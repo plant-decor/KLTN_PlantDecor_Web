@@ -7,19 +7,10 @@ let currentToken: string | null = null;
 let currentRefreshToken: string | null = null;
 
 // Subscribe để cập nhật token real-time khi state thay đổi
-useAuthStore.subscribe(
-  (state) => state.token,
-  (token) => {
-    currentToken = token;
-  }
-);
-
-useAuthStore.subscribe(
-  (state) => state.refreshToken,
-  (refreshToken) => {
-    currentRefreshToken = refreshToken;
-  }
-);
+useAuthStore.subscribe((state) => {
+  currentToken = state.token;
+  currentRefreshToken = state.refreshToken;
+});
 
 // Tạo axios instance
 const axiosInstance = axios.create({
@@ -37,7 +28,7 @@ axiosInstance.interceptors.request.use(
     if (currentToken) {
       config.headers.Authorization = `Bearer ${currentToken}`;
     }
-    
+
     return config;
   },
   (error) => {
@@ -62,18 +53,18 @@ axiosInstance.interceptors.response.use(
       if (currentRefreshToken) {
         try {
           const deviceId = getDeviceId();
-          
+
           // Gọi API refresh token với deviceId
           const response = await axios.post(
             `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
-            { 
+            {
               refreshToken: currentRefreshToken,
-              deviceId 
+              deviceId
             }
           );
 
           const { token, refreshToken: newRefreshToken, expiresIn, user } = response.data;
-          
+
           // Cập nhật token mới
           // setTokens() sẽ trigger subscribe tự động cập nhật currentToken
           const { setTokens } = useAuthStore.getState();

@@ -38,3 +38,8 @@ next-env.d.ts
 # markdown files - ignore all except README.md
 *.md
 !README.md
+
+# macOS system files
+.DS_Store
+._*
+.AppleDouble

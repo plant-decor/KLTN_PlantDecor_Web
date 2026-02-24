@@ -1,76 +1,48 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { getDeviceId } from '@/lib/utils/deviceId';
 import type { User } from '@/types/auth.types';
 
+/**
+ * Zustand Store cho Authentication (Cookie-Based)
+ * 
+ * ⚠️ QUAN TRỌNG: Chỉ lưu UserInfo (dữ liệu KHÔNG nhạy cảm)
+ * - Token được lưu trong HTTP-Only Cookie (không thể truy cập từ JS)
+ * - RefreshToken cũng được lưu trong Cookie
+ * - Client chỉ cần biết: user info (tên, avatar...) để hiển thị UI
+ */
 interface AuthState {
-  token: string | null;
-  refreshToken: string | null;
-  tokenExpiry: number | null;
-  isAuthenticated: boolean;
+  // Chỉ lưu user info (dữ liệu không nhạy cảm)
   user: User | null;
-  deviceId: string;
+  isAuthenticated: boolean;
   
   // Actions
-  setTokens: (token: string, refreshToken: string, expiresIn: number, user?: User) => void;
-  clearTokens: () => void;
-  isTokenExpired: () => boolean;
-  getToken: () => string | null;
   setUser: (user: User) => void;
-  getDeviceId: () => string;
+  clearUser: () => void;
+  getUser: () => User | null;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
-      token: null,
-      refreshToken: null,
-      tokenExpiry: null,
-      isAuthenticated: false,
       user: null,
-      deviceId: typeof window !== 'undefined' ? getDeviceId() : '',
-
-      setTokens: (token: string, refreshToken: string, expiresIn: number, user?: User) => {
-        const expiryTime = Date.now() + expiresIn * 1000; // Convert seconds to milliseconds
-        set({
-          token,
-          refreshToken,
-          tokenExpiry: expiryTime,
-          isAuthenticated: true,
-          user: user || get().user,
-        });
-      },
-
-      clearTokens: () => {
-        set({
-          token: null,
-          refreshToken: null,
-          tokenExpiry: null,
-          isAuthenticated: false,
-          user: null,
-        });
-      },
-
-      isTokenExpired: () => {
-        const { tokenExpiry } = get();
-        if (!tokenExpiry) return true;
-        return Date.now() >= tokenExpiry;
-      },
-
-      getToken: () => {
-        const { token, isTokenExpired } = get();
-        if (isTokenExpired()) {
-          return null;
-        }
-        return token;
-      },
+      isAuthenticated: false,
 
       setUser: (user: User) => {
-        set({ user });
+        set({
+          user,
+          isAuthenticated: true,
+        });
       },
 
-      getDeviceId: () => {
-        return get().deviceId;
+      clearUser: () => {
+        set({
+          user: null,
+          isAuthenticated: false,
+        });
+      },
+
+      getUser: () => {
+        return get().user;
       },
     }),
     {

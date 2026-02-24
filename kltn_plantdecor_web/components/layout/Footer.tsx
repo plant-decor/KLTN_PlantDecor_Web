@@ -59,11 +59,6 @@ export default function Footer() {
                   Liên hệ
                 </Link>
               </li>
-              <li>
-                <Link href="/blog" className="text-gray-400 hover:text-white transition-colors duration-200">
-                  Blog
-                </Link>
-              </li>
             </ul>
           </div>
 
@@ -89,11 +84,6 @@ export default function Footer() {
               <li>
                 <Link href="/services/delivery" className="text-gray-400 hover:text-white transition-colors duration-200">
                   Giao hàng
-                </Link>
-              </li>
-              <li>
-                <Link href="/services/maintenance" className="text-gray-400 hover:text-white transition-colors duration-200">
-                  Bảo trì
                 </Link>
               </li>
             </ul>

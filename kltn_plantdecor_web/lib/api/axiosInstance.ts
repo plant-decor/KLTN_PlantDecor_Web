@@ -1,16 +1,14 @@
 import axios from 'axios';
-import { useAuthStore } from '@/store/authStore';
-import { getDeviceId } from '@/lib/utils/deviceId';
 
-// ===== Real-time Token Tracking with Subscribe =====
-let currentToken: string | null = null;
-let currentRefreshToken: string | null = null;
-
-// Subscribe để cập nhật token real-time khi state thay đổi
-useAuthStore.subscribe((state) => {
-  currentToken = state.token;
-  currentRefreshToken = state.refreshToken;
-});
+/**
+ * Axios Instance - Cookie-Based Authentication
+ * 
+ * 🔒 Bảo mật:
+ * - Token được lưu trong HTTP-Only Cookie
+ * - Axios tự động gửi cookie khi request (do withCredentials: true)
+ * - Không cần thêm header Authorization (Backend tự extract từ cookie)
+ * - Backend sẽ handle refresh token logic nếu cần
+ */
 
 // Tạo axios instance
 const axiosInstance = axios.create({
@@ -19,16 +17,16 @@ const axiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  // 🔒 QUAN TRỌNG: Gửi cookies kèm theo request (bao gồm authToken)
+  withCredentials: true,
 });
 
 // ===== Request Interceptor =====
-// Sử dụng token từ subscribe (real-time, luôn đồng bộ với state)
+// Log requests (optional)
 axiosInstance.interceptors.request.use(
   (config) => {
-    if (currentToken) {
-      config.headers.Authorization = `Bearer ${currentToken}`;
-    }
-
+    // Cookies sẽ được tự động gửi cùng request
+    // Không cần thêm header Authorization vì token ở cookie
     return config;
   },
   (error) => {
@@ -37,58 +35,28 @@ axiosInstance.interceptors.request.use(
 );
 
 // ===== Response Interceptor =====
-// Xử lý token hết hạn real-time (sử dụng token từ subscribe)
+// Xử lý errors (401, 403...)
 axiosInstance.interceptors.response.use(
   (response) => {
     return response;
   },
   async (error) => {
-    const originalRequest = error.config;
+    // Nếu lỗi 401 Unauthorized (token hết hạn hoặc invalid)
+    if (error.response?.status === 401) {
+      // Backend sẽ tự động refresh token bằng refreshToken cookie
+      // hoặc client cần gọi một endpoint để refresh
+      // Tùy theo design của backend
+      
+      // Ở đây, redirect tới login page
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
+    }
 
-    // Nếu lỗi 401 và chưa retry
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      // Sử dụng refreshToken từ subscribe (real-time, luôn mới nhất)
-      if (currentRefreshToken) {
-        try {
-          const deviceId = getDeviceId();
-
-          // Gọi API refresh token với deviceId
-          const response = await axios.post(
-            `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
-            {
-              refreshToken: currentRefreshToken,
-              deviceId
-            }
-          );
-
-          const { token, refreshToken: newRefreshToken, expiresIn, user } = response.data;
-
-          // Cập nhật token mới
-          // setTokens() sẽ trigger subscribe tự động cập nhật currentToken
-          const { setTokens } = useAuthStore.getState();
-          setTokens(token, newRefreshToken, expiresIn, user);
-
-          // Retry request với token mới
-          originalRequest.headers.Authorization = `Bearer ${token}`;
-          return axiosInstance(originalRequest);
-        } catch (refreshError) {
-          // Nếu refresh token thất bại (có thể bị revoked), xóa hết token và redirect to login
-          const { clearTokens } = useAuthStore.getState();
-          clearTokens();
-          if (typeof window !== 'undefined') {
-            window.location.href = '/login';
-          }
-          return Promise.reject(refreshError);
-        }
-      } else {
-        // Không có refresh token, clear và redirect
-        const { clearTokens } = useAuthStore.getState();
-        clearTokens();
-        if (typeof window !== 'undefined') {
-          window.location.href = '/login';
-        }
+    // Nếu lỗi 403 Forbidden (không có quyền)
+    if (error.response?.status === 403) {
+      if (typeof window !== 'undefined') {
+        window.location.href = '/';
       }
     }
 

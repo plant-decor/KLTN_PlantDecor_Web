@@ -14,38 +14,17 @@ export const useTokenRefresh = ({
   onRefresh,
   onError,
 }: UseTokenRefreshOptions = {}) => {
-  const { tokenExpiry, refreshToken, setTokens, clearTokens } = useAuthStore();
-
+  // Token refresh is now handled by HTTP-only cookies, no need for client-side handling
+  
   const checkAndRefreshToken = useCallback(async () => {
-    if (!tokenExpiry || !refreshToken || !onRefresh) return;
-
-    const timeUntilExpiry = tokenExpiry - Date.now();
-
-    // Nếu token đã hết hạn hoặc sắp hết hạn
-    if (timeUntilExpiry <= refreshThreshold) {
-      try {
-        const newTokens = await onRefresh(refreshToken);
-        setTokens(newTokens.token, newTokens.refreshToken, newTokens.expiresIn);
-        console.log('Token refreshed successfully');
-      } catch (error) {
-        console.error('Failed to refresh token:', error);
-        clearTokens();
-        if (onError) {
-          onError(error as Error);
-        }
-      }
-    }
-  }, [tokenExpiry, refreshToken, refreshThreshold, onRefresh, setTokens, clearTokens, onError]);
+    // Placeholder for compatibility
+    return;
+  }, []);
 
   useEffect(() => {
-    // Kiểm tra ngay khi component mount
-    checkAndRefreshToken();
-
-    // Thiết lập interval để kiểm tra định kỳ
-    const intervalId = setInterval(checkAndRefreshToken, checkInterval);
-
-    return () => clearInterval(intervalId);
-  }, [checkAndRefreshToken, checkInterval]);
+    // Token refresh is handled server-side via HTTP-only cookies
+    return () => {};
+  }, [checkInterval]);
 
   return { checkAndRefreshToken };
 };

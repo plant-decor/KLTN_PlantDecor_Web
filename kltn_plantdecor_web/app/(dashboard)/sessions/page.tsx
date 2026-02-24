@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { authService } from '@/lib/api/authService';
 import { useRouter } from 'next/navigation';
+import { getDeviceId } from '@/lib/utils/deviceId';
 
 interface Session {
   id: number;
@@ -20,7 +21,6 @@ interface Session {
 export default function SessionsPage() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { getDeviceId } = useAuthStore();
   const router = useRouter();
 
   useEffect(() => {

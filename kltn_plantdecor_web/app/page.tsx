@@ -1,8 +1,13 @@
-import Image from "next/image";
 import Link from "next/link";
 import MainLayout from "@/components/layout/MainLayout";
+import { SAMPLE_PLANTS } from "@/data/sampledata";
+import ProductCard from "@/components/ProductCard";
 
 export default function Home() {
+  // Get featured plants for showcase (limit to 8)
+  const featuredPlants = SAMPLE_PLANTS.filter(
+    (plant) => plant.isFeatured || plant.isBestSeller
+  ).slice(0, 8);
   return (
     <MainLayout>
       {/* Hero Section */}
@@ -140,68 +145,9 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow">
-              <div className="w-full h-48 bg-green-200 relative">
-                <span className="absolute top-4 left-4 bg-green-600 text-white px-2 py-1 text-xs rounded">New</span>
-              </div>
-              <div className="p-6">
-                <h3 className="font-semibold text-gray-900 mb-2">Cây Monstera Deliciosa</h3>
-                <p className="text-gray-600 text-sm mb-4">Cây cảnh không khí, dễ trồng và chăm sóc</p>
-                <div className="flex justify-between items-center">
-                  <span className="text-green-600 font-bold text-lg">450.000đ</span>
-                  <button className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition-colors">
-                    Thêm vào giỏ
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow">
-              <div className="w-full h-48 bg-green-300"></div>
-              <div className="p-6">
-                <h3 className="font-semibold text-gray-900 mb-2">Cây Lưỡi Hổ</h3>
-                <p className="text-gray-600 text-sm mb-4">Lọc không khí hiệu quả, phù hợp văn phòng</p>
-                <div className="flex justify-between items-center">
-                  <span className="text-green-600 font-bold text-lg">250.000đ</span>
-                  <button className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition-colors">
-                    Thêm vào giỏ
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow">
-              <div className="w-full h-48 bg-green-400"></div>
-              <div className="p-6">
-                <h3 className="font-semibold text-gray-900 mb-2">Combo Sen Đá Mix</h3>
-                <p className="text-gray-600 text-sm mb-4">Bộ sưu tập sen đá nhiều màu sắc</p>
-                <div className="flex justify-between items-center">
-                  <span className="text-green-600 font-bold text-lg">180.000đ</span>
-                  <button className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition-colors">
-                    Thêm vào giỏ
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow">
-              <div className="w-full h-48 bg-green-500 relative">
-                <span className="absolute top-4 left-4 bg-red-600 text-white px-2 py-1 text-xs rounded">Sale</span>
-              </div>
-              <div className="p-6">
-                <h3 className="font-semibold text-gray-900 mb-2">Cây Tù Và lá Tím</h3>
-                <p className="text-gray-600 text-sm mb-4">Màu sắc độc đáo, thu hút ánh nhìn</p>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <span className="text-gray-400 line-through text-sm">350.000đ</span>
-                    <span className="text-green-600 font-bold text-lg ml-2">280.000đ</span>
-                  </div>
-                  <button className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition-colors">
-                    Thêm vào giỏ
-                  </button>
-                </div>
-              </div>
-            </div>
+            {featuredPlants.map((plant) => (
+              <ProductCard key={plant.id} plant={plant} />
+            ))}
           </div>
         </div>
       </section>

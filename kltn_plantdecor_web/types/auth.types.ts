@@ -24,7 +24,10 @@ export interface User {
   id: number;
   email: string;
   name: string;
-  // Thêm các thuộc tính khác của user
+  avatar?: string;
+  role?: string;
+  // Chỉ lưu dữ liệu KHÔNG nhạy cảm trên client
+  // Token sẽ được lưu trong HTTP-Only Cookie
 }
 
 export interface LoginRequest {

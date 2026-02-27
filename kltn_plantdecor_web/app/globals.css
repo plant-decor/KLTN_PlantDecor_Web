@@ -42,8 +42,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background:         #0f0f0f;
-    --foreground:         #f3f4f6;
+    --background:         #f3f4f6;
+    --foreground:         #0f0f0f;
     --card:               #1e1e1e;
     --card-border:        #2d3748;
   }

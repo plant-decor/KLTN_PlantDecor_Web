@@ -1,4 +1,4 @@
-export type UserRole = 'guest' | 'user' | 'admin' | 'staff' | 'shipper' | 'caretaker';
+export type UserRole = 'guest' | 'user' | 'admin' | 'manager' | 'staff' | 'shipper' | 'caretaker';
 
 export type HeaderIconKey =
   | 'home'
@@ -27,6 +27,11 @@ export const NAV_ITEMS_BY_ROLE: Record<UserRole, HeaderNavItem[]> = {
     { label: 'Home', href: '/', icon: 'home' },
     { label: 'Plant Store', href: '/plant-store', icon: 'store' },
     { label: 'Services', href: '/services', icon: 'services' },
+    {
+      label: 'AI Plant Recommendation',
+      href: '/ai-plant-recommendation/',
+      icon: 'ai',
+    },
     { label: 'Contact', href: '/contact', icon: 'contact' },
     { label: 'About Us', href: '/about', icon: 'about' },
   ],
@@ -45,6 +50,7 @@ export const NAV_ITEMS_BY_ROLE: Record<UserRole, HeaderNavItem[]> = {
     { label: 'About Us', href: '/about', icon: 'about' },
   ],
   admin: [],
+  manager: [],
   staff: [],
   shipper: [],
   caretaker: [],

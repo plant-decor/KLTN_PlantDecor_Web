@@ -3,6 +3,24 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useMemo, type ReactNode } from 'react';
+import {
+  Dashboard as DashboardIcon,
+  People as PeopleIcon,
+  BarChart as BarChartIcon,
+  Settings as SettingsIcon,
+  ShoppingBag as ShoppingBagIcon,
+  Layers as LayersIcon,
+  MiscellaneousServices as ServicesIcon,
+  Description as DescriptionIcon,
+  Chat as ChatIcon,
+  EventNote as EventNoteIcon,
+  Checklist as ChecklistIcon,
+  History as HistoryIcon,
+  LocalShipping as LocalShippingIcon,
+  Logout as LogoutIcon,
+  Payment as PaymentIcon,
+  Notifications as ReminderIcon,
+} from '@mui/icons-material';
 import { ACTIVE_SAMPLE_USER_ID, SAMPLE_USERS } from '@/data/sampledata';
 import {
   SIDEBAR_ITEMS_BY_ROLE,
@@ -12,86 +30,49 @@ import {
 import type { UserRole } from '@/lib/constants/header';
 
 const ICONS: Record<SidebarIconKey, ReactNode> = {
-  dashboard: (
-    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4h7v7H4V4zm9 0h7v11h-7V4zM4 13h7v7H4v-7zm9 5h7" />
-    </svg>
-  ),
-  users: (
-    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 21v-2a4 4 0 00-4-4H7a4 4 0 00-4 4v2m9-10a4 4 0 11-8 0 4 4 0 018 0zm9 10v-2a4 4 0 00-3-3.87" />
-    </svg>
-  ),
-  revenue: (
-    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3v18h18M7 15l4-4 3 3 5-7" />
-    </svg>
-  ),
-  settings: (
-    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6a3 3 0 100 6 3 3 0 000-6zm8 3l-2 1 1 2-2 2-2-1-1 2h-3l-1-2-2 1-2-2 1-2-2-1 1-3 2-1-1-2 2-2 2 1 1-2h3l1 2 2-1 2 2-1 2 2 1-1 3z" />
-    </svg>
-  ),
-  products: (
-    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7h16l-1 12H5L4 7zm2-3h12l2 3H4l2-3z" />
-    </svg>
-  ),
-  materials: (
-    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4h16v4H4V4zm0 6h16v10H4V10z" />
-    </svg>
-  ),
-  services: (
-    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5L12 2z" />
-    </svg>
-  ),
-  orders: (
-    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6M7 4h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z" />
-    </svg>
-  ),
-  chat: (
-    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h6m-6 8l-4-4V4a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2H7z" />
-    </svg>
-  ),
-  requests: (
-    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h8M8 11h8M8 15h5M5 3h14a2 2 0 012 2v14l-4-4H5a2 2 0 01-2-2V5a2 2 0 012-2z" />
-    </svg>
-  ),
-  scheduled: (
-    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3M4 11h16M5 5h14a2 2 0 012 2v11a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z" />
-    </svg>
-  ),
-  tasks: (
-    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 11l3 3L22 4M3 7h6M3 12h6M3 17h6" />
-    </svg>
-  ),
-  history: (
-    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3M3 12a9 9 0 1115.6 6M3 12H1" />
-    </svg>
-  ),
-  delivery: (
-    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6h11v10H3V6zm11 3h4l3 3v4h-7V9zM7 20a2 2 0 100-4 2 2 0 000 4zm10 0a2 2 0 100-4 2 2 0 000 4z" />
-    </svg>
-  ),
-  logout: (
-    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1" />
-    </svg>
-  ),
+  dashboard: <DashboardIcon sx={{ fontSize: 18 }} />,
+  users: <PeopleIcon sx={{ fontSize: 18 }} />,
+  revenue: <BarChartIcon sx={{ fontSize: 18 }} />,
+  settings: <SettingsIcon sx={{ fontSize: 18 }} />,
+  products: <ShoppingBagIcon sx={{ fontSize: 18 }} />,
+  materials: <LayersIcon sx={{ fontSize: 18 }} />,
+  services: <ServicesIcon sx={{ fontSize: 18 }} />,
+  orders: <DescriptionIcon sx={{ fontSize: 18 }} />,
+  chat: <ChatIcon sx={{ fontSize: 18 }} />,
+  requests: <DescriptionIcon sx={{ fontSize: 18 }} />,
+  scheduled: <EventNoteIcon sx={{ fontSize: 18 }} />,
+  tasks: <ChecklistIcon sx={{ fontSize: 18 }} />,
+  history: <HistoryIcon sx={{ fontSize: 18 }} />,
+  delivery: <LocalShippingIcon sx={{ fontSize: 18 }} />,
+  store: <ShoppingBagIcon sx={{ fontSize: 18 }} />,
+  catalog: <LayersIcon sx={{ fontSize: 18 }} />,
+  tags: <DescriptionIcon sx={{ fontSize: 18 }} />,
+  metrics: <BarChartIcon sx={{ fontSize: 18 }} />,
+  payment: <PaymentIcon sx={{ fontSize: 18 }} />,
+  reminder: <ReminderIcon sx={{ fontSize: 18 }} />,
+  logout: <LogoutIcon sx={{ fontSize: 18 }} />,
 };
 
-const isActiveRoute = (pathname: string, href: string) => {
+const isActiveRoute = (pathname: string, href: string, allHrefs: string[]) => {
   if (href === '/') return pathname === '/';
-  return pathname === href || pathname.startsWith(`${href}/`);
+  
+  // Exact match
+  if (pathname === href) return true;
+  
+  // Check if current path starts with this href
+  if (pathname.startsWith(`${href}/`)) {
+    // Make sure no other href is a longer match
+    const hasLongerMatch = allHrefs.some(
+      (otherHref) =>
+        otherHref !== href &&
+        otherHref.length > href.length &&
+        pathname.startsWith(`${otherHref}/`) ||
+        pathname === otherHref
+    );
+    return !hasLongerMatch;
+  }
+  
+  return false;
 };
 
 interface SidebarProps {
@@ -108,7 +89,8 @@ export default function Sidebar({ isOpen, onClose, role }: SidebarProps) {
   );
   const resolvedRole = role ?? activeUser?.role ?? 'guest';
   const items = SIDEBAR_ITEMS_BY_ROLE[resolvedRole] ?? [];
-  const activeItem = items.find((item) => isActiveRoute(pathname, item.href));
+  const allHrefs = items.map((item) => item.href);
+  const activeItem = items.find((item) => isActiveRoute(pathname, item.href, allHrefs));
   const headerLabel = activeItem?.label ?? 'Dashboard';
 
   if (items.length === 0) {
@@ -141,7 +123,7 @@ export default function Sidebar({ isOpen, onClose, role }: SidebarProps) {
               key={item.label}
               href={item.href}
               className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                isActiveRoute(pathname, item.href)
+                isActiveRoute(pathname, item.href, allHrefs)
                   ? 'bg-green-50 text-green-700'
                   : 'text-gray-700 hover:bg-gray-50 hover:text-green-600'
               }`}

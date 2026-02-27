@@ -295,3 +295,190 @@ export const serviceTypesDistribution = [
   { serviceType: 'Thiết kế sân vườn', count: 30 },
   { serviceType: 'Khác', count: 15 },
 ];
+
+// ============= USER PROFILE DATA =============
+
+export const userProfileData = {
+  id: 'user-123',
+  avatarUrl: '/img/avatar-placeholder.jpg',
+  fullName: 'Nguyễn Văn An',
+  email: 'nguyenvanan@example.com',
+  phoneNumber: '0901234567',
+  gender: 'Male', // Male, Female, Other
+  birthYear: 1995,
+  address: '123 Đường Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh',
+  receiveNotifications: true,
+  createdAt: '2024-01-15',
+  membershipLevel: 'Gold', // Bronze, Silver, Gold, Platinum
+};
+
+// ============= ORDER HISTORY DATA =============
+
+export const orderHistoryData = [
+  {
+    id: 'ORD-2026-0228-001',
+    createdAt: '2026-02-28T10:30:00',
+    totalAmount: 2850000,
+    status: 'Pending', // Pending, Confirmed, Shipping, Delivered, Completed, Cancelled
+    orderType: 'Product', // Product, Service
+    customerName: 'Nguyễn Văn An',
+    phoneNumber: '0901234567',
+    address: '123 Đường Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh',
+    items: [
+      {
+        itemName: 'Phong Lộc',
+        quantity: 2,
+        price: 850000,
+        imageUrl: '/img/products/phong-loc.jpg',
+      },
+      {
+        itemName: 'Lan Hồ Điệp',
+        quantity: 1,
+        price: 1150000,
+        imageUrl: '/img/products/lan-ho-diep.jpg',
+      },
+    ],
+  },
+  {
+    id: 'ORD-2026-0225-002',
+    createdAt: '2026-02-25T14:20:00',
+    totalAmount: 5420000,
+    status: 'Shipping',
+    orderType: 'Product',
+    customerName: 'Nguyễn Văn An',
+    phoneNumber: '0901234567',
+    address: '123 Đường Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh',
+    shippedAt: '2026-02-26T09:00:00',
+    estimatedDelivery: '2026-03-01T17:00:00',
+    items: [
+      {
+        itemName: 'Kim Ngân',
+        quantity: 3,
+        price: 750000,
+        imageUrl: '/img/products/kim-ngan.jpg',
+      },
+      {
+        itemName: 'Monstera Deliciosa',
+        quantity: 2,
+        price: 980000,
+        imageUrl: '/img/products/monstera.jpg',
+      },
+      {
+        itemName: 'Trầu Bà',
+        quantity: 1,
+        price: 450000,
+        imageUrl: '/img/products/trau-ba.jpg',
+      },
+    ],
+  },
+  {
+    id: 'ORD-2026-0220-003',
+    createdAt: '2026-02-20T11:15:00',
+    totalAmount: 3200000,
+    status: 'Completed',
+    orderType: 'Product',
+    customerName: 'Nguyễn Văn An',
+    phoneNumber: '0901234567',
+    address: '123 Đường Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh',
+    shippedAt: '2026-02-21T10:00:00',
+    deliveredAt: '2026-02-23T15:30:00',
+    completedAt: '2026-02-23T15:30:00',
+    items: [
+      {
+        itemName: 'Cây Đa Búp Đỏ',
+        quantity: 4,
+        price: 650000,
+        imageUrl: '/img/products/da-bup-do.jpg',
+      },
+      {
+        itemName: 'Sen Đá',
+        quantity: 2,
+        price: 350000,
+        imageUrl: '/img/products/sen-da.jpg',
+      },
+    ],
+  },
+  {
+    id: 'SVC-2026-0218-004',
+    createdAt: '2026-02-18T09:00:00',
+    totalAmount: 1500000,
+    status: 'Completed',
+    orderType: 'Service',
+    customerName: 'Nguyễn Văn An',
+    phoneNumber: '0901234567',
+    address: '123 Đường Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh',
+    completedAt: '2026-02-22T16:00:00',
+    items: [
+      {
+        itemName: 'Dịch vụ chăm sóc định kỳ (3 tháng)',
+        quantity: 1,
+        price: 1500000,
+        imageUrl: '/img/services/care-service.jpg',
+      },
+    ],
+  },
+  {
+    id: 'ORD-2026-0215-005',
+    createdAt: '2026-02-15T16:45:00',
+    totalAmount: 7850000,
+    status: 'Delivered',
+    orderType: 'Product',
+    customerName: 'Nguyễn Văn An',
+    phoneNumber: '0901234567',
+    address: '123 Đường Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh',
+    shippedAt: '2026-02-16T08:00:00',
+    deliveredAt: '2026-02-18T14:20:00',
+    items: [
+      {
+        itemName: 'Cây Thiết Mộc Lan',
+        quantity: 1,
+        price: 2500000,
+        imageUrl: '/img/products/thiet-moc-lan.jpg',
+      },
+      {
+        itemName: 'Xương Rồng',
+        quantity: 5,
+        price: 280000,
+        imageUrl: '/img/products/xuong-rong.jpg',
+      },
+      {
+        itemName: 'Lưỡi Hổ',
+        quantity: 3,
+        price: 550000,
+        imageUrl: '/img/products/luoi-ho.jpg',
+      },
+      {
+        itemName: 'Phong Lộc',
+        quantity: 2,
+        price: 850000,
+        imageUrl: '/img/products/phong-loc.jpg',
+      },
+    ],
+  },
+  {
+    id: 'ORD-2026-0210-006',
+    createdAt: '2026-02-10T13:30:00',
+    totalAmount: 1200000,
+    status: 'Cancelled',
+    orderType: 'Product',
+    customerName: 'Nguyễn Văn An',
+    phoneNumber: '0901234567',
+    address: '123 Đường Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh',
+    cancelledAt: '2026-02-11T10:00:00',
+    cancelReason: 'Khách hàng đổi ý',
+    items: [
+      {
+        itemName: 'Kim Ngân',
+        quantity: 1,
+        price: 750000,
+        imageUrl: '/img/products/kim-ngan.jpg',
+      },
+      {
+        itemName: 'Trầu Bà',
+        quantity: 1,
+        price: 450000,
+        imageUrl: '/img/products/trau-ba.jpg',
+      },
+    ],
+  },
+];

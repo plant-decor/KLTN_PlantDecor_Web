@@ -77,6 +77,19 @@ export async function loginAction(
       });
     }
 
+    // Lưu role để middleware check authorization
+    if (data.user.role) {
+      cookieStore.set({
+        name: 'userRole',
+        value: data.user.role,
+        httpOnly: false, // Middleware cần đọc được
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: data.expiresIn,
+        path: '/',
+      });
+    }
+
     // Bước 4: Trả về userInfo (dữ liệu không nhạy cảm)
     return {
       success: true,
@@ -99,6 +112,7 @@ export async function logoutAction(): Promise<{ success: boolean }> {
     const cookieStore = await cookies();
     cookieStore.delete('authToken');
     cookieStore.delete('refreshToken');
+    cookieStore.delete('userRole'); // Xóa role cookie
     
     // Redirect to login page
     redirect('/login');

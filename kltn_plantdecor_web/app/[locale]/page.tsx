@@ -4,6 +4,7 @@ import MainLayout from '@/components/layout/MainLayout';
 import { SAMPLE_PLANTS } from '@/data/sampledata';
 import ProductCard from '@/components/product/ProductCard';
 import ExpertGuide from '@/components/public/ExpertGuide';
+import SupportChatWidget from '@/components/chat/SupportChatWidget';
 import { ContactSupportOutlined, LocalFloristOutlined, SmartToyOutlined } from '@mui/icons-material';
 import Image from 'next/image';
 
@@ -192,6 +193,7 @@ export default function Home() {
         </div> */}
         <ExpertGuide/>
       </section>
+      <SupportChatWidget />
     </MainLayout>
   );
 }

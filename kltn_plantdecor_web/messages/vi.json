@@ -116,6 +116,7 @@
     "title": "Cây cảnh",
     "subtitle": "Khám phá bộ sưu tập cây cảnh đa dạng",
     "addToCart": "Thêm vào giỏ",
+    "addToCartCompact": "Thêm giỏ",
     "buyNow": "Mua ngay",
     "outOfStock": "Hết hàng",
     "inStock": "Còn hàng",
@@ -132,12 +133,15 @@
     "noResults": "Không tìm thấy sản phẩm",
     "productDetail": "Chi tiết sản phẩm",
     "description": "Mô tả",
-    "reviews": "Đánh giá"
+    "reviews": "Đánh giá",
+    "sale": "Giảm giá"
   },
   "cart": {
     "title": "Giỏ hàng",
     "empty": "Giỏ hàng của bạn đang trống",
     "emptyDescription": "Hãy thêm một số cây cảnh vào giỏ hàng của bạn",
+    "processing": "Đang xử lý...",
+    "addedSuccess": "Đã thêm {quantity} {name} vào giỏ hàng!",
     "continueShopping": "Tiếp tục mua sắm",
     "checkout": "Thanh toán",
     "total": "Tổng cộng",
@@ -228,7 +232,65 @@
     "title": "Danh sách yêu thích",
     "empty": "Chưa có sản phẩm yêu thích",
     "removeItem": "Xóa khỏi yêu thích",
-    "addToCart": "Thêm vào giỏ"
+    "addToCart": "Thêm vào giỏ",
+    "addToWishlist": "Thêm vào yêu thích",
+    "addToWishlistCompact": "Yêu thích",
+    "subtitle": "Bạn có {count} sản phẩm trong wishlist"
+  },
+  "productDetail": {
+    "home": "Trang chủ",
+    "store": "Cửa hàng",
+    "reviewsWithCount": "{count} đánh giá",
+    "priceFrom": "Giá từ:",
+    "priceTo": "đến {price}",
+    "savePercent": "Tiết kiệm {percent}%",
+    "inStock": "Còn hàng ({count} sản phẩm)",
+    "outOfStock": "Hết hàng",
+    "description": "Mô tả",
+    "careLevel": "Độ khó chăm sóc",
+    "light": "Ánh sáng",
+    "watering": "Tưới nước",
+    "size": "Kích thước",
+    "humidity": "Độ ẩm",
+    "temperature": "Nhiệt độ",
+    "fertilizing": "Phân bón",
+    "pruning": "Cắt tỉa",
+    "propagation": "Nhân giống",
+    "commonPests": "Sâu bệnh thường gặp",
+    "careInstructions": "Hướng dẫn chăm sóc",
+    "myPlants": "Cây của tôi",
+    "ownedCount": "Bạn đang sở hữu {count} cây loại này",
+    "boughtFrom": "Mua từ",
+    "lastWatered": "Tưới lần cuối",
+    "viewDetails": "Xem chi tiết",
+    "careLevelValues": {
+      "easy": "Dễ",
+      "medium": "Trung bình",
+      "hard": "Khó"
+    },
+    "lightValues": {
+      "low": "Yếu",
+      "medium": "Trung bình",
+      "bright": "Sáng",
+      "directSun": "Trực tiếp"
+    },
+    "wateringValues": {
+      "daily": "Hàng ngày",
+      "weekly": "Hàng tuần",
+      "biWeekly": "2 tuần/lần",
+      "monthly": "Hàng tháng"
+    },
+    "sizeValues": {
+      "small": "Nhỏ",
+      "medium": "Trung",
+      "large": "Lớn"
+    },
+    "instanceStatus": {
+      "healthy": "✓ Khỏe",
+      "thriving": "✨ Phát triển tốt",
+      "needsAttention": "⚠️ Cần chăm sóc",
+      "critical": "🔴 Tình trạng nghiêm trọng"
+    }
   },
   "language": {
     "switchTo": "Chuyển sang",
@@ -275,5 +337,19 @@
       "desc": "Lịch trình dinh dưỡng AI"
     },
     "imageAlt": "Chăm sóc cây xanh"
+  },
+  "PlantInstancesGrid": {
+    "title": "Các cây đang có",
+    "description": "Mỗi cây có các mức giá khác nhau tùy theo kích thước và tuổi của cây. Click vào ảnh để xem chi tiết.",
+    "selected": "Đã chọn",
+    "onSale": "Giảm giá",
+    "selectedInfo": "Thông tin cây đã chọn",
+    "name": "Tên",
+    "price": "Giá",
+    "location": "Vị trí",
+    "status": "Trạng thái",
+    "inStock": "Còn hàng",
+    "trees": "cây",
+    "priceFrom": "Giá từ"
   }
 }

@@ -2,7 +2,11 @@
 
 import Image from 'next/image';
 import { PlantInstance, SAMPLE_PLANTS } from '@/data/sampledata';
-import { useState } from 'react';
+import { useTranslations } from 'next-intl';
+import { use, useState } from 'react';
+import { Box, IconButton, Tooltip } from '@mui/material';
+import { ZoomIn as ZoomInIcon } from '@mui/icons-material';
+import FullscreenImageModal from '@/components/ImageViewer/FullscreenImageModal';
 
 interface PlantInstancesGridProps {
   instances: PlantInstance[];
@@ -10,9 +14,11 @@ interface PlantInstancesGridProps {
 }
 
 export default function PlantInstancesGrid({ instances, plantId }: PlantInstancesGridProps) {
+  const t = useTranslations('PlantInstancesGrid');
   const [selectedInstanceId, setSelectedInstanceId] = useState<number | null>(
     instances.length > 0 ? instances[0].id : null
   );
+  const [fullscreenImageId, setFullscreenImageId] = useState<number | null>(null);
 
   const selectedInstance = instances.find(i => i.id === selectedInstanceId);
   const plant = SAMPLE_PLANTS.find(p => p.id === plantId);
@@ -28,9 +34,9 @@ export default function PlantInstancesGrid({ instances, plantId }: PlantInstance
   return (
     <div className="mt-12 bg-white rounded-xl shadow-md p-8">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Các cây đang có</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('title')}</h2>
         <p className="text-gray-600">
-          Mỗi cây có các mức giá khác nhau tùy theo kích thước và tuổi của cây. Click vào ảnh để xem chi tiết.
+          {t('description')}
         </p>
       </div>
 
@@ -51,29 +57,77 @@ export default function PlantInstancesGrid({ instances, plantId }: PlantInstance
                   : 'border-gray-200 hover:border-green-400'
               }`}
             >
-              {/* Image */}
+              {/* Image with Fullscreen Viewer */}
               {instance.imageUrl && (
-                <div className="relative aspect-square bg-gray-100">
+                <Box
+                  sx={{
+                    position: 'relative',
+                    aspectRatio: '1 / 1',
+                    backgroundColor: '#f3f4f6',
+                    cursor: 'pointer',
+                    overflow: 'hidden',
+                    '&:hover img': {
+                      transform: 'scale(1.05)',
+                    },
+                    '&:hover .zoom-hint': {
+                      opacity: 1,
+                    },
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setFullscreenImageId(instance.id);
+                  }}
+                >
                   <Image
                     src={instance.imageUrl}
                     alt={instance.customName || plant.name}
                     fill
                     className="object-cover"
+                    style={{
+                      transition: 'transform 0.3s ease-in-out',
+                    }}
                   />
-                </div>
+
+                  {/* Zoom Hint */}
+                  <Tooltip title="View fullscreen" arrow>
+                    <IconButton
+                      className="zoom-hint"
+                      size="small"
+                      sx={{
+                        position: 'absolute',
+                        bottom: 4,
+                        right: 4,
+                        backgroundColor: 'rgba(76, 175, 80, 0.9)',
+                        color: 'white',
+                        opacity: { xs: 1, sm: 0 },
+                        transition: 'opacity 0.3s ease-in-out',
+                        '&:hover': {
+                          backgroundColor: 'rgba(56, 142, 60, 1)',
+                        },
+                        zIndex: 5,
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setFullscreenImageId(instance.id);
+                      }}
+                    >
+                      <ZoomInIcon sx={{ fontSize: 16 }} />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
               )}
 
               {/* Selected Badge */}
               {isSelected && (
                 <div className="absolute top-3 left-3 bg-green-600 text-white px-2 py-1 rounded-full text-xs font-bold">
-                  ✓ Đã chọn
+                  ✓ {t('selected')}
                 </div>
               )}
 
               {/* On Sale Badge */}
               {isOnSale && (
                 <div className="absolute top-3 right-3 bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">
-                  Giảm giá
+                  {t('onSale')}
                 </div>
               )}
 
@@ -99,26 +153,26 @@ export default function PlantInstancesGrid({ instances, plantId }: PlantInstance
       {/* Selected Instance Details */}
       {selectedInstance && (
         <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
-          <h3 className="font-bold text-blue-900 mb-2">📋 Thông tin cây đã chọn</h3>
+          <h3 className="font-bold text-blue-900 mb-2">📋 {t('selectedInfo')}</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-blue-800">
             <div>
-              <span className="block text-xs text-blue-600 font-semibold">Tên</span>
+              <span className="block text-xs text-blue-600 font-semibold">{t('name')}</span>
               <span className="block font-medium">{selectedInstance.customName || plant.name}</span>
             </div>
             <div>
-              <span className="block text-xs text-blue-600 font-semibold">Giá</span>
+              <span className="block text-xs text-blue-600 font-semibold">{t('price')}</span>
               <span className="block font-bold text-green-600">
                 ₫{getInstancePrice(selectedInstance).toLocaleString('vi-VN')}
               </span>
             </div>
             {selectedInstance.location && (
               <div>
-                <span className="block text-xs text-blue-600 font-semibold">Vị trí</span>
+                <span className="block text-xs text-blue-600 font-semibold">{t('location')}</span>
                 <span className="block font-medium">{selectedInstance.location}</span>
               </div>
             )}
             <div>
-              <span className="block text-xs text-blue-600 font-semibold">Trạng thái</span>
+              <span className="block text-xs text-blue-600 font-semibold">{t('status')}</span>
               <span className="block font-medium capitalize">
                 {selectedInstance.status === 'healthy' ? '✓ Khỏe'
                   : selectedInstance.status === 'thriving' ? '✨ Phát triển tốt'
@@ -138,14 +192,31 @@ export default function PlantInstancesGrid({ instances, plantId }: PlantInstance
       {/* Stock Info */}
       <div className="mt-6 text-sm">
         <span className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full font-medium">
-          Còn hàng: <strong>{instances.length} cây</strong>
+          {t('inStock')}: <strong>{instances.length} cây</strong>
         </span>
         {minPrice < plant.price && (
           <span className="ml-3 inline-block bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-medium">
-            Giá từ ₫{minPrice.toLocaleString('vi-VN')}
+            {t('fromPrice')} ₫{minPrice.toLocaleString('vi-VN')}
           </span>
         )}
       </div>
+
+      {/* Fullscreen Image Modal */}
+      {fullscreenImageId !== null && (
+        <FullscreenImageModal
+          images={[
+            instances.find((i) => i.id === fullscreenImageId)?.imageUrl || '',
+          ]}
+          initialIndex={0}
+          isOpen={fullscreenImageId !== null}
+          onClose={() => setFullscreenImageId(null)}
+          alt={
+            instances.find((i) => i.id === fullscreenImageId)?.customName ||
+            plant?.name ||
+            'Instance'
+          }
+        />
+      )}
     </div>
   );
 }

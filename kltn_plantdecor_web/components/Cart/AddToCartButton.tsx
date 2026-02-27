@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import type { SamplePlant } from '@/data/sampledata';
 import { useAuthStore } from '@/store/authStore';
 import { ACTIVE_SAMPLE_USER_ID } from '@/data/sampledata';
@@ -10,6 +11,8 @@ interface AddToCartButtonProps {
 }
 
 export default function AddToCartButton({ plant }: AddToCartButtonProps) {
+  const tProducts = useTranslations('products');
+  const tCart = useTranslations('cart');
   const [quantity, setQuantity] = useState(1);
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -42,7 +45,9 @@ export default function AddToCartButton({ plant }: AddToCartButtonProps) {
       }
 
       const data = await response.json();
-      setFeedbackMessage(`Đã thêm ${quantity} ${plant.name} vào giỏ hàng!`);
+      setFeedbackMessage(
+        tCart('addedSuccess', { quantity, name: plant.name }),
+      );
       setQuantity(1);
       
       // Clear message after 3 seconds
@@ -105,7 +110,11 @@ export default function AddToCartButton({ plant }: AddToCartButtonProps) {
               : 'bg-gray-300 text-gray-500 cursor-not-allowed'
           }`}
         >
-          {isLoading ? 'Đang xử lý...' : plant.stock > 0 ? 'Thêm vào giỏ hàng' : 'Hết hàng'}
+          {isLoading
+            ? tCart('processing')
+            : plant.stock > 0
+            ? tProducts('addToCart')
+            : tProducts('outOfStock')}
         </button>
       </div>
 

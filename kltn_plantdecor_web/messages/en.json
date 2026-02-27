@@ -116,6 +116,7 @@
     "title": "Plants",
     "subtitle": "Explore a diverse collection of ornamental plants",
     "addToCart": "Add to cart",
+    "addToCartCompact": "Add cart",
     "buyNow": "Buy now",
     "outOfStock": "Out of stock",
     "inStock": "In stock",
@@ -132,12 +133,15 @@
     "noResults": "No products found",
     "productDetail": "Product detail",
     "description": "Description",
-    "reviews": "Reviews"
+    "reviews": "Reviews",
+    "sale": "Sale"
   },
   "cart": {
     "title": "Shopping Cart",
     "empty": "Your cart is empty",
     "emptyDescription": "Add some plants to your cart",
+    "processing": "Processing...",
+    "addedSuccess": "Added {quantity} {name} to cart!",
     "continueShopping": "Continue shopping",
     "checkout": "Checkout",
     "total": "Total",
@@ -228,7 +232,65 @@
     "title": "Wishlist",
     "empty": "No items in wishlist",
     "removeItem": "Remove from wishlist",
-    "addToCart": "Add to cart"
+    "addToCart": "Add to cart",
+    "addToWishlist": "Add to wishlist",
+    "addToWishlistCompact": "Wishlist",
+    "subtitle": "You have {count} items in your wishlist"
+  },
+  "productDetail": {
+    "home": "Home",
+    "store": "Store",
+    "reviewsWithCount": "{count} reviews",
+    "priceFrom": "Price from:",
+    "priceTo": "to {price}",
+    "savePercent": "Save {percent}%",
+    "inStock": "In stock ({count} items)",
+    "outOfStock": "Out of stock",
+    "description": "Description",
+    "careLevel": "Care level",
+    "light": "Light",
+    "watering": "Watering",
+    "size": "Size",
+    "humidity": "Humidity",
+    "temperature": "Temperature",
+    "fertilizing": "Fertilizing",
+    "pruning": "Pruning",
+    "propagation": "Propagation",
+    "commonPests": "Common pests",
+    "careInstructions": "Care instructions",
+    "myPlants": "My plants",
+    "ownedCount": "You currently own {count} plants of this type",
+    "boughtFrom": "Bought on",
+    "lastWatered": "Last watered",
+    "viewDetails": "View details",
+    "careLevelValues": {
+      "easy": "Easy",
+      "medium": "Medium",
+      "hard": "Hard"
+    },
+    "lightValues": {
+      "low": "Low",
+      "medium": "Medium",
+      "bright": "Bright",
+      "directSun": "Direct sun"
+    },
+    "wateringValues": {
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "biWeekly": "Bi-weekly",
+      "monthly": "Monthly"
+    },
+    "sizeValues": {
+      "small": "Small",
+      "medium": "Medium",
+      "large": "Large"
+    },
+    "instanceStatus": {
+      "healthy": "✓ Healthy",
+      "thriving": "✨ Thriving",
+      "needsAttention": "⚠️ Needs attention",
+      "critical": "🔴 Critical"
+    }
   },
   "language": {
     "switchTo": "Switch to",
@@ -275,5 +337,19 @@
       "desc": "AI nutrition schedule"
     },
     "imageAlt": "Plant care"
+  },
+  "PlantInstancesGrid": {
+    "title": "Available Plants",
+    "description": "Each plant has different prices based on size and age. Click on image to view details.",
+    "selected": "Selected",
+    "onSale": "On Sale",
+    "selectedInfo": "Selected Plant Information",
+    "name": "Name",
+    "price": "Price",
+    "location": "Location",
+    "status": "Status",
+    "inStock": "In Stock",
+    "trees": "plants",
+    "priceFrom": "From"
   }
 }

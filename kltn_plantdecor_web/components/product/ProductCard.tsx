@@ -2,19 +2,44 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { Star as StarIcon } from '@mui/icons-material';
+import type { MouseEvent } from 'react';
+  import { Button } from '@mui/material';
+import { DeleteOutline as DeleteOutlineIcon, Star as StarIcon } from '@mui/icons-material';
+  import { useLocale, useTranslations } from 'next-intl';
 import type { SamplePlant } from '@/data/sampledata';
+  import AddToWishlistButton from './AddToWishlistButton';
 
 interface ProductCardProps {
   plant: SamplePlant;
+  showAddToWishlistButton?: boolean;
+  showAddToCartButton?: boolean;
+  showRemoveFromWishlistButton?: boolean;
+  onRemoveFromWishlist?: (plantId: number) => void;
 }
 
-export default function ProductCard({ plant }: ProductCardProps) {
-  const handleAddToCart = (e: React.MouseEvent) => {
+export default function ProductCard({
+  plant,
+  showAddToWishlistButton = true,
+  showAddToCartButton = true,
+  showRemoveFromWishlistButton = false,
+  onRemoveFromWishlist,
+}: ProductCardProps) {
+  const locale = useLocale();
+  const tProducts = useTranslations('products');
+  const tWishlist = useTranslations('wishlist');
+
+  const handleAddToCart = (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     // TODO: Add to cart functionality
     console.log('Adding to cart:', plant.name);
   };
+
+  const handleRemoveFromWishlist = (e: MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    onRemoveFromWishlist?.(plant.id);
+  };
+
+  const priceLocale = locale === 'vi' ? 'vi-VN' : 'en-US';
 
   return (
     <Link
@@ -30,12 +55,12 @@ export default function ProductCard({ plant }: ProductCardProps) {
         />
         {plant.isNewArrival && (
           <span className="absolute top-4 left-4 bg-green-600 text-white px-2 py-1 text-xs rounded">
-            New
+            {tProducts('new')}
           </span>
         )}
         {plant.originalPrice && (
           <span className="absolute top-4 right-4 bg-red-600 text-white px-2 py-1 text-xs rounded">
-            Sale
+            {tProducts('sale')}
           </span>
         )}
       </div>
@@ -52,27 +77,81 @@ export default function ProductCard({ plant }: ProductCardProps) {
             </span>
           </div>
         </div>
-        <div className="flex justify-between items-center">
+        <div className="mb-4">
           {plant.originalPrice ? (
             <div className="flex flex-col">
               <span className="text-gray-400 line-through text-sm">
-                {plant.originalPrice.toLocaleString('vi-VN')}đ
+                {plant.originalPrice.toLocaleString(priceLocale)}đ
               </span>
               <span className="text-green-600 font-bold text-lg">
-                {plant.price.toLocaleString('vi-VN')}đ
+                {plant.price.toLocaleString(priceLocale)}đ
               </span>
             </div>
           ) : (
             <span className="text-green-600 font-bold text-lg">
-              {plant.price.toLocaleString('vi-VN')}đ
+              {plant.price.toLocaleString(priceLocale)}đ
             </span>
           )}
-          <button
-            onClick={handleAddToCart}
-            className="bg-primary text-white px-4 py-2 rounded-lg text-sm hover:bg-green-600 hover:font-semibold transition-colors"
-          >
-            Thêm vào giỏ
-          </button>
+        </div>
+
+        <div className="flex items-stretch gap-2">
+          {showAddToWishlistButton && (
+            <div className="flex-1">
+              <AddToWishlistButton
+                plant={plant}
+                label={tWishlist('addToWishlistCompact')}
+                fullWidth
+                size="medium"
+                onClick={(event) => {
+                  event.preventDefault();
+                }}
+              />
+            </div>
+          )}
+          {showRemoveFromWishlistButton && (
+            <div className="flex-1">
+              <Button
+                onClick={handleRemoveFromWishlist}
+                variant="outlined"
+                size="medium"
+                fullWidth
+                color="error"
+                startIcon={<DeleteOutlineIcon fontSize="small" />}
+                sx={{
+                  textTransform: 'none',
+                  whiteSpace: 'nowrap',
+                  minHeight: 44,
+                  px: 1.5,
+                  fontSize: '0.95rem',
+                  lineHeight: 1.2,
+                }}
+              >
+                {tWishlist('removeItem')}
+              </Button>
+            </div>
+          )}
+          {showAddToCartButton && (
+            <div className="flex-1">
+              <Button
+                onClick={handleAddToCart}
+                variant="contained"
+                size="medium"
+                fullWidth
+                sx={{
+                  textTransform: 'none',
+                  whiteSpace: 'nowrap',
+                  minHeight: 44,
+                  px: 1.5,
+                  fontSize: '0.95rem',
+                  lineHeight: 1.2,
+                  bgcolor: 'var(--primary)',
+                  '&:hover': { bgcolor: '#45a049' },
+                }}
+              >
+                {tProducts('addToCartCompact')}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </Link>

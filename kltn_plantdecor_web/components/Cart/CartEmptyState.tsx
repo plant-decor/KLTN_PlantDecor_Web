@@ -4,8 +4,18 @@ import React from 'react';
 import Link from 'next/link';
 import { Box, Button, Container, Typography } from '@mui/material';
 import { ShoppingCart as ShoppingCartIcon } from '@mui/icons-material';
+import { useTranslations } from 'next-intl';
 
-export default function CartEmptyState() {
+interface CartEmptyStateProps {
+  type?: 'cart' | 'wishlist';
+}
+
+export default function CartEmptyState({ type = 'cart' }: CartEmptyStateProps) {
+  const tCart = useTranslations('cart');
+  const tWishlist = useTranslations('wishlist');
+
+  const title = type === 'wishlist' ? tWishlist('empty') : tCart('empty');
+
   return (
     <Container maxWidth="lg" sx={{ py: 20 }} className=''>
       <Box
@@ -19,7 +29,7 @@ export default function CartEmptyState() {
       >
         <ShoppingCartIcon sx={{ fontSize: 80, color: 'var(--primary)', mb: 2 }} />
         <Typography variant="h5" sx={{ mb: 3 }}>
-          Your cart is empty
+          {title}
         </Typography>
         <Button
           component={Link}
@@ -34,7 +44,7 @@ export default function CartEmptyState() {
             py: 1.5,
           }}
         >
-          Browse Catalog
+          {tCart('continueShopping')}
         </Button>
       </Box>
     </Container>

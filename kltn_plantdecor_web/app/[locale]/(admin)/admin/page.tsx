@@ -1,10 +1,36 @@
+'use client';
+
+import { useState } from 'react';
+import { Box, Tabs, Tab } from '@mui/material';
+import AdminBusinessDashboard from '@/components/dashboard/AdminBusinessDashboard';
+import AdminSystemDashboard from '@/components/dashboard/AdminSystemDashboard';
+
 export default function AdminPage() {
+  const [currentTab, setCurrentTab] = useState(0);
+
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+    setCurrentTab(newValue);
+  };
+
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="text-center">
-        <h1 className="text-3xl font-bold mb-4">System Dashboard</h1>
-        <p className="text-gray-600 text-lg">🚀 Chức năng đang phát triển</p>
-      </div>
-    </div>
+    <Box>
+      <Tabs
+        value={currentTab}
+        onChange={handleTabChange}
+        sx={{
+          borderBottom: 1,
+          borderColor: 'divider',
+          backgroundColor: 'white',
+          px: 2,
+        }}
+      >
+        <Tab label="Dashboard Kinh Doanh" />
+        <Tab label="Dashboard Hệ Thống" />
+      </Tabs>
+      <Box>
+        {currentTab === 0 && <AdminBusinessDashboard />}
+        {currentTab === 1 && <AdminSystemDashboard />}
+      </Box>
+    </Box>
   );
 }

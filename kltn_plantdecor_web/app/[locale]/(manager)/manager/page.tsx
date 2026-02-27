@@ -1,10 +1,36 @@
+'use client';
+
+import { useState } from 'react';
+import { Box, Tabs, Tab } from '@mui/material';
+import ManagerStoreMetricsDashboard from '@/components/dashboard/ManagerStoreMetricsDashboard';
+import ManagerStoreOperationsDashboard from '@/components/dashboard/ManagerStoreOperationsDashboard';
+
 export default function ManagerDashboardPage() {
+  const [currentTab, setCurrentTab] = useState(0);
+
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+    setCurrentTab(newValue);
+  };
+
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="text-center">
-        <h1 className="text-3xl font-bold mb-4">Store Dashboard</h1>
-        <p className="text-gray-600 text-lg">🚀 Chức năng đang phát triển</p>
-      </div>
-    </div>
+    <Box>
+      <Tabs
+        value={currentTab}
+        onChange={handleTabChange}
+        sx={{
+          borderBottom: 1,
+          borderColor: 'divider',
+          backgroundColor: 'white',
+          px: 2,
+        }}
+      >
+        <Tab label="Thống Kê Chi Nhánh" />
+        <Tab label="Vận Hành" />
+      </Tabs>
+      <Box>
+        {currentTab === 0 && <ManagerStoreMetricsDashboard />}
+        {currentTab === 1 && <ManagerStoreOperationsDashboard />}
+      </Box>
+    </Box>
   );
 }

@@ -39,6 +39,18 @@ export const SAMPLE_USERS: SampleUser[] = [
     updateAt: '2026-02-23T08:00:00Z',
   },
   {
+    id: 2002,
+    role: 'manager',
+    email: 'manager@plantdecor.local',
+    phoneNumber: '0900000002B',
+    password: 'Manager@123',
+    userName: 'Manager',
+    avatarUrl: '',
+    status: 'active',
+    createAt: '2026-02-23T08:00:00Z',
+    updateAt: '2026-02-23T08:00:00Z',
+  },
+  {
     id: 3001,
     role: 'staff',
     email: 'staff@plantdecor.local',
@@ -76,7 +88,7 @@ export const SAMPLE_USERS: SampleUser[] = [
   },
 ];
 
-export const ACTIVE_SAMPLE_USER_ID = 1001;
+export const ACTIVE_SAMPLE_USER_ID = 1002;
 export const STORE_USER_ID = 9999; // Virtual user for store inventory
 
 export interface SamplePlant {

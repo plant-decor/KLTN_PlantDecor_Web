@@ -1,62 +1,53 @@
 import { NextRequest, NextResponse } from 'next/server';
+import createIntlMiddleware from 'next-intl/middleware';
+import { routing } from '@/i18n/routing';
 
-/**
- * Next.js Middleware
- * 
- * Chức năng:
- * 1. Check xem user có token trong cookie không
- * 2. Nếu không có token nhưng cố truy cập trang protected -> redirect tới login
- * 3. Attach token vào request headers nếu cần
- */
+const intlMiddleware = createIntlMiddleware(routing);
 
-// Routes không cần authentication
-const PUBLIC_ROUTES = ['/login', '/register', '/about', '/contact', '/plant-store', '/services'];
+// Danh sách các route cần bảo vệ (không bao gồm locale)
+const PROTECTED_ROUTES = [
+  'dashboard', 'admin', 'manager', 'staff',
+  'caretaker', 'shipper', 'profile', 'orders',
+  'wishlist', 'cart', 'ai-plant-recommendation',
+];
 
-// Routes cần authentication
-const PROTECTED_ROUTES = ['/dashboard', '/admin', '/profile', '/orders', '/wishlist', '/cart'];
-
-export default function proxy (request: NextRequest) {
+export default function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-
-  // Lấy token từ cookie
+  
+  // 1. Lấy token từ Cookie (giả sử .NET API của bạn trả về cookie này khi login)
   const authToken = request.cookies.get('authToken')?.value;
-  const refreshToken = request.cookies.get('refreshToken')?.value;
 
-  // Kiểm tra xem route hiện tại có phải route protected không
-  const isProtectedRoute = PROTECTED_ROUTES.some((route) =>
-    pathname.startsWith(route)
+  // 2. Tách locale khỏi pathname để kiểm tra chính xác
+  // Ví dụ: /vi/dashboard -> segments = ['', 'vi', 'dashboard']
+  const segments = pathname.split('/');
+  const isProtectedRoute = PROTECTED_ROUTES.some((route) => 
+    segments.includes(route)
   );
 
-  // Kiểm tra xem route hiện tại có phải route public không
-  const isPublicRoute = PUBLIC_ROUTES.some((route) =>
-    pathname.startsWith(route)
-  );
-
-  // Nếu là protected route nhưng không có token -> redirect tới login
+  // 3. Logic Redirect cho Protected Routes
   if (isProtectedRoute && !authToken) {
     const loginUrl = new URL('/login', request.nextUrl.origin);
+    // Lưu lại trang định truy cập để sau khi login .NET xong có thể quay lại
     loginUrl.searchParams.set('redirectTo', pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // Nếu user đã logged in (có token) nhưng cố truy cập trang login -> redirect tới dashboard
-  if ((pathname === '/login' || pathname === '/register') && authToken) {
-    return NextResponse.redirect(new URL('/dashboard', request.nextUrl.origin));
+  // 4. Logic Redirect cho Auth Routes (Login/Register)
+  const isAuthPage = segments.includes('login') || segments.includes('register');
+  if (isAuthPage && authToken) {
+    const potentialLocale = segments[1] ?? '';
+    const localeFromPath = routing.locales.includes(potentialLocale as 'vi' | 'en')
+      ? potentialLocale
+      : routing.defaultLocale;
+    const dashboardPath = `/${localeFromPath}/dashboard`;
+    return NextResponse.redirect(new URL(dashboardPath, request.nextUrl.origin));
   }
 
-  return NextResponse.next();
+  // 5. Chuyển tiếp cho next-intl xử lý ngôn ngữ
+  return intlMiddleware(request);
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     */
-    '/((?!api|_next/static|_next/image|favicon.ico|public).*)',
-  ],
+  // Match all routes except Next.js internals and static assets
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|img|logo).*)'],
 };

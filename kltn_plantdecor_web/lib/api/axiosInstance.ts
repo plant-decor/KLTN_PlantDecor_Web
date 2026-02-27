@@ -1,4 +1,5 @@
-import axios from 'axios';
+import axios, { AxiosRequestConfig } from 'axios';
+import { useLoadingStore } from '@/store/loadingStore';
 
 /**
  * Axios Instance - Cookie-Based Authentication
@@ -8,7 +9,19 @@ import axios from 'axios';
  * - Axios tự động gửi cookie khi request (do withCredentials: true)
  * - Không cần thêm header Authorization (Backend tự extract từ cookie)
  * - Backend sẽ handle refresh token logic nếu cần
+ * 
+ * ⚙️ Loading Configuration:
+ * - By default, all API calls show loading spinner
+ * - To skip loading for specific request: use skipLoading: true in config
+ * - Example: axiosInstance.get('/endpoint', { skipLoading: true })
  */
+
+// Extend Axios config to include skipLoading flag
+declare module 'axios' {
+  interface AxiosRequestConfig {
+    skipLoading?: boolean;
+  }
+}
 
 // Tạo axios instance
 const axiosInstance = axios.create({
@@ -22,11 +35,19 @@ const axiosInstance = axios.create({
 });
 
 // ===== Request Interceptor =====
-// Log requests (optional)
+// Show loading spinner (unless skipLoading is true)
 axiosInstance.interceptors.request.use(
   (config) => {
     // Cookies sẽ được tự động gửi cùng request
     // Không cần thêm header Authorization vì token ở cookie
+    
+    // Show loading by default (unless skipLoading flag is set)
+    const skipLoading = config.skipLoading;
+    if (!skipLoading) {
+      const { setIsLoading } = useLoadingStore.getState();
+      setIsLoading(true);
+    }
+    
     return config;
   },
   (error) => {
@@ -35,12 +56,20 @@ axiosInstance.interceptors.request.use(
 );
 
 // ===== Response Interceptor =====
-// Xử lý errors (401, 403...)
+// Hide loading and handle errors (401, 403...)
 axiosInstance.interceptors.response.use(
   (response) => {
+    // Hide loading for successful response
+    const { setIsLoading } = useLoadingStore.getState();
+    setIsLoading(false);
+    
     return response;
   },
   async (error) => {
+    // Hide loading on error
+    const { setIsLoading } = useLoadingStore.getState();
+    setIsLoading(false);
+
     // Nếu lỗi 401 Unauthorized (token hết hạn hoặc invalid)
     if (error.response?.status === 401) {
       // Backend sẽ tự động refresh token bằng refreshToken cookie

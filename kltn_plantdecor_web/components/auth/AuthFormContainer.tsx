@@ -37,7 +37,7 @@ export default function AuthFormContainer() {
       }
 
       setTimeout(() => {
-        router.push('/dashboard');
+        router.push('/');
       }, 500);
     } catch (err) {
       console.error('Login error:', err);

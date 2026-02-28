@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { type ReactNode } from 'react';
 import { routing } from '@/i18n/routing';
 import { AuthProvider } from '@/components/providers/AuthProviderNew';
+import { SignalRProvider } from '@/components/providers/SignalRProvider';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
 import type { Metadata } from 'next';
 
@@ -31,8 +32,10 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
       <AuthProvider>
-        <LoadingOverlay />
-        {children}
+        <SignalRProvider autoConnect={true}>
+          <LoadingOverlay />
+          {children}
+        </SignalRProvider>
       </AuthProvider>
     </NextIntlClientProvider>
   );

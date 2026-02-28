@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import CartBadge from '@/components/Cart/CartBadge';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 import Navigation from './Navigation';
 import LanguageSwitcher from './LanguageSwitcher';
 import { Link } from '@/i18n/navigation';
@@ -37,6 +38,9 @@ export default function Header() {
   const [mounted, setMounted] = useState(false);
   const t = useTranslations('common');
   const tAuth = useTranslations('auth');
+  
+  // Check if user has notification access (staff, manager, admin, shipper, caretaker)
+  const hasNotificationAccess = user && ['ADMIN', 'MANAGER', 'STAFF', 'SHIPPER', 'CARETAKER'].includes(user.role?.toUpperCase() || '');
 
   // Prevent hydration mismatch
   useEffect(() => {
@@ -84,6 +88,9 @@ export default function Header() {
 
               {/* Cart Badge */}
               <CartBadge />
+
+              {/* Notification Bell (for staff, manager, admin, shipper, caretaker) */}
+              {hasNotificationAccess && <NotificationBell />}
 
               {/* Auth Actions */}
               <div className="flex items-center gap-2 lg:gap-4">

@@ -29,6 +29,9 @@ const axiosInstance = axios.create({
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
+    ...(process.env.NEXT_PUBLIC_API_KEY
+      ? { 'x-api-key': process.env.NEXT_PUBLIC_API_KEY }
+      : {}),
   },
   // 🔒 QUAN TRỌNG: Gửi cookies kèm theo request (bao gồm authToken)
   withCredentials: true,

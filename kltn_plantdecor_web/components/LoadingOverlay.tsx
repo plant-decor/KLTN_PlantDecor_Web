@@ -15,15 +15,16 @@ export const LoadingOverlay = () => {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 pointer-events-none">
-      <div className="bg-white rounded-lg p-8 flex flex-col items-center gap-4 pointer-events-auto">
+      <div className="rounded-lg p-8 flex flex-col items-center gap-4 pointer-events-auto">
         <Image
-          src="/img/customLoading.svg"
+          src="/img/customLoading.png"
           alt="Loading..."
-          width={80}
-          height={80}
+          width={200}
+          height={200}
+          className="animate-loading-spin"
           priority
         />
-        <p className="text-gray-600 text-sm font-medium">Loading...</p>
+        <p className="text-white text-medium font-semibold">Loading...</p>
       </div>
     </div>
   );

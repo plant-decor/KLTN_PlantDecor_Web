@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { Container, Typography } from '@mui/material';
 import { SAMPLE_PLANTS, type SamplePlant } from '@/data/sampledata';
 import ProductCard from '@/components/product/ProductCard';
-import CartEmptyState from '@/components/Cart/CartEmptyState';
+import CartEmptyState from '@/components/cart/CartEmptyState';
 import { useTranslations } from 'next-intl';
 
 interface WishlistPageClientProps {

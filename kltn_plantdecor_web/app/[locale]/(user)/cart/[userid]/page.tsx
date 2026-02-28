@@ -1,4 +1,4 @@
-import CartPageClient from '@/components/Cart/CartPageClient';
+import CartPageClient from '@/components/cart/CartPageClient';
 
 interface PageProps {
   params: Promise<{ userid: string }>;

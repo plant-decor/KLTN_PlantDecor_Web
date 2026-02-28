@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
 import { use, useState } from 'react';
 import { Box, IconButton, Tooltip } from '@mui/material';
 import { ZoomIn as ZoomInIcon } from '@mui/icons-material';
-import FullscreenImageModal from '@/components/ImageViewer/FullscreenImageModal';
+import FullscreenImageModal from '@/components/image-view/FullscreenImageModal';
 
 interface PlantInstancesGridProps {
   instances: PlantInstance[];

@@ -351,5 +351,11 @@
     "inStock": "Còn hàng",
     "trees": "cây",
     "priceFrom": "Giá từ"
+  },
+  "notFound": {
+    "title": "Không tìm thấy trang",
+    "description": "Trang bạn đang tìm kiếm không tồn tại hoặc đã được di chuyển.",
+    "backHome": "Về trang chủ",
+    "imageAlt": "404 Không tìm thấy"
   }
 }

@@ -1,5 +1,7 @@
 import axios, { AxiosRequestConfig } from 'axios';
 import { useLoadingStore } from '@/store/loadingStore';
+import { useAuthStore } from '@/store/authStore';
+import { dispatchSessionInvalidated } from '@/lib/utils/authSessionEvents';
 
 /**
  * Axios Instance - Cookie-Based Authentication
@@ -36,6 +38,19 @@ const axiosInstance = axios.create({
   // 🔒 QUAN TRỌNG: Gửi cookies kèm theo request (bao gồm authToken)
   withCredentials: true,
 });
+
+const getNotFoundRedirectPath = () => {
+  if (typeof window === 'undefined') {
+    return '/404';
+  }
+
+  const localeMatch = window.location.pathname.match(/^\/(en|vi)(\/|$)/);
+  if (localeMatch) {
+    return `/${localeMatch[1]}/404`;
+  }
+
+  return '/404';
+};
 
 // ===== Request Interceptor =====
 // Show loading spinner (unless skipLoading is true)
@@ -75,13 +90,13 @@ axiosInstance.interceptors.response.use(
 
     // Nếu lỗi 401 Unauthorized (token hết hạn hoặc invalid)
     if (error.response?.status === 401) {
-      // Backend sẽ tự động refresh token bằng refreshToken cookie
-      // hoặc client cần gọi một endpoint để refresh
-      // Tùy theo design của backend
-      
-      // Ở đây, redirect tới login page
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login';
+      const requestUrl: string = error.config?.url || '';
+      const isLoginRequest = requestUrl.includes('/auth/login');
+
+      if (!isLoginRequest && typeof window !== 'undefined') {
+        const { clearUser } = useAuthStore.getState();
+        clearUser();
+        dispatchSessionInvalidated('unauthorized');
       }
     }
 
@@ -89,6 +104,16 @@ axiosInstance.interceptors.response.use(
     if (error.response?.status === 403) {
       if (typeof window !== 'undefined') {
         window.location.href = '/';
+      }
+    }
+
+    // Nếu lỗi 404 Not Found
+    if (error.response?.status === 404) {
+      if (typeof window !== 'undefined') {
+        const redirectPath = getNotFoundRedirectPath();
+        if (window.location.pathname !== redirectPath) {
+          window.location.href = redirectPath;
+        }
       }
     }
 

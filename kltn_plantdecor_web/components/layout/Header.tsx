@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
-import CartBadge from '@/components/Cart/CartBadge';
+import CartBadge from '@/components/cart/CartBadge';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import Navigation from './Navigation';
 import LanguageSwitcher from './LanguageSwitcher';

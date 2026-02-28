@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { Box, IconButton, Tooltip } from '@mui/material';
 import { ZoomIn as ZoomInIcon } from '@mui/icons-material';
-import FullscreenImageModal from '@/components/ImageViewer/FullscreenImageModal';
+import FullscreenImageModal from '@/components/image-view/FullscreenImageModal';
 
 interface ProductImageGalleryProps {
   images: string[];

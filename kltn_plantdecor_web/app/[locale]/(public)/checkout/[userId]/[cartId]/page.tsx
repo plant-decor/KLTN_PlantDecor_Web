@@ -1,6 +1,6 @@
 import React from 'react';
 import { Container } from '@mui/material';
-import CheckoutPageClient from '@/components/Checkout/CheckoutPageClient';
+import CheckoutPageClient from '@/components/checkout/CheckoutPageClient';
 
 interface CheckoutPageProps {
   params: Promise<{

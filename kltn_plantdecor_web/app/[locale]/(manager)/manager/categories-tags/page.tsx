@@ -4,8 +4,8 @@ import { useState, useMemo } from 'react';
 import { Box, Button, Container, Tabs, Tab, Typography, Card, CardContent, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Chip } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { mockCategories, mockTags, type Category, type Tag } from '@/data/storeCatalogData';
-import CategoryModal from '@/components/StoreCatalog/CategoryModal';
-import TagModal from '@/components/StoreCatalog/TagModal';
+import CategoryModal from '@/components/store-catalog/CategoryModal';
+import TagModal from '@/components/store-catalog/TagModal';
 
 interface TabPanelProps {
   children?: React.ReactNode;

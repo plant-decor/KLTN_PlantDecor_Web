@@ -13,10 +13,10 @@ import {
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/store/cartStore';
-import CheckoutShipping from '@/components/Checkout/CheckoutShipping';
-import CheckoutPayment from '@/components/Checkout/CheckoutPayment';
-import CheckoutReview from '@/components/Checkout/CheckoutReview';
-import CheckoutComplete from '@/components/Checkout/CheckoutComplete';
+import CheckoutShipping from '@/components/checkout/CheckoutShipping';
+import CheckoutPayment from '@/components/checkout/CheckoutPayment';
+import CheckoutReview from '@/components/checkout/CheckoutReview';
+import CheckoutComplete from '@/components/checkout/CheckoutComplete';
 
 interface CheckoutPageClientProps {
   userId: string;

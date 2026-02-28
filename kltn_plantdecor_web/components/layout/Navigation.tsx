@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from 'react';
 import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
-import CartBadge from '@/components/Cart/CartBadge';
+import CartBadge from '@/components/cart/CartBadge';
 import LanguageSwitcher from './LanguageSwitcher';
 import { InputAdornment, TextField } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';

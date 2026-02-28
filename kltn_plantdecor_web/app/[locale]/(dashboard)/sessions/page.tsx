@@ -62,6 +62,9 @@ export default function SessionsPage() {
 
     try {
       await authService.logoutAllDevices();
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('auth:logout-all', Date.now().toString());
+      }
       // Redirect về login vì tất cả sessions đã bị revoke
       router.push('/login');
     } catch (error) {

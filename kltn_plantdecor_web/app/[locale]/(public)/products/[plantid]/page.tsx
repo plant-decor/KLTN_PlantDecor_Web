@@ -3,7 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { SAMPLE_PLANTS, SAMPLE_PLANT_INSTANCES, ACTIVE_SAMPLE_USER_ID, STORE_USER_ID } from '@/data/sampledata';
-import AddToCartButton from '@/components/Cart/AddToCartButton';
+import AddToCartButton from '@/components/cart/AddToCartButton';
 import AddToWishlistButton from '@/components/product/AddToWishlistButton';
 import ProductImageGallery from '@/components/product/ProductImageGallery';
 import PlantInstancesGrid from '@/components/plant/PlantInstancesGrid';

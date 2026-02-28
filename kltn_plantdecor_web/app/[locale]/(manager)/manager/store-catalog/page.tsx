@@ -10,8 +10,8 @@ import {
   type Product,
   type PlantInstance,
 } from '@/data/storeCatalogData';
-import ProductModal from '@/components/StoreCatalog/ProductModal';
-import ProductTable from '@/components/StoreCatalog/ProductTable';
+import ProductModal from '@/components/store-catalog/ProductModal';
+import ProductTable from '@/components/store-catalog/ProductTable';
 import { useProductFilter } from '@/hooks/useProductFilter';
 
 export default function StoreCatalogPage() {

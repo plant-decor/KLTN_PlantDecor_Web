@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { SAMPLE_PLANTS } from '@/data/sampledata';
 import ProductCard from '@/components/product/ProductCard';
-import PlantFilter from '@/components/StoreCatalog/PlantFilter';
+import PlantFilter from '@/components/store-catalog/PlantFilter';
 import { useTranslations } from 'next-intl';
 import type { SamplePlant } from '@/data/sampledata';
 

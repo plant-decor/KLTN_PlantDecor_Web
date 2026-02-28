@@ -17,17 +17,30 @@ interface LoginActionResponse {
  * 
  * Luồng:
  * 1. Nhận email, password từ client
- * 2. Gọi API C# để login (server-to-server)
- * 3. Nhận token và userInfo từ C#
- * 4. Lưu token vào HTTP-Only Cookie
- * 5. Trả về userInfo để client lưu vào Zustand
+ * 2. Verify reCAPTCHA token nếu có
+ * 3. Gọi API C# để login (server-to-server)
+ * 4. Nhận token và userInfo từ C#
+ * 5. Lưu token vào HTTP-Only Cookie
+ * 6. Trả về userInfo để client lưu vào Zustand
  */
 export async function loginAction(
   email: string,
-  password: string
+  password: string,
+  recaptchaToken?: string
 ): Promise<LoginActionResponse> {
   try {
-    // Bước 2: Gọi API C# (Server to Server)
+    // Bước 2: Verify reCAPTCHA token nếu có
+    if (recaptchaToken) {
+      const recaptchaVerified = await verifyRecaptcha(recaptchaToken);
+      if (!recaptchaVerified) {
+        return {
+          success: false,
+          message: 'reCAPTCHA verification failed. Please try again.',
+        };
+      }
+    }
+
+    // Bước 3: Gọi API C# (Server to Server)
     const response = await fetch(`${API_BASE}/auth/login`, {
       method: 'POST',
       headers: {
@@ -51,7 +64,7 @@ export async function loginAction(
 
     const data: LoginResponse = await response.json();
 
-    // Bước 3: Lưu token vào HTTP-Only Cookie
+    // Bước 4: Lưu token vào HTTP-Only Cookie
     const cookieStore = await cookies();
     
     cookieStore.set({
@@ -90,7 +103,7 @@ export async function loginAction(
       });
     }
 
-    // Bước 4: Trả về userInfo (dữ liệu không nhạy cảm)
+    // Bước 5: Trả về userInfo (dữ liệu không nhạy cảm)
     return {
       success: true,
       user: data.user,
@@ -101,6 +114,46 @@ export async function loginAction(
       success: false,
       message: 'Lỗi server khi đăng nhập',
     };
+  }
+}
+
+/**
+ * Verify reCAPTCHA token with Google
+ */
+async function verifyRecaptcha(token: string): Promise<boolean> {
+  try {
+    const secretKey = process.env.RECAPTCHA_SECRET_KEY;
+    
+    if (!secretKey) {
+      console.warn('RECAPTCHA_SECRET_KEY not configured');
+      return true; // Allow login if secret key not configured
+    }
+
+    const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: `secret=${secretKey}&response=${token}`,
+    });
+
+    const data = await response.json();
+    
+    // Consider it verified if score is above 0.5
+    const isValid = data.success && data.score >= 0.5;
+    
+    if (!isValid) {
+      console.warn('reCAPTCHA verification failed:', {
+        success: data.success,
+        score: data.score,
+        action: data.action,
+      });
+    }
+
+    return isValid;
+  } catch (error) {
+    console.error('reCAPTCHA verification error:', error);
+    return false;
   }
 }
 

@@ -3,12 +3,14 @@
 import { useState } from 'react';
 import { EmailOutlined, LockOutline, LockOpen } from '@mui/icons-material';
 import Image from 'next/image';
+import RecaptchaField from './RecaptchaField';
+import { useFailedLoginAttempts } from '@/hooks/useFailedLoginAttempts';
 
 interface LoginFormProps {
   isVisible: boolean;
   onForgotPassword: () => void;
   onSignUp: () => void;
-  onSubmit: (email: string, password: string) => Promise<void>;
+  onSubmit: (email: string, password: string, recaptchaToken?: string) => Promise<void>;
   isLoading?: boolean;
   error?: string;
 }
@@ -27,6 +29,9 @@ export default function LoginForm({
   const [isEmailFocused, setIsEmailFocused] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [recaptchaToken, setRecaptchaToken] = useState<string>('');
+
+  const { requiresRecaptcha, getRemainingAttempts } = useFailedLoginAttempts();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +42,7 @@ export default function LoginForm({
       timestamp: new Date().toISOString(),
     });
     setErrors({});
-    await onSubmit(email, password);
+    await onSubmit(email, password, recaptchaToken || undefined);
   };
 
   return (
@@ -72,6 +77,29 @@ export default function LoginForm({
             {error && (
               <div className="text-red-500 text-sm text-center bg-red-50 p-3 rounded-lg">
                 {error}
+              </div>
+            )}
+
+            {requiresRecaptcha() && (
+              <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
+                <p className="text-yellow-800 text-sm font-semibold mb-2">
+                  Too many failed attempts
+                </p>
+                <p className="text-yellow-700 text-xs mb-3">
+                  For security reasons, please complete the reCAPTCHA verification.
+                </p>
+                <RecaptchaField
+                  onToken={setRecaptchaToken}
+                  onError={(error) => console.error('reCAPTCHA error:', error)}
+                  isLoading={isLoading}
+                  showMessage={false}
+                />
+              </div>
+            )}
+
+            {requiresRecaptcha() && getRemainingAttempts() === 0 && (
+              <div className="text-yellow-700 text-xs text-center">
+                You have exceeded the maximum number of login attempts. Please complete reCAPTCHA.
               </div>
             )}
 

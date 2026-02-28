@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import { loginAction } from '@/app/actions/loginAction';
+import { useFailedLoginAttempts } from '@/hooks/useFailedLoginAttempts';
 import Image from 'next/image';
 import LoginForm from './LoginForm';
 import ForgotPasswordForm from './ForgotPasswordForm';
@@ -19,21 +20,27 @@ export default function AuthFormContainer() {
 
   const router = useRouter();
   const { setUser } = useAuthStore();
+  const { incrementFailedAttempts, resetFailedAttempts, requiresRecaptcha } = useFailedLoginAttempts();
 
-  const handleLoginSubmit = async (email: string, password: string) => {
+  const handleLoginSubmit = async (email: string, password: string, recaptchaToken?: string) => {
     setError('');
     setIsLoading(true);
 
     try {
-      const result = await loginAction(email, password);
+      const result = await loginAction(email, password, recaptchaToken);
 
       if (!result.success) {
+        // Only increment failed attempts if recaptcha wasn't required or failed
+        if (!requiresRecaptcha()) {
+          incrementFailedAttempts();
+        }
         setError(result.message || 'Đăng nhập thất bại');
         return;
       }
 
       if (result.user) {
         setUser(result.user);
+        resetFailedAttempts(); // Clear failed attempts on successful login
       }
 
       setTimeout(() => {
@@ -41,6 +48,9 @@ export default function AuthFormContainer() {
       }, 500);
     } catch (err) {
       console.error('Login error:', err);
+      if (!requiresRecaptcha()) {
+        incrementFailedAttempts();
+      }
       setError('Lỗi khi đăng nhập');
     } finally {
       setIsLoading(false);

@@ -5,6 +5,7 @@ import { type ReactNode } from 'react';
 import { routing } from '@/i18n/routing';
 import { AuthProvider } from '@/components/providers/AuthProviderNew';
 import { SignalRProvider } from '@/components/providers/SignalRProvider';
+import { GoogleRecaptchaProviderWrapper } from '@/components/providers/GoogleRecaptchaProvider';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
 import { SessionInvalidatedModal } from '@/components/auth/SessionInvalidatedModal';
 import type { Metadata } from 'next';
@@ -32,13 +33,15 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
-      <AuthProvider>
-        <SignalRProvider autoConnect={true}>
-          <LoadingOverlay />
-          <SessionInvalidatedModal />
-          {children}
-        </SignalRProvider>
-      </AuthProvider>
+      <GoogleRecaptchaProviderWrapper>
+        <AuthProvider>
+          <SignalRProvider autoConnect={true}>
+            <LoadingOverlay />
+            <SessionInvalidatedModal />
+            {children}
+          </SignalRProvider>
+        </AuthProvider>
+      </GoogleRecaptchaProviderWrapper>
     </NextIntlClientProvider>
   );
 }

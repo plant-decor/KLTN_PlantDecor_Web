@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import { loginAction } from '@/app/actions/loginAction';
+import { useFailedLoginAttempts } from '@/hooks/useFailedLoginAttempts';
 import Image from 'next/image';
 import LoginForm from './LoginForm';
 import ForgotPasswordForm from './ForgotPasswordForm';
@@ -19,18 +20,24 @@ export default function AuthFormContainer() {
 
   const router = useRouter();
   const { setUser } = useAuthStore();
+  const { incrementFailedAttempts, resetFailedAttempts } = useFailedLoginAttempts();
 
-  const handleLoginSubmit = async (email: string, password: string) => {
+  const handleLoginSubmit = async (email: string, password: string, recaptchaToken?: string) => {
     setError('');
     setIsLoading(true);
 
     try {
-      const result = await loginAction(email, password);
+      const result = await loginAction(email, password, recaptchaToken);
 
       if (!result.success) {
         setError(result.message || 'Đăng nhập thất bại');
+        // Tăng số lần thất bại
+        incrementFailedAttempts();
         return;
       }
+
+      // Đăng nhập thành công - reset số lần thất bại
+      resetFailedAttempts();
 
       if (result.user) {
         setUser(result.user);
@@ -42,6 +49,8 @@ export default function AuthFormContainer() {
     } catch (err) {
       console.error('Login error:', err);
       setError('Lỗi khi đăng nhập');
+      // Tăng số lần thất bại khi có lỗi
+      incrementFailedAttempts();
     } finally {
       setIsLoading(false);
     }

@@ -16,7 +16,7 @@ interface LoginActionResponse {
  * Server Action: Đăng nhập
  * 
  * Luồng:
- * 1. Nhận email, password từ client
+ * 1. Nhận email, password, recaptchaToken từ client
  * 2. Gọi API C# để login (server-to-server)
  * 3. Nhận token và userInfo từ C#
  * 4. Lưu token vào HTTP-Only Cookie
@@ -24,7 +24,8 @@ interface LoginActionResponse {
  */
 export async function loginAction(
   email: string,
-  password: string
+  password: string,
+  recaptchaToken?: string
 ): Promise<LoginActionResponse> {
   try {
     // Bước 2: Gọi API C# (Server to Server)
@@ -38,6 +39,7 @@ export async function loginAction(
         password,
         deviceId: process.env.DEVICE_ID || 'web-app',
         deviceName: 'Web Browser',
+        recaptchaToken: recaptchaToken || undefined,
       }),
     });
 
@@ -101,6 +103,43 @@ export async function loginAction(
       success: false,
       message: 'Lỗi server khi đăng nhập',
     };
+  }
+}
+
+/**
+ * Verify reCAPTCHA token with Google
+ */
+async function verifyRecaptcha(token: string): Promise<boolean> {
+  try {
+    const secretKey = process.env.RECAPTCHA_SECRET_KEY;
+    
+    if (!secretKey) {
+      console.warn('RECAPTCHA_SECRET_KEY not configured');
+      return true; // Allow login if secret key not configured
+    }
+
+    const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: `secret=${secretKey}&response=${token}`,
+    });
+
+    const data = await response.json();
+    const isValid = Boolean(data.success);
+    
+    if (!isValid) {
+      console.warn('reCAPTCHA verification failed:', {
+        success: data.success,
+        errorCodes: data['error-codes'],
+      });
+    }
+
+    return isValid;
+  } catch (error) {
+    console.error('reCAPTCHA verification error:', error);
+    return false;
   }
 }
 

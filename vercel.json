@@ -1,0 +1,5 @@
+{
+  "buildCommand": "cd kltn_plantdecor_web && npm run build",
+  "outputDirectory": "kltn_plantdecor_web/.next",
+  "installCommand": "cd kltn_plantdecor_web && npm install"
+}

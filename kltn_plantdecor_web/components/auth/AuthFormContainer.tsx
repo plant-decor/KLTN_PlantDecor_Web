@@ -30,6 +30,10 @@ export default function AuthFormContainer() {
       const result = await loginAction(email, password, recaptchaToken);
 
       if (!result.success) {
+        // Only increment failed attempts if recaptcha wasn't required or failed
+        if (!requiresRecaptcha()) {
+          incrementFailedAttempts();
+        }
         setError(result.message || 'Đăng nhập thất bại');
         // Tăng số lần thất bại
         incrementFailedAttempts();
@@ -41,6 +45,7 @@ export default function AuthFormContainer() {
 
       if (result.user) {
         setUser(result.user);
+        resetFailedAttempts(); // Clear failed attempts on successful login
       }
 
       setTimeout(() => {
@@ -48,6 +53,9 @@ export default function AuthFormContainer() {
       }, 500);
     } catch (err) {
       console.error('Login error:', err);
+      if (!requiresRecaptcha()) {
+        incrementFailedAttempts();
+      }
       setError('Lỗi khi đăng nhập');
       // Tăng số lần thất bại khi có lỗi
       incrementFailedAttempts();

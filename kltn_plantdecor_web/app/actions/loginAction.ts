@@ -28,7 +28,18 @@ export async function loginAction(
   recaptchaToken?: string
 ): Promise<LoginActionResponse> {
   try {
-    // Bước 2: Gọi API C# (Server to Server)
+    // Bước 2: Verify reCAPTCHA token nếu có
+    if (recaptchaToken) {
+      const recaptchaVerified = await verifyRecaptcha(recaptchaToken);
+      if (!recaptchaVerified) {
+        return {
+          success: false,
+          message: 'reCAPTCHA verification failed. Please try again.',
+        };
+      }
+    }
+
+    // Bước 3: Gọi API C# (Server to Server)
     const response = await fetch(`${API_BASE}/auth/login`, {
       method: 'POST',
       headers: {
@@ -53,7 +64,7 @@ export async function loginAction(
 
     const data: LoginResponse = await response.json();
 
-    // Bước 3: Lưu token vào HTTP-Only Cookie
+    // Bước 4: Lưu token vào HTTP-Only Cookie
     const cookieStore = await cookies();
     
     cookieStore.set({
@@ -92,7 +103,7 @@ export async function loginAction(
       });
     }
 
-    // Bước 4: Trả về userInfo (dữ liệu không nhạy cảm)
+    // Bước 5: Trả về userInfo (dữ liệu không nhạy cảm)
     return {
       success: true,
       user: data.user,

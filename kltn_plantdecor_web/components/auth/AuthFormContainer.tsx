@@ -20,7 +20,7 @@ export default function AuthFormContainer() {
 
   const router = useRouter();
   const { setUser } = useAuthStore();
-  const { incrementFailedAttempts, resetFailedAttempts } = useFailedLoginAttempts();
+  const { incrementFailedAttempts, resetFailedAttempts, requiresRecaptcha } = useFailedLoginAttempts();
 
   const handleLoginSubmit = async (email: string, password: string, recaptchaToken?: string) => {
     setError('');

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { EmailOutlined } from '@mui/icons-material';
 import Image from 'next/image';
 
@@ -21,6 +22,7 @@ export default function ForgotPasswordForm({
   error = '',
   message = '',
 }: ForgotPasswordFormProps) {
+  const t = useTranslations('auth');
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
   const [isForgotPasswordEmailFocused, setIsForgotPasswordEmailFocused] = useState(false);
 
@@ -59,7 +61,7 @@ export default function ForgotPasswordForm({
 
         <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-6">
           <h1 className="text-3xl font-semibold text-center mb-8">
-            Forgot Password
+            {t('forgotPasswordTitle')}
           </h1>
 
           {error && (
@@ -82,7 +84,7 @@ export default function ForgotPasswordForm({
                   : "text-base"
               }`}
             >
-              Email
+              {t('email')}
             </span>
             <input
               type="email"
@@ -105,14 +107,14 @@ export default function ForgotPasswordForm({
               disabled={isLoading}
               className="w-full h-12 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-semibold rounded-lg cursor-pointer transition-all hover:scale-105 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Sending...' : 'Send Reset Link'}
+              {isLoading ? t('sending') : t('sendResetLink')}
             </button>
             <button
               type="button"
               onClick={onBack}
               className="w-full h-12 border-2 border-gray-500 text-gray-600 font-semibold rounded-lg cursor-pointer transition-all hover:scale-105 focus:outline-none"
             >
-              Back to Login
+              {t('backToLogin')}
             </button>
           </div>
         </form>

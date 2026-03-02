@@ -19,6 +19,7 @@ import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import SaveIcon from '@mui/icons-material/Save';
 import LockResetIcon from '@mui/icons-material/LockReset';
 import { userProfileData } from '@/data/dashboardMockData';
+import ChangePasswordModal from '@/components/profile/ChangePasswordModal';
 
 interface PageProps {
   params: Promise<{ userid: string }>;
@@ -27,6 +28,7 @@ interface PageProps {
 export default function ProfilePage({ params }: PageProps) {
   const [profile, setProfile] = useState(userProfileData);
   const [isEditing, setIsEditing] = useState(false);
+  const [openChangePassword, setOpenChangePassword] = useState(false);
 
   const handleInputChange = (field: string, value: any) => {
     setProfile((prev) => ({
@@ -131,7 +133,7 @@ export default function ProfilePage({ params }: PageProps) {
                 variant="outlined"
                 startIcon={<LockResetIcon />}
                 size="small"
-                onClick={() => console.log('Change password')}
+                onClick={() => setOpenChangePassword(true)}
               >
                 Đổi mật khẩu
               </Button>
@@ -274,6 +276,12 @@ export default function ProfilePage({ params }: PageProps) {
           Lưu thay đổi
         </Button>
       </Box>
+
+      {/* Change Password Modal */}
+      <ChangePasswordModal
+        open={openChangePassword}
+        onClose={() => setOpenChangePassword(false)}
+      />
     </Box>
   );
 }

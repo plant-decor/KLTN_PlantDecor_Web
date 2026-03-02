@@ -30,6 +30,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Khi app load, kiểm tra xem user đã login chưa
     const initializeAuth = async () => {
       try {
+        const hasUserRoleCookie = document.cookie
+          .split(';')
+          .some((cookie) => cookie.trim().startsWith('userRole='));
+
+        if (!hasUserRoleCookie) {
+          return;
+        }
+
         // Gọi Server Action để lấy user info từ cookie
         // (Nếu cookie hợp lệ, backend sẽ return user info)
         const response = await fetch('/api/auth/me', {

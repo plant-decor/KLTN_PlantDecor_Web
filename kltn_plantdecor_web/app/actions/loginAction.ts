@@ -16,12 +16,11 @@ interface LoginActionResponse {
  * Server Action: Đăng nhập
  * 
  * Luồng:
- * 1. Nhận email, password từ client
- * 2. Verify reCAPTCHA token nếu có
- * 3. Gọi API C# để login (server-to-server)
- * 4. Nhận token và userInfo từ C#
- * 5. Lưu token vào HTTP-Only Cookie
- * 6. Trả về userInfo để client lưu vào Zustand
+ * 1. Nhận email, password, recaptchaToken từ client
+ * 2. Gọi API C# để login (server-to-server)
+ * 3. Nhận token và userInfo từ C#
+ * 4. Lưu token vào HTTP-Only Cookie
+ * 5. Trả về userInfo để client lưu vào Zustand
  */
 export async function loginAction(
   email: string,
@@ -51,6 +50,7 @@ export async function loginAction(
         password,
         deviceId: process.env.DEVICE_ID || 'web-app',
         deviceName: 'Web Browser',
+        recaptchaToken: recaptchaToken || undefined,
       }),
     });
 
@@ -138,15 +138,12 @@ async function verifyRecaptcha(token: string): Promise<boolean> {
     });
 
     const data = await response.json();
-    
-    // Consider it verified if score is above 0.5
-    const isValid = data.success && data.score >= 0.5;
+    const isValid = Boolean(data.success);
     
     if (!isValid) {
       console.warn('reCAPTCHA verification failed:', {
         success: data.success,
-        score: data.score,
-        action: data.action,
+        errorCodes: data['error-codes'],
       });
     }
 

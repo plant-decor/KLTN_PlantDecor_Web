@@ -20,7 +20,7 @@ export default function AuthFormContainer() {
 
   const router = useRouter();
   const { setUser } = useAuthStore();
-  const { incrementFailedAttempts, resetFailedAttempts, requiresRecaptcha } = useFailedLoginAttempts();
+  const { incrementFailedAttempts, resetFailedAttempts } = useFailedLoginAttempts();
 
   const handleLoginSubmit = async (email: string, password: string, recaptchaToken?: string) => {
     setError('');
@@ -35,8 +35,13 @@ export default function AuthFormContainer() {
           incrementFailedAttempts();
         }
         setError(result.message || 'Đăng nhập thất bại');
+        // Tăng số lần thất bại
+        incrementFailedAttempts();
         return;
       }
+
+      // Đăng nhập thành công - reset số lần thất bại
+      resetFailedAttempts();
 
       if (result.user) {
         setUser(result.user);
@@ -52,6 +57,8 @@ export default function AuthFormContainer() {
         incrementFailedAttempts();
       }
       setError('Lỗi khi đăng nhập');
+      // Tăng số lần thất bại khi có lỗi
+      incrementFailedAttempts();
     } finally {
       setIsLoading(false);
     }

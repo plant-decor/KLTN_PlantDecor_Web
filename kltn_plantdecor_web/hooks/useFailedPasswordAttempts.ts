@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 
-const FAILED_LOGIN_ATTEMPTS_KEY = 'login_failed_attempts';
-const FAILED_LOGIN_TIMESTAMP_KEY = 'login_failed_attempts_timestamp';
+const FAILED_PASSWORD_ATTEMPTS_KEY = 'password_change_failed_attempts';
+const FAILED_PASSWORD_TIMESTAMP_KEY = 'password_change_failed_attempts_timestamp';
 const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes in milliseconds
 const MAX_ATTEMPTS = 5;
 
@@ -10,14 +10,14 @@ interface FailedAttemptInfo {
   firstAttemptTime: number;
 }
 
-export function useFailedLoginAttempts() {
+export function useFailedPasswordAttempts() {
   const [failedAttempts, setFailedAttempts] = useState<number>(0);
 
   const getFailedAttempts = useCallback(() => {
     if (typeof window === 'undefined') return 0;
     
-    const stored = localStorage.getItem(FAILED_LOGIN_ATTEMPTS_KEY);
-    const timestamp = localStorage.getItem(FAILED_LOGIN_TIMESTAMP_KEY);
+    const stored = localStorage.getItem(FAILED_PASSWORD_ATTEMPTS_KEY);
+    const timestamp = localStorage.getItem(FAILED_PASSWORD_TIMESTAMP_KEY);
     
     if (!stored || !timestamp) return 0;
     
@@ -27,8 +27,8 @@ export function useFailedLoginAttempts() {
 
     // Reset if lockout period has expired
     if (now - firstAttemptTime > LOCKOUT_DURATION) {
-      localStorage.removeItem(FAILED_LOGIN_ATTEMPTS_KEY);
-      localStorage.removeItem(FAILED_LOGIN_TIMESTAMP_KEY);
+      localStorage.removeItem(FAILED_PASSWORD_ATTEMPTS_KEY);
+      localStorage.removeItem(FAILED_PASSWORD_TIMESTAMP_KEY);
       return 0;
     }
 
@@ -43,13 +43,13 @@ export function useFailedLoginAttempts() {
 
     const attemptInfo: FailedAttemptInfo = {
       count: newCount,
-      firstAttemptTime: current === 0 ? Date.now() : JSON.parse(localStorage.getItem(FAILED_LOGIN_ATTEMPTS_KEY) || '{}').firstAttemptTime || Date.now(),
+      firstAttemptTime: current === 0 ? Date.now() : JSON.parse(localStorage.getItem(FAILED_PASSWORD_ATTEMPTS_KEY) || '{}').firstAttemptTime || Date.now(),
     };
 
-    localStorage.setItem(FAILED_LOGIN_ATTEMPTS_KEY, JSON.stringify(attemptInfo));
+    localStorage.setItem(FAILED_PASSWORD_ATTEMPTS_KEY, JSON.stringify(attemptInfo));
     
     if (current === 0) {
-      localStorage.setItem(FAILED_LOGIN_TIMESTAMP_KEY, Date.now().toString());
+      localStorage.setItem(FAILED_PASSWORD_TIMESTAMP_KEY, Date.now().toString());
     }
 
     setFailedAttempts(newCount);
@@ -58,8 +58,8 @@ export function useFailedLoginAttempts() {
   const resetFailedAttempts = useCallback(() => {
     if (typeof window === 'undefined') return;
     
-    localStorage.removeItem(FAILED_LOGIN_ATTEMPTS_KEY);
-    localStorage.removeItem(FAILED_LOGIN_TIMESTAMP_KEY);
+    localStorage.removeItem(FAILED_PASSWORD_ATTEMPTS_KEY);
+    localStorage.removeItem(FAILED_PASSWORD_TIMESTAMP_KEY);
     setFailedAttempts(0);
   }, []);
 
@@ -75,7 +75,7 @@ export function useFailedLoginAttempts() {
   const getRemainingLockoutTime = useCallback(() => {
     if (typeof window === 'undefined') return 0;
     
-    const timestamp = localStorage.getItem(FAILED_LOGIN_TIMESTAMP_KEY);
+    const timestamp = localStorage.getItem(FAILED_PASSWORD_TIMESTAMP_KEY);
     if (!timestamp) return 0;
 
     const firstAttemptTime = parseInt(timestamp, 10);

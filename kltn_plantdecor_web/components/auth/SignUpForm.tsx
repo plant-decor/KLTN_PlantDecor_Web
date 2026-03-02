@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { motion } from "framer-motion";
 import {
   EmailOutlined,
@@ -34,6 +35,7 @@ export default function SignUpForm({
   isLoading = false,
   error = '',
 }: SignUpFormProps) {
+  const t = useTranslations('auth');
   const [signUpName, setSignUpName] = useState('');
   const [signUpEmail, setSignUpEmail] = useState('');
   const [signUpPassword, setSignUpPassword] = useState('');
@@ -112,7 +114,7 @@ export default function SignUpForm({
         />
 
         <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-5">
-          <h1 className="text-3xl font-semibold text-center mb-6">Create Account</h1>
+          <h1 className="text-3xl font-semibold text-center mb-6">{t('createAccount')}</h1>
 
           {error && (
             <div className="text-red-500 text-sm text-center bg-red-50 p-3 rounded-lg">
@@ -129,7 +131,7 @@ export default function SignUpForm({
                   : "text-base"
               }`}
             >
-              Full Name
+              {t('fullName')}
             </span>
             <input
               type="text"
@@ -154,7 +156,7 @@ export default function SignUpForm({
                   : "text-base"
               }`}
             >
-              Email
+              {t('email')}
             </span>
             <input
               type="email"
@@ -179,7 +181,7 @@ export default function SignUpForm({
                   : "text-base"
               }`}
             >
-              Phone Number
+              {t('phone')}
             </span>
             <input
               type="tel"
@@ -204,7 +206,7 @@ export default function SignUpForm({
                   : "text-base"
               }`}
             >
-              Address
+              {t('address')}
             </span>
             <input
               type="text"
@@ -229,7 +231,7 @@ export default function SignUpForm({
                   : "text-base"
               }`}
             >
-              Password
+              {t('password')}
             </span>
             <input
               type={isSignUpPasswordVisible ? "text" : "password"}
@@ -261,7 +263,7 @@ export default function SignUpForm({
                   : "text-base"
               }`}
             >
-              Confirm Password
+              {t('confirmPassword')}
             </span>
             <input
               type={isSignUpConfirmPasswordVisible ? "text" : "password"}
@@ -291,14 +293,14 @@ export default function SignUpForm({
               disabled={isLoading}
               className="w-full h-12 bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold rounded-lg cursor-pointer transition-all hover:scale-105 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Creating...' : 'Create Account'}
+              {isLoading ? t('creating') : t('createAccount')}
             </button>
             <button
               type="button"
               onClick={onBack}
               className="w-full h-12 border-2 border-gray-500 text-gray-600 font-semibold rounded-lg cursor-pointer transition-all hover:scale-105 focus:outline-none"
             >
-              Back to Login
+              {t('backToLogin')}
             </button>
           </div>
         </form>

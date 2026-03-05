@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import { loginAction } from '@/app/actions/loginAction';
 import { useFailedLoginAttempts } from '@/hooks/useFailedLoginAttempts';
@@ -19,6 +19,7 @@ export default function AuthFormContainer() {
   const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { setUser } = useAuthStore();
   const { incrementFailedAttempts, resetFailedAttempts, requiresRecaptcha } = useFailedLoginAttempts();
 
@@ -48,8 +49,16 @@ export default function AuthFormContainer() {
         resetFailedAttempts(); // Clear failed attempts on successful login
       }
 
+      const redirectToRaw = searchParams.get('redirectTo');
+      const redirectTo = redirectToRaw && redirectToRaw.startsWith('/')
+        ? redirectToRaw
+        : '/';
+      const resolvedRedirectTo = result.user?.id
+        ? redirectTo.replace(/\[(userid|userId)\]/g, String(result.user.id))
+        : redirectTo;
+
       setTimeout(() => {
-        router.push('/');
+        router.push(resolvedRedirectTo);
       }, 500);
     } catch (err) {
       console.error('Login error:', err);

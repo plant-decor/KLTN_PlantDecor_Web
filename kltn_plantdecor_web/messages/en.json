@@ -52,7 +52,12 @@
     "tooManyAttempts": "Too many failed attempts",
     "recaptchaRequired": "For security reasons, please complete the reCAPTCHA verification.",
     "recaptchaComplete": "Please verify reCAPTCHA before login.",
-    "exceededAttempts": "You have exceeded the maximum number of login attempts. Please complete reCAPTCHA."
+    "exceededAttempts": "You have exceeded the maximum number of login attempts. Please complete reCAPTCHA.",
+    "sessionInvalidated": {
+      "title": "Session Expired",
+      "description": "Your login session has expired or been logged out from another device. Please log in again to secure your information.",
+      "button": "Log In Now"
+    }
   },
   "nav": {
     "home": "Home",
@@ -240,7 +245,39 @@
     "changePassword": "Change password",
     "avatar": "Avatar",
     "bio": "Bio",
-    "saveChanges": "Save changes"
+    "saveChanges": "Save changes",
+    "cancelChanges": "Cancel changes",
+    "gender": "Gender",
+    "male": "Male",
+    "female": "Female",
+    "other": "Other",
+    "birthYear": "Birth year",
+    "shippingAddress": "Shipping address",
+    "detailedAddress": "Detailed address",
+    "addressPlaceholder": "House number, street, ward, district, province/city",
+    "notificationSettings": "Notification settings",
+    "receiveNotifications": "Receive notifications",
+    "notificationDescription": "Receive care reminders, promotions and new updates",
+    "unsupportedFormat": "Unsupported format. Please choose JPEG, JPG, PNG or HEIF",
+    "fileSizeExceeded": "File size must not exceed 5MB",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmNewPassword": "Confirm new password",
+    "passwordMinLength": "At least 6 characters",
+    "changePasswordTitle": "Change password",
+    "tooManyFailedAttempts": "Too many failed attempts",
+    "recaptchaRequiredForPassword": "For security reasons, please complete the reCAPTCHA verification.",
+    "recaptchaCompleteBeforeChange": "Please verify reCAPTCHA before changing password.",
+    "exceededPasswordAttempts": "You have exceeded the maximum number of attempts. Please complete reCAPTCHA.",
+    "processing": "Processing...",
+    "pleaseEnterCurrentPassword": "Please enter current password",
+    "pleaseEnterNewPassword": "Please enter new password",
+    "newPasswordMinLength": "New password must be at least 6 characters",
+    "passwordMismatch": "Password confirmation does not match",
+    "newPasswordMustDiffer": "New password must be different from old password",
+    "changePasswordFailed": "Change password failed",
+    "changePasswordSuccess": "Password changed successfully",
+    "changePasswordError": "Error changing password"
   },
   "wishlist": {
     "title": "Wishlist",
@@ -372,4 +409,5 @@
     "backHome": "Back to home",
     "imageAlt": "404 Not Found"
   }
+  
 }

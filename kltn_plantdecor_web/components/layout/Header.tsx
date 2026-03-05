@@ -22,8 +22,10 @@ import { useTranslations } from 'next-intl';
  */
 
 const resolveHref = (href: string, userId?: number | null) => {
-  if (href.includes('[userid]')) {
-    return userId ? href.replace('[userid]', String(userId)) : '#';
+  if (/\[(userid|userId)\]/.test(href)) {
+    return userId
+      ? href.replace(/\[(userid|userId)\]/g, String(userId))
+      : `/login?redirectTo=${encodeURIComponent(href)}`;
   }
   return href;
 };

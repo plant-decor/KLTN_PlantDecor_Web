@@ -16,6 +16,8 @@ import {
 import { useFailedPasswordAttempts } from '@/hooks/useFailedPasswordAttempts';
 import { changePasswordAction } from '@/app/actions/changePasswordAction';
 import RecaptchaField from '@/components/auth/RecaptchaField';
+import { hoverGlowStyle, hoverLiftStyle } from '@/lib/styles/buttonStyles';
+import { useTranslations } from 'next-intl';
 
 interface ChangePasswordModalProps {
   open: boolean;
@@ -23,6 +25,8 @@ interface ChangePasswordModalProps {
 }
 
 export default function ChangePasswordModal({ open, onClose }: ChangePasswordModalProps) {
+  const t = useTranslations('profile');
+  const tCommon = useTranslations('common');
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -57,33 +61,33 @@ export default function ChangePasswordModal({ open, onClose }: ChangePasswordMod
 
     // Validation
     if (!oldPassword) {
-      setError('Vui lòng nhập mật khẩu hiện tại');
+      setError(t('pleaseEnterCurrentPassword'));
       return;
     }
 
     if (!newPassword) {
-      setError('Vui lòng nhập mật khẩu mới');
+      setError(t('pleaseEnterNewPassword'));
       return;
     }
 
     if (newPassword.length < 6) {
-      setError('Mật khẩu mới phải có ít nhất 6 ký tự');
+      setError(t('newPasswordMinLength'));
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError('Mật khẩu xác nhận không khớp');
+      setError(t('passwordMismatch'));
       return;
     }
 
     if (oldPassword === newPassword) {
-      setError('Mật khẩu mới phải khác mật khẩu cũ');
+      setError(t('newPasswordMustDiffer'));
       return;
     }
 
     // Check reCAPTCHA requirement
     if (requiresRecaptcha() && !recaptchaToken) {
-      setRecaptchaError('Vui lòng xác thực reCAPTCHA trước khi đổi mật khẩu.');
+      setRecaptchaError(t('recaptchaCompleteBeforeChange'));
       return;
     }
 
@@ -99,12 +103,12 @@ export default function ChangePasswordModal({ open, onClose }: ChangePasswordMod
         if (!requiresRecaptcha()) {
           incrementFailedAttempts();
         }
-        setError(result.message || 'Đổi mật khẩu thất bại');
+        setError(result.message || t('changePasswordFailed'));
         return;
       }
 
       resetFailedAttempts();
-      setMessage('Mật khẩu đã được thay đổi thành công');
+      setMessage(t('changePasswordSuccess'));
       setTimeout(() => {
         handleClose();
       }, 1500);
@@ -113,7 +117,7 @@ export default function ChangePasswordModal({ open, onClose }: ChangePasswordMod
       if (!requiresRecaptcha()) {
         incrementFailedAttempts();
       }
-      setError('Lỗi khi đổi mật khẩu');
+      setError(t('changePasswordError'));
     } finally {
       setIsLoading(false);
     }
@@ -122,10 +126,10 @@ export default function ChangePasswordModal({ open, onClose }: ChangePasswordMod
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ fontWeight: 'bold', fontSize: '1.25rem' }}>
-        Đổi mật khẩu
+        {t('changePasswordTitle')}
       </DialogTitle>
 
-      <DialogContent sx={{ pt: 3, space: 2 }}>
+      <DialogContent sx={{ pt: 3, space: 4 }}>
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
@@ -138,10 +142,10 @@ export default function ChangePasswordModal({ open, onClose }: ChangePasswordMod
           </Alert>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4! pt-2">
           {/* Old Password */}
           <TextField
-            label="Mật khẩu hiện tại"
+            label={t('currentPassword')}
             type="password"
             fullWidth
             value={oldPassword}
@@ -152,19 +156,19 @@ export default function ChangePasswordModal({ open, onClose }: ChangePasswordMod
 
           {/* New Password */}
           <TextField
-            label="Mật khẩu mới"
+            label={t('newPassword')}
             type="password"
             fullWidth
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             required
             disabled={isLoading}
-            helperText="Ít nhất 6 ký tự"
+            helperText={t('passwordMinLength')}
           />
 
           {/* Confirm Password */}
           <TextField
-            label="Xác nhận mật khẩu mới"
+            label={t('confirmNewPassword')}
             type="password"
             fullWidth
             value={confirmPassword}
@@ -177,10 +181,10 @@ export default function ChangePasswordModal({ open, onClose }: ChangePasswordMod
           {requiresRecaptcha() && (
             <Box sx={{ bgcolor: '#fef3c7', border: '1px solid #fde68a', p: 2, borderRadius: 1 }}>
               <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1, color: '#92400e' }}>
-                Quá nhiều lần thất bại
+                {t('tooManyFailedAttempts')}
               </Typography>
               <Typography variant="caption" sx={{ color: '#b45309', mb: 2, display: 'block' }}>
-                Vì lý do bảo mật, vui lòng hoàn thành xác thực reCAPTCHA.
+                {t('recaptchaRequiredForPassword')}
               </Typography>
               <RecaptchaField
                 onToken={(token) => {
@@ -206,23 +210,24 @@ export default function ChangePasswordModal({ open, onClose }: ChangePasswordMod
 
           {requiresRecaptcha() && getRemainingAttempts() === 0 && (
             <Typography variant="caption" sx={{ color: '#b45309' }}>
-              Bạn đã vượt quá số lần thử tối đa. Vui lòng hoàn thành reCAPTCHA.
+              {t('exceededPasswordAttempts')}
             </Typography>
           )}
         </form>
       </DialogContent>
 
       <DialogActions sx={{ p: 2, gap: 1 }}>
-        <Button onClick={handleClose} disabled={isLoading}>
-          Hủy
+        <Button onClick={handleClose} disabled={isLoading} sx={{...hoverGlowStyle, ":hover": { backgroundColor: 'var(--error)' }}}>
+          {tCommon('cancel')}
         </Button>
         <Button
           onClick={handleSubmit}
           variant="contained"
           disabled={isLoading}
+          sx={{background: "var(--primary)", ...hoverLiftStyle}}
           startIcon={isLoading ? <CircularProgress size={20} /> : undefined}
         >
-          {isLoading ? 'Đang xử lý...' : 'Đổi mật khẩu'}
+          {isLoading ? t('processing') : t('changePassword')}
         </Button>
       </DialogActions>
     </Dialog>

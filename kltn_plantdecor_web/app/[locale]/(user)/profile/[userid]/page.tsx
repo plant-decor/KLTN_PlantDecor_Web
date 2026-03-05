@@ -20,12 +20,16 @@ import SaveIcon from '@mui/icons-material/Save';
 import LockResetIcon from '@mui/icons-material/LockReset';
 import { userProfileData } from '@/data/dashboardMockData';
 import ChangePasswordModal from '@/components/profile/ChangePasswordModal';
+import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
+import { useTranslations } from 'next-intl';
 
 interface PageProps {
   params: Promise<{ userid: string }>;
 }
 
 export default function ProfilePage({ params }: PageProps) {
+  const t = useTranslations('profile');
+  const tAuth = useTranslations('auth');
   const [profile, setProfile] = useState(userProfileData);
   const [isEditing, setIsEditing] = useState(false);
   const [openChangePassword, setOpenChangePassword] = useState(false);
@@ -53,7 +57,7 @@ export default function ProfilePage({ params }: PageProps) {
     <Box sx={{ py: 4, px: { xs: 2, md: 4 }, maxWidth: 1200, mx: 'auto' }}>
       {/* Page Header */}
       <Typography variant="h4" fontWeight="bold" gutterBottom sx={{ mb: 4 }}>
-        Hồ sơ cá nhân
+        {t('title')}
       </Typography>
 
       {/* Avatar Section */}
@@ -71,22 +75,52 @@ export default function ProfilePage({ params }: PageProps) {
                   boxShadow: 3,
                 }}
               />
-              <IconButton
-                onClick={handleAvatarUpload}
-                sx={{
-                  position: 'absolute',
-                  bottom: 0,
-                  right: 0,
-                  backgroundColor: 'primary.main',
-                  color: 'white',
-                  '&:hover': {
-                    backgroundColor: 'primary.dark',
-                  },
-                }}
-                size="small"
-              >
-                <PhotoCameraIcon />
-              </IconButton>
+                  <IconButton
+                  component="label"
+                  sx={{
+                    position: 'absolute',
+                    bottom: 0,
+                    right: 0,
+                    backgroundColor: 'var(--primary)',
+                    color: 'black',
+                    ":hover": {
+                      backgroundColor: 'var(--success)',
+                      color: 'white',
+                    },
+                    ...hoverLiftStyle,
+                  }}
+                  size="large"
+                  >
+                  <PhotoCameraIcon fontSize="large"/>
+                  <input
+                    hidden
+                    accept="image/jpeg,image/jpg,image/png,image/heif"
+                    type="file"
+                    onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const maxSize = 5 * 1024 * 1024; // 5MB
+                      const allowedFormats = ['image/jpeg', 'image/jpg', 'image/png', 'image/heif'];
+
+                      if (!allowedFormats.includes(file.type)) {
+                      alert(t('unsupportedFormat'));
+                      return;
+                      }
+
+                      if (file.size > maxSize) {
+                      alert(t('fileSizeExceeded'));
+                      return;
+                      }
+
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                      handleInputChange('avatarUrl', reader.result);
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                    }}
+                  />
+                  </IconButton>
             </Box>
 
             {/* Name and Email */}
@@ -97,34 +131,6 @@ export default function ProfilePage({ params }: PageProps) {
               <Typography variant="body1" color="text.secondary" gutterBottom>
                 {profile.email}
               </Typography>
-              <Box
-                sx={{
-                  display: 'inline-block',
-                  px: 2,
-                  py: 0.5,
-                  borderRadius: 2,
-                  backgroundColor:
-                    profile.membershipLevel === 'Platinum'
-                      ? '#e5e7eb'
-                      : profile.membershipLevel === 'Gold'
-                      ? '#fef3c7'
-                      : profile.membershipLevel === 'Silver'
-                      ? '#f3f4f6'
-                      : '#fef2f2',
-                  color:
-                    profile.membershipLevel === 'Platinum'
-                      ? '#1f2937'
-                      : profile.membershipLevel === 'Gold'
-                      ? '#92400e'
-                      : profile.membershipLevel === 'Silver'
-                      ? '#374151'
-                      : '#991b1b',
-                  fontWeight: 600,
-                  fontSize: '0.875rem',
-                }}
-              >
-                {profile.membershipLevel} Member
-              </Box>
             </Box>
 
             {/* Action Buttons */}
@@ -135,7 +141,7 @@ export default function ProfilePage({ params }: PageProps) {
                 size="small"
                 onClick={() => setOpenChangePassword(true)}
               >
-                Đổi mật khẩu
+                {t('changePassword')}
               </Button>
             </Box>
           </Box>
@@ -146,7 +152,7 @@ export default function ProfilePage({ params }: PageProps) {
       <Card sx={{ mb: 3, boxShadow: 2 }}>
         <CardContent>
           <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ mb: 3 }}>
-            Thông tin cá nhân
+            {t('personalInfo')}
           </Typography>
 
           {/* Two-column layout for form fields */}
@@ -159,7 +165,7 @@ export default function ProfilePage({ params }: PageProps) {
           >
             {/* Full Name */}
             <TextField
-              label="Họ và tên"
+              label={tAuth('fullName')}
               value={profile.fullName}
               onChange={(e) => handleInputChange('fullName', e.target.value)}
               fullWidth
@@ -168,7 +174,7 @@ export default function ProfilePage({ params }: PageProps) {
 
             {/* Phone Number */}
             <TextField
-              label="Số điện thoại"
+              label={tAuth('phone')}
               value={profile.phoneNumber}
               onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
               fullWidth
@@ -177,7 +183,7 @@ export default function ProfilePage({ params }: PageProps) {
 
             {/* Email */}
             <TextField
-              label="Email"
+              label={tAuth('email')}
               value={profile.email}
               onChange={(e) => handleInputChange('email', e.target.value)}
               fullWidth
@@ -188,20 +194,20 @@ export default function ProfilePage({ params }: PageProps) {
 
             {/* Gender */}
             <TextField
-              label="Giới tính"
+              label={t('gender')}
               value={profile.gender}
               onChange={(e) => handleInputChange('gender', e.target.value)}
               fullWidth
               select
             >
-              <MenuItem value="Male">Nam</MenuItem>
-              <MenuItem value="Female">Nữ</MenuItem>
-              <MenuItem value="Other">Khác</MenuItem>
+              <MenuItem value="Male">{t('male')}</MenuItem>
+              <MenuItem value="Female">{t('female')}</MenuItem>
+              <MenuItem value="Other">{t('other')}</MenuItem>
             </TextField>
 
             {/* Birth Year */}
             <TextField
-              label="Năm sinh"
+              label={t('birthYear')}
               value={profile.birthYear}
               onChange={(e) => handleInputChange('birthYear', parseInt(e.target.value))}
               fullWidth
@@ -214,16 +220,16 @@ export default function ProfilePage({ params }: PageProps) {
 
           {/* Address Section */}
           <Typography variant="subtitle1" fontWeight="bold" gutterBottom sx={{ mb: 2 }}>
-            Địa chỉ giao hàng
+            {t('shippingAddress')}
           </Typography>
           <TextField
-            label="Địa chỉ chi tiết"
+            label={t('detailedAddress')}
             value={profile.address}
             onChange={(e) => handleInputChange('address', e.target.value)}
             fullWidth
             multiline
             rows={3}
-            placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố"
+            placeholder={t('addressPlaceholder')}
           />
         </CardContent>
       </Card>
@@ -232,7 +238,7 @@ export default function ProfilePage({ params }: PageProps) {
       <Card sx={{ mb: 3, boxShadow: 2 }}>
         <CardContent>
           <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ mb: 3 }}>
-            Cài đặt thông báo
+            {t('notificationSettings')}
           </Typography>
 
           <FormControlLabel
@@ -246,10 +252,10 @@ export default function ProfilePage({ params }: PageProps) {
             label={
               <Box>
                 <Typography variant="body1" fontWeight="medium">
-                  Nhận thông báo
+                  {t('receiveNotifications')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Nhận nhắc nhở chăm sóc cây, thông tin khuyến mãi và cập nhật mới
+                  {t('notificationDescription')}
                 </Typography>
               </Box>
             }
@@ -259,8 +265,9 @@ export default function ProfilePage({ params }: PageProps) {
 
       {/* Save Button */}
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-        <Button variant="outlined" size="large" onClick={() => setProfile(userProfileData)}>
-          Hủy thay đổi
+        <Button variant="outlined" size="large" onClick={() => setProfile(userProfileData)} 
+        sx={{":hover": {backgroundColor: 'var(--error)', color: 'white'}, ...hoverLiftStyle}}>
+          {t('cancelChanges')}
         </Button>
         <Button
           variant="contained"
@@ -270,10 +277,12 @@ export default function ProfilePage({ params }: PageProps) {
           sx={{
             px: 4,
             py: 1.5,
+            backgroundColor: 'var(--primary)',
             fontWeight: 'bold',
+            ...hoverLiftStyle,
           }}
         >
-          Lưu thay đổi
+          {t('saveChanges')}
         </Button>
       </Box>
 

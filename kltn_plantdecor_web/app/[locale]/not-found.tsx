@@ -1,12 +1,8 @@
 import Error404Content from '@/components/errors/Error404Content';
-import { getTranslations } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 
-interface LocaleNotFoundProps {
-  params: Promise<{ locale: string }>;
-}
-
-export default async function LocaleNotFound({ params }: LocaleNotFoundProps) {
-  const { locale } = await params;
+export default async function LocaleNotFound() {
+  const locale = await getLocale();
   const homeHref = locale === 'en' ? '/en' : '/';
   const t = await getTranslations('notFound');
 

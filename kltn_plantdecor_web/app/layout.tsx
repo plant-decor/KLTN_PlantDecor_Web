@@ -1,4 +1,5 @@
 import { Inter } from 'next/font/google';
+import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import './globals.css';
 
 const inter = Inter({
@@ -20,7 +21,9 @@ export default function RootLayout({
 }>) {
   return (
     <html suppressHydrationWarning>
-      <body className={`${inter.variable} antialiased`}>{children}</body>
+      <body className={`${inter.variable} antialiased`}>
+        <AppRouterCacheProvider>{children}</AppRouterCacheProvider>
+      </body>
     </html>
   );
 }

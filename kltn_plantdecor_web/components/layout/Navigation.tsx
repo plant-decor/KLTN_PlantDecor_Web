@@ -51,9 +51,14 @@ const ICONS: Record<HeaderIconKey, ReactNode> = {
 };
 
 const resolveHref = (href: string, userId?: number | null) => {
-  if (href.includes('[userid]')) {
-    return userId ? href.replace('[userid]', String(userId)) : '#';
+  if (/\[(userid|userId)\]/.test(href)) {
+    if (userId) {
+      return href.replace(/\[(userid|userId)\]/g, String(userId));
+    }
+
+    return `/login?redirectTo=${encodeURIComponent(href)}`;
   }
+
   return href;
 };
 

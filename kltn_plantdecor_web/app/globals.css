@@ -139,3 +139,52 @@ h1, h2, h3, h4, h5, h6 {
     transform-origin: center;
   }
 }
+
+/* Loading */
+ .loader-wrap {
+        min-height: 120px;
+        display: grid;
+        place-items: center;
+        z-index: 9999;
+  }
+
+      .loader {
+        width: 140px;
+        height: 140px;
+        position: relative;
+      }
+
+      .loader .leaf {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 24px;
+        height: 36px;
+        border-radius: 100% 0 100% 0;
+        transform: translate(-50%, -50%) rotate(calc(var(--i) * 36deg))
+          translateY(-48px) rotate(-45deg);
+        background:
+          linear-gradient(145deg, #9be15d 0%, #00c853 70%),
+          linear-gradient(to right, #ffffffa8, #ffffff00 45%);
+        box-shadow:
+          0 2px 8px #00000022,
+          inset 0 0 0 1px #ffffff66;
+        opacity: 0.18;
+        animation: leaf-fade 1.2s linear infinite;
+        animation-delay: calc(var(--i) * -0.08s);
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      @keyframes leaf-fade {
+        0%,
+        100% {
+          opacity: 0.18;
+        }
+
+        40% {
+          opacity: 1;
+        }
+      }

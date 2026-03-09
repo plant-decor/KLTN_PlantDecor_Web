@@ -1,4 +1,4 @@
-export type UserRole = 'guest' | 'user' | 'admin' | 'manager' | 'staff' | 'shipper' | 'caretaker';
+export type UserRole = 'guest' | 'user' | 'admin' | 'manager' | 'staff' | 'consultant' | 'shipper' | 'caretaker';
 
 export type HeaderIconKey =
   | 'home'
@@ -26,10 +26,10 @@ export const NAV_ITEMS_BY_ROLE: Record<UserRole, HeaderNavItem[]> = {
   guest: [
     { label: 'Home', href: '/', icon: 'home' },
     { label: 'Plant Store', href: '/plant-store', icon: 'store' },
-    { label: 'Services', href: '/services', icon: 'services' },
+    { label: 'Services', href: '/services/[userId]', icon: 'services' },
     {
       label: 'AI Plant Recommendation',
-      href: '/ai-plant-recommendation/',
+      href: '/ai-plant-recommendation/[userId]',
       icon: 'ai',
     },
     { label: 'Contact', href: '/contact', icon: 'contact' },
@@ -38,11 +38,11 @@ export const NAV_ITEMS_BY_ROLE: Record<UserRole, HeaderNavItem[]> = {
   user: [
     { label: 'Home', href: '/', icon: 'home' },
     { label: 'Plant Store', href: '/plant-store', icon: 'store' },
-    { label: 'Services', href: '/services', icon: 'services' },
-    { label: 'My Plant', href: '/my-plant/[userid]', icon: 'myPlant', requiresUserId: true },
+    { label: 'Services', href: '/services/[userId]', icon: 'services' },
+    { label: 'My Plant', href: '/my-plant/[userId]', icon: 'myPlant', requiresUserId: true },
     {
       label: 'AI Plant Recommendation',
-      href: '/ai-plant-recommendation/[userid]',
+      href: '/ai-plant-recommendation/[userId]',
       icon: 'ai',
       requiresUserId: true,
     },
@@ -52,6 +52,7 @@ export const NAV_ITEMS_BY_ROLE: Record<UserRole, HeaderNavItem[]> = {
   admin: [],
   manager: [],
   staff: [],
+  consultant: [],
   shipper: [],
   caretaker: [],
 };

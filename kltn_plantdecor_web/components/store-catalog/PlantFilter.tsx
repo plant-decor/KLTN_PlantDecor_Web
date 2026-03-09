@@ -10,6 +10,8 @@ interface PlantFilterProps {
   plants: SamplePlant[];
   enableSearch?: boolean;
   onSearchChange?: (query: string) => void;
+  useInternalMobileDrawer?: boolean;
+  renderInlineOnMobile?: boolean;
 }
 
 interface FilterState {
@@ -40,7 +42,14 @@ const SIZES = [
   { value: 'large', label: 'Large' },
 ];
 
-export default function PlantFilter({ onFiltersChange, plants, enableSearch = false, onSearchChange }: PlantFilterProps) {
+export default function PlantFilter({
+  onFiltersChange,
+  plants,
+  enableSearch = false,
+  onSearchChange,
+  useInternalMobileDrawer = true,
+  renderInlineOnMobile = false,
+}: PlantFilterProps) {
   const t = useTranslations('filter');
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<FilterState>({
@@ -241,6 +250,10 @@ export default function PlantFilter({ onFiltersChange, plants, enableSearch = fa
     </>
   );
 
+  if (renderInlineOnMobile) {
+    return <FilterContent />;
+  }
+
   return (
     <>
       {/* Desktop - Sticky Sidebar */}
@@ -250,26 +263,22 @@ export default function PlantFilter({ onFiltersChange, plants, enableSearch = fa
       </div>
 
       {/* Mobile - Filter Button */}
-      <div className="md:hidden fixed bottom-6 right-6 z-40">
-        <button
-          onClick={() => setIsDrawerOpen(true)}
-          className="bg-primary text-white p-4 rounded-full shadow-lg hover:bg-green-700 transition-colors flex items-center gap-2"
-        >
-          <FilterIcon sx={{ fontSize: 24 }} />
-        </button>
-      </div>
+      {useInternalMobileDrawer && (
+        <div className="md:hidden fixed bottom-6 right-6 z-40">
+          <button
+            onClick={() => setIsDrawerOpen(true)}
+            className="bg-primary text-white p-4 rounded-full shadow-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+          >
+            <FilterIcon sx={{ fontSize: 24 }} />
+          </button>
+        </div>
+      )}
 
       {/* Mobile - Filter Drawer */}
-      {isDrawerOpen && (
+      {useInternalMobileDrawer && isDrawerOpen && (
         <>
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden animate-in fade-in duration-200"
-            onClick={() => setIsDrawerOpen(false)}
-          />
-
           {/* Drawer */}
-          <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl z-50 max-h-[90vh] overflow-y-auto md:hidden animate-fade-in-up">
+          <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl z-50 overflow-y-auto md:hidden animate-fade-in-up">
             {/* Header */}
             <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
               <h2 className="text-xl font-bold text-gray-900">{t('title')}</h2>

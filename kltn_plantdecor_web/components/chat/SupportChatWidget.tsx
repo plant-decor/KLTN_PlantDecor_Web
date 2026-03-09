@@ -38,12 +38,8 @@ export default function SupportChatWidget() {
 
   return (
     <Box
-      sx={{
-        position: 'fixed',
-        right: 20,
-        bottom: 20,
-        zIndex: 1200,
-      }}
+      className="z-1200 fixed right-6 bottom-6"
+
     >
       {isOpen ? (
         <Paper

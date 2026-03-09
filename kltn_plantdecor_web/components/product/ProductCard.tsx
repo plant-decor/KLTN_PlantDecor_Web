@@ -94,9 +94,9 @@ export default function ProductCard({
           )}
         </div>
 
-        <div className="flex items-stretch gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:items-stretch sm:gap-2">
           {showAddToWishlistButton && (
-            <div className="flex-1">
+            <div className="sm:flex-1">
               <AddToWishlistButton
                 plant={plant}
                 label={tWishlist('addToWishlistCompact')}
@@ -109,7 +109,7 @@ export default function ProductCard({
             </div>
           )}
           {showRemoveFromWishlistButton && (
-            <div className="flex-1">
+            <div className="sm:flex-1">
               <Button
                 onClick={handleRemoveFromWishlist}
                 variant="outlined"
@@ -131,7 +131,7 @@ export default function ProductCard({
             </div>
           )}
           {showAddToCartButton && (
-            <div className="flex-1">
+            <div className="sm:flex-1">
               <Button
                 onClick={handleAddToCart}
                 variant="contained"

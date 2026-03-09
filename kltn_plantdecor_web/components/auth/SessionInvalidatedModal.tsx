@@ -1,9 +1,20 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Dialog, DialogActions, DialogContent, DialogTitle, Button, Typography } from '@mui/material';
+import { useTranslations } from 'next-intl';
+import { 
+  Dialog, 
+  DialogActions, 
+  DialogContent, 
+  Button, 
+  Typography, 
+  Box, 
+  Zoom 
+} from '@mui/material';
+import LockClockOutlinedIcon from '@mui/icons-material/LockClockOutlined';
 import { useAuthStore } from '@/store/authStore';
+import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 import {
   dispatchSessionInvalidated,
   getSessionInvalidatedEventName,
@@ -14,14 +25,9 @@ const HEARTBEAT_INTERVAL_MS = 15000;
 
 export function SessionInvalidatedModal() {
   const router = useRouter();
+  const t = useTranslations('auth.sessionInvalidated');
   const { isAuthenticated, clearUser } = useAuthStore();
   const [open, setOpen] = useState(false);
-
-  const message = useMemo(
-    () =>
-      'Phiên đăng nhập của bạn đã hết hiệu lực hoặc đã bị đăng xuất từ thiết bị khác. Vui lòng đăng nhập lại để tiếp tục.',
-    []
-  );
 
   const onSessionInvalidated = useCallback(() => {
     clearUser();
@@ -31,7 +37,6 @@ export function SessionInvalidatedModal() {
   useEffect(() => {
     const eventName = getSessionInvalidatedEventName();
     const listener = () => onSessionInvalidated();
-
     window.addEventListener(eventName, listener as EventListener);
     return () => window.removeEventListener(eventName, listener as EventListener);
   }, [onSessionInvalidated]);
@@ -42,14 +47,12 @@ export function SessionInvalidatedModal() {
         dispatchSessionInvalidated('revoked');
       }
     };
-
     window.addEventListener('storage', onStorage);
     return () => window.removeEventListener('storage', onStorage);
   }, []);
 
   useEffect(() => {
     if (!isAuthenticated) return;
-
     const checkSession = async () => {
       try {
         const response = await fetch('/api/auth/me', {
@@ -57,14 +60,9 @@ export function SessionInvalidatedModal() {
           credentials: 'include',
           cache: 'no-store',
         });
-
-        if (response.status === 401) {
-          dispatchSessionInvalidated('revoked');
-        }
-      } catch {
-      }
+        if (response.status === 401) dispatchSessionInvalidated('revoked');
+      } catch {}
     };
-
     checkSession();
     const intervalId = window.setInterval(checkSession, HEARTBEAT_INTERVAL_MS);
     return () => window.clearInterval(intervalId);
@@ -77,14 +75,60 @@ export function SessionInvalidatedModal() {
   }, [router]);
 
   return (
-    <Dialog open={open} disableEscapeKeyDown onClose={() => {}}>
-      <DialogTitle>Phiên đăng nhập đã bị thu hồi</DialogTitle>
+    <Dialog 
+      open={open} 
+      TransitionComponent={Zoom} 
+      disableEscapeKeyDown 
+      maxWidth="xs" 
+      fullWidth
+      PaperProps={{
+        sx: { borderRadius: 3, p: 1 }
+      }}
+    >
       <DialogContent>
-        <Typography variant="body2">{message}</Typography>
+        <Box 
+          display="flex" 
+          flexDirection="column" 
+          alignItems="center" 
+          textAlign="center"
+          py={2}
+        >
+          <Box 
+            sx={{ 
+              backgroundColor: '#FFEDED',
+              borderRadius: '50%', 
+              p: 2, 
+              mb: 2 
+            }}
+          >
+            <LockClockOutlinedIcon sx={{ fontSize: 60, color: 'var(--error)' }} />
+          </Box>
+
+          <Typography variant="h6" fontWeight="bold" gutterBottom>
+            {t('title')}
+          </Typography>
+          
+          <Typography variant="body2" color="text.secondary" sx={{ px: 2 }}>
+            {t('description')}
+          </Typography>
+        </Box>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={handleReLogin} variant="contained" color="primary" autoFocus>
-          Đăng nhập lại
+
+      <DialogActions sx={{ justifyContent: 'center', pb: 3, px: 3 }}>
+        <Button 
+          onClick={handleReLogin} 
+          variant="contained" 
+          fullWidth 
+          size="large"
+          sx={{ 
+            borderRadius: 2, 
+            textTransform: 'none', 
+            fontWeight: 'bold', 
+            backgroundColor: 'var(--primary)',
+            ...hoverLiftStyle,
+          }}
+        >
+          {t('button')}
         </Button>
       </DialogActions>
     </Dialog>

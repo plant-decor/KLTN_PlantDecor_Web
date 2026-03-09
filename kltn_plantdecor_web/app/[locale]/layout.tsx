@@ -3,7 +3,7 @@ import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { type ReactNode } from 'react';
 import { routing } from '@/i18n/routing';
-import { AuthProvider } from '@/components/providers/AuthProviderNew';
+import { AuthProvider } from '@/components/providers/AuthProvider';
 import { SignalRProvider } from '@/components/providers/SignalRProvider';
 import { GoogleRecaptchaProviderWrapper } from '@/components/providers/GoogleRecaptchaProvider';
 import { LoadingOverlay } from '@/components/LoadingOverlay';

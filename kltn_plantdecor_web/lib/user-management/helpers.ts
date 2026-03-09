@@ -8,6 +8,7 @@ export const getRoleColor = (role: UserRole): 'default' | 'primary' | 'secondary
     admin: 'error',
     manager: 'warning',
     staff: 'info',
+    consultant: 'primary',
     shipper: 'secondary',
     caretaker: 'success',
   };

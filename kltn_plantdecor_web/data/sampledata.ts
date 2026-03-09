@@ -63,6 +63,18 @@ export const SAMPLE_USERS: SampleUser[] = [
     updateAt: '2026-02-23T08:00:00Z',
   },
   {
+    id: 3002,
+    role: 'consultant',
+    email: 'consultant@plantdecor.local',
+    phoneNumber: '0900000003B',
+    password: 'Consultant@123',
+    userName: 'Consultant',
+    avatarUrl: '',
+    status: 'active',
+    createAt: '2026-02-23T08:00:00Z',
+    updateAt: '2026-02-23T08:00:00Z',
+  },
+  {
     id: 4001,
     role: 'shipper',
     email: 'shipper@plantdecor.local',

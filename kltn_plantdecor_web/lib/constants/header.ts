@@ -1,4 +1,4 @@
-export type UserRole = 'guest' | 'user' | 'admin' | 'manager' | 'staff' | 'shipper' | 'caretaker';
+export type UserRole = 'guest' | 'user' | 'admin' | 'manager' | 'staff' | 'consultant' | 'shipper' | 'caretaker';
 
 export type HeaderIconKey =
   | 'home'
@@ -52,6 +52,7 @@ export const NAV_ITEMS_BY_ROLE: Record<UserRole, HeaderNavItem[]> = {
   admin: [],
   manager: [],
   staff: [],
+  consultant: [],
   shipper: [],
   caretaker: [],
 };

@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type ReactNode } from 'react';
 import { Menu as MenuIcon } from '@mui/icons-material';
+import { useTranslations } from 'next-intl';
 import Sidebar from '@/components/layout/Sidebar';
 import { ACTIVE_SAMPLE_USER_ID, SAMPLE_USERS } from '@/data/sampledata';
 import { SIDEBAR_ITEMS_BY_ROLE } from '@/lib/constants/sidebar';
@@ -13,6 +14,7 @@ interface DashboardShellProps {
 }
 
 export default function DashboardShell({ children, role }: DashboardShellProps) {
+  const t = useTranslations('common');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const activeUser = useMemo(
     () => SAMPLE_USERS.find((user) => user.id === ACTIVE_SAMPLE_USER_ID) || null,
@@ -33,7 +35,7 @@ export default function DashboardShell({ children, role }: DashboardShellProps) 
               aria-label="Open sidebar"
             >
               <MenuIcon sx={{ fontSize: 20 }} />
-              Menu
+              {t('menu')}
             </button>
             <span className="text-sm text-gray-500">{resolvedRole.toUpperCase()}</span>
           </div>

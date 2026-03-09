@@ -48,6 +48,7 @@ export default function TestLoginPage() {
           admin: '/admin',
           manager: '/manager',
           staff: '/staff',
+          consultant: '/consultant',
           caretaker: '/caretaker',
           shipper: '/shipper',
           user: '/dashboard',

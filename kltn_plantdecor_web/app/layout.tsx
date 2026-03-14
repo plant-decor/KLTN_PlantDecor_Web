@@ -1,6 +1,7 @@
 import { Inter } from 'next/font/google';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import './globals.css';
+import 'react-toastify/dist/ReactToastify.css';
 
 const inter = Inter({
   variable: '--font-inter',

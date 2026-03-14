@@ -333,7 +333,7 @@ export default function ProductTable({
                                     <TableCell>Image</TableCell>
                                     <TableCell>SKU</TableCell>
                                     <TableCell>Quantity</TableCell>
-                                                                        <TableCell>Price</TableCell>
+                                    <TableCell>Price</TableCell>
                                     <TableCell>Condition</TableCell>
                                     <TableCell>Location</TableCell>
                                     <TableCell>Date Added</TableCell>

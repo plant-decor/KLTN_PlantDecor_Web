@@ -9,7 +9,6 @@ import { ACTIVE_SAMPLE_USER_ID } from '@/data/sampledata';
 
 export default function CartBadge() {
   const [itemCount, setItemCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuthStore();
 
   // Use auth user if available, otherwise use sample user
@@ -19,7 +18,6 @@ export default function CartBadge() {
   useEffect(() => {
     const fetchCartCount = async () => {
       try {
-        setIsLoading(true);
         const response = await fetch(`/api/cart/get?userId=${userId}`);
         
         if (!response.ok) {
@@ -33,8 +31,6 @@ export default function CartBadge() {
       } catch (error) {
         console.error('Fetch cart count error:', error);
         setItemCount(0);
-      } finally {
-        setIsLoading(false);
       }
     };
 

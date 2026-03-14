@@ -1,4 +1,5 @@
-import axios, { AxiosRequestConfig } from 'axios';
+import axios from 'axios';
+import { toast } from 'react-toastify';
 import { useLoadingStore } from '@/store/loadingStore';
 import { useAuthStore } from '@/store/authStore';
 import { dispatchSessionInvalidated } from '@/lib/utils/authSessionEvents';
@@ -22,6 +23,9 @@ import { dispatchSessionInvalidated } from '@/lib/utils/authSessionEvents';
 declare module 'axios' {
   interface AxiosRequestConfig {
     skipLoading?: boolean;
+    skipToast?: boolean;
+    showSuccessToast?: boolean;
+    showErrorToast?: boolean;
   }
 }
 
@@ -52,6 +56,45 @@ const getNotFoundRedirectPath = () => {
   return '/404';
 };
 
+const methodsWithoutSuccessToast = new Set(['get', 'head', 'options']);
+
+const extractResponseMessage = (payload: unknown): string | null => {
+  if (!payload || typeof payload !== 'object') {
+    return null;
+  }
+
+  if ('message' in payload && typeof payload.message === 'string') {
+    const message = payload.message.trim();
+    return message ? message : null;
+  }
+
+  return null;
+};
+
+const shouldShowSuccessToast = (method?: string, showSuccessToast?: boolean, skipToast?: boolean) => {
+  if (skipToast || showSuccessToast === false) {
+    return false;
+  }
+
+  if (showSuccessToast === true) {
+    return true;
+  }
+
+  if (!method) {
+    return true;
+  }
+
+  return !methodsWithoutSuccessToast.has(method.toLowerCase());
+};
+
+const shouldShowErrorToast = (showErrorToast?: boolean, skipToast?: boolean) => {
+  if (skipToast || showErrorToast === false) {
+    return false;
+  }
+
+  return true;
+};
+
 // ===== Request Interceptor =====
 // Show loading spinner (unless skipLoading is true)
 axiosInstance.interceptors.request.use(
@@ -80,6 +123,18 @@ axiosInstance.interceptors.response.use(
     // Hide loading for successful response
     const { setIsLoading } = useLoadingStore.getState();
     setIsLoading(false);
+
+    const responseMessage = extractResponseMessage(response.data);
+    if (
+      responseMessage &&
+      shouldShowSuccessToast(
+        response.config.method,
+        response.config.showSuccessToast,
+        response.config.skipToast
+      )
+    ) {
+      toast.success(responseMessage);
+    }
     
     return response;
   },
@@ -87,6 +142,14 @@ axiosInstance.interceptors.response.use(
     // Hide loading on error
     const { setIsLoading } = useLoadingStore.getState();
     setIsLoading(false);
+
+    const errorMessage =
+      extractResponseMessage(error.response?.data) ||
+      (typeof error.message === 'string' && error.message.trim() ? error.message : null);
+
+    if (errorMessage && shouldShowErrorToast(error.config?.showErrorToast, error.config?.skipToast)) {
+      toast.error(errorMessage);
+    }
 
     // Nếu lỗi 401 Unauthorized (token hết hạn hoặc invalid)
     if (error.response?.status === 401) {

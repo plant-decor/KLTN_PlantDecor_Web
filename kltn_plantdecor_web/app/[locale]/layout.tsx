@@ -6,6 +6,7 @@ import { routing } from '@/i18n/routing';
 import { AuthProvider } from '@/components/providers/AuthProvider';
 import { SignalRProvider } from '@/components/providers/SignalRProvider';
 import { GoogleRecaptchaProviderWrapper } from '@/components/providers/GoogleRecaptchaProvider';
+import { ToastProvider } from '@/components/providers/ToastProvider';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
 import { SessionInvalidatedModal } from '@/components/auth/SessionInvalidatedModal';
 import type { Metadata } from 'next';
@@ -36,6 +37,7 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
       <GoogleRecaptchaProviderWrapper>
         <AuthProvider>
           <SignalRProvider autoConnect={true}>
+            <ToastProvider />
             <LoadingOverlay />
             <SessionInvalidatedModal />
             {children}

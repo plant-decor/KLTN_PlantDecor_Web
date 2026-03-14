@@ -18,6 +18,7 @@ import {
 } from '@mui/material';
 import { useTranslations } from 'next-intl';
 import { CareServicePackage, ServiceType, DifficultyLevel } from '@/types/service.types';
+import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 
 interface ServiceBookingDialogProps {
   open: boolean;
@@ -298,10 +299,10 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit }: Servic
         </Box>
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
-        <Button onClick={handleClose} color="inherit">
+        <Button onClick={handleClose} color="inherit" className='bg-error! font-semibold!' sx={{...hoverLiftStyle}}>
           {tCommon('cancel')}
         </Button>
-        <Button onClick={handleSubmit} variant="contained" color="primary">
+        <Button onClick={handleSubmit} variant="contained" className='bg-primary! font-semibold!' sx={{ ...hoverLiftStyle }}>
           {t('submitRequest')}
         </Button>
       </DialogActions>

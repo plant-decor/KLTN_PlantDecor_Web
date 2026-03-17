@@ -105,7 +105,7 @@ export default function ForgotPasswordForm({
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full h-12 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-semibold rounded-lg cursor-pointer transition-all hover:scale-105 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full h-12 bg-linear-to-r from-amber-500 to-amber-600 text-white font-semibold rounded-lg cursor-pointer transition-all hover:scale-105 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? t('sending') : t('sendResetLink')}
             </button>

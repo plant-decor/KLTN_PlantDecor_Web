@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import { logoutAction } from '@/app/actions/loginAction';
 
@@ -14,6 +14,7 @@ import { logoutAction } from '@/app/actions/loginAction';
  */
 export default function LogoutButton() {
   const router = useRouter();
+  const params = useParams<{ locale?: string }>();
   const { clearUser } = useAuthStore();
 
   const handleLogout = async () => {
@@ -25,9 +26,9 @@ export default function LogoutButton() {
         // Clear Zustand store
         clearUser();
 
-        // Redirect sẽ được xử lý bởi Server Action
-        // Nhưng để chắc chắn:
-        router.push('/login');
+        const locale = Array.isArray(params?.locale) ? params.locale[0] : params?.locale;
+        const loginPath = locale ? `/${locale}/login` : '/login';
+        router.replace(loginPath);
       }
     } catch (error) {
       console.error('Logout error:', error);

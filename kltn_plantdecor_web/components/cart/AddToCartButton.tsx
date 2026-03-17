@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type { SamplePlant } from '@/data/sampledata';
 import { useAuthStore } from '@/store/authStore';
-import { ACTIVE_SAMPLE_USER_ID } from '@/data/sampledata';
 
 interface AddToCartButtonProps {
   plant: SamplePlant;
@@ -19,10 +18,15 @@ export default function AddToCartButton({ plant }: AddToCartButtonProps) {
   const [error, setError] = useState('');
   const { user } = useAuthStore();
 
-  // Use auth user if available, otherwise use sample user
-  const userId = user?.id?.toString() || String(ACTIVE_SAMPLE_USER_ID);
+  const userId = user?.id?.toString();
 
   const handleAddToCart = async () => {
+    if (!userId) {
+      setError('Vui long dang nhap de them san pham vao gio hang');
+      setTimeout(() => setError(''), 3000);
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError('');

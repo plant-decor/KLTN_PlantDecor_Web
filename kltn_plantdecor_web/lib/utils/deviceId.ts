@@ -5,40 +5,57 @@
 
 const DEVICE_ID_KEY = 'device_id';
 
+const safeLocalStorageGet = (key: string): string | null => {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
+
+const safeLocalStorageSet = (key: string, value: string): void => {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // Ignore storage write failures (private mode, quota exceeded...)
+  }
+};
+
 export const getDeviceId = (): string => {
   if (typeof window === 'undefined') {
     return '';
   }
 
   // Kiểm tra xem đã có device ID chưa
-  let deviceId = localStorage.getItem(DEVICE_ID_KEY);
+  let deviceId = safeLocalStorageGet(DEVICE_ID_KEY);
 
   if (!deviceId) {
-    // Tạo device ID mới
+    // Tạo UUID mới cho browser/device này
     deviceId = generateDeviceId();
-    localStorage.setItem(DEVICE_ID_KEY, deviceId);
+    safeLocalStorageSet(DEVICE_ID_KEY, deviceId);
   }
 
   return deviceId;
 };
 
 const generateDeviceId = (): string => {
-  // Tạo ID dựa trên timestamp, random number và user agent
-  const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 15);
-  const navigatorInfo = typeof navigator !== 'undefined' 
-    ? `${navigator.userAgent}-${navigator.language}` 
-    : '';
-  
-  const base = `${timestamp}-${random}-${navigatorInfo}`;
-  
-  // Hash đơn giản để tạo ID ngắn gọn hơn
-  return btoa(base).substring(0, 32);
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+
+  // Fallback cho môi trường cũ chưa hỗ trợ randomUUID
+  const randomPart = Math.random().toString(36).slice(2);
+  const timePart = Date.now().toString(36);
+  return `${timePart}-${randomPart}`;
 };
 
 export const clearDeviceId = (): void => {
   if (typeof window !== 'undefined') {
-    localStorage.removeItem(DEVICE_ID_KEY);
+    try {
+      localStorage.removeItem(DEVICE_ID_KEY);
+    } catch {
+      // Ignore storage delete failures
+    }
   }
 };
 

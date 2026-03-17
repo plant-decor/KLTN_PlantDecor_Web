@@ -19,13 +19,11 @@ export const authService = {
    */
   login: async (email: string, password: string): Promise<LoginResponse> => {
     const deviceId = getDeviceId();
-    const deviceName = typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown';
 
-    const response = await axiosInstance.post<LoginResponse>(`${API_BASE}/auth/login`, {
+    const response = await axiosInstance.post<LoginResponse>(`${API_BASE}/Authentication/login`, {
       email,
       password,
       deviceId,
-      deviceName,
     } as LoginRequest);
 
     return response.data;

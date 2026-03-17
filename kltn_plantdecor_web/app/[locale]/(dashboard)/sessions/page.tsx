@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
+import { logoutAllAction } from '@/app/actions/authenticationActions';
 import { authService } from '@/lib/api/authService';
 import { useRouter } from 'next/navigation';
 import { getDeviceId } from '@/lib/utils/deviceId';
@@ -22,6 +23,7 @@ export default function SessionsPage() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const { clearUser } = useAuthStore();
 
   useEffect(() => {
     loadSessions();
@@ -61,10 +63,18 @@ export default function SessionsPage() {
     if (!confirm('Bạn có chắc muốn đăng xuất tất cả thiết bị?')) return;
 
     try {
-      await authService.logoutAllDevices();
+      const result = await logoutAllAction();
+
+      if (!result.success) {
+        throw new Error(result.message);
+      }
+
+      clearUser();
+
       if (typeof window !== 'undefined') {
         localStorage.setItem('auth:logout-all', Date.now().toString());
       }
+
       // Redirect về login vì tất cả sessions đã bị revoke
       router.push('/login');
     } catch (error) {

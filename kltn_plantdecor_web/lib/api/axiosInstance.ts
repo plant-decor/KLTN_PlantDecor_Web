@@ -154,7 +154,9 @@ axiosInstance.interceptors.response.use(
     // Nếu lỗi 401 Unauthorized (token hết hạn hoặc invalid)
     if (error.response?.status === 401) {
       const requestUrl: string = error.config?.url || '';
-      const isLoginRequest = requestUrl.includes('/auth/login');
+      const isLoginRequest =
+        requestUrl.includes('/auth/login') ||
+        requestUrl.includes('/Authentication/login');
 
       if (!isLoginRequest && typeof window !== 'undefined') {
         const { clearUser } = useAuthStore.getState();

@@ -92,7 +92,7 @@ export default function AddToCartButton({ plant }: AddToCartButtonProps) {
           >
             −
           </button>
-          <span className="px-6 py-2 border-x border-gray-300 min-w-[60px] text-center">
+          <span className="px-6 py-2 border-x border-gray-300 min-w-15 text-center">
             {quantity}
           </span>
           <button

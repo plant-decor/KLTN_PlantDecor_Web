@@ -13,6 +13,7 @@ import {
   ServiceRegistrationStatus,
   ServiceProgressAction,
 } from "@/types/service.types";
+import { get, post } from '@/lib/api/apiService';
 
 type View = "list" | "detail";
 
@@ -36,10 +37,11 @@ export const CaretakerTaskPageClient: React.FC = () => {
         setLoading(true);
         setError(null);
         // TODO: Replace with actual API call - should filter by current caretaker and today's date
-        const response = await fetch(
-          `/api/services/caretaker/tasks?date=${new Date().toISOString().split('T')[0]}`
+        const data = await get<ServiceRegistration[]>(
+          '/api/services/caretaker/tasks',
+          { date: new Date().toISOString().split('T')[0] },
+          false
         );
-        const data = await response.json();
         setTasks(data.data || []);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Error fetching tasks";
@@ -67,24 +69,14 @@ export const CaretakerTaskPageClient: React.FC = () => {
 
     try {
       // TODO: Replace with actual API call
-      const response = await fetch(
+      await post(
         `/api/services/registrations/${selectedTask.id}/progress`,
         {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            action: ServiceProgressAction.CHECK_IN,
-            description: "Caretaker checked in at the location",
-            actualStartTime: new Date().toISOString(),
-          }),
+          action: ServiceProgressAction.CHECK_IN,
+          description: "Caretaker checked in at the location",
+          actualStartTime: new Date().toISOString(),
         }
       );
-
-      if (!response.ok) {
-        throw new Error("Failed to check in");
-      }
 
       // Update task status to IN_PROGRESS
       setSelectedTask({
@@ -102,24 +94,14 @@ export const CaretakerTaskPageClient: React.FC = () => {
 
     try {
       // TODO: Replace with actual API call
-      const response = await fetch(
+      await post(
         `/api/services/registrations/${selectedTask.id}/progress`,
         {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            action: ServiceProgressAction.CHECK_OUT,
-            description: "Caretaker checked out",
-            actualEndTime: new Date().toISOString(),
-          }),
+          action: ServiceProgressAction.CHECK_OUT,
+          description: "Caretaker checked out",
+          actualEndTime: new Date().toISOString(),
         }
       );
-
-      if (!response.ok) {
-        throw new Error("Failed to check out");
-      }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Error checking out";
       setError(message);
@@ -136,17 +118,7 @@ export const CaretakerTaskPageClient: React.FC = () => {
       });
 
       // TODO: Replace with actual API call
-      const response = await fetch(
-        `/api/services/registrations/${selectedTask.id}/evidence`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to upload evidence");
-      }
+      await post(`/api/services/registrations/${selectedTask.id}/evidence`, formData);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Error uploading photos";
       setError(message);
@@ -162,24 +134,11 @@ export const CaretakerTaskPageClient: React.FC = () => {
 
     try {
       // TODO: Replace with actual API call - submit survey and add-on proposals
-      const response = await fetch(
-        `/api/services/registrations/${selectedTask.id}/survey`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            action: ServiceProgressAction.SURVEY,
-            description,
-            addOns,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to submit survey");
-      }
+      await post(`/api/services/registrations/${selectedTask.id}/survey`, {
+        action: ServiceProgressAction.SURVEY,
+        description,
+        addOns,
+      });
 
       // Update task status
       setTasks((prev) =>

@@ -53,6 +53,7 @@
     "sendResetLink": "Send reset link",
     "welcomeUser": "Welcome User",
     "loggingIn": "Logging in...",
+    "loginFailed": "Login failed",
     "loginButton": "Login",
     "loginWithGoogle": "Login with Google",
     "signUp": "Sign Up",

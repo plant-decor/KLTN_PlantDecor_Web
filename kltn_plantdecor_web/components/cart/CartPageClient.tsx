@@ -10,6 +10,7 @@ import CartTable from './CartTable';
 import OrderSummary from './OrderSummary';
 import DeleteItemDialog from './DeleteItemDialog';
 import ClearCartDialog from './ClearCartDialog';
+import { del, get, post, put } from '@/lib/api/apiService';
 
 interface CartPageClientProps {
   userid: string;
@@ -34,13 +35,7 @@ export default function CartPageClient({ userid }: CartPageClientProps) {
       try {
         setIsLoading(true);
         setError('');
-        const response = await fetch(`/api/cart/get?userId=${userId}`);
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch cart');
-        }
-
-        const data = await response.json();
+        const data = await get<CartItem[]>('/api/cart/get', { userId }, false);
         setCartItems(data.data || []);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to load cart';
@@ -60,23 +55,11 @@ export default function CartPageClient({ userid }: CartPageClientProps) {
     try {
       setIsUpdating(true);
       setError('');
-      const response = await fetch('/api/cart/update', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const data = await put<CartItem[]>('/api/cart/update', {
           userId,
           plantId,
           quantity: newQuantity,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update quantity');
-      }
-
-      const data = await response.json();
+        }, false);
       setCartItems(data.data || []);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update quantity';
@@ -98,22 +81,10 @@ export default function CartPageClient({ userid }: CartPageClientProps) {
     try {
       setIsUpdating(true);
       setError('');
-      const response = await fetch('/api/cart/remove', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const data = await del<CartItem[]>('/api/cart/remove', false, {
           userId,
           plantId: deleteItemId,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to remove item');
-      }
-
-      const data = await response.json();
+        });
       setCartItems(data.data || []);
       setDeleteDialogOpen(false);
       setDeleteItemId(null);
@@ -134,21 +105,9 @@ export default function CartPageClient({ userid }: CartPageClientProps) {
     try {
       setIsUpdating(true);
       setError('');
-      const response = await fetch('/api/cart/clear', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const data = await post<CartItem[]>('/api/cart/clear', {
           userId,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to clear cart');
-      }
-
-      const data = await response.json();
+        }, false);
       setCartItems(data.data || []);
       setClearDialogOpen(false);
     } catch (err) {

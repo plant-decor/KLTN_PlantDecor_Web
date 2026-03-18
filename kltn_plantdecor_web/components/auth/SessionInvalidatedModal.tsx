@@ -15,6 +15,7 @@ import {
 import LockClockOutlinedIcon from '@mui/icons-material/LockClockOutlined';
 import { useAuthStore } from '@/store/authStore';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
+import { get } from '@/lib/api/apiService';
 import {
   dispatchSessionInvalidated,
   getSessionInvalidatedEventName,
@@ -55,13 +56,11 @@ export function SessionInvalidatedModal() {
     if (!isAuthenticated) return;
     const checkSession = async () => {
       try {
-        const response = await fetch('/api/auth/me', {
-          method: 'GET',
-          credentials: 'include',
-          cache: 'no-store',
-        });
-        if (response.status === 401) dispatchSessionInvalidated('revoked');
-      } catch {}
+        await get('/api/auth/me', undefined, false);
+      } catch (error) {
+        const status = (error as { response?: { status?: number } }).response?.status;
+        if (status === 401) dispatchSessionInvalidated('revoked');
+      }
     };
     checkSession();
     const intervalId = window.setInterval(checkSession, HEARTBEAT_INTERVAL_MS);

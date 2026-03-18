@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { Badge, IconButton } from '@mui/material';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import { useAuthStore } from '@/store/authStore';
+import { get } from '@/lib/api/apiService';
+import type { CartItem } from '@/types/cart.types';
 
 export default function CartBadge() {
   const [itemCount, setItemCount] = useState(0);
@@ -14,22 +16,13 @@ export default function CartBadge() {
 
   // Fetch cart data to get item count
   useEffect(() => {
-    if (!userId) {
-      setItemCount(0);
-      return;
-    }
+    if (!userId) return;
 
     const fetchCartCount = async () => {
       try {
-        const response = await fetch(`/api/cart/get?userId=${userId}`);
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch cart');
-        }
-
-        const data = await response.json();
+        const data = await get<CartItem[]>('/api/cart/get', { userId }, false);
         const cartItems = data.data || [];
-        const totalItems = cartItems.reduce((sum: number, item: any) => sum + item.quantity, 0);
+        const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
         setItemCount(totalItems);
       } catch (error) {
         console.error('Fetch cart count error:', error);
@@ -45,6 +38,7 @@ export default function CartBadge() {
   }, [userId]);
 
   const cartHref = userId ? `/cart/${userId}` : '/login';
+  const displayCount = userId ? itemCount : 0;
 
   return (
     <Link href={cartHref} passHref>
@@ -56,7 +50,7 @@ export default function CartBadge() {
           },
         }}
       >
-        <Badge badgeContent={itemCount} color="success">
+        <Badge badgeContent={displayCount} color="success">
           <ShoppingCartIcon />
         </Badge>
       </IconButton>

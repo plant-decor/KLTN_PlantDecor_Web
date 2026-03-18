@@ -17,6 +17,7 @@ import CheckoutShipping from '@/components/checkout/CheckoutShipping';
 import CheckoutPayment from '@/components/checkout/CheckoutPayment';
 import CheckoutReview from '@/components/checkout/CheckoutReview';
 import CheckoutComplete from '@/components/checkout/CheckoutComplete';
+import { post } from '@/lib/api/apiService';
 
 interface CheckoutPageClientProps {
   userId: string;
@@ -86,21 +87,11 @@ export default function CheckoutPageClient({
       setIsSubmitting(true);
       setError('');
 
-      const response = await fetch('/api/orders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      await post('/api/orders', {
           userId,
           cartId,
           checkoutData,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to submit order');
-      }
+        });
       setActiveStep(3); // Complete step
     } catch (err) {
       const errorMessage =

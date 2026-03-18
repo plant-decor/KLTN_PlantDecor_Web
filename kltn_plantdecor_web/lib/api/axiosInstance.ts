@@ -23,6 +23,7 @@ import { dispatchSessionInvalidated } from '@/lib/utils/authSessionEvents';
 declare module 'axios' {
   interface AxiosRequestConfig {
     skipLoading?: boolean;
+    showLoading?: boolean;
     skipToast?: boolean;
     showSuccessToast?: boolean;
     showErrorToast?: boolean;
@@ -99,14 +100,20 @@ const shouldShowErrorToast = (showErrorToast?: boolean, skipToast?: boolean) => 
 // Show loading spinner (unless skipLoading is true)
 axiosInstance.interceptors.request.use(
   (config) => {
-    // Cookies sẽ được tự động gửi cùng request
-    // Không cần thêm header Authorization vì token ở cookie
-    
-    // Show loading by default (unless skipLoading flag is set)
-    const skipLoading = config.skipLoading;
-    if (!skipLoading) {
-      const { setIsLoading } = useLoadingStore.getState();
+    const { isLoadingFlag, setIsLoading } = useLoadingStore.getState();
+
+    // Show loading by default (unless skipLoading/showLoading explicitly disables it)
+    const shouldShowLoading = config.showLoading ?? !config.skipLoading;
+    if (isLoadingFlag && shouldShowLoading) {
       setIsLoading(true);
+    }
+
+    // Backward compatibility: attach bearer token when localStorage token exists.
+    if (typeof window !== 'undefined') {
+      const token = window.localStorage.getItem('token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
     
     return config;
@@ -149,6 +156,8 @@ axiosInstance.interceptors.response.use(
 
     if (errorMessage && shouldShowErrorToast(error.config?.showErrorToast, error.config?.skipToast)) {
       toast.error(errorMessage);
+    } else if (!error.response && shouldShowErrorToast(error.config?.showErrorToast, error.config?.skipToast)) {
+      toast.error('No response from server');
     }
 
     // Nếu lỗi 401 Unauthorized (token hết hạn hoặc invalid)

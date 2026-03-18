@@ -13,6 +13,7 @@ import {
   CareServicePackage,
   ServiceRegistrationFormData,
 } from "@/types/service.types";
+import { get, post } from '@/lib/api/apiService';
 
 type View = "catalog" | "detail" | "registration";
 
@@ -28,8 +29,7 @@ export const CustomerServicePageClient: React.FC = () => {
       try {
         setLoading(true);
         // TODO: Replace with actual API call
-        const response = await fetch("/api/services/packages");
-        const data = await response.json();
+        const data = await get<CareServicePackage[]>('/api/services/packages', undefined, false);
         setPackages(data.data || []);
       } catch (error) {
         console.error("Error fetching packages:", error);
@@ -62,19 +62,7 @@ export const CustomerServicePageClient: React.FC = () => {
   const handleSubmitRegistration = async (data: ServiceRegistrationFormData) => {
     try {
       // TODO: Replace with actual API call
-      const response = await fetch("/api/services/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to register service");
-      }
-
-      const result = await response.json();
+      const result = await post('/api/services/register', data);
       
       // TODO: Show success notification and redirect to confirmation page
       console.log("Registration successful:", result);

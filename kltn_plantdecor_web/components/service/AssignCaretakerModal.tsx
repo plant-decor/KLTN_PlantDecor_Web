@@ -21,6 +21,7 @@ import {
 import PersonIcon from "@mui/icons-material/Person";
 import StarIcon from "@mui/icons-material/Star";
 import { CaretakerInfo } from "@/types/service.types";
+import { get } from '@/lib/api/apiService';
 
 interface AssignCaretakerModalProps {
   open: boolean;
@@ -50,8 +51,7 @@ export const AssignCaretakerModal: React.FC<AssignCaretakerModalProps> = ({
         setFetchLoading(true);
         setError(null);
         // TODO: Replace with actual API call
-        const response = await fetch("/api/services/caretakers/available");
-        const data = await response.json();
+        const data = await get<CaretakerInfo[]>('/api/services/caretakers/available', undefined, false);
         setCaretakers(data.data || []);
         
         if (data.data && data.data.length > 0) {

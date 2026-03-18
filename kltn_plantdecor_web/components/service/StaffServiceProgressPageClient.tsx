@@ -17,6 +17,7 @@ import {
   ServiceProgress,
   AddOnService,
 } from "@/types/service.types";
+import { get, post } from '@/lib/api/apiService';
 
 type View = "timeline" | "detail";
 
@@ -58,10 +59,11 @@ export const StaffServiceProgressPageClient: React.FC = () => {
         setLoading(true);
         setError(null);
         // TODO: Replace with actual API call
-        const response = await fetch(
-          `/api/services/registrations?status=${ServiceRegistrationStatus.IN_PROGRESS}`
+        const data = await get<ServiceRegistration[]>(
+          '/api/services/registrations',
+          { status: ServiceRegistrationStatus.IN_PROGRESS },
+          false
         );
-        const data = await response.json();
         setInProgressServices(data.data || []);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Error fetching services";
@@ -80,13 +82,10 @@ export const StaffServiceProgressPageClient: React.FC = () => {
       setView("detail");
 
       // Fetch progress logs and add-ons for this service
-      const [progressRes, addOnsRes] = await Promise.all([
-        fetch(`/api/services/registrations/${service.id}/progress`),
-        fetch(`/api/services/registrations/${service.id}/addons`),
+      const [progressData, addOnsData] = await Promise.all([
+        get<ServiceProgress[]>(`/api/services/registrations/${service.id}/progress`, undefined, false),
+        get<AddOnService[]>(`/api/services/registrations/${service.id}/addons`, undefined, false),
       ]);
-
-      const progressData = await progressRes.json();
-      const addOnsData = await addOnsRes.json();
 
       setProgressLogs(progressData.data || []);
       setAddOns(addOnsData.data || []);
@@ -106,16 +105,7 @@ export const StaffServiceProgressPageClient: React.FC = () => {
   const handleApproveAddOn = async (addOnId: number) => {
     try {
       // TODO: Replace with actual API call
-      const response = await fetch(`/api/services/addons/${addOnId}/approve`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to approve add-on");
-      }
+      await post(`/api/services/addons/${addOnId}/approve`);
 
       // Update local state
       setAddOns((prev) =>
@@ -132,17 +122,7 @@ export const StaffServiceProgressPageClient: React.FC = () => {
   const handleRejectAddOn = async (addOnId: number, reason: string) => {
     try {
       // TODO: Replace with actual API call
-      const response = await fetch(`/api/services/addons/${addOnId}/reject`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ reason }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to reject add-on");
-      }
+      await post(`/api/services/addons/${addOnId}/reject`, { reason });
 
       // Update local state
       setAddOns((prev) =>
@@ -161,19 +141,7 @@ export const StaffServiceProgressPageClient: React.FC = () => {
 
     try {
       // TODO: Replace with actual API call
-      const response = await fetch(
-        `/api/services/registrations/${selectedService.id}/invoice`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to generate invoice");
-      }
+      await post(`/api/services/registrations/${selectedService.id}/invoice`);
 
       // Update service status to COMPLETED
       setInProgressServices((prev) =>

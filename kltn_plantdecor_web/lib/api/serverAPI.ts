@@ -2,6 +2,7 @@
 
 import { cookies } from 'next/headers';
 import type { User } from '@/types/auth.types';
+import serverAxiosInstance from '@/lib/api/serverAxiosInstance';
 
 /**
  * Server-side utility để fetch user data từ C# API
@@ -25,26 +26,20 @@ export async function fetchUserFromAPI(): Promise<User | null> {
       return null;
     }
 
-    const response = await fetch(`${API_BASE}/user/profile`, {
-      method: 'GET',
+    const response = await serverAxiosInstance.get<User>(`${API_BASE}/user/profile`, {
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
       },
     });
 
-    if (!response.ok) {
-      if (response.status === 401) {
-        // Token không hợp lệ, xóa cookie
-        cookieStore.delete('authToken');
-        cookieStore.delete('refreshToken');
-      }
-      return null;
+    return response.data;
+  } catch (error) {
+    if ((error as Error & { status?: number }).status === 401) {
+      const cookieStore = await cookies();
+      cookieStore.delete('authToken');
+      cookieStore.delete('refreshToken');
     }
 
-    const user: User = await response.json();
-    return user;
-  } catch (error) {
     console.error('Error fetching user from API:', error);
     return null;
   }
@@ -68,27 +63,24 @@ export async function fetchProtectedAPI<T>(
       throw new Error('No authentication token found');
     }
 
-    const response = await fetch(`${API_BASE}${endpoint}`, {
-      ...options,
+    const method = (options.method || 'GET').toUpperCase();
+    const response = await serverAxiosInstance.request<T>({
+      method,
+      url: `${API_BASE}${endpoint}`,
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        ...options.headers,
+        Authorization: `Bearer ${token}`,
+        ...(options.headers as Record<string, string> | undefined),
       },
+      data: options.body,
     });
 
-    if (!response.ok) {
-      if (response.status === 401) {
-        cookieStore.delete('authToken');
-        cookieStore.delete('refreshToken');
-        throw new Error('Token expired or invalid');
-      }
-      throw new Error(`API error: ${response.status}`);
+    return response.data;
+  } catch (error) {
+    if ((error as Error & { status?: number }).status === 401) {
+      cookieStore.delete('authToken');
+      cookieStore.delete('refreshToken');
     }
 
-    const data: T = await response.json();
-    return data;
-  } catch (error) {
     console.error(`Error fetching from ${endpoint}:`, error);
     return null;
   }

@@ -13,7 +13,7 @@ export const LoadingOverlay = () => {
   if (!isLoading) return null;
 
   return (
-    <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-[9999] flex items-center justify-center">
+    <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-9999 flex items-center justify-center">
       <div className="loader-wrap">
         <div className="loader">
           <span className="leaf" style={{ '--i': 0 } as React.CSSProperties}></span>

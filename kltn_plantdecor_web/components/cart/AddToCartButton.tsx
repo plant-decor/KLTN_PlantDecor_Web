@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type { SamplePlant } from '@/data/sampledata';
 import { useAuthStore } from '@/store/authStore';
+import { post } from '@/lib/api/apiService';
 
 interface AddToCartButtonProps {
   plant: SamplePlant;
@@ -31,24 +32,11 @@ export default function AddToCartButton({ plant }: AddToCartButtonProps) {
       setIsLoading(true);
       setError('');
       
-      const response = await fetch('/api/cart/add', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      await post('/api/cart/add', {
           userId,
           plantId: plant.id,
           quantity,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to add item to cart');
-      }
-
-      const data = await response.json();
+        }, false);
       setFeedbackMessage(
         tCart('addedSuccess', { quantity, name: plant.name }),
       );

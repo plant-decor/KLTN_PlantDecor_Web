@@ -2,7 +2,8 @@
 
 import { useEffect } from 'react';
 import { useAuthStore } from '@/store/authStore';
-import { fetchUserFromAPI } from '@/lib/api/serverAPI';
+import { get } from '@/lib/api/apiService';
+import type { User } from '@/types/auth.types';
 
 /**
  * Auth Provider
@@ -40,14 +41,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         // Gọi Server Action để lấy user info từ cookie
         // (Nếu cookie hợp lệ, backend sẽ return user info)
-        const response = await fetch('/api/auth/me', {
-          method: 'GET',
-          credentials: 'include', // Gửi cookie
-        });
-
-        if (response.ok) {
-          const user = await response.json();
-          setUser(user);
+        const response = await get<User>('/api/auth/me', undefined, false);
+        if (response.data) {
+          setUser(response.data);
         }
       } catch (error) {
         console.error('Failed to initialize auth:', error);

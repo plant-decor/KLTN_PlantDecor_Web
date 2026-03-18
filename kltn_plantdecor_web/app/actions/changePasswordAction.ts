@@ -1,6 +1,7 @@
 'use server';
 
-import type { LoginResponse } from '@/types/auth.types';
+import axios from 'axios';
+import serverAxiosInstance from '@/lib/api/serverAxiosInstance';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
 
@@ -22,34 +23,37 @@ export async function changePasswordAction(
   newPassword: string,
 ): Promise<ChangePasswordResponse> {
   try {
-    const response = await fetch(`${API_BASE}/auth/change-password`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include', // Gửi cookie để xác định user
-      body: JSON.stringify({
+    const response = await serverAxiosInstance.post<ChangePasswordResponse>(
+      `${API_BASE}/auth/change-password`,
+      {
         oldPassword,
         newPassword,
-      }),
-    });
+      }
+    );
 
-    if (!response.ok) {
-      const errorData = await response.json();
+    if (response.data?.success === false) {
       return {
         success: false,
-        message: errorData.message || 'Đổi mật khẩu thất bại',
+        message: response.data.message || 'Đổi mật khẩu thất bại',
       };
     }
-
-    const data = await response.json();
 
     // Bước 4: Trả về success
     return {
       success: true,
-      message: 'Mật khẩu đã được thay đổi thành công',
+      message: response.data?.message || 'Mật khẩu đã được thay đổi thành công',
     };
   } catch (error) {
+    if (axios.isAxiosError(error)) {
+      return {
+        success: false,
+        message:
+          (error.response?.data as { message?: string } | undefined)?.message ||
+          error.message ||
+          'Đổi mật khẩu thất bại',
+      };
+    }
+
     console.error('Change password error:', error);
     return {
       success: false,

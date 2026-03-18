@@ -16,6 +16,7 @@ import {
   CareServicePackage,
   CareServicePackageFormData,
 } from "@/types/service.types";
+import { del, get, patch, post, put } from '@/lib/api/apiService';
 
 export const AdminCarePackagePageClient: React.FC = () => {
   const [packages, setPackages] = useState<CareServicePackage[]>([]);
@@ -33,8 +34,7 @@ export const AdminCarePackagePageClient: React.FC = () => {
         setLoading(true);
         setError(null);
         // TODO: Replace with actual API call
-        const response = await fetch("/api/services/packages");
-        const data = await response.json();
+        const data = await get<CareServicePackage[]>('/api/services/packages', undefined, false);
         setPackages(data.data || []);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Error fetching packages";
@@ -70,19 +70,9 @@ export const AdminCarePackagePageClient: React.FC = () => {
       
       const method = selectedPackage ? "PUT" : "POST";
 
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to save package");
-      }
-
-      const result = await response.json();
+      const result = method === 'PUT'
+        ? await put<CareServicePackage>(url, data)
+        : await post<CareServicePackage>(url, data);
       const message = selectedPackage ? "Cập nhật gói thành công" : "Tạo gói thành công";
       
       setSuccess(message);
@@ -109,13 +99,7 @@ export const AdminCarePackagePageClient: React.FC = () => {
   const handleDelete = async (packageId: number) => {
     try {
       // TODO: Replace with actual API call
-      const response = await fetch(`/api/services/packages/${packageId}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete package");
-      }
+      await del(`/api/services/packages/${packageId}`);
 
       setPackages((prev) => prev.filter((p) => p.id !== packageId));
       setSuccess("Xoá gói thành công");
@@ -130,19 +114,7 @@ export const AdminCarePackagePageClient: React.FC = () => {
   const handleStatusToggle = async (packageId: number, isActive: boolean) => {
     try {
       // TODO: Replace with actual API call
-      const response = await fetch(`/api/services/packages/${packageId}/status`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ isActive }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update status");
-      }
-
-      const result = await response.json();
+      const result = await patch<CareServicePackage>(`/api/services/packages/${packageId}/status`, { isActive });
       setPackages((prev) =>
         prev.map((p) => (p.id === packageId ? result.data : p))
       );

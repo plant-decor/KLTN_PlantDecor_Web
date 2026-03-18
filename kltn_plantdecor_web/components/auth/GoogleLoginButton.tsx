@@ -1,69 +1,97 @@
 'use client';
 
+import { useState } from 'react';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useTranslations } from 'next-intl';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'react-toastify';
 import { useAuthStore } from '@/store/authStore';
+import { useLoadingStore } from '@/store/loadingStore';
 import type { User } from '@/types/auth.types';
+import { get } from '@/lib/api/apiService';
+import { resolvePostLoginRedirect } from '@/lib/utils/authRedirect';
+import { getDeviceId } from '@/lib/utils/deviceId';
+import { loginWithGoogleAction } from '@/app/actions/authenticationActions';
 
 export default function GoogleLoginButton() {
     const t = useTranslations('auth');
     const router = useRouter();
     const searchParams = useSearchParams();
+    const pathname = usePathname();
     const { setUser } = useAuthStore();
+    const { setLoading } = useLoadingStore();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    const fetchProfileWithRetry = async (): Promise<User | undefined> => {
+        const retryDelays = [0, 200];
+
+        for (const delay of retryDelays) {
+            if (delay > 0) {
+                await sleep(delay);
+            }
+
+            try {
+                const profileResponse = await get<User>('/api/auth/me', undefined, false);
+                if (profileResponse.data) {
+                    return profileResponse.data;
+                }
+            } catch (profileError) {
+                console.warn('Failed to fetch profile after Google login:', profileError);
+            }
+        }
+
+        return undefined;
+    };
 
     const googleLogin = useGoogleLogin({
-        onSuccess: (credentialResponse) => {
-            console.log('=== GOOGLE LOGIN SUCCESS ===', credentialResponse);
-            fetch('/api/auth/google', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    accessToken: credentialResponse.access_token,
-                    deviceId: 'web-client'
-                }),
-            })
-                .then(async (res) => {
-                    const data = await res.json();
-                    
-                    if (!res.ok || !data.success) {
-                        toast.error(data.message || data.error || t('loginFailed'));
-                        return;
-                    }
+        onSuccess: async (credentialResponse) => {
+            setIsSubmitting(true);
+            setLoading(true);
 
-                    if (data.user) {
-                        // Cập nhật auth store với user info
-                        setUser(data.user as User);
-                        
-                        // Hiển thị thông báo thành công
-                        toast.success(data.message || t('welcomeUser'));
-                        
-                        // Lấy redirect URL từ query params hoặc redirect về home
-                        const redirectToRaw = searchParams.get('redirectTo');
-                        const redirectTo = redirectToRaw && redirectToRaw.startsWith('/')
-                            ? redirectToRaw
-                            : '/';
-                        const resolvedRedirectTo = data.user.id
-                            ? redirectTo.replace(/\[(userid|userId)\]/g, String(data.user.id))
-                            : redirectTo;
-                        
-                        // Redirect đến home/dashboard sau khi login thành công
-                        setTimeout(() => {
-                            router.push(resolvedRedirectTo);
-                        }, 500);
-                    } else {
-                        toast.error(t('loginFailed'));
-                    }
-                })
-                .catch((error) => {
-                    console.error('Google login error:', error);
-                    toast.error(t('loginFailed'));
+            try {
+                const result = await loginWithGoogleAction({
+                    accessToken: credentialResponse.access_token,
+                    deviceId: getDeviceId(),
                 });
+
+                if (!result.success) {
+                    toast.error(result.message || t('loginFailed'));
+                    return;
+                }
+
+                const profileUser = await fetchProfileWithRetry();
+                const resolvedUser: User | undefined = profileUser || result.user;
+
+                if (!resolvedUser) {
+                    toast.error(result.message || t('loginFailed'));
+                    return;
+                }
+
+                setUser(resolvedUser);
+
+                const resolvedRedirectTo = resolvePostLoginRedirect({
+                    redirectToRaw: searchParams.get('redirectTo'),
+                    userId: resolvedUser.id,
+                    userRole: resolvedUser.role,
+                    pathname,
+                });
+
+                toast.success(result.message || t('welcomeUser'));
+                router.replace(resolvedRedirectTo);
+                router.refresh();
+            } catch (error) {
+                console.error('Google login error:', error);
+                toast.error(t('loginFailed'));
+            } finally {
+                setIsSubmitting(false);
+                setLoading(false);
+            }
         },
         onError: () => {
+            setIsSubmitting(false);
+            setLoading(false);
             toast.error(t('loginFailed'));
         }
     });
@@ -72,12 +100,13 @@ export default function GoogleLoginButton() {
     return (
         <button
             onClick={() => googleLogin()}
+            disabled={isSubmitting}
             className="w-full h-12 border border-gray-300 hover:bg-blue-300 font-semibold rounded-lg cursor-pointer transition-all hover:scale-105 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
         >
             <span>{t('loginWithGoogle')}</span>
             <span className="w-2"></span>
             <svg width="30" height="30" viewBox="0 0 256 262" xmlns="http://www.w3.org/2000/svg">
-                <g fill="none" fill-rule="evenodd">
+                <g fill="none" fillRule="evenodd">
                     <path d="M255.68 131c0-10.6-.95-20.8-2.73-30.6H130v57.9h70.4c-3 16.2-12.1 29.9-25.7 39v32h41.5c24.3-22.4 39.48-55.4 39.48-98.3z"
                         fill="#4285F4" />
 

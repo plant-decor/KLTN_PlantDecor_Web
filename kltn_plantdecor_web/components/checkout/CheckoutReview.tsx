@@ -156,12 +156,12 @@ export default function CheckoutReview({
                       </TableCell>
                       <TableCell align="right">
                         <Typography variant="body2">
-                          {item.plant.price.toLocaleString('vi-VN')}₫
+                          {parseFloat(item.plant.basePrice).toLocaleString('vi-VN')}₫
                         </Typography>
                       </TableCell>
                       <TableCell align="right">
                         <Typography variant="body2">
-                          {(item.plant.price * item.quantity).toLocaleString(
+                          {(parseFloat(item.plant.basePrice) * item.quantity).toLocaleString(
                             'vi-VN'
                           )}
                           ₫

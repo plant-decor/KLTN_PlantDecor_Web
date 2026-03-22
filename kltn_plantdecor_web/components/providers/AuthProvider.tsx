@@ -1,8 +1,14 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useAuthStore } from '@/store/authStore';
-import { fetchUserFromAPI } from '@/lib/api/serverAPI';
+import { useAuthStore } from '@/lib/store/authStore';
+import type { User } from '@/types/auth.types';
+import { refreshTokenAction } from '@/app/actions/authenticationActions';
+import {
+  getClientAccessToken,
+  setClientAccessToken,
+  setClientRefreshToken,
+} from '@/lib/axios/tokenStorage';
 
 /**
  * Auth Provider
@@ -23,41 +29,40 @@ import { fetchUserFromAPI } from '@/lib/api/serverAPI';
  *   );
  * }
  */
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const { setUser } = useAuthStore();
+export function AuthProvider({ children, initialUser }: { children: React.ReactNode, initialUser: User | null; }) {
+  const { setUser, clearAll } = useAuthStore();
 
   useEffect(() => {
     // Khi app load, kiểm tra xem user đã login chưa
     const initializeAuth = async () => {
       try {
-        const hasUserRoleCookie = document.cookie
-          .split(';')
-          .some((cookie) => cookie.trim().startsWith('userRole='));
+        if (initialUser) {
+          setUser(initialUser);
 
-        if (!hasUserRoleCookie) {
-          return;
-        }
+          if (!getClientAccessToken()) {
+            const refreshed = await refreshTokenAction();
 
-        // Gọi Server Action để lấy user info từ cookie
-        // (Nếu cookie hợp lệ, backend sẽ return user info)
-        const response = await fetch('/api/auth/me', {
-          method: 'GET',
-          credentials: 'include', // Gửi cookie
-        });
+            if (refreshed.success && refreshed.token) {
+              setClientAccessToken(refreshed.token);
 
-        if (response.ok) {
-          const user = await response.json();
-          setUser(user);
+              if (refreshed.refreshToken) {
+                setClientRefreshToken(refreshed.refreshToken);
+              }
+            } else {
+              clearAll();
+            }
+          }
         }
       } catch (error) {
         console.error('Failed to initialize auth:', error);
+        clearAll();
       }
     };
 
     // Delay 100ms để tránh hydration issues
     const timer = setTimeout(initializeAuth, 100);
     return () => clearTimeout(timer);
-  }, [setUser]);
+  }, [clearAll, initialUser, setUser]);
 
   return <>{children}</>;
 }

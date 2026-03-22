@@ -12,6 +12,7 @@ import {
   ServiceRegistration,
   ServiceRegistrationStatus,
 } from "@/types/service.types";
+import { get, post } from '@/lib/api/apiService';
 
 type View = "list" | "detail";
 
@@ -29,11 +30,12 @@ export const StaffServiceRequestPageClient: React.FC = () => {
         setLoading(true);
         setError(null);
         // TODO: Replace with actual API call
-        const response = await fetch(
-          `/api/services/registrations?status=${ServiceRegistrationStatus.PENDING_CONFIRMATION}`
+        const data = await get<ServiceRegistration[]>(
+          '/api/services/registrations',
+          { status: ServiceRegistrationStatus.PENDING_CONFIRMATION },
+          false
         );
-        const data = await response.json();
-        setRequests(data.data || []);
+        setRequests(data || []);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Error fetching requests";
         setError(message);
@@ -60,24 +62,11 @@ export const StaffServiceRequestPageClient: React.FC = () => {
 
     try {
       // TODO: Replace with actual API call
-      const response = await fetch(
-        `/api/services/registrations/${selectedRequest.id}/confirm`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            mainCaretakerId: caretakerId,
-            estimatedDuration,
-            status: ServiceRegistrationStatus.CONFIRMED,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to confirm request");
-      }
+      await post(`/api/services/registrations/${selectedRequest.id}/confirm`, {
+        mainCaretakerId: caretakerId,
+        estimatedDuration,
+        status: ServiceRegistrationStatus.CONFIRMED,
+      }, false);
 
       // Remove from list and go back
       setRequests((prev) =>
@@ -95,23 +84,10 @@ export const StaffServiceRequestPageClient: React.FC = () => {
 
     try {
       // TODO: Replace with actual API call
-      const response = await fetch(
-        `/api/services/registrations/${selectedRequest.id}/reject`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            status: ServiceRegistrationStatus.REJECTED,
-            cancelReason: reason,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to reject request");
-      }
+      await post(`/api/services/registrations/${selectedRequest.id}/reject`, {
+        status: ServiceRegistrationStatus.REJECTED,
+        cancelReason: reason,
+      }, false);
 
       // Remove from list and go back
       setRequests((prev) =>

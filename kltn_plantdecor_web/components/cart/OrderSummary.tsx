@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Box, Button, Card, CardContent, Typography } from '@mui/material';
 import type { CartItem } from '@/types/cart.types';
-import { useCartStore } from '@/store/cartStore';
-import { useAuthStore } from '@/store/authStore';
+import { useCartStore } from '@/lib/store/cartStore';
+import { useAuthStore } from '@/lib/store/authStore';
 import { ACTIVE_SAMPLE_USER_ID } from '@/data/sampledata';
 
 interface OrderSummaryProps {
@@ -21,7 +21,7 @@ export default function OrderSummary({ items, isUpdating, userId }: OrderSummary
   const { user } = useAuthStore();
 
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
-  const subtotal = items.reduce((total, item) => total + item.plant.price * item.quantity, 0);
+  const subtotal = items.reduce((total, item) => total + parseFloat(item.plant.basePrice) * item.quantity, 0);
   const shippingFee = 0; // Free shipping
   const total = subtotal + shippingFee;
 

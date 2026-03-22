@@ -1,6 +1,6 @@
 'use client';
 
-import { useLoadingStore } from '@/store/loadingStore';
+import { useLoadingStore } from '@/lib/store/zustand';
 
 /**
  * LoadingOverlay Component
@@ -8,12 +8,12 @@ import { useLoadingStore } from '@/store/loadingStore';
  * Controlled by axios interceptor via loadingStore
  */
 export const LoadingOverlay = () => {
-  const { isLoading } = useLoadingStore();
+  const { loading } = useLoadingStore();
 
-  if (!isLoading) return null;
+  if (!loading) return null;
 
   return (
-    <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-[9999] flex items-center justify-center">
+    <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-9999 flex items-center justify-center">
       <div className="loader-wrap">
         <div className="loader">
           <span className="leaf" style={{ '--i': 0 } as React.CSSProperties}></span>

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { useParams, usePathname, useRouter } from 'next/navigation';
 import { useMemo, type ReactNode } from 'react';
 import {
   Dashboard as DashboardIcon,
@@ -22,13 +22,15 @@ import {
   Notifications as ReminderIcon,
   Inventory,
 } from '@mui/icons-material';
-import { ACTIVE_SAMPLE_USER_ID, SAMPLE_USERS } from '@/data/sampledata';
+// import { ACTIVE_SAMPLE_USER_ID, SAMPLE_USERS } from '@/data/sampledata';
 import {
   SIDEBAR_ITEMS_BY_ROLE,
   SIDEBAR_LOGOUT_ITEM,
   type SidebarIconKey,
 } from '@/lib/constants/sidebar';
 import type { UserRole } from '@/lib/constants/header';
+import { useAuthStore } from '@/lib/store/authStore';
+import { logoutAction } from '@/app/actions/loginAction';
 
 const ICONS: Record<SidebarIconKey, ReactNode> = {
   dashboard: <DashboardIcon sx={{ fontSize: 18 }} />,
@@ -84,16 +86,34 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ isOpen, onClose, role }: SidebarProps) {
+  const router = useRouter();
+  const params = useParams<{ locale?: string }>();
   const pathname = usePathname();
-  const activeUser = useMemo(
-    () => SAMPLE_USERS.find((user) => user.id === ACTIVE_SAMPLE_USER_ID) || null,
-    []
-  );
-  const resolvedRole = role ?? activeUser?.role ?? 'guest';
+  const { clearAll } = useAuthStore();
+  const { user } = useAuthStore();
+  const resolvedRole = role ?? (user?.role as UserRole | undefined) ?? 'guest';
   const items = SIDEBAR_ITEMS_BY_ROLE[resolvedRole] ?? [];
   const allHrefs = items.map((item) => item.href);
   const activeItem = items.find((item) => isActiveRoute(pathname, item.href, allHrefs));
   const headerLabel = activeItem?.label ?? 'Dashboard';
+
+  const handleLogout = async () => {
+    try {
+      const result = await logoutAction();
+
+      if (result.success) {
+        // Clear Zustand store (user + tokens)
+        clearAll();
+        onClose();
+
+        const locale = Array.isArray(params?.locale) ? params.locale[0] : params?.locale;
+        const loginPath = locale ? `/${locale}/login` : '/login';
+        router.replace(loginPath);
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   if (items.length === 0) {
     return null;
@@ -138,14 +158,14 @@ export default function Sidebar({ isOpen, onClose, role }: SidebarProps) {
         </div>
       </div>
       <div className="border-t border-gray-100 px-6 py-4">
-        <Link
-          href={SIDEBAR_LOGOUT_ITEM.href}
+        <button
+          type="button"
           className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-green-600"
-          onClick={onClose}
+          onClick={handleLogout}
         >
           <span className="text-gray-500">{ICONS[SIDEBAR_LOGOUT_ITEM.icon]}</span>
           <span>{SIDEBAR_LOGOUT_ITEM.label}</span>
-        </Link>
+        </button>
       </div>
     </aside>
   );

@@ -1,6 +1,6 @@
 import type { UserRole } from '@/lib/constants/header';
 
-export const ROLE_OPTIONS: UserRole[] = ['user', 'admin', 'manager', 'staff', 'shipper', 'caretaker'];
+export const ROLE_OPTIONS: UserRole[] = ['customer', 'admin', 'manager', 'staff', 'shipper', 'caretaker'];
 
 export const STATUS_OPTIONS = ['active', 'inactive'] as const;
 

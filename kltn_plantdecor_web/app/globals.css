@@ -173,11 +173,6 @@ h1, h2, h3, h4, h5, h6 {
         animation: leaf-fade 1.2s linear infinite;
         animation-delay: calc(var(--i) * -0.08s);
       }
-
-      .hidden {
-        display: none;
-      }
-
       @keyframes leaf-fade {
         0%,
         100% {

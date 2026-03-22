@@ -49,8 +49,8 @@ export default function ProductTable({
   onUpdateThumbnail,
 }: ProductTableProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<string[]>([]);
-  const [tagFilter, setTagFilter] = useState<string[]>([]);
+  const [categoryFilter, setCategoryFilter] = useState<number[]>([]);
+  const [tagFilter, setTagFilter] = useState<number[]>([]);
   const [expandedProduct, setExpandedProduct] = useState<string | null>(null);
   const [instanceModalOpen, setInstanceModalOpen] = useState(false);
   const [editingInstance, setEditingInstance] = useState<PlantInstance | undefined>();
@@ -153,7 +153,7 @@ export default function ProductTable({
               {tags.map((tag) => (
                 <Chip
                   key={tag.id}
-                  label={tag.name}
+                  label={tag.tagName}
                   onClick={() =>
                     setTagFilter((prev) =>
                       prev.includes(tag.id)
@@ -163,9 +163,9 @@ export default function ProductTable({
                   }
                   variant={tagFilter.includes(tag.id) ? 'filled' : 'outlined'}
                   sx={{
-                    backgroundColor: tagFilter.includes(tag.id) ? tag.color : 'transparent',
-                    color: tagFilter.includes(tag.id) ? '#fff' : tag.color,
-                    borderColor: tag.color,
+                    backgroundColor: "#e0f7fa",
+                    color: tagFilter.includes(tag.id) ? '#fff' : '#000',
+                    borderColor: "#ccc",
                   }}
                 />
               ))}
@@ -256,10 +256,10 @@ export default function ProductTable({
                           return (
                             <Chip
                               key={tagId}
-                              label={tag?.name}
+                              label={tag?.tagName}
                               size="small"
                               sx={{
-                                backgroundColor: tag?.color,
+                                backgroundColor: "#e0f7fa",
                                 color: '#fff',
                               }}
                             />
@@ -333,7 +333,7 @@ export default function ProductTable({
                                     <TableCell>Image</TableCell>
                                     <TableCell>SKU</TableCell>
                                     <TableCell>Quantity</TableCell>
-                                                                        <TableCell>Price</TableCell>
+                                    <TableCell>Price</TableCell>
                                     <TableCell>Condition</TableCell>
                                     <TableCell>Location</TableCell>
                                     <TableCell>Date Added</TableCell>

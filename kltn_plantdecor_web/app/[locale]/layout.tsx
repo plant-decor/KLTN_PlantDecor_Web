@@ -5,10 +5,11 @@ import { type ReactNode } from 'react';
 import { routing } from '@/i18n/routing';
 import { AuthProvider } from '@/components/providers/AuthProvider';
 import { SignalRProvider } from '@/components/providers/SignalRProvider';
-import { GoogleRecaptchaProviderWrapper } from '@/components/providers/GoogleRecaptchaProvider';
+import { ToastProvider } from '@/components/providers/ToastProvider';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
 import { SessionInvalidatedModal } from '@/components/auth/SessionInvalidatedModal';
 import type { Metadata } from 'next';
+import { getCurrentUser } from '@/lib/auth/getCurrentUser';
 
 export const metadata: Metadata = {
   title: 'Plant Decor',
@@ -30,18 +31,18 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
 
   // Load messages for the current locale
   const messages = await getMessages();
+  const initialUser = await getCurrentUser();
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
-      <GoogleRecaptchaProviderWrapper>
-        <AuthProvider>
-          <SignalRProvider autoConnect={true}>
+        <AuthProvider initialUser={initialUser}>
+          <SignalRProvider autoConnect={false}>
+            <ToastProvider />
             <LoadingOverlay />
             <SessionInvalidatedModal />
             {children}
           </SignalRProvider>
         </AuthProvider>
-      </GoogleRecaptchaProviderWrapper>
     </NextIntlClientProvider>
   );
 }

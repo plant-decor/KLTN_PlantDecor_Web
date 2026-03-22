@@ -7,7 +7,7 @@ export interface ValidationErrors {
 }
 
 export const DEFAULT_FORM_DATA: UserFormData = {
-  role: 'user',
+  role: 'customer',
   email: '',
   phoneNumber: '',
   password: '',

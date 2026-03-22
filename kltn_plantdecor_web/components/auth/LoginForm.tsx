@@ -31,12 +31,6 @@ export default function LoginForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('=== LOGIN FORM SUBMISSION ===');
-    console.log({
-      email,
-      password,
-      timestamp: new Date().toISOString(),
-    });
     setErrors({});
 
     await onSubmit(email, password);

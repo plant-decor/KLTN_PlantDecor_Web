@@ -32,12 +32,13 @@ export type SidebarIconKey =
 
 export const SIDEBAR_ITEMS_BY_ROLE: Record<UserRole, SidebarItem[]> = {
   guest: [],
-  user: [],
+  customer: [],
   admin: [
     { label: 'System Dashboard', href: '/admin', icon: 'dashboard' },
     { label: 'Reminder Management', href: '/admin/reminder-management', icon: 'reminder' },
     { label: 'Service Management', href: '/admin/service-management', icon: 'services' },
     { label: 'User Management', href: '/admin/user-management', icon: 'users' },
+    { label: 'Categories & Tags', href: '/admin/categories-tags', icon: 'tags' },
     { label: 'Store Management', href: '/admin/store-management', icon: 'store' },
     { label: 'Setting', href: '/admin/setting', icon: 'settings' },
   ],
@@ -45,7 +46,6 @@ export const SIDEBAR_ITEMS_BY_ROLE: Record<UserRole, SidebarItem[]> = {
     { label: 'Store Dashboard', href: '/manager', icon: 'dashboard' },
     { label: 'Store Metrics', href: '/manager/store-metrics', icon: 'metrics' },
     { label: 'Store Catalog', href: '/manager/store-catalog', icon: 'catalog' },
-    { label: 'Categories & Tags', href: '/manager/categories-tags', icon: 'tags' },
     { label: 'Store Users', href: '/manager/store-users', icon: 'users' },
     { label: 'Sales Orders', href: '/manager/sales-orders', icon: 'orders' },
     { label: 'Service Orders', href: '/manager/service-orders', icon: 'services' },

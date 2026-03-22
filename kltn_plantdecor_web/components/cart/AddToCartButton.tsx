@@ -2,12 +2,13 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import type { SamplePlant } from '@/data/sampledata';
-import { useAuthStore } from '@/store/authStore';
-import { post } from '@/lib/api/apiService';
+import type { Plant } from '@/data/sampledata';
+import { useAuthStore } from '@/lib/store/authStore';
+import { addPlantToCart } from '@/lib/api/cartWishlistService';
+import { notifyCartUpdated } from '@/lib/utils/cartEvents';
 
 interface AddToCartButtonProps {
-  plant: SamplePlant;
+  plant: Plant;
 }
 
 export default function AddToCartButton({ plant }: AddToCartButtonProps) {
@@ -19,10 +20,8 @@ export default function AddToCartButton({ plant }: AddToCartButtonProps) {
   const [error, setError] = useState('');
   const { user } = useAuthStore();
 
-  const userId = user?.id?.toString();
-
   const handleAddToCart = async () => {
-    if (!userId) {
+    if (!user?.id) {
       setError('Vui long dang nhap de them san pham vao gio hang');
       setTimeout(() => setError(''), 3000);
       return;
@@ -32,11 +31,8 @@ export default function AddToCartButton({ plant }: AddToCartButtonProps) {
       setIsLoading(true);
       setError('');
       
-      await post('/api/cart/add', {
-          userId,
-          plantId: plant.id,
-          quantity,
-        }, false);
+      await addPlantToCart(plant.id, quantity);
+      notifyCartUpdated();
       setFeedbackMessage(
         tCart('addedSuccess', { quantity, name: plant.name }),
       );
@@ -57,7 +53,7 @@ export default function AddToCartButton({ plant }: AddToCartButtonProps) {
   };
 
   const incrementQuantity = () => {
-    if (quantity < plant.stock) {
+    if (quantity < plant.availableCommonQuantity) {
       setQuantity(quantity + 1);
     }
   };
@@ -86,7 +82,7 @@ export default function AddToCartButton({ plant }: AddToCartButtonProps) {
           <button
             onClick={incrementQuantity}
             className="px-4 py-2 hover:bg-gray-100 transition-colors"
-            disabled={quantity >= plant.stock}
+            disabled={quantity >= plant.availableCommonQuantity || quantity >= plant.availableInstances || quantity >= plant.totalAvailableStock}
           >
             +
           </button>
@@ -95,16 +91,16 @@ export default function AddToCartButton({ plant }: AddToCartButtonProps) {
         {/* Add to Cart Button */}
         <button
           onClick={handleAddToCart}
-          disabled={plant.stock === 0 || isLoading}
+          disabled={plant.availableCommonQuantity === 0 || isLoading}
           className={`flex-1 px-8 py-3 rounded-lg font-semibold transition-colors ${
-            plant.stock > 0 && !isLoading
+            plant.availableCommonQuantity > 0 && !isLoading
               ? 'bg-green-600 text-white hover:bg-green-700'
               : 'bg-gray-300 text-gray-500 cursor-not-allowed'
           }`}
         >
           {isLoading
             ? tCart('processing')
-            : plant.stock > 0
+            : plant.availableCommonQuantity > 0
             ? tProducts('addToCart')
             : tProducts('outOfStock')}
         </button>

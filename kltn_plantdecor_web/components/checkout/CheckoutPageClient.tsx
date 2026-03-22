@@ -12,7 +12,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
-import { useCartStore } from '@/store/cartStore';
+import { useCartStore } from '@/lib/store/cartStore';
 import CheckoutShipping from '@/components/checkout/CheckoutShipping';
 import CheckoutPayment from '@/components/checkout/CheckoutPayment';
 import CheckoutReview from '@/components/checkout/CheckoutReview';
@@ -91,7 +91,7 @@ export default function CheckoutPageClient({
           userId,
           cartId,
           checkoutData,
-        });
+        }, false);
       setActiveStep(3); // Complete step
     } catch (err) {
       const errorMessage =

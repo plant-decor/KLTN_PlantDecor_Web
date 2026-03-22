@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/authStore';
+import { useAuthStore } from '@/lib/store/authStore';
 import CartBadge from '@/components/cart/CartBadge';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import Navigation from './Navigation';
@@ -13,6 +13,7 @@ import { logoutAction } from '@/app/actions/loginAction';
 import { InputAdornment, TextField } from '@mui/material';
 import { Search as SearchIcon, ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
 import { useTranslations } from 'next-intl';
+import type { CategoryResponse } from '@/lib/api/categoriesService';
 
 /**
  * Header Component (Integrated with Navigation)
@@ -32,8 +33,12 @@ const resolveHref = (href: string, userId?: number | null) => {
   return href;
 };
 
-export default function Header() {
-  const { user, clearUser } = useAuthStore();
+interface HeaderProps {
+  initialStoreCategories?: CategoryResponse[];
+}
+
+export default function Header({ initialStoreCategories = [] }: HeaderProps) {
+  const { user, clearAll } = useAuthStore();
   const router = useRouter();
   const params = useParams<{ locale?: string }>();
   const isUser = !!user;
@@ -43,7 +48,7 @@ export default function Header() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const t = useTranslations('common');
   const tAuth = useTranslations('auth');
-  
+
   // Check if user has notification access (staff, manager, admin, shipper, caretaker)
   const hasNotificationAccess = user && ['ADMIN', 'MANAGER', 'STAFF', 'SHIPPER', 'CARETAKER'].includes(user.role?.toUpperCase() || '');
 
@@ -52,7 +57,8 @@ export default function Header() {
       const result = await logoutAction();
 
       if (result.success) {
-        clearUser();
+        // Clear Zustand store (user + tokens)
+        clearAll();
         setIsUserMenuOpen(false);
 
         const locale = Array.isArray(params?.locale) ? params.locale[0] : params?.locale;
@@ -169,7 +175,7 @@ export default function Header() {
       </header>
 
       {/* Navigation Section */}
-      <Navigation />
+      <Navigation initialStoreCategories={initialStoreCategories} />
     </>
   );
 }

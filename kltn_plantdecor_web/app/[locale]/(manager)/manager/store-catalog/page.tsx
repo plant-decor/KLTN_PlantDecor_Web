@@ -4,9 +4,6 @@ import { useState, useMemo } from 'react';
 import { Box, Button, Container, Typography, TextField, Paper } from '@mui/material';
 import { Add as AddIcon, Search as SearchIcon } from '@mui/icons-material';
 import {
-  mockProducts,
-  mockCategories,
-  mockTags,
   type Product,
   type PlantInstance,
 } from '@/data/storeCatalogData';
@@ -15,9 +12,10 @@ import ProductTable from '@/components/store-catalog/ProductTable';
 import { useProductFilter } from '@/hooks/useProductFilter';
 
 export default function StoreCatalogPage() {
-  const [products, setProducts] = useState<Product[]>(mockProducts);
-  const [categories] = useState(mockCategories);
-  const [tags] = useState(mockTags);
+  const [products, setProducts] = useState<Product[]>([]);
+  // TODO: Implement categories and tags from API
+  const categories: any[] = [];
+  const tags: any[] = [];
   const [productModalOpen, setProductModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | undefined>();
 

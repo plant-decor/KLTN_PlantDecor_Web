@@ -1,95 +1,68 @@
-import internalAxiosInstance from '@/lib/api/internalAxiosInstance';
-import { useLoadingStore } from '@/store/loadingStore';
-import type { ResponseModel } from '@/types/api.types';
+import type { AxiosRequestConfig } from "axios";
+import * as apiClient from "@/lib/api/apiService.client";
+import * as apiServer from "@/lib/api/apiService.server";
 
-export const get = async <T>(
+// Backward-compatible bridge. Prefer importing from apiService.client/apiService.server directly.
+export async function get<T>(
   url: string,
-  params?: unknown,
-  loading?: boolean
-): Promise<ResponseModel<T>> => {
-  try {
-    const showLoading = loading ?? true;
-    useLoadingStore.getState().setIsLoadingFlag(showLoading);
-    const response = await internalAxiosInstance.get<ResponseModel<T>>(url, {
-      params,
-      showLoading,
-    });
-    return response.data;
-  } catch (error) {
-    console.error(`Error fetching ${url}:`, error);
-    throw error;
+  params: AxiosRequestConfig["params"] = undefined,
+  isServer = false,
+  loading = true,
+  config: AxiosRequestConfig = {}
+): Promise<T> {
+  if (isServer) {
+    return apiServer.get<T>(url, params, config);
   }
-};
+  return apiClient.get<T>(url, params, loading, config);
+}
 
-export const post = async <T>(
+export async function post<T>(
   url: string,
-  data?: unknown,
-  loading?: boolean
-): Promise<ResponseModel<T>> => {
-  try {
-    const showLoading = loading ?? true;
-    useLoadingStore.getState().setIsLoadingFlag(showLoading);
-    const response = await internalAxiosInstance.post<ResponseModel<T>>(url, data, {
-      showLoading,
-    });
-    return response.data;
-  } catch (error) {
-    console.error(`Error posting to ${url}:`, error);
-    throw error;
+  data: unknown = undefined,
+  isServer = false,
+  loading = true,
+  config: AxiosRequestConfig = {}
+): Promise<T> {
+  if (isServer) {
+    return apiServer.post<T>(url, data, config);
   }
-};
+  return apiClient.post<T>(url, data, loading, config);
+}
 
-export const put = async <T>(
+export async function put<T>(
   url: string,
-  data?: unknown,
-  loading?: boolean
-): Promise<ResponseModel<T>> => {
-  try {
-    const showLoading = loading ?? true;
-    useLoadingStore.getState().setIsLoadingFlag(showLoading);
-    const response = await internalAxiosInstance.put<ResponseModel<T>>(url, data, {
-      showLoading,
-    });
-    return response.data;
-  } catch (error) {
-    console.error(`Error updating ${url}:`, error);
-    throw error;
+  data: unknown = undefined,
+  isServer = false,
+  loading = true,
+  config: AxiosRequestConfig = {}
+): Promise<T> {
+  if (isServer) {
+    return apiServer.put<T>(url, data, config);
   }
-};
+  return apiClient.put<T>(url, data, loading, config);
+}
 
-export const patch = async <T>(
+export async function patch<T>(
   url: string,
-  data?: unknown,
-  loading?: boolean
-): Promise<ResponseModel<T>> => {
-  try {
-    const showLoading = loading ?? true;
-    useLoadingStore.getState().setIsLoadingFlag(showLoading);
-    const response = await internalAxiosInstance.patch<ResponseModel<T>>(url, data, {
-      showLoading,
-    });
-    return response.data;
-  } catch (error) {
-    console.error(`Error patching ${url}:`, error);
-    throw error;
+  data: unknown = undefined,
+  isServer = false,
+  loading = true,
+  config: AxiosRequestConfig = {}
+): Promise<T> {
+  if (isServer) {
+    return apiServer.patch<T>(url, data, config);
   }
-};
+  return apiClient.patch<T>(url, data, loading, config);
+}
 
-export const del = async <T>(
+export async function del<T>(
   url: string,
-  loading?: boolean,
-  data?: unknown
-): Promise<ResponseModel<T>> => {
-  try {
-    const showLoading = loading ?? true;
-    useLoadingStore.getState().setIsLoadingFlag(showLoading);
-    const response = await internalAxiosInstance.delete<ResponseModel<T>>(url, {
-      showLoading,
-      data,
-    });
-    return response.data;
-  } catch (error) {
-    console.error(`Error deleting ${url}:`, error);
-    throw error;
+  isServer = false,
+  loading = true,
+  config: AxiosRequestConfig = {}
+): Promise<T> {
+  if (isServer) {
+    return apiServer.del<T>(url, config);
   }
-};
+  return apiClient.del<T>(url, loading, config);
+}

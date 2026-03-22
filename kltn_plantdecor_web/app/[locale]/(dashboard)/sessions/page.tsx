@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuthStore } from '@/store/authStore';
+import { useAuthStore } from '@/lib/store/authStore';
 import { logoutAllAction } from '@/app/actions/authenticationActions';
 import { authService } from '@/lib/api/authService';
 import { useRouter } from 'next/navigation';
 import { getDeviceId } from '@/lib/utils/deviceId';
+import { clearClientAccessToken } from '@/lib/axios/tokenStorage';
 
 interface Session {
   id: number;
@@ -35,7 +36,7 @@ export default function SessionsPage() {
       const currentDeviceId = getDeviceId();
       
       // Map data và đánh dấu device hiện tại
-      const mappedSessions = data.map((session: any) => ({
+      const mappedSessions = data.map((session) => ({
         ...session,
         isCurrentDevice: session.deviceId === currentDeviceId,
       }));
@@ -70,6 +71,7 @@ export default function SessionsPage() {
       }
 
       clearUser();
+      clearClientAccessToken();
 
       if (typeof window !== 'undefined') {
         localStorage.setItem('auth:logout-all', Date.now().toString());

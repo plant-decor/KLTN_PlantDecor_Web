@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { CartState, CartItem, CheckoutData } from '@/types/cart.types';
-import type { SamplePlant } from '@/data/sampledata';
+import type { Plant } from '@/data/sampledata';
 
 export const useCartStore = create<CartState>()(
   persist(
@@ -9,7 +9,7 @@ export const useCartStore = create<CartState>()(
       items: [],
       checkoutData: undefined,
 
-      addToCart: (plant: SamplePlant, quantity: number = 1) => {
+      addToCart: (plant: Plant, quantity: number = 1) => {
         set((state) => {
           const existingItem = state.items.find((item) => item.plantId === plant.id);
 
@@ -68,7 +68,7 @@ export const useCartStore = create<CartState>()(
 
       getTotalPrice: () => {
         return get().items.reduce((total, item) => {
-          return total + item.plant.price * item.quantity;
+          return total + parseFloat(item.plant.basePrice) * item.quantity;
         }, 0);
       },
 

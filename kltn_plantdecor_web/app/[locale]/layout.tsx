@@ -9,6 +9,7 @@ import { ToastProvider } from '@/components/providers/ToastProvider';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
 import { SessionInvalidatedModal } from '@/components/auth/SessionInvalidatedModal';
 import type { Metadata } from 'next';
+import { getCurrentUser } from '@/lib/auth/getCurrentUser';
 
 export const metadata: Metadata = {
   title: 'Plant Decor',
@@ -30,11 +31,12 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
 
   // Load messages for the current locale
   const messages = await getMessages();
+  const initialUser = await getCurrentUser();
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
-        <AuthProvider>
-          <SignalRProvider autoConnect={true}>
+        <AuthProvider initialUser={initialUser}>
+          <SignalRProvider autoConnect={false}>
             <ToastProvider />
             <LoadingOverlay />
             <SessionInvalidatedModal />

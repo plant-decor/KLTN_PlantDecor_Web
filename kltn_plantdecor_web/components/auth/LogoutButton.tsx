@@ -1,8 +1,9 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/authStore';
+import { useAuthStore } from '@/lib/store/authStore';
 import { logoutAction } from '@/app/actions/loginAction';
+import { clearClientAccessToken } from '@/lib/axios/tokenStorage';
 
 /**
  * Logout Button Component
@@ -25,6 +26,7 @@ export default function LogoutButton() {
       if (result.success) {
         // Clear Zustand store
         clearUser();
+        clearClientAccessToken();
 
         const locale = Array.isArray(params?.locale) ? params.locale[0] : params?.locale;
         const loginPath = locale ? `/${locale}/login` : '/login';

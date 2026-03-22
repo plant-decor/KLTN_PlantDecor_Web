@@ -22,14 +22,14 @@ import {
   Notifications as ReminderIcon,
   Inventory,
 } from '@mui/icons-material';
-import { ACTIVE_SAMPLE_USER_ID, SAMPLE_USERS } from '@/data/sampledata';
+// import { ACTIVE_SAMPLE_USER_ID, SAMPLE_USERS } from '@/data/sampledata';
 import {
   SIDEBAR_ITEMS_BY_ROLE,
   SIDEBAR_LOGOUT_ITEM,
   type SidebarIconKey,
 } from '@/lib/constants/sidebar';
 import type { UserRole } from '@/lib/constants/header';
-import { useAuthStore } from '@/store/authStore';
+import { useAuthStore } from '@/lib/store/authStore';
 import { logoutAction } from '@/app/actions/loginAction';
 
 const ICONS: Record<SidebarIconKey, ReactNode> = {
@@ -89,12 +89,9 @@ export default function Sidebar({ isOpen, onClose, role }: SidebarProps) {
   const router = useRouter();
   const params = useParams<{ locale?: string }>();
   const pathname = usePathname();
-  const { clearUser } = useAuthStore();
-  const activeUser = useMemo(
-    () => SAMPLE_USERS.find((user) => user.id === ACTIVE_SAMPLE_USER_ID) || null,
-    []
-  );
-  const resolvedRole = role ?? activeUser?.role ?? 'guest';
+  const { clearAll } = useAuthStore();
+  const { user } = useAuthStore();
+  const resolvedRole = role ?? (user?.role as UserRole | undefined) ?? 'guest';
   const items = SIDEBAR_ITEMS_BY_ROLE[resolvedRole] ?? [];
   const allHrefs = items.map((item) => item.href);
   const activeItem = items.find((item) => isActiveRoute(pathname, item.href, allHrefs));
@@ -105,7 +102,8 @@ export default function Sidebar({ isOpen, onClose, role }: SidebarProps) {
       const result = await logoutAction();
 
       if (result.success) {
-        clearUser();
+        // Clear Zustand store (user + tokens)
+        clearAll();
         onClose();
 
         const locale = Array.isArray(params?.locale) ? params.locale[0] : params?.locale;

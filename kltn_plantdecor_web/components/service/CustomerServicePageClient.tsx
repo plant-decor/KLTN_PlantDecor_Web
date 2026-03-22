@@ -30,7 +30,7 @@ export const CustomerServicePageClient: React.FC = () => {
         setLoading(true);
         // TODO: Replace with actual API call
         const data = await get<CareServicePackage[]>('/api/services/packages', undefined, false);
-        setPackages(data.data || []);
+        setPackages(data || []);
       } catch (error) {
         console.error("Error fetching packages:", error);
         // TODO: Show error toast/notification
@@ -62,7 +62,7 @@ export const CustomerServicePageClient: React.FC = () => {
   const handleSubmitRegistration = async (data: ServiceRegistrationFormData) => {
     try {
       // TODO: Replace with actual API call
-      const result = await post('/api/services/register', data);
+      const result = await post('/api/services/register', data, false);
       
       // TODO: Show success notification and redirect to confirmation page
       console.log("Registration successful:", result);

@@ -1,7 +1,7 @@
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import MainLayout from '@/components/layout/MainLayout';
-import { SAMPLE_PLANTS } from '@/data/sampledata';
+// import { SAMPLE_PLANTS } from '@/data/sampledata';
 import ProductCard from '@/components/product/ProductCard';
 import ExpertGuide from '@/components/public/ExpertGuide';
 import SupportChatWidget from '@/components/chat/SupportChatWidget';
@@ -12,9 +12,9 @@ export default function Home() {
   const t = useTranslations('home');
   const tCommon = useTranslations('common');
 
-  const featuredPlants = SAMPLE_PLANTS.filter(
-    (plant) => plant.isFeatured || plant.isBestSeller
-  ).slice(0, 8);
+  // const featuredPlants = SAMPLE_PLANTS.filter(
+  //   (plant) => plant.isFeatured || plant.isBestSeller
+  // ).slice(0, 8);
 
   return (
     <MainLayout>
@@ -170,9 +170,9 @@ export default function Home() {
             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {featuredPlants.map((plant) => (
+            {/* {featuredPlants.map((plant) => (
               <ProductCard key={plant.id} plant={plant} />
-            ))}
+            ))} */}
           </div>
         </div>
       </section>

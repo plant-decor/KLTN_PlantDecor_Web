@@ -35,7 +35,7 @@ export const StaffServiceRequestPageClient: React.FC = () => {
           { status: ServiceRegistrationStatus.PENDING_CONFIRMATION },
           false
         );
-        setRequests(data.data || []);
+        setRequests(data || []);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Error fetching requests";
         setError(message);
@@ -66,7 +66,7 @@ export const StaffServiceRequestPageClient: React.FC = () => {
         mainCaretakerId: caretakerId,
         estimatedDuration,
         status: ServiceRegistrationStatus.CONFIRMED,
-      });
+      }, false);
 
       // Remove from list and go back
       setRequests((prev) =>
@@ -87,7 +87,7 @@ export const StaffServiceRequestPageClient: React.FC = () => {
       await post(`/api/services/registrations/${selectedRequest.id}/reject`, {
         status: ServiceRegistrationStatus.REJECTED,
         cancelReason: reason,
-      });
+      }, false);
 
       // Remove from list and go back
       setRequests((prev) =>

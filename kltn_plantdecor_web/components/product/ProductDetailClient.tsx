@@ -1,10 +1,10 @@
 'use client';
 
+import { Plant } from '@/data/sampledata';
 import { useState } from 'react';
-import { SamplePlant } from '@/data/sampledata';
 
 interface ProductDetailClientProps {
-  plant: SamplePlant;
+  plant: Plant;
 }
 
 export default function ProductDetailClient({ plant }: ProductDetailClientProps) {
@@ -57,14 +57,14 @@ export default function ProductDetailClient({ plant }: ProductDetailClientProps)
           <input
             type="number"
             min="1"
-            max={plant.stock}
+            max={plant.totalAvailableStock}
             value={quantity}
             onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
             disabled={isLoading}
             className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-center focus:ring-2 focus:ring-green-600 focus:border-transparent disabled:opacity-50"
           />
           <button
-            onClick={() => setQuantity(Math.min(plant.stock, quantity + 1))}
+            onClick={() => setQuantity(Math.min(plant.totalAvailableStock, quantity + 1))}
             disabled={isLoading}
             className="w-12 h-12 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-100 disabled:opacity-50"
           >
@@ -74,7 +74,7 @@ export default function ProductDetailClient({ plant }: ProductDetailClientProps)
       </div>
 
       {/* Add to My Plants Button */}
-      <button
+      {/* <button
         onClick={handleAddToMyPlants}
         disabled={isLoading || plant.stock === 0}
         className={`w-full py-3 rounded-lg font-semibold text-white transition-all ${
@@ -86,7 +86,7 @@ export default function ProductDetailClient({ plant }: ProductDetailClientProps)
         }`}
       >
         {isLoading ? 'Đang xử lý...' : plant.stock === 0 ? 'Hết hàng' : '➕ Thêm vào Cây của tôi'}
-      </button>
+      </button> */}
 
       {/* Feedback Message */}
       {message && (

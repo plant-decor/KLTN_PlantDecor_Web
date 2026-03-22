@@ -1,20 +1,50 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Alert, Box, Container, CircularProgress, Grid, Typography } from '@mui/material';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Alert, Box, CircularProgress, Container, Grid, Typography } from '@mui/material';
 import type { CartItem } from '@/types/cart.types';
-import { useAuthStore } from '@/store/authStore';
-import { ACTIVE_SAMPLE_USER_ID } from '@/data/sampledata';
 import CartEmptyState from './CartEmptyState';
 import CartTable from './CartTable';
 import OrderSummary from './OrderSummary';
 import DeleteItemDialog from './DeleteItemDialog';
 import ClearCartDialog from './ClearCartDialog';
-import { del, get, post, put } from '@/lib/api/apiService';
+import {
+  clearCartItems,
+  deleteCartItem,
+  fetchCartItems,
+  updateCartItemQuantity,
+  type CartApiItem,
+} from '@/lib/api/cartWishlistService';
+import { notifyCartUpdated } from '@/lib/utils/cartEvents';
+import { Plant } from '@/data/sampledata';
 
 interface CartPageClientProps {
   userid: string;
 }
+
+const toSamplePlant = (item: CartApiItem): Plant => ({
+  id: item.plantId,
+  name: item.name,
+  basePrice: String(item.unitPrice),
+  size: 'medium',
+  careLevel: 'easy',
+  isActive: true,
+  primaryImageUrl: item.imageUrl || null,
+  totalInstances: 999,
+  availableInstances: 999,
+  availableCommonQuantity: 999,
+  totalAvailableStock: 999,
+  categoryNames: [],
+  tagNames: [],
+});
+
+const toCartItem = (item: CartApiItem): CartItem => ({
+  id: item.cartItemId,
+  plantId: item.plantId,
+  plant: toSamplePlant(item),
+  quantity: item.quantity,
+  addedAt: new Date().toISOString(),
+});
 
 export default function CartPageClient({ userid }: CartPageClientProps) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -24,43 +54,37 @@ export default function CartPageClient({ userid }: CartPageClientProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
   const [deleteItemId, setDeleteItemId] = useState<number | null>(null);
-  const { user } = useAuthStore();
 
-  // Use auth user if available, otherwise use sample user
-  const userId = user?.id?.toString() || String(ACTIVE_SAMPLE_USER_ID);
+  const loadCart = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError('');
+      const items = await fetchCartItems();
+      setCartItems(items.map(toCartItem));
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load cart';
+      setError(errorMessage);
+      console.error('Fetch cart error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
-  // Fetch cart data
   useEffect(() => {
-    const fetchCart = async () => {
-      try {
-        setIsLoading(true);
-        setError('');
-        const data = await get<CartItem[]>('/api/cart/get', { userId }, false);
-        setCartItems(data.data || []);
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Failed to load cart';
-        setError(errorMessage);
-        console.error('Fetch cart error:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    loadCart();
+  }, [loadCart, userid]);
 
-    fetchCart();
-  }, [userId]);
-
-  const handleQuantityChange = async (plantId: number, newQuantity: number) => {
-    if (newQuantity < 0) return;
+  const handleQuantityChange = async (cartItemId: number, newQuantity: number) => {
+    if (newQuantity < 1) {
+      return;
+    }
 
     try {
       setIsUpdating(true);
       setError('');
-      const data = await put<CartItem[]>('/api/cart/update', {
-          userId,
-          plantId,
-          quantity: newQuantity,
-        }, false);
-      setCartItems(data.data || []);
+      await updateCartItemQuantity(cartItemId, newQuantity);
+      await loadCart();
+      notifyCartUpdated();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update quantity';
       setError(errorMessage);
@@ -70,24 +94,24 @@ export default function CartPageClient({ userid }: CartPageClientProps) {
     }
   };
 
-  const handleRemoveClick = (plantId: number) => {
-    setDeleteItemId(plantId);
+  const handleRemoveClick = (cartItemId: number) => {
+    setDeleteItemId(cartItemId);
     setDeleteDialogOpen(true);
   };
 
   const handleConfirmDelete = async () => {
-    if (deleteItemId === null) return;
+    if (deleteItemId === null) {
+      return;
+    }
 
     try {
       setIsUpdating(true);
       setError('');
-      const data = await del<CartItem[]>('/api/cart/remove', false, {
-          userId,
-          plantId: deleteItemId,
-        });
-      setCartItems(data.data || []);
+      await deleteCartItem(deleteItemId);
       setDeleteDialogOpen(false);
       setDeleteItemId(null);
+      await loadCart();
+      notifyCartUpdated();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to remove item';
       setError(errorMessage);
@@ -105,11 +129,10 @@ export default function CartPageClient({ userid }: CartPageClientProps) {
     try {
       setIsUpdating(true);
       setError('');
-      const data = await post<CartItem[]>('/api/cart/clear', {
-          userId,
-        }, false);
-      setCartItems(data.data || []);
+      await clearCartItems();
       setClearDialogOpen(false);
+      await loadCart();
+      notifyCartUpdated();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to clear cart';
       setError(errorMessage);
@@ -118,8 +141,6 @@ export default function CartPageClient({ userid }: CartPageClientProps) {
       setIsUpdating(false);
     }
   };
-
-  const isEmptyCart = cartItems.length === 0;
 
   if (isLoading) {
     return (
@@ -131,13 +152,12 @@ export default function CartPageClient({ userid }: CartPageClientProps) {
     );
   }
 
-  if (isEmptyCart) {
+  if (cartItems.length === 0) {
     return <CartEmptyState />;
   }
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      {/* Error Alert */}
       {error && (
         <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError('')}>
           {error}
@@ -156,7 +176,6 @@ export default function CartPageClient({ userid }: CartPageClientProps) {
       </Typography>
 
       <Grid container spacing={3}>
-        {/* Main Cart Table */}
         <Grid size={{ xs: 12, md: 8 }}>
           <CartTable
             items={cartItems}
@@ -167,13 +186,11 @@ export default function CartPageClient({ userid }: CartPageClientProps) {
           />
         </Grid>
 
-        {/* Order Summary Sidebar */}
         <Grid size={{ xs: 12, md: 4 }}>
-          <OrderSummary items={cartItems} isUpdating={isUpdating} userId={userId} />
+          <OrderSummary items={cartItems} isUpdating={isUpdating} userId={userid} />
         </Grid>
       </Grid>
 
-      {/* Dialogs */}
       <DeleteItemDialog
         open={deleteDialogOpen}
         isUpdating={isUpdating}

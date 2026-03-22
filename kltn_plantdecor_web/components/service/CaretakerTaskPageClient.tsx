@@ -42,7 +42,7 @@ export const CaretakerTaskPageClient: React.FC = () => {
           { date: new Date().toISOString().split('T')[0] },
           false
         );
-        setTasks(data.data || []);
+        setTasks(data || []);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Error fetching tasks";
         setError(message);
@@ -75,7 +75,8 @@ export const CaretakerTaskPageClient: React.FC = () => {
           action: ServiceProgressAction.CHECK_IN,
           description: "Caretaker checked in at the location",
           actualStartTime: new Date().toISOString(),
-        }
+        },
+        false
       );
 
       // Update task status to IN_PROGRESS
@@ -100,7 +101,8 @@ export const CaretakerTaskPageClient: React.FC = () => {
           action: ServiceProgressAction.CHECK_OUT,
           description: "Caretaker checked out",
           actualEndTime: new Date().toISOString(),
-        }
+        },
+        false
       );
     } catch (err) {
       const message = err instanceof Error ? err.message : "Error checking out";
@@ -118,7 +120,7 @@ export const CaretakerTaskPageClient: React.FC = () => {
       });
 
       // TODO: Replace with actual API call
-      await post(`/api/services/registrations/${selectedTask.id}/evidence`, formData);
+      await post(`/api/services/registrations/${selectedTask.id}/evidence`, formData, false);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Error uploading photos";
       setError(message);
@@ -138,7 +140,7 @@ export const CaretakerTaskPageClient: React.FC = () => {
         action: ServiceProgressAction.SURVEY,
         description,
         addOns,
-      });
+      }, false);
 
       // Update task status
       setTasks((prev) =>

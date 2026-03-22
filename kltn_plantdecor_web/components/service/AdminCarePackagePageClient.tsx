@@ -35,7 +35,7 @@ export const AdminCarePackagePageClient: React.FC = () => {
         setError(null);
         // TODO: Replace with actual API call
         const data = await get<CareServicePackage[]>('/api/services/packages', undefined, false);
-        setPackages(data.data || []);
+        setPackages(data || []);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Error fetching packages";
         setError(message);
@@ -71,8 +71,8 @@ export const AdminCarePackagePageClient: React.FC = () => {
       const method = selectedPackage ? "PUT" : "POST";
 
       const result = method === 'PUT'
-        ? await put<CareServicePackage>(url, data)
-        : await post<CareServicePackage>(url, data);
+        ? await put<CareServicePackage>(url, data, false)
+        : await post<CareServicePackage>(url, data, false);
       const message = selectedPackage ? "Cập nhật gói thành công" : "Tạo gói thành công";
       
       setSuccess(message);
@@ -82,8 +82,8 @@ export const AdminCarePackagePageClient: React.FC = () => {
       // Refresh list
       setPackages((prev) =>
         selectedPackage
-          ? prev.map((p) => (p.id === selectedPackage.id ? result.data : p))
-          : [...prev, result.data]
+          ? prev.map((p) => (p.id === selectedPackage.id ? result : p))
+          : [...prev, result]
       );
 
       // Clear success message after 3 seconds
@@ -99,7 +99,7 @@ export const AdminCarePackagePageClient: React.FC = () => {
   const handleDelete = async (packageId: number) => {
     try {
       // TODO: Replace with actual API call
-      await del(`/api/services/packages/${packageId}`);
+      await del(`/api/services/packages/${packageId}`, false);
 
       setPackages((prev) => prev.filter((p) => p.id !== packageId));
       setSuccess("Xoá gói thành công");
@@ -114,9 +114,9 @@ export const AdminCarePackagePageClient: React.FC = () => {
   const handleStatusToggle = async (packageId: number, isActive: boolean) => {
     try {
       // TODO: Replace with actual API call
-      const result = await patch<CareServicePackage>(`/api/services/packages/${packageId}/status`, { isActive });
+      const result = await patch<CareServicePackage>(`/api/services/packages/${packageId}/status`, { isActive }, false);
       setPackages((prev) =>
-        prev.map((p) => (p.id === packageId ? result.data : p))
+        prev.map((p) => (p.id === packageId ? result : p))
       );
     } catch (err) {
       const message = err instanceof Error ? err.message : "Error updating status";

@@ -9,7 +9,7 @@ export const SIGNALR_CONFIG = {
   BASE_URL:
     process.env.NEXT_PUBLIC_SIGNALR_BASE_URL ||
     process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') ||
-    'http://localhost:8080',
+    'https://localhost:7180',
   
   // Hub endpoints (relative to base URL)
   HUBS: {

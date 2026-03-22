@@ -1,44 +1,57 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Badge, IconButton } from '@mui/material';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import { useAuthStore } from '@/store/authStore';
-import { get } from '@/lib/api/apiService';
-import type { CartItem } from '@/types/cart.types';
+import { useAuthStore } from '@/lib/store/authStore';
+import { fetchCartItems } from '@/lib/api/cartWishlistService';
+import { subscribeCartUpdated } from '@/lib/utils/cartEvents';
 
 export default function CartBadge() {
   const [itemCount, setItemCount] = useState(0);
-  const { user } = useAuthStore();
+  const { user, accessToken } = useAuthStore();
 
-  const userId = user?.id?.toString();
-
-  // Fetch cart data to get item count
   useEffect(() => {
-    if (!userId) return;
+    let mounted = true;
 
-    const fetchCartCount = async () => {
+    const loadCartCount = async () => {
+      if (!user?.id || !accessToken) {
+        if (mounted) {
+          setItemCount(0);
+        }
+        return;
+      }
+
       try {
-        const data = await get<CartItem[]>('/api/cart/get', { userId }, false);
-        const cartItems = data.data || [];
+        const cartItems = await fetchCartItems();
         const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-        setItemCount(totalItems);
+
+        if (mounted) {
+          setItemCount(totalItems);
+        }
       } catch (error) {
+        if (mounted) {
+          setItemCount(0);
+        }
         console.error('Fetch cart count error:', error);
-        setItemCount(0);
       }
     };
 
-    fetchCartCount();
-    
-    // Reload cart count every 5 seconds or when needed
-    const interval = setInterval(fetchCartCount, 5000);
-    return () => clearInterval(interval);
-  }, [userId]);
+    loadCartCount();
 
-  const cartHref = userId ? `/cart/${userId}` : '/login';
-  const displayCount = userId ? itemCount : 0;
+    const unsubscribe = subscribeCartUpdated(() => {
+      loadCartCount();
+    });
+
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
+  }, [accessToken, user?.id]);
+
+  const cartHref = user?.id ? `/cart/${user.id}` : '/login';
+  const displayCount = user?.id ? itemCount : 0;
 
   return (
     <Link href={cartHref} passHref>

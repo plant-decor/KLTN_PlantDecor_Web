@@ -1,9 +1,9 @@
-import type { SamplePlant } from '@/data/sampledata';
+import type { Plant } from '@/data/sampledata';
 
 export interface CartItem {
   id: number;
   plantId: number;
-  plant: SamplePlant;
+  plant: Plant;
   quantity: number;
   addedAt: string;
 }
@@ -31,7 +31,7 @@ export interface CartState {
   checkoutData?: CheckoutData;
   
   // Cart actions
-  addToCart: (plant: SamplePlant, quantity?: number) => void;
+  addToCart: (plant: Plant, quantity?: number) => void;
   removeFromCart: (plantId: number) => void;
   updateQuantity: (plantId: number, quantity: number) => void;
   clearCart: () => void;

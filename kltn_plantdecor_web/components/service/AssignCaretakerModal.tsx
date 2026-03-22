@@ -52,10 +52,10 @@ export const AssignCaretakerModal: React.FC<AssignCaretakerModalProps> = ({
         setError(null);
         // TODO: Replace with actual API call
         const data = await get<CaretakerInfo[]>('/api/services/caretakers/available', undefined, false);
-        setCaretakers(data.data || []);
+        setCaretakers(data || []);
         
-        if (data.data && data.data.length > 0) {
-          setSelectedCaretakerId(data.data[0].id);
+        if (data && data.length > 0) {
+          setSelectedCaretakerId(data[0].id);
         }
       } catch (err) {
         const message = err instanceof Error ? err.message : "Error fetching caretakers";

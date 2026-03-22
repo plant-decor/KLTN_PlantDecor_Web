@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'react-toastify';
-import { useAuthStore } from '@/store/authStore';
-import { useLoadingStore } from '@/store/loadingStore';
+import { useAuthStore } from '@/lib/store/authStore';
+import { useLoadingStore } from '@/lib/store/zustand';
 import {
   forgotPasswordAction,
   loginAction,
@@ -12,8 +12,7 @@ import {
 } from '@/app/actions/authenticationActions';
 import { getDeviceId } from '@/lib/utils/deviceId';
 import { resolvePostLoginRedirect } from '@/lib/utils/authRedirect';
-import { get } from '@/lib/api/apiService';
-import type { User } from '@/types/auth.types';
+import { setClientAccessToken, setClientRefreshToken } from '@/lib/axios/tokenStorage';
 import Image from 'next/image';
 import LoginForm from './LoginForm';
 import ForgotPasswordForm from './ForgotPasswordForm';
@@ -42,7 +41,7 @@ export default function AuthFormContainer() {
     setLoading(false);
   };
 
-  const handleLoginSubmit = async (email: string, password: string) => {
+  const handleLoginSubmit = async (email: string, password: string) => {  
     setError('');
     setMessage('');
     beginSubmit();
@@ -52,7 +51,6 @@ export default function AuthFormContainer() {
       document.cookie = `deviceId=${encodeURIComponent(deviceId)}; Max-Age=31536000; Path=/; SameSite=Lax`;
 
       const result = await loginAction(email, password);
-
       if (!result.success) {
         const loginMessage = result.message || 'Đăng nhập thất bại';
 
@@ -60,26 +58,30 @@ export default function AuthFormContainer() {
           setError('Tài khoản chưa xác thực email. Vui lòng kiểm tra mailbox và bấm link xác thực.');
           return;
         }
-
         setError(loginMessage);
         return;
       }
-
-      let resolvedUser = result.user;
-
-      try {
-        const profileResponse = await get<User>('/api/auth/me', undefined, false);
-        if (profileResponse.data) {
-          resolvedUser = profileResponse.data;
-        }
-      } catch (profileError) {
-        console.warn('Failed to fetch profile after login, fallback to token user:', profileError);
+      const resolvedUser = result.user;
+      if (result.token) {
+        setClientAccessToken(result.token);
+      }
+      if (result.refreshToken) {
+        setClientRefreshToken(result.refreshToken);
       }
 
+      // try {
+      //   const profileResponse = await get<User>('/User/user-profile', undefined, false);
+      //   console.log('Fetched user profile after login:', profileResponse);
+      //   if (profileResponse.data) {
+      //     resolvedUser = profileResponse.data;
+      //   }
+      // } catch (profileError) {
+      //   console.warn('Failed to fetch profile after login, fallback to token user:', profileError);
+      // }
       if (resolvedUser) {
         setUser(resolvedUser);
       }
-
+      toast.success(result.message || 'Đăng nhập thành công');
       const resolvedRedirectTo = resolvePostLoginRedirect({
         redirectToRaw: searchParams.get('redirectTo'),
         userId: resolvedUser?.id,
@@ -93,6 +95,7 @@ export default function AuthFormContainer() {
     } catch (err) {
       console.error('Login error:', err);
       setError('Lỗi khi đăng nhập');
+      toast.error('Lỗi khi đăng nhập');
     } finally {
       endSubmit();
     }

@@ -18,8 +18,8 @@ import CartItemRow from './CartItemRow';
 interface CartTableProps {
   items: CartItem[];
   isUpdating: boolean;
-  onQuantityChange: (plantId: number, quantity: number) => void;
-  onRemove: (plantId: number) => void;
+  onQuantityChange: (cartItemId: number, quantity: number) => void;
+  onRemove: (cartItemId: number) => void;
   onClearCart: () => void;
 }
 

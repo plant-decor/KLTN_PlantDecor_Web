@@ -3,53 +3,24 @@
 import { useState } from 'react';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useTranslations } from 'next-intl';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
-import { useAuthStore } from '@/store/authStore';
-import { useLoadingStore } from '@/store/loadingStore';
-import type { User } from '@/types/auth.types';
-import { get } from '@/lib/api/apiService';
-import { resolvePostLoginRedirect } from '@/lib/utils/authRedirect';
+import { useAuthStore } from '@/lib/store/authStore';
+import { useLoadingStore } from '@/lib/store/zustand';
 import { getDeviceId } from '@/lib/utils/deviceId';
 import { loginWithGoogleAction } from '@/app/actions/authenticationActions';
+import { setClientAccessToken, setClientRefreshToken } from '@/lib/axios/tokenStorage';
 
 export default function GoogleLoginButton() {
     const t = useTranslations('auth');
     const router = useRouter();
-    const searchParams = useSearchParams();
-    const pathname = usePathname();
     const { setUser } = useAuthStore();
     const { setLoading } = useLoadingStore();
     const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-    const fetchProfileWithRetry = async (): Promise<User | undefined> => {
-        const retryDelays = [0, 200];
-
-        for (const delay of retryDelays) {
-            if (delay > 0) {
-                await sleep(delay);
-            }
-
-            try {
-                const profileResponse = await get<User>('/api/auth/me', undefined, false);
-                if (profileResponse.data) {
-                    return profileResponse.data;
-                }
-            } catch (profileError) {
-                console.warn('Failed to fetch profile after Google login:', profileError);
-            }
-        }
-
-        return undefined;
-    };
-
     const googleLogin = useGoogleLogin({
         onSuccess: async (credentialResponse) => {
             setIsSubmitting(true);
             setLoading(true);
-
             try {
                 const result = await loginWithGoogleAction({
                     accessToken: credentialResponse.access_token,
@@ -57,29 +28,20 @@ export default function GoogleLoginButton() {
                 });
 
                 if (!result.success) {
-                    toast.error(result.message || t('loginFailed'));
+                    toast.error(result.message);
                     return;
                 }
-
-                const profileUser = await fetchProfileWithRetry();
-                const resolvedUser: User | undefined = profileUser || result.user;
-
-                if (!resolvedUser) {
-                    toast.error(result.message || t('loginFailed'));
-                    return;
+                toast.success(result.message);
+                if (result.token) {
+                    setClientAccessToken(result.token);
                 }
-
-                setUser(resolvedUser);
-
-                const resolvedRedirectTo = resolvePostLoginRedirect({
-                    redirectToRaw: searchParams.get('redirectTo'),
-                    userId: resolvedUser.id,
-                    userRole: resolvedUser.role,
-                    pathname,
-                });
-
-                toast.success(result.message || t('welcomeUser'));
-                router.replace(resolvedRedirectTo);
+                if (result.refreshToken) {
+                    setClientRefreshToken(result.refreshToken);
+                }
+                if (result.user) {
+                    setUser(result.user);
+                }
+                router.replace("/");
                 router.refresh();
             } catch (error) {
                 console.error('Google login error:', error);

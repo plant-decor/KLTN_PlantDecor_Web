@@ -1,8 +1,6 @@
 'use server';
 
-import axios from 'axios';
 import { cookies } from 'next/headers';
-import https from 'node:https';
 import type {
   ConfirmEmailRequest,
   CreateManagerRequest,
@@ -15,8 +13,9 @@ import type {
   User,
   VerifyEmailRequest,
 } from '@/types/auth.types';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7180/api';
+import { getOrCreateSessionId } from '@/lib/utils/deviceId';
+import { createAxiosServer } from '@/lib/axios/axiosServer';
+import { buildUserFromToken } from '@/lib/auth/getCurrentUser';
 const REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60;
 
 interface ActionResult {
@@ -26,6 +25,8 @@ interface ActionResult {
 
 interface AuthenticatedActionResult extends ActionResult {
   user?: User;
+  token?: string;
+  refreshToken?: string;
 }
 
 interface RefreshActionResult extends ActionResult {
@@ -57,10 +58,8 @@ interface ApiMessageResponse {
 }
 
 type ErrorWithCause = Error & {
-  code?: string;
-  cause?: {
-    code?: string;
-  };
+  status?: number;
+  payload?: unknown;
 };
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -73,76 +72,7 @@ interface RequestOptions {
   token?: string;
 }
 
-const isSelfSignedCertificateError = (error: unknown): boolean => {
-  if (!error || typeof error !== 'object') {
-    return false;
-  }
 
-  const err = error as ErrorWithCause;
-  return err.code === 'DEPTH_ZERO_SELF_SIGNED_CERT' || err.cause?.code === 'DEPTH_ZERO_SELF_SIGNED_CERT';
-};
-
-const isLocalHttpsUrl = (url: string): boolean => {
-  if (process.env.NODE_ENV === 'production') {
-    return false;
-  }
-
-  return /^https:\/\/(localhost|127\.0\.0\.1)(:\d+)?\//i.test(url);
-};
-
-const parseJwtPayload = (token: string): Record<string, unknown> | null => {
-  try {
-    const parts = token.split('.');
-    if (parts.length < 2) {
-      return null;
-    }
-
-    const base64Url = parts[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const padding = '='.repeat((4 - (base64.length % 4)) % 4);
-    const decoded = Buffer.from(base64 + padding, 'base64').toString('utf-8');
-
-    return JSON.parse(decoded) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-};
-
-const claimString = (claims: Record<string, unknown> | null, keys: string[]): string => {
-  if (!claims) {
-    return '';
-  }
-
-  for (const key of keys) {
-    const value = claims[key];
-    if (typeof value === 'string' && value.trim()) {
-      return value.trim();
-    }
-  }
-
-  return '';
-};
-
-const claimNumber = (claims: Record<string, unknown> | null, key: string): number | null => {
-  if (!claims) {
-    return null;
-  }
-
-  const value = claims[key];
-
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    return value;
-  }
-
-  if (typeof value === 'string' && value.trim()) {
-    const parsed = Number(value);
-    if (Number.isFinite(parsed)) {
-      return parsed;
-    }
-  }
-
-  return null;
-};
 
 const parseErrorMessage = (payload: unknown, fallback: string): string => {
   if (!payload || typeof payload !== 'object') {
@@ -164,31 +94,6 @@ const parseErrorMessage = (payload: unknown, fallback: string): string => {
   }
 
   return fallback;
-};
-
-const buildUserFromToken = (token: string, fallbackUser?: User): { user: User; expiresIn: number } => {
-  const claims = parseJwtPayload(token);
-  const exp = claimNumber(claims, 'exp');
-  const iat = claimNumber(claims, 'iat');
-  const sub = claimString(claims, ['sub']);
-  const parsedId = Number(sub);
-  const userId = Number.isFinite(parsedId) ? parsedId : 0;
-
-  return {
-    expiresIn: exp && iat ? Math.max(0, Math.floor(exp - iat)) : 3600,
-    user: {
-      id: userId,
-      email: claimString(claims, ['email']) || fallbackUser?.email || '',
-      name:
-        claimString(claims, ['name', 'unique_name', 'given_name']) ||
-        fallbackUser?.name ||
-        'User',
-      role: claimString(claims, ['Role', 'role']) || fallbackUser?.role,
-      avatar:
-        claimString(claims, ['avatarURL', 'avatarUrl', 'avatar']) ||
-        fallbackUser?.avatar,
-    },
-  };
 };
 
 const normalizeTokenResponse = (
@@ -214,6 +119,7 @@ const normalizeTokenResponse = (
 
 const clearAuthenticationCookies = async (): Promise<void> => {
   const cookieStore = await cookies();
+  cookieStore.delete('accessToken');
   cookieStore.delete('authToken');
   cookieStore.delete('refreshToken');
   cookieStore.delete('userRole');
@@ -223,7 +129,7 @@ const setAuthenticationCookies = async (data: LoginResponse): Promise<void> => {
   const cookieStore = await cookies();
 
   cookieStore.set({
-    name: 'authToken',
+    name: 'accessToken',
     value: data.token,
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -263,98 +169,85 @@ const callAuthenticationApi = async <TResponse>(
   options: RequestOptions = {}
 ): Promise<TResponse> => {
   const cookieStore = await cookies();
-  const authMode = options.auth ?? 'none';
-  const url = `${API_BASE}${endpoint}`;
-  const bearerToken =
-    options.token || (authMode !== 'none' ? cookieStore.get('authToken')?.value || '' : '');
+  const authMode = options.auth ?? "none";
 
-  if (authMode === 'required' && !bearerToken) {
-    throw new Error('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
+  const bearerToken =
+    options.token ||
+    (authMode !== "none"
+      ? cookieStore.get("accessToken")?.value || ""
+      : "");
+
+  if (authMode === "required" && !bearerToken) {
+    throw new Error("Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.");
   }
 
-  const requestConfig = (httpsAgent?: https.Agent) => ({
-    method: options.method || 'POST',
-    url,
-    data: options.body,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(bearerToken ? { Authorization: `Bearer ${bearerToken}` } : {}),
-    },
-    timeout: 15000,
-    withCredentials: true,
-    ...(httpsAgent ? { httpsAgent } : {}),
-  });
-
   try {
-    const response = await axios.request<TResponse>(requestConfig());
+    const axios = await createAxiosServer();
+
+    const response = await axios({
+      method: options.method || "POST",
+      url: endpoint,
+      data: options.body,
+      headers: {
+        ...(bearerToken ? { Authorization: `Bearer ${bearerToken}` } : {}),
+      },
+    });
+
     return response.data;
-  } catch (error) {
-    if (isSelfSignedCertificateError(error) && isLocalHttpsUrl(url)) {
-      try {
-        const response = await axios.request<TResponse>(
-          requestConfig(
-            new https.Agent({
-              rejectUnauthorized: false,
-            })
-          )
-        );
+  } catch (error: unknown) {
+    const normalized = error as {
+      response?: {
+        status?: number;
+        data?: unknown;
+      };
+      message?: string;
+    };
 
-        return response.data;
-      } catch (retryError) {
-        if (axios.isAxiosError(retryError)) {
-          if (retryError.response?.status === 401) {
-            await clearAuthenticationCookies();
-          }
-
-          throw new Error(parseErrorMessage(retryError.response?.data, fallbackErrorMessage));
-        }
-
-        throw retryError;
-      }
+    if (normalized.response?.status === 401) {
+      await clearAuthenticationCookies();
     }
 
-    if (axios.isAxiosError(error)) {
-      if (error.response?.status === 401) {
-        await clearAuthenticationCookies();
-      }
-
-      throw new Error(parseErrorMessage(error.response?.data, fallbackErrorMessage));
-    }
-
-    throw error;
+    const normalizedError = new Error(
+      parseErrorMessage(
+        normalized.response?.data,
+        normalized.message || fallbackErrorMessage
+      )
+    ) as ErrorWithCause;
+    normalizedError.status = normalized.response?.status;
+    normalizedError.payload = normalized.response?.data;
+    throw normalizedError;
   }
 };
 
-export async function loginAction(email: string, password: string): Promise<AuthenticatedActionResult> {
+export async function loginAction(email: string, password: string) {
   try {
-    const cookieStore = await cookies();
-    const deviceId = cookieStore.get('deviceId')?.value;
-
-
     const data = await callAuthenticationApi<RawAuthApiResponse>(
-      '/Authentication/login',
-      'Đăng nhập thất bại.',
+      "/Authentication/login",
+      "Login failed",
       {
         body: {
           email,
           password,
-          ...(deviceId ? { deviceId } : {}),
+          deviceId: getOrCreateSessionId(), // hoặc getDeviceId()
         },
       }
     );
 
-    const normalized = normalizeTokenResponse(data, 'Đăng nhập thất bại.');
+    const normalized = normalizeTokenResponse(data, "Login failed");
+
     await setAuthenticationCookies(normalized);
 
     return {
       success: true,
-      message: data.message || 'Đăng nhập thành công.',
-      user: normalized.user,
+      message: data.message,
+      user: normalized.user, // ✅ lấy từ JWT
+      token: normalized.token,
+      refreshToken: normalized.refreshToken,
     };
-  } catch (error) {
+  } catch (err) {
     return {
       success: false,
-      message: error instanceof Error ? error.message : 'Lỗi server khi đăng nhập.',
+      message: err instanceof Error ? err.message : "Login error",
     };
   }
 }
@@ -372,12 +265,18 @@ export async function loginWithGoogleAction(
     );
 
     const normalized = normalizeTokenResponse(data, 'Đăng nhập Google thất bại.');
+
+    //decode JWT để lấy user
+    const { user } = buildUserFromToken(normalized.token);
+
     await setAuthenticationCookies(normalized);
 
     return {
       success: true,
       message: data.message || 'Đăng nhập Google thành công.',
-      user: normalized.user,
+      user, // ✅ giờ đã có user
+      token: normalized.token,
+      refreshToken: normalized.refreshToken,
     };
   } catch (error) {
     return {
@@ -453,7 +352,7 @@ export async function registerAction(payload: RegisterRequest): Promise<ActionRe
 
 export async function logoutAction(): Promise<{ success: boolean }> {
   const cookieStore = await cookies();
-  const authToken = cookieStore.get('authToken')?.value || '';
+  const authToken = cookieStore.get('accessToken')?.value || '';
   const refreshToken = cookieStore.get('refreshToken')?.value || '';
 
   try {
@@ -492,6 +391,31 @@ export async function logoutAllAction(): Promise<ActionResult> {
       success: false,
       message: error instanceof Error ? error.message : 'Đăng xuất tất cả phiên thất bại.',
     };
+  }
+}
+
+export async function validateSessionAction(): Promise<{ authenticated: boolean }> {
+  try {
+    await callAuthenticationApi<unknown>(
+      '/User/user-profile',
+      'Không thể xác thực phiên đăng nhập.',
+      {
+        method: 'GET',
+        auth: 'required',
+      }
+    );
+
+    return { authenticated: true };
+  } catch (error) {
+    const status = (error as ErrorWithCause).status;
+
+    if (status === 401) {
+      await clearAuthenticationCookies();
+      return { authenticated: false };
+    }
+
+    // Keep user logged in on transient/network/server errors.
+    return { authenticated: true };
   }
 }
 

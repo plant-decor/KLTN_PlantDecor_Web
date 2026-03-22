@@ -64,7 +64,7 @@ export const StaffServiceProgressPageClient: React.FC = () => {
           { status: ServiceRegistrationStatus.IN_PROGRESS },
           false
         );
-        setInProgressServices(data.data || []);
+        setInProgressServices(data || []);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Error fetching services";
         setError(message);
@@ -87,8 +87,8 @@ export const StaffServiceProgressPageClient: React.FC = () => {
         get<AddOnService[]>(`/api/services/registrations/${service.id}/addons`, undefined, false),
       ]);
 
-      setProgressLogs(progressData.data || []);
-      setAddOns(addOnsData.data || []);
+      setProgressLogs(progressData || []);
+      setAddOns(addOnsData || []);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Error fetching service details";
       setError(message);
@@ -105,7 +105,7 @@ export const StaffServiceProgressPageClient: React.FC = () => {
   const handleApproveAddOn = async (addOnId: number) => {
     try {
       // TODO: Replace with actual API call
-      await post(`/api/services/addons/${addOnId}/approve`);
+      await post(`/api/services/addons/${addOnId}/approve`, undefined, false);
 
       // Update local state
       setAddOns((prev) =>
@@ -122,7 +122,7 @@ export const StaffServiceProgressPageClient: React.FC = () => {
   const handleRejectAddOn = async (addOnId: number, reason: string) => {
     try {
       // TODO: Replace with actual API call
-      await post(`/api/services/addons/${addOnId}/reject`, { reason });
+      await post(`/api/services/addons/${addOnId}/reject`, { reason }, false);
 
       // Update local state
       setAddOns((prev) =>
@@ -141,7 +141,7 @@ export const StaffServiceProgressPageClient: React.FC = () => {
 
     try {
       // TODO: Replace with actual API call
-      await post(`/api/services/registrations/${selectedService.id}/invoice`);
+      await post(`/api/services/registrations/${selectedService.id}/invoice`, undefined, false);
 
       // Update service status to COMPLETED
       setInProgressServices((prev) =>

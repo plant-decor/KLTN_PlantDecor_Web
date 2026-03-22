@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 
 interface LoginPageProps {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ forceLogout?: string }>;
 }
 
 /**
@@ -12,12 +13,14 @@ interface LoginPageProps {
  * Sử dụng LoginForm component để handle đăng nhập
  * LoginForm sẽ gọi Server Action (loginAction) để thực hiện login
  */
-export default async function LoginPage({ params }: LoginPageProps) {
+export default async function LoginPage({ params, searchParams }: LoginPageProps) {
   const { locale } = await params;
+  const { forceLogout } = await searchParams;
   const cookieStore = await cookies();
-  const authToken = cookieStore.get('authToken')?.value;
+  const authToken = cookieStore.get('accessToken')?.value;
+  const isForceLogout = forceLogout === '1';
 
-  if (authToken) {
+  if (authToken && !isForceLogout) {
     redirect(`/${locale}`);
   }
 

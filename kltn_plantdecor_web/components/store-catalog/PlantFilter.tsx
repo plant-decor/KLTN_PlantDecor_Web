@@ -2,14 +2,16 @@
 
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import type { SamplePlant } from '@/data/sampledata';
+import type { Plant } from '@/data/sampledata';
 import { Close as CloseIcon, Tune as FilterIcon } from '@mui/icons-material';
 
 interface PlantFilterProps {
-  onFiltersChange: (filteredPlants: SamplePlant[]) => void;
-  plants: SamplePlant[];
+  onFiltersChange: (filteredPlants: Plant[]) => void;
+  plants: Plant[];
   enableSearch?: boolean;
   onSearchChange?: (query: string) => void;
+  useInternalMobileDrawer?: boolean;
+  renderInlineOnMobile?: boolean;
 }
 
 interface FilterState {
@@ -40,7 +42,14 @@ const SIZES = [
   { value: 'large', label: 'Large' },
 ];
 
-export default function PlantFilter({ onFiltersChange, plants, enableSearch = false, onSearchChange }: PlantFilterProps) {
+export default function PlantFilter({
+  onFiltersChange,
+  plants,
+  enableSearch = false,
+  onSearchChange,
+  useInternalMobileDrawer = true,
+  renderInlineOnMobile = false,
+}: PlantFilterProps) {
   const t = useTranslations('filter');
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<FilterState>({
@@ -53,14 +62,14 @@ export default function PlantFilter({ onFiltersChange, plants, enableSearch = fa
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   // Get max price from plants
-  const maxPrice = Math.max(...plants.map(p => p.price), 1000000);
+  const maxPrice = Math.max(...plants.map(p => parseFloat(p.basePrice)), 1000000);
 
   const applyFilters = (newFilters: FilterState) => {
     setFilters(newFilters);
 
     let filtered = plants.filter(plant => {
       // Category filter
-      if (newFilters.category.length > 0 && !newFilters.category.includes(plant.category)) {
+      if (newFilters.category.length > 0 && !newFilters.category.includes(plant.categoryNames.join(','))) {
         return false;
       }
 
@@ -75,7 +84,7 @@ export default function PlantFilter({ onFiltersChange, plants, enableSearch = fa
       }
 
       // Price Range filter
-      if (plant.price < newFilters.priceRange[0] || plant.price > newFilters.priceRange[1]) {
+      if (parseFloat(plant.basePrice) < newFilters.priceRange[0] || parseFloat(plant.basePrice) > newFilters.priceRange[1]) {
         return false;
       }
 
@@ -85,9 +94,7 @@ export default function PlantFilter({ onFiltersChange, plants, enableSearch = fa
     // Apply search filter
     if (enableSearch && searchQuery.trim()) {
       filtered = filtered.filter(plant =>
-        plant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        plant.scientificName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        plant.description.toLowerCase().includes(searchQuery.toLowerCase())
+        plant.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
@@ -241,6 +248,10 @@ export default function PlantFilter({ onFiltersChange, plants, enableSearch = fa
     </>
   );
 
+  if (renderInlineOnMobile) {
+    return <FilterContent />;
+  }
+
   return (
     <>
       {/* Desktop - Sticky Sidebar */}
@@ -250,26 +261,22 @@ export default function PlantFilter({ onFiltersChange, plants, enableSearch = fa
       </div>
 
       {/* Mobile - Filter Button */}
-      <div className="md:hidden fixed bottom-6 right-6 z-40">
-        <button
-          onClick={() => setIsDrawerOpen(true)}
-          className="bg-primary text-white p-4 rounded-full shadow-lg hover:bg-green-700 transition-colors flex items-center gap-2"
-        >
-          <FilterIcon sx={{ fontSize: 24 }} />
-        </button>
-      </div>
+      {useInternalMobileDrawer && (
+        <div className="md:hidden fixed bottom-6 right-6 z-40">
+          <button
+            onClick={() => setIsDrawerOpen(true)}
+            className="bg-primary text-white p-4 rounded-full shadow-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+          >
+            <FilterIcon sx={{ fontSize: 24 }} />
+          </button>
+        </div>
+      )}
 
       {/* Mobile - Filter Drawer */}
-      {isDrawerOpen && (
+      {useInternalMobileDrawer && isDrawerOpen && (
         <>
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden animate-in fade-in duration-200"
-            onClick={() => setIsDrawerOpen(false)}
-          />
-
           {/* Drawer */}
-          <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl z-50 max-h-[90vh] overflow-y-auto md:hidden animate-fade-in-up">
+          <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl z-50 overflow-y-auto md:hidden animate-fade-in-up">
             {/* Header */}
             <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
               <h2 className="text-xl font-bold text-gray-900">{t('title')}</h2>

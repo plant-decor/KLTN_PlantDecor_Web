@@ -27,16 +27,18 @@ export type SidebarIconKey =
   | 'payment'
   | 'reminder'
   | 'store'
+  | 'inventory'
   | 'logout';
 
 export const SIDEBAR_ITEMS_BY_ROLE: Record<UserRole, SidebarItem[]> = {
   guest: [],
-  user: [],
+  customer: [],
   admin: [
     { label: 'System Dashboard', href: '/admin', icon: 'dashboard' },
     { label: 'Reminder Management', href: '/admin/reminder-management', icon: 'reminder' },
     { label: 'Service Management', href: '/admin/service-management', icon: 'services' },
     { label: 'User Management', href: '/admin/user-management', icon: 'users' },
+    { label: 'Categories & Tags', href: '/admin/categories-tags', icon: 'tags' },
     { label: 'Store Management', href: '/admin/store-management', icon: 'store' },
     { label: 'Setting', href: '/admin/setting', icon: 'settings' },
   ],
@@ -44,7 +46,6 @@ export const SIDEBAR_ITEMS_BY_ROLE: Record<UserRole, SidebarItem[]> = {
     { label: 'Store Dashboard', href: '/manager', icon: 'dashboard' },
     { label: 'Store Metrics', href: '/manager/store-metrics', icon: 'metrics' },
     { label: 'Store Catalog', href: '/manager/store-catalog', icon: 'catalog' },
-    { label: 'Categories & Tags', href: '/manager/categories-tags', icon: 'tags' },
     { label: 'Store Users', href: '/manager/store-users', icon: 'users' },
     { label: 'Sales Orders', href: '/manager/sales-orders', icon: 'orders' },
     { label: 'Service Orders', href: '/manager/service-orders', icon: 'services' },
@@ -52,9 +53,16 @@ export const SIDEBAR_ITEMS_BY_ROLE: Record<UserRole, SidebarItem[]> = {
   ],
   staff: [
     { label: 'Dashboard', href: '/staff', icon: 'dashboard' },
-    { label: 'Chat Management', href: '/staff/chat-management', icon: 'chat' },
     { label: 'Service Request', href: '/staff/service-request', icon: 'requests' },
     { label: 'Service Process', href: '/staff/service-process', icon: 'scheduled' },
+    { label: 'Current Nursery Inventory', href: '/staff/inventory-current-nursery', icon: 'store' },
+    { label: 'Cross-Nursery Inventory', href: '/staff/inventory-cross-nursery', icon: 'store' },
+  ],
+  consultant: [
+    { label: 'Dashboard', href: '/consultant', icon: 'dashboard' },
+    { label: 'Chat Support', href: '/consultant/chat-support', icon: 'chat' },
+    { label: 'Customer Orders', href: '/consultant/customer-orders', icon: 'orders' },
+    { label: 'Products & Inventory', href: '/consultant/products-inventory', icon: 'products' },
   ],
   caretaker: [
     { label: 'Dashboard', href: '/caretaker', icon: 'dashboard' },

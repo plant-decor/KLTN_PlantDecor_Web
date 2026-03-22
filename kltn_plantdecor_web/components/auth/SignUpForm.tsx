@@ -17,12 +17,12 @@ interface SignUpFormProps {
   isVisible: boolean;
   onBack: () => void;
   onSubmit: (formData: {
-    name: string;
     email: string;
-    phone: string;
-    address: string;
     password: string;
     confirmPassword: string;
+    userName: string;
+    fullName: string;
+    phoneNumber: string;
   }) => Promise<void>;
   isLoading?: boolean;
   error?: string;
@@ -41,12 +41,12 @@ export default function SignUpForm({
   const [signUpPassword, setSignUpPassword] = useState('');
   const [signUpConfirmPassword, setSignUpConfirmPassword] = useState('');
   const [signUpPhone, setSignUpPhone] = useState('');
-  const [signUpAddress, setSignUpAddress] = useState('');
+  const [signUpUsername, setSignUpUsername] = useState('');
   const [isSignUpPasswordVisible, setIsSignUpPasswordVisible] = useState(false);
   const [isSignUpConfirmPasswordVisible, setIsSignUpConfirmPasswordVisible] = useState(false);
   const [isNameFocused, setIsNameFocused] = useState(false);
   const [isPhoneFocused, setIsPhoneFocused] = useState(false);
-  const [isAddressFocused, setIsAddressFocused] = useState(false);
+  const [isUsernameFocused, setIsUsernameFocused] = useState(false);
   const [isConfirmPasswordFocused, setIsConfirmPasswordFocused] = useState(false);
   const [isEmailFocused, setIsEmailFocused] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
@@ -54,12 +54,12 @@ export default function SignUpForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const formData = {
-      name: signUpName,
       email: signUpEmail,
-      phone: signUpPhone,
-      address: signUpAddress,
       password: signUpPassword,
       confirmPassword: signUpConfirmPassword,
+      userName: signUpUsername,
+      fullName: signUpName,
+      phoneNumber: signUpPhone,
     };
     console.log('=== SIGN UP FORM SUBMISSION ===');
     console.log({
@@ -184,7 +184,7 @@ export default function SignUpForm({
               {t('phone')}
             </span>
             <input
-              type="tel"
+              type="text"
               value={signUpPhone}
               onChange={(e) => setSignUpPhone(e.target.value)}
               onFocus={() => setIsPhoneFocused(true)}
@@ -197,23 +197,23 @@ export default function SignUpForm({
             </span>
           </div>
 
-          {/* Address Field */}
+          {/*UserName Field */}
           <div className="relative">
             <span
               className={`absolute left-2 top-2 text-gray-500 transition-all pointer-events-none ${
-                signUpAddress || isAddressFocused
+                signUpUsername || isUsernameFocused
                   ? "text-xs -translate-y-7 bg-white px-2 text-blue-500"
                   : "text-base"
               }`}
             >
-              {t('address')}
+              {t('username')}
             </span>
             <input
               type="text"
-              value={signUpAddress}
-              onChange={(e) => setSignUpAddress(e.target.value)}
-              onFocus={() => setIsAddressFocused(true)}
-              onBlur={() => setIsAddressFocused(false)}
+              value={signUpUsername}
+              onChange={(e) => setSignUpUsername(e.target.value)}
+              onFocus={() => setIsUsernameFocused(true)}
+              onBlur={() => setIsUsernameFocused(false)}
               className="w-full h-12 p-2 pl-8 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
@@ -291,7 +291,7 @@ export default function SignUpForm({
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full h-12 bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold rounded-lg cursor-pointer transition-all hover:scale-105 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full h-12 bg-linear-to-r from-green-500 to-green-600 text-white font-semibold rounded-lg cursor-pointer transition-all hover:scale-105 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? t('creating') : t('createAccount')}
             </button>

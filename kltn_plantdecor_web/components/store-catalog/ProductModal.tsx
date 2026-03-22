@@ -15,7 +15,6 @@ import {
   Select,
   MenuItem,
   Chip,
-  FormHelperText,
   Table,
   TableBody,
   TableCell,
@@ -120,17 +119,17 @@ export default function ProductModal({
     }
   };
 
-  const handleCategoryChange = (categoryIds: string[]) => {
+  const handleCategoryChange = (categoryIds: number[]) => {
     setFormData((prev) => ({
       ...prev,
-      categoryIds,
+      categoryIds: categoryIds.map(Number),
     }));
   };
 
-  const handleTagChange = (tagIds: string[]) => {
+  const handleTagChange = (tagIds: number[]) => {
     setFormData((prev) => ({
       ...prev,
-      tagIds,
+      tagIds: tagIds.map(Number),
     }));
   };
 
@@ -241,10 +240,12 @@ export default function ProductModal({
             <Select
               multiple
               name="categoryIds"
-              value={formData.categoryIds || []}
+              value={(formData.categoryIds || []).map(String)}
               onChange={(e) =>
                 handleCategoryChange(
-                  typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value
+                  Array.isArray(e.target.value)
+                    ? (e.target.value as string[]).map(Number)
+                    : []
                 )
               }
               renderValue={(selected) => (
@@ -252,7 +253,7 @@ export default function ProductModal({
                   {(selected as string[]).map((value) => (
                     <Chip
                       key={value}
-                      label={categories.find((c) => c.id === value)?.name}
+                      label={categories.find((c) => c.id === Number(value))?.name}
                       size="small"
                     />
                   ))}
@@ -272,22 +273,23 @@ export default function ProductModal({
             <Select
               multiple
               name="tagIds"
-              value={formData.tagIds || []}
+              value={(formData.tagIds || []).map(String)}
               onChange={(e) =>
                 handleTagChange(
-                  typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value
+                  Array.isArray(e.target.value)
+                    ? (e.target.value as string[]).map(Number)
+                    : []
                 )
               }
               renderValue={(selected) => (
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                   {(selected as string[]).map((value) => {
-                    const tag = tags.find((t) => t.id === value);
+                    const tag = tags.find((t) => t.id === Number(value));
                     return (
                       <Chip
                         key={value}
-                        label={tag?.name}
+                        label={tag?.tagName}
                         size="small"
-                        sx={{ backgroundColor: tag?.color }}
                       />
                     );
                   })}
@@ -296,7 +298,7 @@ export default function ProductModal({
             >
               {tags.map((tag) => (
                 <MenuItem key={tag.id} value={tag.id}>
-                  {tag.name}
+                  {tag.tagName}
                 </MenuItem>
               ))}
             </Select>

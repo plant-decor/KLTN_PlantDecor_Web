@@ -1,10 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/authStore';
-import { loginAction } from '@/app/actions/loginAction';
-import { useFailedLoginAttempts } from '@/hooks/useFailedLoginAttempts';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { toast } from 'react-toastify';
+import { useAuthStore } from '@/lib/store/authStore';
+import { useLoadingStore } from '@/lib/store/zustand';
+import {
+  forgotPasswordAction,
+  loginAction,
+  registerAction,
+} from '@/app/actions/authenticationActions';
+import { getDeviceId } from '@/lib/utils/deviceId';
+import { resolvePostLoginRedirect } from '@/lib/utils/authRedirect';
+import { setClientAccessToken, setClientRefreshToken } from '@/lib/axios/tokenStorage';
 import Image from 'next/image';
 import LoginForm from './LoginForm';
 import ForgotPasswordForm from './ForgotPasswordForm';
@@ -14,87 +22,123 @@ type FormType = 'login' | 'forgot' | 'signup';
 
 export default function AuthFormContainer() {
   const [currentForm, setCurrentForm] = useState<FormType>('login');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
   const { setUser } = useAuthStore();
-  const { incrementFailedAttempts, resetFailedAttempts, requiresRecaptcha } = useFailedLoginAttempts();
+  const { setLoading } = useLoadingStore();
 
-  const handleLoginSubmit = async (email: string, password: string, recaptchaToken?: string) => {
+  const beginSubmit = () => {
+    setIsSubmitting(true);
+    setLoading(true);
+  };
+
+  const endSubmit = () => {
+    setIsSubmitting(false);
+    setLoading(false);
+  };
+
+  const handleLoginSubmit = async (email: string, password: string) => {  
     setError('');
-    setIsLoading(true);
+    setMessage('');
+    beginSubmit();
 
     try {
-      const result = await loginAction(email, password, recaptchaToken);
+      const deviceId = getDeviceId();
+      document.cookie = `deviceId=${encodeURIComponent(deviceId)}; Max-Age=31536000; Path=/; SameSite=Lax`;
 
+      const result = await loginAction(email, password);
       if (!result.success) {
-        // Only increment failed attempts if recaptcha wasn't required or failed
-        if (!requiresRecaptcha()) {
-          incrementFailedAttempts();
+        const loginMessage = result.message || 'Đăng nhập thất bại';
+
+        if (loginMessage.toLowerCase().includes('not been verified')) {
+          setError('Tài khoản chưa xác thực email. Vui lòng kiểm tra mailbox và bấm link xác thực.');
+          return;
         }
-        setError(result.message || 'Đăng nhập thất bại');
-        // Tăng số lần thất bại
-        incrementFailedAttempts();
+        setError(loginMessage);
         return;
       }
-
-      // Đăng nhập thành công - reset số lần thất bại
-      resetFailedAttempts();
-
-      if (result.user) {
-        setUser(result.user);
-        resetFailedAttempts(); // Clear failed attempts on successful login
+      const resolvedUser = result.user;
+      if (result.token) {
+        setClientAccessToken(result.token);
+      }
+      if (result.refreshToken) {
+        setClientRefreshToken(result.refreshToken);
       }
 
+      // try {
+      //   const profileResponse = await get<User>('/User/user-profile', undefined, false);
+      //   console.log('Fetched user profile after login:', profileResponse);
+      //   if (profileResponse.data) {
+      //     resolvedUser = profileResponse.data;
+      //   }
+      // } catch (profileError) {
+      //   console.warn('Failed to fetch profile after login, fallback to token user:', profileError);
+      // }
+      if (resolvedUser) {
+        setUser(resolvedUser);
+      }
+      toast.success(result.message || 'Đăng nhập thành công');
+      const resolvedRedirectTo = resolvePostLoginRedirect({
+        redirectToRaw: searchParams.get('redirectTo'),
+        userId: resolvedUser?.id,
+        userRole: resolvedUser?.role,
+        pathname,
+      });
+
       setTimeout(() => {
-        router.push('/');
+        router.push(resolvedRedirectTo);
       }, 500);
     } catch (err) {
       console.error('Login error:', err);
-      if (!requiresRecaptcha()) {
-        incrementFailedAttempts();
-      }
       setError('Lỗi khi đăng nhập');
-      // Tăng số lần thất bại khi có lỗi
-      incrementFailedAttempts();
+      toast.error('Lỗi khi đăng nhập');
     } finally {
-      setIsLoading(false);
+      endSubmit();
     }
   };
 
   const handleForgotPasswordSubmit = async (email: string) => {
     setError('');
     setMessage('');
-    setIsLoading(true);
+    beginSubmit();
 
     try {
       if (!email) {
         setError('Vui lòng nhập email');
         return;
       }
-      // TODO: Implement forgot password API call
-      setMessage('Link đặt lại mật khẩu đã được gửi đến email của bạn');
+
+      const result = await forgotPasswordAction({ email: email.trim() });
+
+      if (!result.success) {
+        setError(result.message || 'Lỗi khi gửi link đặt lại mật khẩu');
+        return;
+      }
+
+      setMessage(result.message || 'Link đặt lại mật khẩu đã được gửi đến email của bạn');
     } catch (err) {
       console.error('Forgot password error:', err);
       setError('Lỗi khi gửi link đặt lại mật khẩu');
     } finally {
-      setIsLoading(false);
+      endSubmit();
     }
   };
 
   const handleSignUpSubmit = async (formData: {
-    name: string;
     email: string;
-    phone: string;
-    address: string;
     password: string;
     confirmPassword: string;
+    userName: string;
+    fullName: string;
+    phoneNumber: string;
   }) => {
     setError('');
     setMessage('');
-    setIsLoading(true);
+    beginSubmit();
 
     try {
       if (formData.password !== formData.confirmPassword) {
@@ -102,20 +146,38 @@ export default function AuthFormContainer() {
         return;
       }
 
-      if (formData.name.trim() === '') {
+      if (formData.fullName.trim() === '') {
         setError('Vui lòng nhập tên đầy đủ');
         return;
       }
 
-      // TODO: Implement sign up API call
-      console.log('Sign up data prepared for API call:', {
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        address: formData.address,
+      if (formData.userName.trim() === '') {
+        setError('Vui lòng nhập tên đăng nhập');
+        return;
+      }
+
+      if (formData.phoneNumber.trim() === '') {
+        setError('Vui lòng nhập số điện thoại');
+        return;
+      }
+
+      const result = await registerAction({
+        email: formData.email.trim(),
+        password: formData.password,
+        confirmPassword: formData.confirmPassword,
+        username: formData.userName.trim(),
+        fullName: formData.fullName.trim(),
+        phoneNumber: formData.phoneNumber.trim(),
       });
 
-      setMessage('Tạo tài khoản thành công! Vui lòng đăng nhập.');
+      if (!result.success) {
+        setError(result.message || 'Lỗi khi tạo tài khoản');
+        return;
+      }
+
+      const successMessage = result.message || 'Tạo tài khoản thành công! Vui lòng kiểm tra email để xác thực.';
+      toast.success(successMessage);
+      setMessage(successMessage);
       setTimeout(() => {
         setCurrentForm('login');
         setMessage('');
@@ -124,7 +186,7 @@ export default function AuthFormContainer() {
       console.error('Sign up error:', err);
       setError('Lỗi khi tạo tài khoản');
     } finally {
-      setIsLoading(false);
+      endSubmit();
     }
   };
 
@@ -147,12 +209,11 @@ export default function AuthFormContainer() {
       {currentForm === 'login' && (
         <div className="lg:w-4/5 lg:h-4/5 w-full h-5/6 flex border border-black rounded-[30px] bg-white z-10 overflow-hidden">
           <LoginForm
-            isVisible={true}
             onForgotPassword={() => setCurrentForm('forgot')}
             onSignUp={() => setCurrentForm('signup')}
             onSubmit={handleLoginSubmit}
-            isLoading={isLoading}
             error={error}
+            isLoading={isSubmitting}
           />
         </div>
       )}
@@ -164,7 +225,7 @@ export default function AuthFormContainer() {
             isVisible={true}
             onBack={handleBackToLogin}
             onSubmit={handleForgotPasswordSubmit}
-            isLoading={isLoading}
+            isLoading={isSubmitting}
             error={error}
             message={message}
           />
@@ -178,7 +239,7 @@ export default function AuthFormContainer() {
             isVisible={true}
             onBack={handleBackToLogin}
             onSubmit={handleSignUpSubmit}
-            isLoading={isLoading}
+            isLoading={isSubmitting}
             error={error}
           />
         </div>

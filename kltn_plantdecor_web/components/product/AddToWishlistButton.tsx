@@ -3,16 +3,23 @@
 import { useState, type MouseEvent } from 'react';
 import { Button } from '@mui/material';
 import { FavoriteBorder as FavoriteBorderIcon, Favorite as FavoriteIcon } from '@mui/icons-material';
-import { useTranslations } from 'next-intl';
-import type { SamplePlant } from '@/data/sampledata';
+import { useLocale, useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
+import type { Plant } from '@/data/sampledata';
+import { useAuthStore } from '@/lib/store/authStore';
+import {
+  addPlantToWishlist,
+  removePlantFromWishlist,
+} from '@/lib/api/cartWishlistService';
 
 interface AddToWishlistButtonProps {
-  plant: SamplePlant;
+  plant: Plant;
   fullWidth?: boolean;
   size?: 'small' | 'medium' | 'large';
   variant?: 'text' | 'outlined' | 'contained';
   onClick?: (event: MouseEvent<HTMLButtonElement>) => void;
   label?: string;
+  onChange?: (isWishlisted: boolean) => void;
 }
 
 export default function AddToWishlistButton({
@@ -22,15 +29,42 @@ export default function AddToWishlistButton({
   variant = 'outlined',
   onClick,
   label,
+  onChange,
 }: AddToWishlistButtonProps) {
   const tWishlist = useTranslations('wishlist');
+  const locale = useLocale();
+  const router = useRouter();
+  const { user } = useAuthStore();
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleToggleWishlist = (event: MouseEvent<HTMLButtonElement>) => {
+  const handleToggleWishlist = async (event: MouseEvent<HTMLButtonElement>) => {
     onClick?.(event);
-    const nextState = !isWishlisted;
-    setIsWishlisted(nextState);
-    console.log(nextState ? 'Added to wishlist:' : 'Removed from wishlist:', plant.name);
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (!user?.id) {
+      router.push(`/${locale}/login`);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const nextState = !isWishlisted;
+
+      if (nextState) {
+        await addPlantToWishlist(plant.id);
+      } else {
+        await removePlantFromWishlist(plant.id);
+      }
+
+      setIsWishlisted(nextState);
+      onChange?.(nextState);
+    } catch (error) {
+      console.error('Toggle wishlist error:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -41,6 +75,7 @@ export default function AddToWishlistButton({
       fullWidth={fullWidth}
       startIcon={isWishlisted ? <FavoriteIcon /> : <FavoriteBorderIcon />}
       color={isWishlisted ? 'error' : 'inherit'}
+      disabled={isLoading}
       sx={{
         textTransform: 'none',
         whiteSpace: 'nowrap',

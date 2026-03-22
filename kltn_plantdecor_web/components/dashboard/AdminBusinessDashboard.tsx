@@ -20,6 +20,7 @@ import {
   topSellingPlants,
   adminBusinessStats,
 } from '@/data/dashboardMockData';
+import { formatNumber } from '@/lib/utils/format';
 
 // Stat Card Component
 interface StatCardProps {
@@ -31,6 +32,7 @@ interface StatCardProps {
 }
 
 function StatCard({ title, value, icon, color, subtitle }: StatCardProps) {
+  // let formattedValue: string | number = formatNumber(value);
   return (
     <Card sx={{ height: '100%' }}>
       <CardContent>

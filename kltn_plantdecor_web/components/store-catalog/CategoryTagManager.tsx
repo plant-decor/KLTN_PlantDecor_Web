@@ -24,10 +24,10 @@ interface CategoryTagManagerProps {
   tags: Tag[];
   onAddCategory: (category: Category) => void;
   onEditCategory: (category: Category) => void;
-  onDeleteCategory: (categoryId: string) => void;
+  onDeleteCategory: (categoryId: number) => void;
   onAddTag: (tag: Tag) => void;
   onEditTag: (tag: Tag) => void;
-  onDeleteTag: (tagId: string) => void;
+  onDeleteTag: (tagId: number) => void;
 }
 
 export default function CategoryTagManager({
@@ -45,7 +45,7 @@ export default function CategoryTagManager({
   const [editingCategory, setEditingCategory] = useState<Category | undefined>();
   const [editingTag, setEditingTag] = useState<Tag | undefined>();
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<{ type: 'category' | 'tag'; id: string } | null>(
+  const [deleteTarget, setDeleteTarget] = useState<{ type: 'category' | 'tag'; id: number } | null>(
     null
   );
 
@@ -162,9 +162,9 @@ export default function CategoryTagManager({
               tags.map((tag) => (
                 <Box key={tag.id} sx={{ position: 'relative' }}>
                   <Chip
-                    label={tag.name}
+                    label={tag.tagName}
                     sx={{
-                      backgroundColor: tag.color,
+                      backgroundColor: '#e0f7fa',
                       color: '#fff',
                       fontWeight: 'bold',
                     }}
@@ -236,6 +236,7 @@ export default function CategoryTagManager({
           }
           setCategoryModalOpen(false);
           setEditingCategory(undefined);
+          return true;
         }}
         category={editingCategory}
       />
@@ -247,7 +248,7 @@ export default function CategoryTagManager({
           setTagModalOpen(false);
           setEditingTag(undefined);
         }}
-        onSave={(tag) => {
+        onSave={async (tag) => {
           if (editingTag) {
             onEditTag(tag);
           } else {
@@ -255,6 +256,7 @@ export default function CategoryTagManager({
           }
           setTagModalOpen(false);
           setEditingTag(undefined);
+          return true;
         }}
         tag={editingTag}
       />

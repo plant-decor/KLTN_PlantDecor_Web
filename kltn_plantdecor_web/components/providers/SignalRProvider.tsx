@@ -16,7 +16,7 @@
 
 import React, { createContext, useEffect, useState, useCallback, useRef } from 'react';
 import { signalRService } from '@/lib/services/signalRService';
-import { useAuthStore } from '@/store/authStore';
+import { useAuthStore } from '@/lib/store/authStore';
 import { ROLE_HUB_ACCESS, type UserRole } from '@/lib/constants/signalr';
 import type { 
   SignalRContextValue, 

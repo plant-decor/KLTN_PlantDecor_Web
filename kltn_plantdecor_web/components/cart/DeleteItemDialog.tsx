@@ -28,9 +28,7 @@ export default function DeleteItemDialog({
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>Remove Item from Cart</DialogTitle>
       <DialogContent>
-        <Typography sx={{ mt: 2 }}>
-          Are you sure you want to remove this item from your cart?
-        </Typography>
+        <Typography sx={{ mt: 2 }}>Are you sure you want to remove this item from your cart?</Typography>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} sx={{ color: '#666' }}>
@@ -42,11 +40,7 @@ export default function DeleteItemDialog({
           variant="contained"
           sx={{ backgroundColor: '#d32f2f' }}
         >
-          {isUpdating ? (
-            <CircularProgress size={20} aria-label="Removing item" />
-          ) : (
-            'Remove'
-          )}
+          {isUpdating ? <CircularProgress size={20} aria-label="Removing item" /> : 'Remove'}
         </Button>
       </DialogActions>
     </Dialog>

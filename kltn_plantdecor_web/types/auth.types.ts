@@ -37,9 +37,49 @@ export interface LoginRequest {
   deviceName?: string;
 }
 
+export interface GoogleLoginRequest {
+  accessToken: string;
+  deviceId: string;
+}
+
 export interface RefreshTokenRequest {
   refreshToken: string;
   deviceId?: string;
+}
+
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  confirmPassword: string;
+  username: string;
+  fullName: string;
+  phoneNumber: string;
+}
+
+export interface VerifyEmailRequest {
+  email: string;
+}
+
+export interface ConfirmEmailRequest {
+  email: string;
+  token: string;
+}
+
+export interface ResetPasswordRequest {
+  email: string;
+  token: string;
+  newPassword: string;
+  confirmNewPassword: string;
+}
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface CreateManagerRequest {
+  email: string;
+  password: string;
+  fullName: string;
 }
 
 export interface RevokeTokenRequest {

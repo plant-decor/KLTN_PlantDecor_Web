@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import {
   Facebook as FacebookIcon,
@@ -11,23 +10,9 @@ import {
   Email as EmailIcon,
 } from '@mui/icons-material';
 import { useTranslations } from 'next-intl';
-import axiosInstance from '@/lib/api/axiosInstance';
 
 export default function Footer() {
   const t = useTranslations('footer');
-  const [isTestingLoading, setIsTestingLoading] = useState(false);
-
-  const handleTestLoading = async () => {
-    try {
-      setIsTestingLoading(true);
-      const mockDelayUrl = `${window.location.origin}/api/mock-delay`;
-      await axiosInstance.get(mockDelayUrl);
-    } catch (error) {
-      console.error('Loading test failed:', error);
-    } finally {
-      setIsTestingLoading(false);
-    }
-  };
 
   return (
     <footer className="border-t border-gray-200 bg-white">
@@ -148,16 +133,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-6 flex justify-center">
-          <button
-            type="button"
-            onClick={handleTestLoading}
-            disabled={isTestingLoading}
-            className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isTestingLoading ? 'Đang test loading...' : 'Test Loading 5s'}
-          </button>
-        </div>
+
       </div>
     </footer>
   );

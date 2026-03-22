@@ -21,8 +21,8 @@ import type { CartItem } from '@/types/cart.types';
 interface CartItemRowProps {
   item: CartItem;
   isUpdating: boolean;
-  onQuantityChange: (plantId: number, quantity: number) => void;
-  onRemove: (plantId: number) => void;
+  onQuantityChange: (cartItemId: number, quantity: number) => void;
+  onRemove: (cartItemId: number) => void;
 }
 
 export default function CartItemRow({
@@ -31,7 +31,7 @@ export default function CartItemRow({
   onQuantityChange,
   onRemove,
 }: CartItemRowProps) {
-  const subtotal = item.plant.price * item.quantity;
+  const subtotal = parseFloat(item.plant.basePrice) * item.quantity;
 
   return (
     <TableRow sx={{ '&:hover': { backgroundColor: '#fafafa' } }}>
@@ -40,7 +40,7 @@ export default function CartItemRow({
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <Box sx={{ position: 'relative', width: 60, height: 60 }}>
             <Image
-              src={item.plant.imageUrl}
+              src={item.plant.primaryImageUrl || 'img/fallbackplant.avif'}
               alt={item.plant.name}
               fill
               style={{ objectFit: 'cover', borderRadius: 4 }}
@@ -59,9 +59,6 @@ export default function CartItemRow({
                 {item.plant.name}
               </Typography>
             </Link>
-            <Typography variant="caption" sx={{ color: '#999' }}>
-              {item.plant.scientificName}
-            </Typography>
           </Box>
         </Box>
       </TableCell>
@@ -69,7 +66,7 @@ export default function CartItemRow({
       {/* Price */}
       <TableCell align="center">
         <Typography sx={{ fontWeight: 500 }}>
-          {item.plant.price.toLocaleString('vi-VN')}₫
+          {parseFloat(item.plant.basePrice).toLocaleString('vi-VN')}₫
         </Typography>
       </TableCell>
 
@@ -85,7 +82,7 @@ export default function CartItemRow({
         >
           <IconButton
             size="small"
-            onClick={() => onQuantityChange(item.plantId, item.quantity - 1)}
+            onClick={() => onQuantityChange(item.id, item.quantity - 1)}
             disabled={isUpdating || item.quantity <= 1}
             sx={{ color: '#999' }}
           >
@@ -95,7 +92,7 @@ export default function CartItemRow({
             type="number"
             value={item.quantity}
             onChange={(e) =>
-              onQuantityChange(item.plantId, parseInt(e.target.value) || 0)
+              onQuantityChange(item.id, parseInt(e.target.value, 10) || 0)
             }
             disabled={isUpdating}
             inputProps={{
@@ -110,7 +107,7 @@ export default function CartItemRow({
           />
           <IconButton
             size="small"
-            onClick={() => onQuantityChange(item.plantId, item.quantity + 1)}
+            onClick={() => onQuantityChange(item.id, item.quantity + 1)}
             disabled={isUpdating}
             sx={{ color: '#999' }}
           >
@@ -130,7 +127,7 @@ export default function CartItemRow({
       <TableCell align="center">
         <IconButton
           size="small"
-          onClick={() => onRemove(item.plantId)}
+          onClick={() => onRemove(item.id)}
           disabled={isUpdating}
           sx={{ color: '#d32f2f' }}
         >

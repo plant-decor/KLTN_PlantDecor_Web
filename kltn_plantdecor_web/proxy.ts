@@ -4,112 +4,113 @@ import { routing } from '@/i18n/routing';
 
 const intlMiddleware = createIntlMiddleware(routing);
 
-// ============= ROLE-BASED ACCESS CONTROL =============
-
-// Mapping: Role -> Allowed Routes (dễ dùng cho sidebar/menu)
 export const ROLE_TO_ROUTES: Record<string, string[]> = {
-  'Admin': [
-    'admin', 'manager', 'staff', 'caretaker', 'shipper',
-    'dashboard', 'profile', 'orders', 'wishlist', 'cart', 'ai-plant-recommendation'
+  Admin: [
+    'admin', 'manager', 'staff', 'caretaker', 'shipper', 'categories-tags',
+    'dashboard', 'profile', 'orders', 'wishlist', 'cart', 'ai-plant-recommendation',
   ],
-  'Manager': [
+  Manager: [
     'manager', 'staff', 'caretaker', 'shipper',
-    'dashboard', 'profile', 'orders', 'wishlist', 'cart', 'ai-plant-recommendation'
+    'dashboard', 'profile', 'orders', 'wishlist', 'cart', 'ai-plant-recommendation',
   ],
-  'Staff': [
-    'staff', 'dashboard', 'profile', 'orders', 'wishlist', 'cart', 'ai-plant-recommendation'
+  Staff: [
+    'staff', 'dashboard', 'profile', 'orders', 'wishlist', 'cart', 'ai-plant-recommendation',
   ],
-  'Caretaker': [
-    'caretaker', 'dashboard', 'profile', 'orders', 'wishlist', 'cart', 'ai-plant-recommendation'
+  Caretaker: [
+    'caretaker', 'dashboard', 'profile', 'orders', 'wishlist', 'cart', 'ai-plant-recommendation',
   ],
-  'Shipper': [
-    'shipper', 'dashboard', 'profile', 'orders', 'wishlist', 'cart', 'ai-plant-recommendation'
+  Shipper: [
+    'shipper', 'dashboard', 'profile', 'orders', 'wishlist', 'cart', 'ai-plant-recommendation',
   ],
-  'User': [
-    'profile', 'orders', 'wishlist', 'cart', 'ai-plant-recommendation'
+  Customer: [
+    'profile', 'orders', 'wishlist', 'cart', 'ai-plant-recommendation',
   ],
 };
 
-// Mapping: Route -> Allowed Roles (dùng cho middleware check)
 export const ROUTE_TO_ROLES: Record<string, string[]> = {
-  'admin': ['Admin'],
-  'manager': ['Admin', 'Manager'],
-  'staff': ['Admin', 'Manager', 'Staff'],
-  'caretaker': ['Admin', 'Manager', 'Caretaker'],
-  'shipper': ['Admin', 'Manager', 'Shipper'],
-  'dashboard': ['Admin', 'Manager', 'Staff', 'Caretaker', 'Shipper'],
-  'profile': ['Admin', 'Manager', 'Staff', 'Caretaker', 'Shipper', 'User'],
-  'orders': ['Admin', 'Manager', 'Staff', 'Caretaker', 'Shipper', 'User'],
-  'wishlist': ['User', 'Admin', 'Manager', 'Staff', 'Caretaker', 'Shipper'],
-  'cart': ['User', 'Admin', 'Manager', 'Staff', 'Caretaker', 'Shipper'],
-  'ai-plant-recommendation': ['User', 'Admin', 'Manager', 'Staff', 'Caretaker', 'Shipper'],
+  admin: ['Admin'],
+  manager: ['Admin', 'Manager'],
+  staff: ['Admin', 'Manager', 'Staff'],
+  caretaker: ['Admin', 'Manager', 'Caretaker'],
+  shipper: ['Admin', 'Manager', 'Shipper'],
+  consultant: ['Admin', 'Manager', 'Staff'],
+  dashboard: ['Admin', 'Manager', 'Staff', 'Caretaker', 'Shipper'],
+  sessions: ['Admin', 'Manager', 'Staff', 'Caretaker', 'Shipper'],
 };
 
-// Danh sách các route cần bảo vệ (authentication)
 const PROTECTED_ROUTES = Object.keys(ROUTE_TO_ROLES);
 
-// Helper function: Check if role has access to route
 export function hasAccess(userRole: string, route: string): boolean {
   return ROLE_TO_ROUTES[userRole]?.includes(route) ?? false;
 }
 
-export default function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  
-  // 1. Lấy token và role từ Cookie
-  const authToken = request.cookies.get('authToken')?.value;
-  const userRole = request.cookies.get('userRole')?.value; // Role được set khi login
+function getLocaleFromPath(pathname: string): string {
+  const segments = pathname.split('/');
+  const potentialLocale = segments[1] ?? '';
+  return routing.locales.includes(potentialLocale as 'vi' | 'en')
+    ? potentialLocale
+    : routing.defaultLocale;
+}
 
-  // 2. Tách locale khỏi pathname để kiểm tra chính xác
-  // Ví dụ: /vi/dashboard -> segments = ['', 'vi', 'dashboard']
+function getLocalizedPath(pathname: string, basePath: string): string {
+  const locale = getLocaleFromPath(pathname);
+  return locale === routing.defaultLocale ? basePath : `/${locale}${basePath}`;
+}
+
+export default function proxy(request: NextRequest) {
+  const { pathname, searchParams } = request.nextUrl;
+
+  const authToken = request.cookies.get('accessToken')?.value;
+  const userRole = request.cookies.get('userRole')?.value;
+
   const segments = pathname.split('/');
   const protectedRoute = PROTECTED_ROUTES.find((route) => segments.includes(route));
+  const isAuthPage = segments.includes('login') || segments.includes('register');
+  const forceLogout = searchParams.get('forceLogout') === '1';
 
-  // 3. Logic Redirect cho Protected Routes - AUTHENTICATION
   if (protectedRoute && !authToken) {
-    const loginUrl = new URL('/login', request.nextUrl.origin);
-    // Lưu lại trang định truy cập để sau khi login .NET xong có thể quay lại
+    const loginPath = getLocalizedPath(pathname, '/login');
+    const loginUrl = new URL(loginPath, request.nextUrl.origin);
     loginUrl.searchParams.set('redirectTo', pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // 4. Logic Redirect cho Protected Routes - AUTHORIZATION (Role-Based)
   if (protectedRoute && authToken && userRole) {
     const allowedRoles = ROUTE_TO_ROLES[protectedRoute];
-    
+
     if (!allowedRoles.includes(userRole)) {
-      // Redirect về trang phù hợp với role
-      const potentialLocale = segments[1] ?? '';
-      const localeFromPath = routing.locales.includes(potentialLocale as 'vi' | 'en')
-        ? potentialLocale
-        : routing.defaultLocale;
-      
-      // Redirect về dashboard hoặc homepage tùy theo role
-      const unauthorizedUrl = new URL(
-        `/${localeFromPath}/unauthorized`,
-        request.nextUrl.origin
-      );
-      
-      return NextResponse.redirect(unauthorizedUrl);
+      const unauthorizedPath = getLocalizedPath(pathname, '/unauthorized');
+      return NextResponse.redirect(new URL(unauthorizedPath, request.nextUrl.origin));
     }
   }
 
-  // 4. Logic Redirect cho Auth Routes (Login/Register)
-  const isAuthPage = segments.includes('login') || segments.includes('register');
-  if (isAuthPage && authToken) {
-    const potentialLocale = segments[1] ?? '';
-    const localeFromPath = routing.locales.includes(potentialLocale as 'vi' | 'en')
-      ? potentialLocale
-      : routing.defaultLocale;
-    const dashboardPath = `/${localeFromPath}/dashboard`;
-    return NextResponse.redirect(new URL(dashboardPath, request.nextUrl.origin));
+  if (isAuthPage && forceLogout) {
+    const response = intlMiddleware(request);
+    response.cookies.delete('accessToken');
+    response.cookies.delete('refreshToken');
+    response.cookies.delete('userRole');
+    return response;
   }
 
-  // 5. Chuyển tiếp cho next-intl xử lý ngôn ngữ
+  if (isAuthPage && authToken && !forceLogout) {
+    const roleToDefaultPath: Record<string, string> = {
+      Admin: '/dashboard',
+      Manager: '/dashboard',
+      Staff: '/dashboard',
+      Caretaker: '/dashboard',
+      Shipper: '/dashboard',
+      Customer: '/',
+    };
+
+    const basePath = userRole ? roleToDefaultPath[userRole] || '/' : '/';
+    const targetPath = getLocalizedPath(pathname, basePath);
+
+    return NextResponse.redirect(new URL(targetPath, request.nextUrl.origin));
+  }
+
   return intlMiddleware(request);
 }
 
 export const config = {
-  // Match app routes only; exclude API, Next internals, and all static files (e.g. .png, .svg)
   matcher: ['/((?!api|_next|.*\\..*).*)'],
 };

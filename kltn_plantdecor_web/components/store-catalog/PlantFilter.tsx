@@ -2,12 +2,12 @@
 
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import type { SamplePlant } from '@/data/sampledata';
+import type { Plant } from '@/data/sampledata';
 import { Close as CloseIcon, Tune as FilterIcon } from '@mui/icons-material';
 
 interface PlantFilterProps {
-  onFiltersChange: (filteredPlants: SamplePlant[]) => void;
-  plants: SamplePlant[];
+  onFiltersChange: (filteredPlants: Plant[]) => void;
+  plants: Plant[];
   enableSearch?: boolean;
   onSearchChange?: (query: string) => void;
   useInternalMobileDrawer?: boolean;
@@ -62,14 +62,14 @@ export default function PlantFilter({
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   // Get max price from plants
-  const maxPrice = Math.max(...plants.map(p => p.price), 1000000);
+  const maxPrice = Math.max(...plants.map(p => parseFloat(p.basePrice)), 1000000);
 
   const applyFilters = (newFilters: FilterState) => {
     setFilters(newFilters);
 
     let filtered = plants.filter(plant => {
       // Category filter
-      if (newFilters.category.length > 0 && !newFilters.category.includes(plant.category)) {
+      if (newFilters.category.length > 0 && !newFilters.category.includes(plant.categoryNames.join(','))) {
         return false;
       }
 
@@ -84,7 +84,7 @@ export default function PlantFilter({
       }
 
       // Price Range filter
-      if (plant.price < newFilters.priceRange[0] || plant.price > newFilters.priceRange[1]) {
+      if (parseFloat(plant.basePrice) < newFilters.priceRange[0] || parseFloat(plant.basePrice) > newFilters.priceRange[1]) {
         return false;
       }
 
@@ -94,9 +94,7 @@ export default function PlantFilter({
     // Apply search filter
     if (enableSearch && searchQuery.trim()) {
       filtered = filtered.filter(plant =>
-        plant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        plant.scientificName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        plant.description.toLowerCase().includes(searchQuery.toLowerCase())
+        plant.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 

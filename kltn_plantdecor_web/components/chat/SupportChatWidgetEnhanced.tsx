@@ -39,7 +39,7 @@ import {
   Circle,
 } from '@mui/icons-material';
 import { useChatRoom, useTypingIndicator, useSignalR } from '@/hooks/useSignalR';
-import { useAuthStore } from '@/store/authStore';
+import { useAuthStore } from '@/lib/store/authStore';
 import { formatDistanceToNow } from '@/lib/utils/dateUtils';
 import type { ChatMessage } from '@/types/signalr.types';
 

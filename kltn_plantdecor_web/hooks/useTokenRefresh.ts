@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from 'react';
-import { useAuthStore } from '@/store/authStore';
+import { useAuthStore } from '@/lib/store/authStore';
 
 interface UseTokenRefreshOptions {
   refreshThreshold?: number; // Thời gian trước khi token hết hạn để refresh (milliseconds)

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -8,29 +8,15 @@ import {
   DialogActions,
   TextField,
   Button,
-  Box,
 } from '@mui/material';
-import type { Tag } from '@/data/storeCatalogData';
+import { Tag } from '@/data/storeCatalogData';
 
 interface TagModalProps {
   open: boolean;
   onClose: () => void;
-  onSave: (tag: Tag) => void;
+  onSave: (tag: Tag) => Promise<boolean>;
   tag?: Tag;
 }
-
-const COLOR_PRESETS = [
-  '#FFB6C1', // Light Pink
-  '#90EE90', // Light Green
-  '#87CEEB', // Sky Blue
-  '#FFD700', // Gold
-  '#DDA0DD', // Plum
-  '#F0E68C', // Khaki
-  '#FF6347', // Tomato
-  '#20B2AA', // Light Sea Green
-  '#FF69B4', // Hot Pink
-  '#98FB98', // Pale Green
-];
 
 export default function TagModal({
   open,
@@ -38,32 +24,59 @@ export default function TagModal({
   onSave,
   tag,
 }: TagModalProps) {
-  const [formData, setFormData] = useState<Tag>(
-    tag || {
-      id: Math.random().toString(36).substr(2, 9),
-      name: '',
-      color: '#FFB6C1',
+  const defaultTag: Tag = {
+    id: 0,
+    tagName: '',
+    tagType: 1,
+    tagTypeName: '',
+  };
+
+  const [formData, setFormData] = useState<Tag>({
+    id: 0,
+    tagName: '',
+    tagType: 1,
+    tagTypeName: '',
+  });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (tag) {
+      setFormData(tag);
+    } else {
+      setFormData(defaultTag);
     }
-  );
+  }, [tag, open]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const { name, value } = e.target;
+
+    if (name === 'tagType') {
+      setFormData((prev) => ({
+        ...prev,
+        tagType: Number(value) || 0,
+      }));
+      return;
+    }
+
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
-  const handleSave = () => {
-    if (formData.name) {
-      onSave(formData);
-      setFormData({
-        id: Math.random().toString(36).substr(2, 9),
-        name: '',
-        color: '#FFB6C1',
-      });
+  const handleSave = async () => {
+    if (!formData.tagName.trim()) {
+      return;
+    }
+
+    setSaving(true);
+    const success = await onSave(formData);
+    setSaving(false);
+
+    if (success) {
+      setFormData(defaultTag);
       onClose();
     }
   };
@@ -74,44 +87,31 @@ export default function TagModal({
       <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
         <TextField
           label="Tag Name"
-          name="name"
-          value={formData.name}
+          name="tagName"
+          value={formData.tagName}
           onChange={handleChange}
           fullWidth
         />
         <TextField
-          label="Color (Hex)"
-          name="color"
-          type="color"
-          value={formData.color}
+          label="Tag Type"
+          name="tagType"
+          type="number"
+          value={formData.tagType}
           onChange={handleChange}
           fullWidth
-          InputLabelProps={{ shrink: true }}
         />
-        <Box>
-          <p style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>Color Presets:</p>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-            {COLOR_PRESETS.map((color) => (
-              <Box
-                key={color}
-                onClick={() => setFormData((prev) => ({ ...prev, color }))}
-                sx={{
-                  width: 40,
-                  height: 40,
-                  backgroundColor: color,
-                  borderRadius: 1,
-                  cursor: 'pointer',
-                  border: formData.color === color ? '2px solid #333' : 'none',
-                }}
-              />
-            ))}
-          </Box>
-        </Box>
+        <TextField
+          label="Tag Type Name"
+          name="tagTypeName"
+          value={formData.tagTypeName}
+          onChange={handleChange}
+          fullWidth
+        />
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSave} variant="contained">
-          {tag ? 'Update' : 'Add'}
+        <Button onClick={onClose} disabled={saving}>Cancel</Button>
+        <Button onClick={handleSave} variant="contained" disabled={saving || !formData.tagName.trim()}>
+          {saving ? 'Saving...' : tag ? 'Update' : 'Add'}
         </Button>
       </DialogActions>
     </Dialog>

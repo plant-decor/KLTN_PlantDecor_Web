@@ -1,6 +1,8 @@
 import { Inter } from 'next/font/google';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import './globals.css';
+import { GoogleOAuthProvider } from '@react-oauth/google';
+import 'react-toastify/dist/ReactToastify.css';
 
 const inter = Inter({
   variable: '--font-inter',
@@ -22,7 +24,9 @@ export default function RootLayout({
   return (
     <html suppressHydrationWarning>
       <body className={`${inter.variable} antialiased`}>
-        <AppRouterCacheProvider>{children}</AppRouterCacheProvider>
+        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}>
+          <AppRouterCacheProvider>{children}</AppRouterCacheProvider>
+        </GoogleOAuthProvider>
       </body>
     </html>
   );

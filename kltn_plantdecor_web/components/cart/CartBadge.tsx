@@ -1,52 +1,60 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Badge, IconButton, CircularProgress } from '@mui/material';
+import { Badge, IconButton } from '@mui/material';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import { useAuthStore } from '@/store/authStore';
-import { ACTIVE_SAMPLE_USER_ID } from '@/data/sampledata';
+import { useAuthStore } from '@/lib/store/authStore';
+import { fetchCartItems } from '@/lib/api/cartWishlistService';
+import { subscribeCartUpdated } from '@/lib/utils/cartEvents';
 
 export default function CartBadge() {
   const [itemCount, setItemCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const { user } = useAuthStore();
+  const { user, accessToken } = useAuthStore();
 
-  // Use auth user if available, otherwise use sample user
-  const userId = user?.id?.toString() || String(ACTIVE_SAMPLE_USER_ID);
-
-  // Fetch cart data to get item count
   useEffect(() => {
-    const fetchCartCount = async () => {
-      try {
-        setIsLoading(true);
-        const response = await fetch(`/api/cart/get?userId=${userId}`);
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch cart');
-        }
+    let mounted = true;
 
-        const data = await response.json();
-        const cartItems = data.data || [];
-        const totalItems = cartItems.reduce((sum: number, item: any) => sum + item.quantity, 0);
-        setItemCount(totalItems);
+    const loadCartCount = async () => {
+      if (!user?.id || !accessToken) {
+        if (mounted) {
+          setItemCount(0);
+        }
+        return;
+      }
+
+      try {
+        const cartItems = await fetchCartItems();
+        const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
+        if (mounted) {
+          setItemCount(totalItems);
+        }
       } catch (error) {
+        if (mounted) {
+          setItemCount(0);
+        }
         console.error('Fetch cart count error:', error);
-        setItemCount(0);
-      } finally {
-        setIsLoading(false);
       }
     };
 
-    fetchCartCount();
-    
-    // Reload cart count every 5 seconds or when needed
-    const interval = setInterval(fetchCartCount, 5000);
-    return () => clearInterval(interval);
-  }, [userId]);
+    loadCartCount();
+
+    const unsubscribe = subscribeCartUpdated(() => {
+      loadCartCount();
+    });
+
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
+  }, [accessToken, user?.id]);
+
+  const cartHref = user?.id ? `/cart/${user.id}` : '/login';
+  const displayCount = user?.id ? itemCount : 0;
 
   return (
-    <Link href={`/cart/${userId}`} passHref>
+    <Link href={cartHref} passHref>
       <IconButton
         sx={{
           color: '#333',
@@ -55,7 +63,7 @@ export default function CartBadge() {
           },
         }}
       >
-        <Badge badgeContent={itemCount} color="success">
+        <Badge badgeContent={displayCount} color="success">
           <ShoppingCartIcon />
         </Badge>
       </IconButton>

@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuthStore } from '@/store/authStore';
+import { useAuthStore } from '@/lib/store/authStore';
+import { logoutAllAction } from '@/app/actions/authenticationActions';
 import { authService } from '@/lib/api/authService';
 import { useRouter } from 'next/navigation';
 import { getDeviceId } from '@/lib/utils/deviceId';
+import { clearClientAccessToken } from '@/lib/axios/tokenStorage';
 
 interface Session {
   id: number;
@@ -22,6 +24,7 @@ export default function SessionsPage() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const { clearUser } = useAuthStore();
 
   useEffect(() => {
     loadSessions();
@@ -33,7 +36,7 @@ export default function SessionsPage() {
       const currentDeviceId = getDeviceId();
       
       // Map data và đánh dấu device hiện tại
-      const mappedSessions = data.map((session: any) => ({
+      const mappedSessions = data.map((session) => ({
         ...session,
         isCurrentDevice: session.deviceId === currentDeviceId,
       }));
@@ -61,10 +64,19 @@ export default function SessionsPage() {
     if (!confirm('Bạn có chắc muốn đăng xuất tất cả thiết bị?')) return;
 
     try {
-      await authService.logoutAllDevices();
+      const result = await logoutAllAction();
+
+      if (!result.success) {
+        throw new Error(result.message);
+      }
+
+      clearUser();
+      clearClientAccessToken();
+
       if (typeof window !== 'undefined') {
         localStorage.setItem('auth:logout-all', Date.now().toString());
       }
+
       // Redirect về login vì tất cả sessions đã bị revoke
       router.push('/login');
     } catch (error) {

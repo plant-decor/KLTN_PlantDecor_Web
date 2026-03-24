@@ -1,8 +1,9 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/authStore';
+import { useParams, useRouter } from 'next/navigation';
+import { useAuthStore } from '@/lib/store/authStore';
 import { logoutAction } from '@/app/actions/loginAction';
+import { clearClientAccessToken } from '@/lib/axios/tokenStorage';
 
 /**
  * Logout Button Component
@@ -14,6 +15,7 @@ import { logoutAction } from '@/app/actions/loginAction';
  */
 export default function LogoutButton() {
   const router = useRouter();
+  const params = useParams<{ locale?: string }>();
   const { clearUser } = useAuthStore();
 
   const handleLogout = async () => {
@@ -24,10 +26,11 @@ export default function LogoutButton() {
       if (result.success) {
         // Clear Zustand store
         clearUser();
+        clearClientAccessToken();
 
-        // Redirect sẽ được xử lý bởi Server Action
-        // Nhưng để chắc chắn:
-        router.push('/login');
+        const locale = Array.isArray(params?.locale) ? params.locale[0] : params?.locale;
+        const loginPath = locale ? `/${locale}/login` : '/login';
+        router.replace(loginPath);
       }
     } catch (error) {
       console.error('Logout error:', error);

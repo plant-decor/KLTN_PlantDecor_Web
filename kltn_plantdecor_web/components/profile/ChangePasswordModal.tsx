@@ -8,14 +8,10 @@ import {
   DialogActions,
   TextField,
   Button,
-  Box,
-  Typography,
   Alert,
   CircularProgress,
 } from '@mui/material';
-import { useFailedPasswordAttempts } from '@/hooks/useFailedPasswordAttempts';
 import { changePasswordAction } from '@/app/actions/changePasswordAction';
-import RecaptchaField from '@/components/auth/RecaptchaField';
 import { hoverGlowStyle, hoverLiftStyle } from '@/lib/styles/buttonStyles';
 import { useTranslations } from 'next-intl';
 
@@ -30,25 +26,14 @@ export default function ChangePasswordModal({ open, onClose }: ChangePasswordMod
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [recaptchaToken, setRecaptchaToken] = useState('');
-  const [recaptchaError, setRecaptchaError] = useState('');
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-
-  const {
-    requiresRecaptcha,
-    incrementFailedAttempts,
-    resetFailedAttempts,
-    getRemainingAttempts,
-  } = useFailedPasswordAttempts();
 
   const handleClose = () => {
     setOldPassword('');
     setNewPassword('');
     setConfirmPassword('');
-    setRecaptchaToken('');
-    setRecaptchaError('');
     setError('');
     setMessage('');
     onClose();
@@ -84,39 +69,24 @@ export default function ChangePasswordModal({ open, onClose }: ChangePasswordMod
       setError(t('newPasswordMustDiffer'));
       return;
     }
-
-    // Check reCAPTCHA requirement
-    if (requiresRecaptcha() && !recaptchaToken) {
-      setRecaptchaError(t('recaptchaCompleteBeforeChange'));
-      return;
-    }
-
     setIsLoading(true);
     try {
       const result = await changePasswordAction(
         oldPassword,
         newPassword,
-        recaptchaToken || undefined
       );
 
       if (!result.success) {
-        if (!requiresRecaptcha()) {
-          incrementFailedAttempts();
-        }
         setError(result.message || t('changePasswordFailed'));
         return;
       }
 
-      resetFailedAttempts();
       setMessage(t('changePasswordSuccess'));
       setTimeout(() => {
         handleClose();
       }, 1500);
     } catch (err) {
       console.error('Change password error:', err);
-      if (!requiresRecaptcha()) {
-        incrementFailedAttempts();
-      }
       setError(t('changePasswordError'));
     } finally {
       setIsLoading(false);
@@ -176,43 +146,6 @@ export default function ChangePasswordModal({ open, onClose }: ChangePasswordMod
             required
             disabled={isLoading}
           />
-
-          {/* reCAPTCHA Section */}
-          {requiresRecaptcha() && (
-            <Box sx={{ bgcolor: '#fef3c7', border: '1px solid #fde68a', p: 2, borderRadius: 1 }}>
-              <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1, color: '#92400e' }}>
-                {t('tooManyFailedAttempts')}
-              </Typography>
-              <Typography variant="caption" sx={{ color: '#b45309', mb: 2, display: 'block' }}>
-                {t('recaptchaRequiredForPassword')}
-              </Typography>
-              <RecaptchaField
-                onToken={(token) => {
-                  setRecaptchaToken(token);
-                  if (token) {
-                    setRecaptchaError('');
-                  }
-                }}
-                onError={(captchaError) => {
-                  console.error('reCAPTCHA error:', captchaError);
-                  setRecaptchaError(captchaError);
-                }}
-                isLoading={isLoading}
-                showMessage={false}
-              />
-              {recaptchaError && (
-                <Typography variant="caption" sx={{ color: 'error.main', mt: 1, display: 'block' }}>
-                  {recaptchaError}
-                </Typography>
-              )}
-            </Box>
-          )}
-
-          {requiresRecaptcha() && getRemainingAttempts() === 0 && (
-            <Typography variant="caption" sx={{ color: '#b45309' }}>
-              {t('exceededPasswordAttempts')}
-            </Typography>
-          )}
         </form>
       </DialogContent>
 

@@ -1,7 +1,11 @@
-'use client';
-
 import AuthFormContainer from '@/components/auth/AuthFormContainer';
-import LoginForm from '@/components/auth/LoginForm';
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
+
+interface LoginPageProps {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ forceLogout?: string }>;
+}
 
 /**
  * Login Page
@@ -9,8 +13,16 @@ import LoginForm from '@/components/auth/LoginForm';
  * Sử dụng LoginForm component để handle đăng nhập
  * LoginForm sẽ gọi Server Action (loginAction) để thực hiện login
  */
-export default function LoginPage() {
-  return (
-    <AuthFormContainer />
-  );
+export default async function LoginPage({ params, searchParams }: LoginPageProps) {
+  const { locale } = await params;
+  const { forceLogout } = await searchParams;
+  const cookieStore = await cookies();
+  const authToken = cookieStore.get('accessToken')?.value;
+  const isForceLogout = forceLogout === '1';
+
+  if (authToken && !isForceLogout) {
+    redirect(`/${locale}`);
+  }
+
+  return <AuthFormContainer />;
 }

@@ -4,8 +4,8 @@ import { Category, Tag } from './storeCatalogData';
 // SamplePlant Interface (used across components)
 export interface Plant {
   "id": number,
-  "name": string,
-  "basePrice": string,
+  "productName": string,
+  "basePrice": number,
   "size": string,
   "careLevel": string,
   "isActive": boolean,

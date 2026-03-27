@@ -21,7 +21,7 @@ type AuthAwareRequestConfig = InternalAxiosRequestConfig & {
 const axiosClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
   timeout: 100000,
-  withCredentials: false,
+  withCredentials: true,
 });
 
 let isRefreshing = false;
@@ -142,9 +142,9 @@ const shouldSkipGlobalRefresh = (config: AuthAwareRequestConfig): boolean => {
   );
 };
 
-const tryRefreshAccessToken = async (): Promise<string | null> => {
+const tryRefreshAccessToken = async (forceRefresh = false): Promise<string | null> => {
   const existingToken = getClientAccessToken();
-  if (existingToken) {
+  if (!forceRefresh && existingToken) {
     return existingToken;
   }
 
@@ -164,6 +164,7 @@ const tryRefreshAccessToken = async (): Promise<string | null> => {
   try {
     const refreshToken = getClientRefreshToken();
     const requestBody = refreshToken ? { refreshToken } : {};
+
 
     const refreshResponse = await axios.post(
       `${process.env.NEXT_PUBLIC_API_URL}/Authentication/refreshToken`,
@@ -268,7 +269,7 @@ axiosClient.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const refreshedToken = await tryRefreshAccessToken();
+        const refreshedToken = await tryRefreshAccessToken(true);
         if (!refreshedToken) {
           throw new Error("Refresh token is required");
         }

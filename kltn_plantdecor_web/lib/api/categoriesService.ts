@@ -75,7 +75,7 @@ export const createCategory = async (
 export const getCategoryTreeAdmin = async (
   loading = true
 ): Promise<ResponseModel<CategoryTreeNode[]>> => {
-  return apiClient.get('/admin/Categories/admin/tree', loading);
+  return apiClient.get('/admin/Categories/admin/tree', undefined, loading);
 };
 
 /**
@@ -85,7 +85,7 @@ export const getCategoryTreeAdmin = async (
 export const getCategoryTree = async (
   loading = true
 ): Promise<ResponseModel<CategoryTreeNode[]>> => {
-  return apiClient.get('/admin/Categories/tree', loading);
+  return apiClient.get('/admin/Categories/tree', undefined, loading);
 };
 
 /**

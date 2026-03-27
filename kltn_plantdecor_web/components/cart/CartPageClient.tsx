@@ -16,34 +16,36 @@ import {
   type CartApiItem,
 } from '@/lib/api/cartWishlistService';
 import { notifyCartUpdated } from '@/lib/utils/cartEvents';
-import { Plant } from '@/data/sampledata';
 
 interface CartPageClientProps {
   userid: string;
 }
 
-const toSamplePlant = (item: CartApiItem): Plant => ({
-  id: item.plantId,
-  name: item.name,
-  basePrice: String(item.unitPrice),
-  size: 'medium',
-  careLevel: 'easy',
-  isActive: true,
-  primaryImageUrl: item.imageUrl || null,
-  totalInstances: 999,
-  availableInstances: 999,
-  availableCommonQuantity: 999,
-  totalAvailableStock: 999,
-  categoryNames: [],
-  tagNames: [],
-});
+// const toSamplePlant = (item: CartApiItem): Plant => ({
+//   id: item.id,
+//   productName: item.productName,
+//   basePrice: item.price,
+//   size: 'medium',
+//   careLevel: 'easy',
+//   isActive: true,
+//   primaryImageUrl: item.imageUrl || null,
+//   totalInstances: 999,
+//   availableInstances: 999,
+//   availableCommonQuantity: 999,
+//   totalAvailableStock: 999,
+//   categoryNames: [],
+//   tagNames: [],
+// });
 
 const toCartItem = (item: CartApiItem): CartItem => ({
-  id: item.cartItemId,
-  plantId: item.plantId,
-  plant: toSamplePlant(item),
+  id: item.id,
+  cartId: item.cartId,
+  commonPlantId: item.commonPlantId,
   quantity: item.quantity,
-  addedAt: new Date().toISOString(),
+  productName: item.productName,
+  price: item.price,
+  imageUrl: item.imageUrl,
+  subtotal: item.price * item.quantity,
 });
 
 export default function CartPageClient({ userid }: CartPageClientProps) {
@@ -60,7 +62,10 @@ export default function CartPageClient({ userid }: CartPageClientProps) {
       setIsLoading(true);
       setError('');
       const items = await fetchCartItems();
-      setCartItems(items.map(toCartItem));
+      console.log('Fetched cart items:', items);
+      if (items.payload) {
+        setCartItems(items.payload.items.map(toCartItem));
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load cart';
       setError(errorMessage);

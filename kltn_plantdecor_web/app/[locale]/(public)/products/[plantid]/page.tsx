@@ -4,6 +4,7 @@ import { getTranslations } from 'next-intl/server';
 import { getPlantById, type PlantDetailResponse } from '@/lib/api/plantsService';
 import AddToCartButton from '@/components/cart/AddToCartButton';
 import AddToWishlistButton from '@/components/product/AddToWishlistButton';
+import type { NurseryResponse } from '@/types/nursery.types';
 import type { Plant } from '@/data/sampledata';
 import { Category, Tag } from '@/data/storeCatalogData';
 
@@ -32,11 +33,11 @@ const toImageUrls = (images: PlantDetailResponse['images']): string[] => {
 
   return urls;
 };
-
-const formatCurrency = (price: number, locale: string) => {
-  const numberLocale = locale === 'vi' ? 'vi-VN' : 'en-US';
-  return `${price.toLocaleString(numberLocale)}đ`;
-};
+import { formatCurrency } from '@/lib/utils/formatUtil';
+import { List, ListItem, ListItemButton, ListItemText } from '@mui/material';
+import { get } from '@/lib/api/apiService.server';
+import { ResponseModel } from '@/types/api.types';
+import NurseryList from '@/components/product/NuseriesList';
 
 const booleanLabel = (value: boolean | null | undefined) => (value ? 'Yes' : 'No');
 
@@ -66,24 +67,47 @@ const toTagNames = (tags: PlantDetailResponse['tags']): Tag[] => {
   }));
 };
 
+const toNumber = (value: number | null | undefined): number => (typeof value === 'number' ? value : 0);
+
+const getTotalAvailableStock = (plant: PlantDetailResponse): number => {
+  const responseTotal = toNumber(plant.totalAvailableStock);
+  if (responseTotal > 0) return responseTotal;
+
+  return (
+    toNumber(plant.availableInstances) +
+    toNumber(plant.availableCommonQuantity) +
+    toNumber(plant.availableComboQuantity) +
+    toNumber(plant.availableMaterialQuantity)
+  );
+};
+
 const mapPlantDetailToSamplePlant = (
   plant: PlantDetailResponse,
   imageUrl: string
-): Plant => ({
-  id: plant.id,
-  name: plant.name,
-  basePrice: String(plant.basePrice ?? 0),
-  size: plant.size || 'Unknown',
-  careLevel: plant.careLevel || 'Unknown',
-  isActive: Boolean(plant.isActive),
-  primaryImageUrl: imageUrl || null,
-  totalInstances: plant.totalInstances ?? 0,
-  availableInstances: plant.availableInstances ?? 0,
-  availableCommonQuantity: plant.availableInstances ?? 0,
-  totalAvailableStock: plant.totalInstances ?? 0,
-  categoryNames: toCategoryNames(plant.categories),
-  tagNames: toTagNames(plant.tags),
-});
+): Plant => {
+  const totalAvailableStock = getTotalAvailableStock(plant);
+  const availableInstances = toNumber(plant.availableInstances);
+  const availableCommonQuantity = toNumber(plant.availableCommonQuantity);
+  const availableComboQuantity = toNumber(plant.availableComboQuantity);
+  const availableMaterialQuantity = toNumber(plant.availableMaterialQuantity);
+
+  return {
+    id: plant.id,
+    name: plant.name,
+    basePrice: plant.basePrice ?? 0,
+    size: plant.size || 'Unknown',
+    careLevel: plant.careLevel || 'Unknown',
+    isActive: Boolean(plant.isActive),
+    primaryImageUrl: imageUrl || null,
+    totalInstances: plant.totalInstances ?? 0,
+    availableInstances,
+    availableCommonQuantity,
+      // availableCommonQuantity || availableComboQuantity || availableMaterialQuantity || availableInstances || totalAvailableStock,
+    totalAvailableStock,
+    categoryNames: toCategoryNames(plant.categories),
+    tagNames: toTagNames(plant.tags),
+  };
+};
 
 export default async function ProductDetailPage({ params }: PageProps) {
   const { plantid, locale } = await params;
@@ -104,14 +128,23 @@ export default async function ProductDetailPage({ params }: PageProps) {
   const images = toImageUrls(plant.images);
   const mainImage = images[0] || FALLBACK_IMAGE;
   const plantForActions = mapPlantDetailToSamplePlant(plant, mainImage);
-
+  console.log(plantForActions);
+  const inventoryRows = [
+    { label: 'Instances', value: toNumber(plant.availableInstances) },
+    { label: 'Common', value: toNumber(plant.availableCommonQuantity) },
+    { label: 'Combo', value: toNumber(plant.availableComboQuantity) },
+    { label: 'Material', value: toNumber(plant.availableMaterialQuantity) },
+  ].filter((item) => item.value > 0);
+  const totalAvailableStock = plantForActions.totalAvailableStock;
+  const nurseryAvailableResponse = await get<ResponseModel<NurseryResponse[]>>(`/plants/${id}/nurseries`);
+  const isNurseryAvailable = nurseryAvailableResponse?.payload || [];
   return (
-    <div className="py-20 bg-gray-50">
+    <div className="py-4 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <nav className="mb-8 flex items-center text-sm text-gray-500">
-          <Link href="/" locale={locale} className="hover:text-green-600">{t('home')}</Link>
+          <Link href={`/${locale}`} className="hover:text-green-600">{t('home')}</Link>
           <span className="mx-2">/</span>
-          <Link href="/plant-store" locale={locale} className="hover:text-green-600">{t('store')}</Link>
+          <Link href={`/${locale}/plant-store`} className="hover:text-green-600">{t('store')}</Link>
           <span className="mx-2">/</span>
           <span className="text-gray-900">{plant.name}</span>
         </nav>
@@ -130,6 +163,10 @@ export default async function ProductDetailPage({ params }: PageProps) {
                 ))}
               </div>
             )}
+            {/* Nusery have this plant */}
+            {isNurseryAvailable &&
+            <NurseryList isNurseryAvailable={isNurseryAvailable} />
+            }
           </div>
 
           <div>
@@ -212,13 +249,23 @@ export default async function ProductDetailPage({ params }: PageProps) {
               </div>
             )}
 
-            <div className="mb-6">
+            {/* <div className="mb-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Inventory</h3>
               <p className="text-gray-700">
-                Available: <span className="font-semibold">{plant.availableInstances ?? 0}</span> / Total:{' '}
+                Available: <span className="font-semibold">{totalAvailableStock}</span> / Total:{' '}
                 <span className="font-semibold">{plant.totalInstances ?? 0}</span>
               </p>
-            </div>
+              {inventoryRows.length > 0 && (
+                <div className="mt-2 grid grid-cols-2 gap-2 text-sm text-gray-700">
+                  {inventoryRows.map((row) => (
+                    <p key={row.label}>
+                      {row.label}: <span className="font-semibold">{row.value}</span>
+                    </p>
+                  ))}
+                </div>
+              )}
+            </div> */}
+            
 
             <div className="mb-6 space-y-3 border-t border-gray-100 pt-6">
               <AddToCartButton plant={plantForActions} />

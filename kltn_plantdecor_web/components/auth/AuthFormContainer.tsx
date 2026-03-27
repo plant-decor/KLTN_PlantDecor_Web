@@ -50,7 +50,7 @@ export default function AuthFormContainer() {
       const deviceId = getDeviceId();
       document.cookie = `deviceId=${encodeURIComponent(deviceId)}; Max-Age=31536000; Path=/; SameSite=Lax`;
 
-      const result = await loginAction(email, password);
+      const result = await loginAction(email, password, deviceId);
       if (!result.success) {
         const loginMessage = result.message || 'Đăng nhập thất bại';
 
@@ -67,6 +67,8 @@ export default function AuthFormContainer() {
       }
       if (result.refreshToken) {
         setClientRefreshToken(result.refreshToken);
+        // Set refresh token as a cookie for server-side access (not HttpOnly)
+        document.cookie = `refreshToken=${encodeURIComponent(result.refreshToken)}; Max-Age=1209600; Path=/; SameSite=Lax`;
       }
 
       // try {

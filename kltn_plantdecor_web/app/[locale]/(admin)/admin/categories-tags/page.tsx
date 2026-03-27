@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Box,
   Button,
@@ -63,11 +63,12 @@ export default function CategoriesTagsPage() {
   const [tagModalOpen, setTagModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategoryResponse | undefined>(undefined);
   const [editingTag, setEditingTag] = useState<Tag | undefined>();
-  const [expandedCategoryIds, setExpandedCategoryIds] = useState<Set<number>>(new Set());
+  const [expandedCategoryIds, setExpandedCategoryIds] = useState<Set<number> | null>(null);
   const [toggleConfirmOpen, setToggleConfirmOpen] = useState(false);
   const [toggleTarget, setToggleTarget] = useState<CategoryResponse | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ type: 'category' | 'tag'; id: number; name: string } | null>(null);
+  const initialFetchDoneRef = useRef(false);
 
   // Use Categories Hook
   const {
@@ -104,7 +105,6 @@ export default function CategoriesTagsPage() {
   } = useAdminTags();
 
   const loading = categoriesLoading || tagsLoading;
-  const error = categoriesError || tagsError;
 
   const getNodeChildren = (node: any): any[] => {
     if (Array.isArray(node?.subCategories)) {
@@ -173,21 +173,18 @@ export default function CategoriesTagsPage() {
     }));
   }, [categoryTree]);
 
-  useEffect(() => {
-    if (!Array.isArray(categoryTree) || categoryTree.length === 0) {
-      return;
+  const rootCategoryIds = useMemo(
+    () => categoryTree.map((node) => Number(node?.id)).filter((id) => Number.isFinite(id)),
+    [categoryTree]
+  );
+
+  const effectiveExpandedCategoryIds = useMemo(() => {
+    if (expandedCategoryIds) {
+      return expandedCategoryIds;
     }
 
-    const rootIds = categoryTree.map((node) => Number(node?.id)).filter((id) => Number.isFinite(id));
-
-    setExpandedCategoryIds((prev) => {
-      if (prev.size > 0) {
-        return prev;
-      }
-
-      return new Set(rootIds);
-    });
-  }, [categoryTree]);
+    return new Set(rootCategoryIds);
+  }, [expandedCategoryIds, rootCategoryIds]);
 
   const hierarchicalCategories = useMemo(() => {
     const flattened: HierarchicalCategoryRow[] = [];
@@ -204,7 +201,7 @@ export default function CategoriesTagsPage() {
 
         flattened.push({ category: normalizedNode, level, hasChildren });
 
-        if (hasChildren && expandedCategoryIds.has(normalizedNode.id)) {
+        if (hasChildren && effectiveExpandedCategoryIds.has(normalizedNode.id)) {
           walk(children, level + 1);
         }
       });
@@ -215,11 +212,11 @@ export default function CategoriesTagsPage() {
     }
 
     return flattened;
-  }, [categoryTree, expandedCategoryIds]);
+  }, [categoryTree, effectiveExpandedCategoryIds]);
 
   const handleToggleExpand = (categoryId: number) => {
     setExpandedCategoryIds((prev) => {
-      const next = new Set(prev);
+      const next = new Set(prev ?? rootCategoryIds);
 
       if (next.has(categoryId)) {
         next.delete(categoryId);
@@ -231,15 +228,16 @@ export default function CategoriesTagsPage() {
     });
   };
 
-  // Load categories on mount
+  // Load initial data once
   useEffect(() => {
-    fetchCategoryTree();
-  }, [fetchCategoryTree]);
+    if (initialFetchDoneRef.current) {
+      return;
+    }
 
-  // Load tags on mount
-  useEffect(() => {
-    fetchTags({ pageNumber: 1, pageSize: 10 });
-  }, [fetchTags]);
+    initialFetchDoneRef.current = true;
+    void fetchCategoryTree();
+    void fetchTags({ pageNumber: 1, pageSize: 10 });
+  }, [fetchCategoryTree, fetchTags]);
 
   const convertToModalCategory = (cat: CategoryResponse | undefined): Category | undefined => {
     if (!cat) return undefined;
@@ -516,7 +514,7 @@ export default function CategoriesTagsPage() {
                   : category.isActive
                     ? 'Deactivate category'
                     : 'Activate category';
-                const isExpanded = expandedCategoryIds.has(category.id);
+                const isExpanded = effectiveExpandedCategoryIds.has(category.id);
 
                 return (
                   <Card
@@ -667,10 +665,6 @@ export default function CategoriesTagsPage() {
                   <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
                     {tag.tagName}
                   </Typography>
-
-                  {/* <Typography variant="caption" sx={{ color: '#666', display: 'block', mb: 2 }}>
-                    {tag.color.toUpperCase()}
-                  </Typography> */}
 
                   <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5 }}>
                     <IconButton

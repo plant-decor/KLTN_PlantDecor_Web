@@ -2,7 +2,7 @@ import { del, get, post } from '@/lib/api/apiService';
 
 interface SessionItem {
   id: number;
-  deviceId?: string;
+  deviceId: string;
   deviceName: string;
   createDate: string;
   expiryDate: string;

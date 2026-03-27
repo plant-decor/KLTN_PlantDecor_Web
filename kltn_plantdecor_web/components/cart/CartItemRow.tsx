@@ -17,6 +17,7 @@ import {
   Remove as RemoveIcon,
 } from '@mui/icons-material';
 import type { CartItem } from '@/types/cart.types';
+import { formatCurrency } from '@/lib/utils/formatUtil';
 
 interface CartItemRowProps {
   item: CartItem;
@@ -31,7 +32,7 @@ export default function CartItemRow({
   onQuantityChange,
   onRemove,
 }: CartItemRowProps) {
-  const subtotal = parseFloat(item.plant.basePrice) * item.quantity;
+  console.log('Rendering CartItemRow for item:', item);
 
   return (
     <TableRow sx={{ '&:hover': { backgroundColor: '#fafafa' } }}>
@@ -40,14 +41,14 @@ export default function CartItemRow({
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <Box sx={{ position: 'relative', width: 60, height: 60 }}>
             <Image
-              src={item.plant.primaryImageUrl || 'img/fallbackplant.avif'}
-              alt={item.plant.name}
+              src={item.imageUrl || '/img/fallbackplant.avif'}
+              alt={item.productName}
               fill
               style={{ objectFit: 'cover', borderRadius: 4 }}
             />
           </Box>
           <Box>
-            <Link href={`/products/${item.plant.id}`}>
+            <Link href={`/products/${item.id}`}>
               <Typography
                 sx={{
                   fontWeight: 500,
@@ -56,7 +57,7 @@ export default function CartItemRow({
                   '&:hover': { textDecoration: 'underline' },
                 }}
               >
-                {item.plant.name}
+                {item.productName}
               </Typography>
             </Link>
           </Box>
@@ -66,7 +67,7 @@ export default function CartItemRow({
       {/* Price */}
       <TableCell align="center">
         <Typography sx={{ fontWeight: 500 }}>
-          {parseFloat(item.plant.basePrice).toLocaleString('vi-VN')}₫
+          {(item.price || 0).toLocaleString('vi-VN')}₫
         </Typography>
       </TableCell>
 
@@ -119,7 +120,7 @@ export default function CartItemRow({
       {/* Subtotal */}
       <TableCell align="center">
         <Typography sx={{ fontWeight: 'bold', color: '#4CAF50', fontSize: '0.95rem' }}>
-          {subtotal.toLocaleString('vi-VN')}₫
+          {formatCurrency(item.subtotal, 'vi-VN')}
         </Typography>
       </TableCell>
 

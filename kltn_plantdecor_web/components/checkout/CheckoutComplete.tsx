@@ -22,13 +22,15 @@ import type { CheckoutData } from '@/types/cart.types';
 interface CheckoutCompleteProps {
   checkoutData: CheckoutData;
   userId: string;
+  orderId?: string | number | null;
 }
 
 export default function CheckoutComplete({
   checkoutData,
   userId,
+  orderId,
 }: CheckoutCompleteProps) {
-  const orderId = `ORD-${Date.now()}`;
+  const displayOrderId = orderId ?? 'N/A';
 
   return (
     <Grid container spacing={3} justifyContent="center">
@@ -63,7 +65,7 @@ export default function CheckoutComplete({
                   Order ID
                 </Typography>
                 <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#333' }}>
-                  {orderId}
+                  {displayOrderId}
                 </Typography>
               </Box>
 

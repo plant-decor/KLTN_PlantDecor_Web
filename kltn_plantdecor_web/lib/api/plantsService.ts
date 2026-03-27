@@ -48,6 +48,10 @@ export interface PlantDetailResponse {
   images: PlantDetailImage[];
   totalInstances: number;
   availableInstances: number;
+  availableCommonQuantity?: number;
+  availableComboQuantity?: number;
+  availableMaterialQuantity?: number;
+  totalAvailableStock?: number;
 }
 
 export const getPlantById = async (
@@ -56,8 +60,8 @@ export const getPlantById = async (
   loading = true
 ): Promise<ResponseModel<PlantDetailResponse>> => {
   if (isServer) {
-    return apiServer.get(`/admin/Plants/${id}`);
+    return apiServer.get(`/shop/plants/${id}`);
   }
 
-  return apiClient.get(`/admin/Plants/${id}`, undefined, loading);
+  return apiClient.get(`/shop/plants/${id}`, undefined, loading);
 };

@@ -80,7 +80,7 @@ export default function TagModal({
       onClose();
     }
   };
-
+  
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>{tag ? 'Edit Tag' : 'Add New Tag'}</DialogTitle>

@@ -1,17 +1,34 @@
 import { del, get, patch, post } from '@/lib/api/apiService';
+import { ResponseModel } from '@/types/api.types';
+import { CartItem } from '@/types/cart.types';
 
 const DEFAULT_IMAGE = '/img/background-login.jpg';
 
 type UnknownRecord = Record<string, unknown>;
 
+export interface CartApiItemResponse {
+  items: CartApiItem[];
+  totalCount: number;
+  pageNumber: number;
+  pageSize: number;
+  totalPages: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+}
+
 export interface CartApiItem {
-  cartItemId: number;
-  plantId: number;
+  cartId: number;
+  commonPlantId: number;
+  createAt: string;
+  updateAt: string;
+  id: number;
+  nurseryMaterialId: number;
+  nurseryPlantComboId: number;
+  price: number;
+  productName: string;
   quantity: number;
-  unitPrice: number;
-  name: string;
-  scientificName: string;
-  imageUrl: string;
+  subtotal: number;
+  imageUrl: string | null;
 }
 
 export interface WishlistApiItem {
@@ -20,7 +37,7 @@ export interface WishlistApiItem {
   scientificName: string;
   description: string;
   price: number;
-  imageUrl: string;
+  imageUrl: string | null;
   careLevel: 'easy' | 'medium' | 'hard';
   size: 'small' | 'medium' | 'large';
   stock: number;
@@ -86,34 +103,6 @@ const toArray = (response: unknown): UnknownRecord[] => {
   return [];
 };
 
-const normalizeCartItem = (item: UnknownRecord): CartApiItem => {
-  const cartItemId = toNumber(item.cartItemId ?? item.id);
-  const plantId = toNumber(item.commonPlantId ?? item.plantId ?? item.id);
-  const quantity = Math.max(1, toNumber(item.quantity, 1));
-  const unitPrice = toNumber(item.unitPrice ?? item.price ?? item.basePrice);
-  const name = toStringSafe(
-    item.commonPlantName ?? item.plantName ?? item.name,
-    `Plant #${plantId || cartItemId}`
-  );
-  const scientificName = toStringSafe(
-    item.commonPlantScientificName ?? item.scientificName,
-    name
-  );
-  const imageUrl = toStringSafe(
-    item.commonPlantImageUrl ?? item.imageUrl ?? item.primaryImageUrl,
-    DEFAULT_IMAGE
-  );
-
-  return {
-    cartItemId,
-    plantId,
-    quantity,
-    unitPrice,
-    name,
-    scientificName,
-    imageUrl,
-  };
-};
 
 const normalizeWishlistItem = (item: UnknownRecord): WishlistApiItem => {
   const plantId = toNumber(item.commonPlantId ?? item.plantId ?? item.id);
@@ -153,8 +142,8 @@ const normalizeWishlistItem = (item: UnknownRecord): WishlistApiItem => {
   };
 };
 
-export const fetchCartItems = async (): Promise<CartApiItem[]> => {
-  const response = await get<unknown>(
+export const fetchCartItems = async (): Promise<ResponseModel<CartApiItemResponse>> => {
+  const response = await get<ResponseModel<CartApiItemResponse>>(
     '/Cart',
     {
       PageNumber: 1,
@@ -163,8 +152,7 @@ export const fetchCartItems = async (): Promise<CartApiItem[]> => {
     false,
     false
   );
-
-  return toArray(response).map(normalizeCartItem).filter((item) => item.cartItemId > 0);
+  return response || [];
 };
 
 export const addPlantToCart = async (plantId: number, quantity = 1): Promise<void> => {

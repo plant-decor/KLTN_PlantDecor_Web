@@ -39,6 +39,21 @@ export const ROUTE_TO_ROLES: Record<string, string[]> = {
 };
 
 const PROTECTED_ROUTES = Object.keys(ROUTE_TO_ROLES);
+const ROLE_NORMALIZATION_MAP: Record<string, string> = {
+  admin: 'Admin',
+  manager: 'Manager',
+  staff: 'Staff',
+  caretaker: 'Caretaker',
+  shipper: 'Shipper',
+  customer: 'Customer',
+};
+
+function normalizeRole(rawRole?: string): string {
+  if (!rawRole) return '';
+  const trimmed = rawRole.trim();
+  if (!trimmed) return '';
+  return ROLE_NORMALIZATION_MAP[trimmed.toLowerCase()] || trimmed;
+}
 
 export function hasAccess(userRole: string, route: string): boolean {
   return ROLE_TO_ROUTES[userRole]?.includes(route) ?? false;
@@ -61,7 +76,7 @@ export default function proxy(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
 
   const authToken = request.cookies.get('accessToken')?.value;
-  const userRole = request.cookies.get('userRole')?.value;
+  const userRole = normalizeRole(request.cookies.get('userRole')?.value);
 
   const segments = pathname.split('/');
   const protectedRoute = PROTECTED_ROUTES.find((route) => segments.includes(route));

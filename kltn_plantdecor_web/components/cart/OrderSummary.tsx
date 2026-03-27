@@ -5,9 +5,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Box, Button, Card, CardContent, Typography } from '@mui/material';
 import type { CartItem } from '@/types/cart.types';
-import { useCartStore } from '@/lib/store/cartStore';
-import { useAuthStore } from '@/lib/store/authStore';
+// import { useCartStore } from '@/lib/store/cartStore';
 import { ACTIVE_SAMPLE_USER_ID } from '@/data/sampledata';
+import { useLocale } from 'next-intl';
 
 interface OrderSummaryProps {
   items: CartItem[];
@@ -16,34 +16,21 @@ interface OrderSummaryProps {
 }
 
 export default function OrderSummary({ items, isUpdating, userId }: OrderSummaryProps) {
+  const locale = useLocale();
   const router = useRouter();
-  const { setCheckoutData } = useCartStore();
-  const { user } = useAuthStore();
-
+  // const { setCheckoutData } = useCartStore();
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
-  const subtotal = items.reduce((total, item) => total + parseFloat(item.plant.basePrice) * item.quantity, 0);
-  const shippingFee = 0; // Free shipping
-  const total = subtotal + shippingFee;
+  const subtotal = items.reduce((total, item) => total + item.price * item.quantity, 0);
+  // const shippingFee = 0; // Free shipping
+  // + shippingFee;
+  const total = subtotal;
 
-  // Get active user ID
-  const activeUserId = user?.id?.toString() || userId || String(ACTIVE_SAMPLE_USER_ID);
-  const cartId = `cart-${Date.now()}`;
 
   const handleProceedToCheckout = () => {
     if (items.length === 0) return;
-
-    // Save checkout data to zustand store
-    setCheckoutData({
-      cartId,
-      items,
-      subtotal,
-      shippingFee,
-      total,
-      createdAt: new Date().toISOString(),
-    });
-
-    // Navigate to checkout page
-    router.push(`/checkout/${activeUserId}/${cartId}`);
+    const nextCartId = items[0]?.cartId?.toString() ?? '0';
+    const resolvedUserId = userId ?? ACTIVE_SAMPLE_USER_ID.toString();
+    router.push(`/${locale}/checkout/${resolvedUserId}/${nextCartId}`);
   };
 
   return (

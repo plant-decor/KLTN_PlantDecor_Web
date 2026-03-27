@@ -30,7 +30,7 @@ export interface ShopPlantSearchRequest {
 export interface ShopPlantListItem {
   id: number;
   name: string;
-  basePrice: string;
+  basePrice: number;
   size: string;
   careLevel: string;
   isActive: boolean;

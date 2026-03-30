@@ -1,51 +1,126 @@
-// Plant Types
-export interface PlantGuide {
-  id?: number;
-  plantId: number;
-  lightRequirement: string;
-  watering: string;
-  fertilizing: string;
-  pruning: string;
-  temperature: string;
-  careNotes: string;
-  createdAt?: string;
+// Plant (Admin) Types
+export interface PlantEnumValue {
+  value: number;
+  name: string;
+}
+
+export interface PlantEnumGroup {
+  enumName: 'PlacementType' | 'PlantSize' | 'CareLevelType' | string;
+  values: PlantEnumValue[];
+}
+
+export interface PlantEnumPayload {
+  placementTypes: PlantEnumValue[];
+  sizes: PlantEnumValue[];
+  careLevelTypes: PlantEnumValue[];
 }
 
 export interface Plant {
-  plantId: number;
+  id: number;
+  name: string;
+  basePrice: number;
+  size: number;
+  sizeName: string;
+  careLevelType: number;
+  careLevelTypeName: string;
+  careLevel: string;
+  isActive: boolean;
+  primaryImageUrl: string | null;
+  totalInstances: number;
+  availableInstances: number;
+  availableCommonQuantity: number;
+  totalAvailableStock: number;
+  categoryNames: string[];
+  tagNames: string[];
+}
+
+export interface PlantCategory {
+  id: number;
+  parentCategoryId?: number | null;
+  name: string;
+  isActive?: boolean;
+  categoryType?: number;
+  categoryTypeName?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  parentCategoryName?: string | null;
+}
+
+export interface PlantTag {
+  id: number;
+  name?: string;
+  tagName?: string;
+  tagType?: number;
+  tagTypeName?: string | null;
+}
+
+export interface PlantDetailImage {
+  id: number;
+  imageUrl: string;
+}
+
+export interface PlantDetail {
+  id: number;
+  name: string;
+  specificName: string | null;
+  origin: string | null;
+  description: string | null;
+  basePrice: number;
+  placementType: number;
+  placementTypeName?: string;
+  size: number;
+  sizeName?: string;
+  growthRate: string | null;
+  toxicity: boolean;
+  airPurifying: boolean;
+  hasFlower: boolean;
+  petSafe: boolean;
+  childSafe: boolean;
+  fengShuiElement: string | null;
+  fengShuiMeaning: string | null;
+  potIncluded: boolean;
+  potSize: string | null;
+  careLevelType: number;
+  careLevelTypeName?: string;
+  careLevel: string;
+  isActive: boolean;
+  isUniqueInstance: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  categories: PlantCategory[];
+  tags: PlantTag[];
+  images: PlantDetailImage[];
+  totalInstances?: number;
+  availableInstances?: number;
+}
+
+export interface PlantUpsertRequest {
   name: string;
   specificName: string;
   origin: string;
   description: string;
   basePrice: number;
-  placement: string;
-  size: string;
-  minHeight: number;
-  maxHeight: number;
+  placementType: number;
+  size: number;
   growthRate: string;
   toxicity: boolean;
   airPurifying: boolean;
   hasFlower: boolean;
+  petSafe: boolean;
+  childSafe: boolean;
   fengShuiElement: string;
   fengShuiMeaning: string;
   potIncluded: boolean;
   potSize: string;
-  plantType: string;
+  careLevelType: number;
   careLevel: string;
-  createdAt?: string;
-  updatedAt?: string;
   isActive: boolean;
-  guide?: PlantGuide;
-  images?: PlantImage[];
+  isUniqueInstance: boolean;
 }
 
-export interface PlantImage {
-  id?: number;
-  plantId?: number;
-  url: string;
-  preview?: string;
-  isThumbnail: boolean;
-  createdAt?: string;
+export interface PlantFormData extends PlantUpsertRequest {
+  categoryIds: number[];
+  tagIds: number[];
 }
 
 // Plant Combo Types
@@ -111,7 +186,7 @@ export interface PlantInstanceImage {
   createdAt?: string;
 }
 
-// Material (Vật tư tiêu hao) Types
+// Material Types
 export interface Material {
   id: number;
   materialCode: string;
@@ -120,7 +195,7 @@ export interface Material {
   basePrice: number;
   unit: string;
   brand: string;
-  specifications: Record<string, any>;
+  specifications: Record<string, unknown>;
   expiryMonths: number;
   isActive: boolean;
   createdAt?: string;
@@ -139,10 +214,11 @@ export interface MaterialImage {
 
 // Common types
 export interface ImageUploadData {
-  file: File;
+  file?: File;
   isThumbnail: boolean;
   preview: string;
   id?: number;
+  existingImageId?: number;
   plantId?: number;
   plantComboId?: number;
   plantInstanceId?: number;
@@ -154,5 +230,5 @@ export interface ImageUploadData {
 export interface DialogState {
   open: boolean;
   editingId: number | null;
-  editingData: any;
+  editingData: unknown;
 }

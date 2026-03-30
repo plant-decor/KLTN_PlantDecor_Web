@@ -2,10 +2,16 @@ import type { Plant } from '@/data/sampledata';
 
 export interface CartItem {
   id: number;
-  plantId: number;
-  plant: Plant;
+  cartId: number;
+  commonPlantId: number;
+  price: number;
+  productName: string;
   quantity: number;
-  addedAt: string;
+  imageUrl: string | null;
+  subtotal: number;
+  createdAt?: string;
+  nurseryMaterialId?: number | null;
+  nurseryPlantComboId?: number | null;
 }
 
 export interface ShippingInfo {
@@ -19,9 +25,12 @@ export interface CheckoutData {
   cartId: string;
   items: CartItem[];
   shippingInfo?: ShippingInfo;
+  paymentStrategy?: number;
+  orderType?: number;
+  plantInstanceId?: number | null;
   paymentMethod?: string;
   subtotal: number;
-  shippingFee: number;
+  // shippingFee: number;
   total: number;
   createdAt?: string;
 }

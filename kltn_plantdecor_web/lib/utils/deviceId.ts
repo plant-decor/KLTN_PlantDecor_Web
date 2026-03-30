@@ -4,14 +4,18 @@
  */
 
 const DEVICE_ID_KEY = 'device_id';
-export const getOrCreateSessionId = () => {
-  let sessionId = sessionStorage.getItem("deviceId");
-  if (!sessionId) {
-    sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    sessionStorage.setItem("deviceId", sessionId);
-  }
-  return sessionId;
-};
+// export const getOrCreateSessionId = () => {
+//   if (typeof window === 'undefined') {
+//     // SSR: sessionStorage is not available
+//     return null;
+//   }
+//   let sessionId = sessionStorage.getItem("deviceId");
+//   if (!sessionId) {
+//     sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+//     sessionStorage.setItem("deviceId", sessionId);
+//   }
+//   return sessionId;
+// };
 const safeLocalStorageGet = (key: string): string | null => {
   try {
     return localStorage.getItem(key);

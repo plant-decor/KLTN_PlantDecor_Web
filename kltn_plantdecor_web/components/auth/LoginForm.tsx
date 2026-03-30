@@ -33,7 +33,8 @@ export default function LoginForm({
     e.preventDefault();
     setErrors({});
 
-    await onSubmit(email, password);
+    const result = await onSubmit(email, password);
+    console.log('Login result:', result, email, password);
   };
 
   return (

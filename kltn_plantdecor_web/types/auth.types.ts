@@ -86,3 +86,20 @@ export interface RevokeTokenRequest {
   refreshToken: string;
   deviceId?: string;
 }
+
+export interface CustomerProfile {
+  id: number;
+  email: string;
+  username?: string;
+  phoneNumber: string | null;
+  createdAt: string;
+  updatedAt: string;
+  status: 'Active' | 'Inactive';
+  isVerified: boolean;
+  avatarUrl?: string;
+  role?: string;
+  fullName?: string;
+  address?: string;
+  receiveNotifications?: boolean;
+  profileCompleteness?: number;
+}

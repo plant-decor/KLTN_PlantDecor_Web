@@ -1,3 +1,4 @@
+"use client";
 export default function ServiceManagementPage() {
   return (
     <div className="flex items-center justify-center min-h-screen">

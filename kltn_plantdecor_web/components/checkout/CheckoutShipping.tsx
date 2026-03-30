@@ -1,48 +1,96 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  Box,
   TextField,
   Typography,
   Card,
   CardContent,
   Grid,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  Box,
 } from '@mui/material';
 import type { CheckoutData } from '@/types/cart.types';
+import type { CustomerProfile } from '@/types/auth.types';
 
 interface CheckoutShippingProps {
   checkoutData: CheckoutData;
+  userProfile: CustomerProfile | null;
   onDataChange: (data: Partial<CheckoutData>) => void;
 }
 
 export default function CheckoutShipping({
   checkoutData,
+  userProfile,
   onDataChange,
 }: CheckoutShippingProps) {
   const [formData, setFormData] = useState({
-    fullName: checkoutData.shippingInfo?.fullName || '',
-    phone: checkoutData.shippingInfo?.phone || '',
-    address: checkoutData.shippingInfo?.address || '',
-    notes: checkoutData.shippingInfo?.notes || '',
+    fullName: checkoutData.shippingInfo?.fullName ?? userProfile?.fullName ?? '',
+    phone: checkoutData.shippingInfo?.phone ?? userProfile?.phoneNumber ?? '',
+    address: checkoutData.shippingInfo?.address ?? userProfile?.address ?? '',
+    notes: checkoutData.shippingInfo?.notes ?? '',
   });
+
+  useEffect(() => {
+    if (!userProfile) return;
+
+    // Only prefill fields that are empty (so user input is not overwritten)
+    const fullName = checkoutData.shippingInfo?.fullName || userProfile.fullName || '';
+    const phone = checkoutData.shippingInfo?.phone || userProfile.phoneNumber || '';
+    const address = checkoutData.shippingInfo?.address || userProfile.address || '';
+    const nextNotes = checkoutData.shippingInfo?.notes ?? formData.notes ?? '';
+
+    const shouldUpdateParent =
+      !checkoutData.shippingInfo?.fullName ||
+      !checkoutData.shippingInfo?.phone ||
+      !checkoutData.shippingInfo?.address;
+
+    setFormData((prev) => ({
+      ...prev,
+      fullName,
+      phone,
+      address,
+      notes: nextNotes,
+    }));
+
+    if (shouldUpdateParent) {
+      onDataChange({
+        shippingInfo: {
+          fullName,
+          phone,
+          address,
+          notes: nextNotes,
+        },
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userProfile]);
+    
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => {
       const updated = { ...prev, [name]: value };
-      
-      // Update store with new shipping info
-      onDataChange({
-        shippingInfo: {
-          fullName: updated.fullName,
-          phone: updated.phone,
-          address: updated.address,
-          notes: updated.notes,
-        },
-      });
-
       return updated;
+    });
+
+    const updatedShipping = { ...formData, [name]: value };
+    onDataChange({
+      shippingInfo: {
+        fullName: updatedShipping.fullName,
+        phone: updatedShipping.phone,
+        address: updatedShipping.address,
+        notes: updatedShipping.notes,
+      },
+    });
+  };
+
+  const handlePaymentStrategyChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = Number(event.target.value);
+    onDataChange({
+      paymentStrategy: value,
     });
   };
 
@@ -113,10 +161,33 @@ export default function CheckoutShipping({
               rows={2}
             />
           </Grid>
+
+          {checkoutData.orderType === 2 && (
+            <Grid size={{ xs: 12 }}>
+              <Box
+                sx={{
+                  border: '1px solid #ddd',
+                  borderRadius: 1,
+                  p: 2,
+                }}
+              >
+                <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                  Payment Strategy
+                </Typography>
+                <RadioGroup
+                  value={checkoutData.paymentStrategy ?? 1}
+                  onChange={handlePaymentStrategyChange}
+                >
+                  <FormControlLabel value={1} control={<Radio />} label="Full payment" />
+                  <FormControlLabel value={2} control={<Radio />} label="Deposit" />
+                </RadioGroup>
+              </Box>
+            </Grid>
+          )}
         </Grid>
 
         {/* Shipping Details */}
-        <Box sx={{ mt: 4, p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
+        {/* <Box sx={{ mt: 4, p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
           <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
             Shipping Details
           </Typography>
@@ -134,7 +205,7 @@ export default function CheckoutShipping({
               <strong>Notes:</strong> {formData.notes}
             </Typography>
           )}
-        </Box>
+        </Box> */}
       </CardContent>
     </Card>
   );

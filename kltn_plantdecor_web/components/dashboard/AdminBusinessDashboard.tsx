@@ -20,7 +20,7 @@ import {
   topSellingPlants,
   adminBusinessStats,
 } from '@/data/dashboardMockData';
-import { formatNumber } from '@/lib/utils/format';
+import { formatCurrency } from '@/lib/utils/formatUtil';
 
 // Stat Card Component
 interface StatCardProps {
@@ -41,9 +41,9 @@ function StatCard({ title, value, icon, color, subtitle }: StatCardProps) {
             <Typography color="text.secondary" variant="body2" gutterBottom>
               {title}
             </Typography>
-            <Typography variant="h4" component="div" fontWeight="bold">
-              {value}
-            </Typography>
+            {/* <Typography variant="h4" component="div" fontWeight="bold">
+              {formatCurrency(value, 'vi-VN')}
+            </Typography> */}
             {subtitle && (
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                 {subtitle}
@@ -68,13 +68,6 @@ function StatCard({ title, value, icon, color, subtitle }: StatCardProps) {
   );
 }
 
-// Format currency in VND
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
-  }).format(value);
-};
 
 export default function AdminBusinessDashboard() {
   // Prepare data for revenue line chart
@@ -113,7 +106,7 @@ export default function AdminBusinessDashboard() {
       >
         <StatCard
           title="Tổng Doanh Thu"
-          value={formatCurrency(adminBusinessStats.totalRevenue)}
+          value={formatCurrency(adminBusinessStats.totalRevenue, 'vi-VN')}
           icon={<AttachMoney sx={{ color: 'white', fontSize: 32 }} />}
           color="#4caf50"
           subtitle={`+${adminBusinessStats.growthRate}% so với tháng trước`}
@@ -126,7 +119,7 @@ export default function AdminBusinessDashboard() {
         />
         <StatCard
           title="Giá Trị TB/Đơn"
-          value={formatCurrency(adminBusinessStats.averageOrderValue)}
+          value={formatCurrency(adminBusinessStats.averageOrderValue, 'vi-VN')}
           icon={<TrendingUp sx={{ color: 'white', fontSize: 32 }} />}
           color="#ff9800"
         />
@@ -273,12 +266,12 @@ export default function AdminBusinessDashboard() {
                   </td>
                   <td style={{ padding: '12px', textAlign: 'right' }}>
                     <Typography variant="body2">
-                      {plant.likeCount.toLocaleString()}
+                      {plant.likeCount}
                     </Typography>
                   </td>
                   <td style={{ padding: '12px', textAlign: 'right' }}>
                     <Typography variant="body2">
-                      {plant.viewCount.toLocaleString()}
+                      {plant.viewCount}
                     </Typography>
                   </td>
                 </tr>

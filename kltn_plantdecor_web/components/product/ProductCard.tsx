@@ -203,16 +203,16 @@ export default function ProductCard({
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           className="object-cover"
         />
-        {plant.tagNames.some(tag => tag.tagName === 'new') && (
+        {/* {plant.tagNames.some(tag => tag.tagName === 'new') && (
           <span className="absolute top-4 left-4 bg-green-600 text-white px-2 py-1 text-xs rounded">
             {tProducts('new')}
           </span>
-        )}
-        {plant.basePrice && (
+        )} */}
+        {/* {plant.basePrice && (
           <span className="absolute top-4 right-4 bg-red-600 text-white px-2 py-1 text-xs rounded">
             {tProducts('sale')}
           </span>
-        )}
+        )} */}
       </div>
       <div className="p-6">
         <h3 className="font-semibold text-gray-900 mb-2">{plant.name}</h3>

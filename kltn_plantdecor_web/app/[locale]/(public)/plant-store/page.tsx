@@ -16,7 +16,6 @@ interface PageProps {
 }
 
 const DEFAULT_PAGE_SIZE = 12;
-const FALLBACK_IMAGE = '/img/background-login.jpg';
 
 const toSingle = (value: string | string[] | undefined): string | undefined => {
   if (Array.isArray(value)) {

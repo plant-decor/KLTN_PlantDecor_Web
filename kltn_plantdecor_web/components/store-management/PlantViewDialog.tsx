@@ -16,58 +16,58 @@ import {
   CardMedia,
 } from '@mui/material';
 import { Check, Close } from '@mui/icons-material';
-import type { Plant } from '@/types/store-management.types';
+import type { PlantDetail, PlantEnumPayload } from '@/types/store-management.types';
+import { getFengShuiColors } from '@/lib/utils/fengShui';
 
 interface PlantViewDialogProps {
   open: boolean;
-  plant?: Plant;
+  plant?: PlantDetail;
+  enums: PlantEnumPayload;
   onClose: () => void;
 }
 
-export default function PlantViewDialog({ open, plant, onClose }: PlantViewDialogProps) {
+const getEnumLabel = (items: { value: number; name: string }[], value: number) => {
+  return items.find((item) => item.value === value)?.name ?? String(value);
+};
+
+const formatDateTime = (value?: string) => {
+  if (!value) {
+    return '-';
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleString('vi-VN');
+};
+
+export default function PlantViewDialog({ open, plant, enums, onClose }: PlantViewDialogProps) {
   if (!plant) return null;
+  const fengShuiColors = getFengShuiColors(plant.fengShuiElement);
 
   const renderBooleanCell = (value: boolean) => (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-      {value ? (
-        <Check sx={{ color: 'success.main', fontSize: 20 }} />
-      ) : (
-        <Close sx={{ color: 'error.main', fontSize: 20 }} />
-      )}
-      <Typography variant="body2">{value ? 'Có' : 'Không'}</Typography>
+      {value ? <Check sx={{ color: 'success.main', fontSize: 20 }} /> : <Close sx={{ color: 'error.main', fontSize: 20 }} />}
+      <Typography variant="body2">{value ? 'Yes' : 'No'}</Typography>
     </Box>
   );
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>Chi tiết cây</DialogTitle>
+      <DialogTitle>Plant Detail</DialogTitle>
       <DialogContent dividers sx={{ maxHeight: '80vh', overflow: 'auto' }}>
         <Stack spacing={3}>
-          {/* Images */}
-          {plant.images && plant.images.length > 0 && (
+          {plant.images.length > 0 && (
             <Box>
               <Typography variant="subtitle1" fontWeight="600" gutterBottom>
-                Hình ảnh
+                Images
               </Typography>
               <Grid container spacing={2}>
-                {plant.images.map((img, index) => (
-                  <Grid sx={{ xs: 12, sm: 6, md: 4 }} key={index}>
-                    <Box sx={{ position: 'relative' }}>
-                      <CardMedia
-                        component="img"
-                        image={img.preview || img.url}
-                        alt={`Plant ${index + 1}`}
-                        sx={{ borderRadius: 1, height: 200, objectFit: 'cover' }}
-                      />
-                      {img.isThumbnail && (
-                        <Chip
-                          label="Ảnh chính"
-                          size="small"
-                          color="primary"
-                          sx={{ position: 'absolute', top: 8, right: 8 }}
-                        />
-                      )}
-                    </Box>
+                {plant.images.map((img) => (
+                  <Grid key={img.id} size={{ xs: 12, sm: 6, md: 4 }}>
+                    <CardMedia component="img" image={img.imageUrl} alt={`Plant image ${img.id}`} sx={{ borderRadius: 1, height: 200, objectFit: 'cover' }} />
                   </Grid>
                 ))}
               </Grid>
@@ -76,261 +76,176 @@ export default function PlantViewDialog({ open, plant, onClose }: PlantViewDialo
 
           <Divider />
 
-          {/* Basic Info */}
           <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom>
-              Thông tin cơ bản
+              Basic information
             </Typography>
             <Grid container spacing={2}>
-              <Grid sx={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Tên cây
-                </Typography>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="body2" color="text.secondary">Name</Typography>
+                <Typography variant="body1" fontWeight="600">{plant.name}</Typography>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="body2" color="text.secondary">Specific name</Typography>
+                <Typography variant="body1" fontWeight="600">{plant.specificName || '-'}</Typography>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="body2" color="text.secondary">Origin</Typography>
+                <Typography variant="body1" fontWeight="600">{plant.origin || '-'}</Typography>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="body2" color="text.secondary">Placement</Typography>
                 <Typography variant="body1" fontWeight="600">
-                  {plant.name}
+                  {plant.placementTypeName || getEnumLabel(enums.placementTypes, plant.placementType)}
                 </Typography>
               </Grid>
-              <Grid sx={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Tên khoa học
-                </Typography>
-                <Typography variant="body1" fontWeight="600">
-                  {plant.specificName}
-                </Typography>
-              </Grid>
-              <Grid sx={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Xuất xứ
-                </Typography>
-                <Typography variant="body1" fontWeight="600">
-                  {plant.origin}
-                </Typography>
-              </Grid>
-              <Grid sx={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Loại cây
-                </Typography>
-                <Typography variant="body1" fontWeight="600">
-                  {plant.plantType}
-                </Typography>
-              </Grid>
-              <Grid sx={{ xs: 12 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Mô tả
-                </Typography>
-                <Typography variant="body1">{plant.description}</Typography>
+              <Grid size={{ xs: 12 }}>
+                <Typography variant="body2" color="text.secondary">Description</Typography>
+                <Typography variant="body1">{plant.description || '-'}</Typography>
               </Grid>
             </Grid>
           </Box>
 
           <Divider />
 
-          {/* Size & Price */}
           <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom>
-              Kích thước & Giá
+              Properties
             </Typography>
             <Grid container spacing={2}>
-              <Grid sx={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Kích thước
-                </Typography>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <Typography variant="body2" color="text.secondary">Size</Typography>
                 <Typography variant="body1" fontWeight="600">
-                  {plant.size}
+                  {plant.sizeName || getEnumLabel(enums.sizes, plant.size)}
                 </Typography>
               </Grid>
-              <Grid sx={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Giá cơ bản
-                </Typography>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <Typography variant="body2" color="text.secondary">Care level type</Typography>
                 <Typography variant="body1" fontWeight="600">
-                  {plant.basePrice.toLocaleString('vi-VN', {
-                    style: 'currency',
-                    currency: 'VND',
-                  })}
+                  {plant.careLevelTypeName || getEnumLabel(enums.careLevelTypes, plant.careLevelType)}
                 </Typography>
               </Grid>
-              <Grid sx={{ xs: 12, sm: 4 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Chiều cao tối thiểu
-                </Typography>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <Typography variant="body2" color="text.secondary">Care level</Typography>
+                <Typography variant="body1" fontWeight="600">{plant.careLevel}</Typography>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <Typography variant="body2" color="text.secondary">Base price</Typography>
                 <Typography variant="body1" fontWeight="600">
-                  {plant.minHeight} cm
+                  {plant.basePrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
                 </Typography>
               </Grid>
-              <Grid sx={{ xs: 12, sm: 4 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Chiều cao tối đa
-                </Typography>
-                <Typography variant="body1" fontWeight="600">
-                  {plant.maxHeight} cm
-                </Typography>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <Typography variant="body2" color="text.secondary">Growth rate</Typography>
+                <Typography variant="body1" fontWeight="600">{plant.growthRate || '-'}</Typography>
               </Grid>
-              <Grid sx={{ xs: 12, sm: 4 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Vị trí đặt
-                </Typography>
-                <Typography variant="body1" fontWeight="600">
-                  {plant.placement}
-                </Typography>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <Typography variant="body2" color="text.secondary">Pot size</Typography>
+                <Typography variant="body1" fontWeight="600">{plant.potSize || '-'}</Typography>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <Typography variant="body2" color="text.secondary">Total instances</Typography>
+                <Typography variant="body1" fontWeight="600">{plant.totalInstances ?? 0}</Typography>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <Typography variant="body2" color="text.secondary">Available instances</Typography>
+                <Typography variant="body1" fontWeight="600">{plant.availableInstances ?? 0}</Typography>
               </Grid>
             </Grid>
           </Box>
 
           <Divider />
 
-          {/* Growth & Care */}
           <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom>
-              Sinh trưởng & Chăm sóc
+              Feng Shui
             </Typography>
             <Grid container spacing={2}>
-              <Grid sx={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Tốc độ sinh trưởng
+              <Grid size={{ xs: 12, sm: 5 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  Element
                 </Typography>
-                <Typography variant="body1" fontWeight="600">
-                  {plant.growthRate}
-                </Typography>
+                <Chip
+                  label={plant.fengShuiElement || '-'}
+                  size="small"
+                  variant="outlined"
+                  sx={{
+                    fontWeight: 600,
+                    backgroundColor: fengShuiColors.bg,
+                    color: fengShuiColors.text,
+                    borderColor: fengShuiColors.border,
+                  }}
+                />
               </Grid>
-              <Grid sx={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Mức độ chăm sóc
-                </Typography>
-                <Typography variant="body1" fontWeight="600">
-                  {plant.careLevel}
-                </Typography>
-              </Grid>
-              <Grid sx={{ xs: 6, sm: 3 }}>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Độc
-                </Typography>
-                {renderBooleanCell(plant.toxicity)}
-              </Grid>
-              <Grid sx={{ xs: 6, sm: 3 }}>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Lọc không khí
-                </Typography>
-                {renderBooleanCell(plant.airPurifying)}
-              </Grid>
-              <Grid sx={{ xs: 6, sm: 3 }}>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Có hoa
-                </Typography>
-                {renderBooleanCell(plant.hasFlower)}
-              </Grid>
-              <Grid sx={{ xs: 6, sm: 3 }}>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Có chậu
-                </Typography>
-                {renderBooleanCell(plant.potIncluded)}
-              </Grid>
-              <Grid sx={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Kích thước chậu
-                </Typography>
-                <Typography variant="body1" fontWeight="600">
-                  {plant.potSize}
-                </Typography>
+              <Grid size={{ xs: 12, sm: 7 }}>
+                <Typography variant="body2" color="text.secondary">Meaning</Typography>
+                <Typography variant="body1" fontWeight="600">{plant.fengShuiMeaning || '-'}</Typography>
               </Grid>
             </Grid>
           </Box>
 
           <Divider />
 
-          {/* Feng Shui */}
           <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom>
-              Phong Thủy
+              Booleans
             </Typography>
             <Grid container spacing={2}>
-              <Grid sx={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Yếu tố phong thủy
-                </Typography>
-                <Typography variant="body1" fontWeight="600">
-                  {plant.fengShuiElement}
-                </Typography>
-              </Grid>
-              <Grid sx={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Ý nghĩa phong thủy
-                </Typography>
-                <Typography variant="body1" fontWeight="600">
-                  {plant.fengShuiMeaning}
-                </Typography>
-              </Grid>
+              <Grid size={{ xs: 6, sm: 4 }}><Typography variant="body2" color="text.secondary">Toxicity</Typography>{renderBooleanCell(plant.toxicity)}</Grid>
+              <Grid size={{ xs: 6, sm: 4 }}><Typography variant="body2" color="text.secondary">Air purifying</Typography>{renderBooleanCell(plant.airPurifying)}</Grid>
+              <Grid size={{ xs: 6, sm: 4 }}><Typography variant="body2" color="text.secondary">Has flower</Typography>{renderBooleanCell(plant.hasFlower)}</Grid>
+              <Grid size={{ xs: 6, sm: 4 }}><Typography variant="body2" color="text.secondary">Pet safe</Typography>{renderBooleanCell(plant.petSafe)}</Grid>
+              <Grid size={{ xs: 6, sm: 4 }}><Typography variant="body2" color="text.secondary">Child safe</Typography>{renderBooleanCell(plant.childSafe)}</Grid>
+              <Grid size={{ xs: 6, sm: 4 }}><Typography variant="body2" color="text.secondary">Pot included</Typography>{renderBooleanCell(plant.potIncluded)}</Grid>
+              <Grid size={{ xs: 6, sm: 4 }}><Typography variant="body2" color="text.secondary">Unique instance</Typography>{renderBooleanCell(plant.isUniqueInstance)}</Grid>
+              <Grid size={{ xs: 6, sm: 4 }}><Typography variant="body2" color="text.secondary">Active</Typography>{renderBooleanCell(plant.isActive)}</Grid>
             </Grid>
           </Box>
 
-          {/* Guide */}
-          {plant.guide && (
-            <>
-              <Divider />
-              <Box>
-                <Typography variant="h6" fontWeight="600" gutterBottom>
-                  Hướng dẫn chăm sóc
-                </Typography>
-                <Grid container spacing={2}>
-                  <Grid sx={{ xs: 12, sm: 6 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Yêu cầu ánh sáng
-                    </Typography>
-                    <Typography variant="body1">{plant.guide.lightRequirement}</Typography>
-                  </Grid>
-                  <Grid sx={{ xs: 12, sm: 6 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Tưới nước
-                    </Typography>
-                    <Typography variant="body1">{plant.guide.watering}</Typography>
-                  </Grid>
-                  <Grid sx={{ xs: 12, sm: 6 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Bón phân
-                    </Typography>
-                    <Typography variant="body1">{plant.guide.fertilizing}</Typography>
-                  </Grid>
-                  <Grid sx={{ xs: 12, sm: 6 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Cắt tỉa
-                    </Typography>
-                    <Typography variant="body1">{plant.guide.pruning}</Typography>
-                  </Grid>
-                  <Grid sx={{ xs: 12, sm: 6 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Nhiệt độ
-                    </Typography>
-                    <Typography variant="body1">{plant.guide.temperature}</Typography>
-                  </Grid>
-                  <Grid sx={{ xs: 12, sm: 6 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Ghi chú chăm sóc
-                    </Typography>
-                    <Typography variant="body1">{plant.guide.careNotes}</Typography>
-                  </Grid>
-                </Grid>
-              </Box>
-            </>
-          )}
-
-          {/* Status */}
           <Divider />
+
           <Box>
-            <Typography variant="body2" color="text.secondary">
-              Trạng thái
+            <Typography variant="h6" fontWeight="600" gutterBottom>
+              Categories 
             </Typography>
-            <Chip
-              label={plant.isActive ? 'Kích hoạt' : 'Vô hiệu'}
-              color={plant.isActive ? 'success' : 'error'}
-              variant="outlined"
-              sx={{ mt: 1 }}
-            />
+            <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mb: 1 }}>
+              {plant.categories.length > 0 ? plant.categories.map((category) => (
+                <Chip key={category.id} label={category.name} size="small" variant="outlined" />
+              )) : <Typography variant="body2" color="text.secondary">No categories</Typography>}
+            </Stack>
+            <Typography variant="h6" fontWeight="600" gutterBottom>
+              Tags 
+            </Typography>
+            <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+              {plant.tags.length > 0 ? plant.tags.map((tag) => (
+                <Chip key={tag.id} label={tag.name || tag.tagName || `Tag #${tag.id}`} size="small" color="info" variant="outlined" />
+              )) : <Typography variant="body2" color="text.secondary">No tags</Typography>}
+            </Stack>
+          </Box>
+
+          <Divider />
+
+          <Box>
+            <Typography variant="h6" fontWeight="600" gutterBottom>
+              Metadata
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="body2" color="text.secondary">Created at</Typography>
+                <Typography variant="body1" fontWeight="600">{formatDateTime(plant.createdAt)}</Typography>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="body2" color="text.secondary">Updated at</Typography>
+                <Typography variant="body1" fontWeight="600">{formatDateTime(plant.updatedAt)}</Typography>
+              </Grid>
+            </Grid>
           </Box>
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Đóng</Button>
+        <Button onClick={onClose}>Close</Button>
       </DialogActions>
     </Dialog>
   );
 }
+

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/authStore';
 import CartBadge from '@/components/cart/CartBadge';
-import { NotificationBell } from '@/components/notifications/NotificationBell';
+// import { NotificationBell } from '@/components/notifications/NotificationBell';
 import Navigation from './Navigation';
 import LanguageSwitcher from './LanguageSwitcher';
 import { Link } from '@/i18n/navigation';
@@ -109,7 +109,7 @@ export default function Header({ initialStoreCategories = [] }: HeaderProps) {
               <CartBadge />
 
               {/* Notification Bell (for staff, manager, admin, shipper, caretaker) */}
-              {hasNotificationAccess && <NotificationBell />}
+              {/* {hasNotificationAccess && <NotificationBell />} */}
 
               {/* Auth Actions */}
               <div className="flex items-center gap-2 lg:gap-4">

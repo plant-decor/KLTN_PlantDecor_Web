@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "set NODE_OPTIONS='--use-system-ca' && next dev --experimental-https",    
+    "dev": "set NODE_OPTIONS=--trace-deprecation && next dev",
+    "dev:ssl": "set NODE_OPTIONS='--use-system-ca' && next dev --experimental-https",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
@@ -19,7 +20,7 @@
     "@mui/material-nextjs": "^7.3.8",
     "@mui/x-charts": "^8.27.0",
     "@react-oauth/google": "^0.13.4",
-    "axios": "^1.13.3",
+    "axios": "^1.14.0",
     "framer-motion": "^12.34.3",
     "jwt-decode": "^4.0.0",
     "next": "16.1.4",

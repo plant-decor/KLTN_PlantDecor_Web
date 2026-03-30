@@ -3,15 +3,20 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState, type MouseEvent } from 'react';
-import { Button } from '@mui/material';
+import { useEffect, useState, type MouseEvent } from 'react';
+import { Button, Drawer } from '@mui/material';
 import { DeleteOutline as DeleteOutlineIcon, Star as StarIcon } from '@mui/icons-material';
 import { useLocale, useTranslations } from 'next-intl';
 import { useAuthStore } from '@/lib/store/authStore';
-import { addPlantToCart, removePlantFromWishlist } from '@/lib/api/cartWishlistService';
+import { addItemToCart, removePlantFromWishlist } from '@/lib/api/cartWishlistService';
 import { notifyCartUpdated } from '@/lib/utils/cartEvents';
+import { get } from '@/lib/api/apiService.client';
+import { ResponseModel } from '@/types/api.types';
+import type { NurseryResponse } from '@/types/nursery.types';
+import NurseryList from './NuseriesList';
 import AddToWishlistButton from './AddToWishlistButton';
 import { ShopPlantListItem } from '@/lib/api/shopPlantsService';
+import { formatCurrency } from '@/lib/utils/formatUtil';
 
 interface ProductCardProps {
   plant: ShopPlantListItem;
@@ -33,8 +38,53 @@ export default function ProductCard({
   const tProducts = useTranslations('products');
   const tWishlist = useTranslations('wishlist');
   const { user } = useAuthStore();
-  const [isCartLoading, setIsCartLoading] = useState(false);
   const [isWishlistRemoving, setIsWishlistRemoving] = useState(false);
+  const [isNurseryDrawerOpen, setIsNurseryDrawerOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<'cart' | null>(null);
+  const [nurseries, setNurseries] = useState<NurseryResponse[]>([]);
+  const [selectedNurseryId, setSelectedNurseryId] = useState<number | null>(null);
+  const [selectedNursery, setSelectedNursery] = useState<NurseryResponse | null>(null);
+  const [selectedQuantity, setSelectedQuantity] = useState(1);
+
+  useEffect(() => {
+    if (!isNurseryDrawerOpen) return;
+    let isMounted = true;
+    const fetchNurseries = async () => {
+      try {
+        if (plant.availableCommonQuantity > 0) {
+          const nurseries = await get<ResponseModel<NurseryResponse[]>>(`/shop/plants/${plant.id}/common-nurseries`, undefined, false)
+          if (!isMounted) return;
+          const nurseryPayload = nurseries?.payload || [];
+          setNurseries(nurseryPayload);
+          if (nurseryPayload.length > 0) {
+            setSelectedNurseryId(nurseryPayload[0].nurseryId);
+            setSelectedNursery(nurseryPayload[0]);
+            setSelectedQuantity(1);
+          }
+          console.log('Fetch nursery list common plant', nurseries)
+        } else {
+          const nurseryResponse = await get<ResponseModel<NurseryResponse[]>>(`/plants/${plant.id}/nurseries`, undefined, false);
+          if (!isMounted) return;
+          const nurseryPayload = nurseryResponse?.payload || [];
+          setNurseries(nurseryPayload);
+          if (nurseryPayload.length > 0) {
+            setSelectedNurseryId(nurseryPayload[0].nurseryId);
+            setSelectedNursery(nurseryPayload[0]);
+            setSelectedQuantity(1);
+          }
+        }
+      } catch (error) {
+        console.error('Fetch nurseries error:', error);
+        if (!isMounted) return;
+        setNurseries([]);
+      }
+    };
+
+    fetchNurseries();
+    return () => {
+      isMounted = false;
+    };
+  }, [plant.id, plant.availableCommonQuantity, isNurseryDrawerOpen]);
 
   const handleAddToCart = async (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
@@ -44,21 +94,61 @@ export default function ProductCard({
       router.push(`/${locale}/login`);
       return;
     }
-
-    try {
-      setIsCartLoading(true);
-      await addPlantToCart(plant.id, 1);
-      notifyCartUpdated();
-    } catch (error) {
-      console.error('Add to cart error:', error);
-    } finally {
-      setIsCartLoading(false);
-    }
+    setSelectedNurseryId(null);
+    setSelectedNursery(null);
+    setSelectedQuantity(1);
+    setPendingAction('cart');
+    setIsNurseryDrawerOpen(true);
   };
 
   const handleCreateOrder = async (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     event.stopPropagation();
+    router.push(`/${locale}/products/${plant.id}`);
+  };
+
+  const getNurseryMaxQuantity = (nursery: NurseryResponse | null): number => {
+    if (!nursery) return 0;
+    return Math.max(
+      0,
+      nursery.availableCommonQuantity ?? 0,
+      nursery.availableInstanceCount ?? 0,
+      nursery.availableComboQuantity ?? 0,
+      nursery.availableMaterialQuantity ?? 0
+    );
+  };
+
+  const selectedNurseryMaxQuantity = getNurseryMaxQuantity(selectedNursery);
+
+  const handleConfirmWithNursery = async (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (!pendingAction) return;
+    if (!selectedNursery) return;
+    if (selectedNurseryMaxQuantity <= 0) return;
+
+    const hasCartItemId =
+      !!selectedNursery.commonPlantId ||
+      !!selectedNursery.nurseryPlantComboId ||
+      !!selectedNursery.nurseryMaterialId;
+
+    const addToCartPayload = {
+      quantity: Math.min(selectedQuantity, selectedNurseryMaxQuantity),
+      commonPlantId: hasCartItemId ? (selectedNursery.commonPlantId ?? null) : plant.id,
+      nurseryPlantComboId: selectedNursery.nurseryPlantComboId ?? null,
+      nurseryMaterialId: selectedNursery.nurseryMaterialId ?? null,
+    };
+
+    try {
+      await addItemToCart(addToCartPayload);
+      notifyCartUpdated();
+      setIsNurseryDrawerOpen(false);
+      setPendingAction(null);
+
+    } catch (error) {
+      console.error('Add to cart with nursery error:', error);
+    }
   };
 
   const handleRemoveFromWishlist = async (event: MouseEvent<HTMLButtonElement>) => {
@@ -81,33 +171,48 @@ export default function ProductCard({
     }
   };
 
-  const isActionDisabled = isCartLoading || isWishlistRemoving;
+  const isActionDisabled = isWishlistRemoving;
   const isOutOfStock = plant.availableCommonQuantity <= 0 && plant.availableInstances <= 0 && plant.totalAvailableStock <= 0;
-  const numberLocale = locale === 'vi' ? 'vi-VN' : 'en-US';
+  const handleSelectNursery = (nursery: NurseryResponse) => {
+    setSelectedNurseryId(nursery.nurseryId);
+    setSelectedNursery(nursery);
+    setSelectedQuantity(1);
+  };
+
+  const handleCancelNurserySelection = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsNurseryDrawerOpen(false);
+    setSelectedNurseryId(null);
+    setSelectedNursery(null);
+    setSelectedQuantity(1);
+    setPendingAction(null);
+  };
 
   return (
-    <Link
-      href={`/products/${plant.id}`}
-      className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow"
-    >
-      <div className="relative w-full h-48">
+    <>
+      <Link
+        href={`/products/${plant.id}`}
+        className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow"
+      >
+        <div className="relative w-full h-48">
         <Image
-          src={plant.primaryImageUrl || '/img/background-login.jpg'}
+          src={plant.primaryImageUrl || '/img/fallbackplant.avif'}
           alt={plant.name}
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           className="object-cover"
         />
-        {plant.tagNames.some(tag => tag.tagName.includes('new')) && (
+        {/* {plant.tagNames.some(tag => tag.tagName === 'new') && (
           <span className="absolute top-4 left-4 bg-green-600 text-white px-2 py-1 text-xs rounded">
             {tProducts('new')}
           </span>
-        )}
-        {plant.basePrice && (
+        )} */}
+        {/* {plant.basePrice && (
           <span className="absolute top-4 right-4 bg-red-600 text-white px-2 py-1 text-xs rounded">
             {tProducts('sale')}
           </span>
-        )}
+        )} */}
       </div>
       <div className="p-6">
         <h3 className="font-semibold text-gray-900 mb-2">{plant.name}</h3>
@@ -133,9 +238,9 @@ export default function ProductCard({
           {plant.basePrice ? (
             <div className="flex flex-col">
               <span className="text-gray-400 line-through text-sm">
-                {plant.basePrice.toLocaleString()} VND
+                {formatCurrency(plant.basePrice, 'vi-VN')} VND
               </span>
-              <span className="text-green-600 font-bold text-lg">{plant.basePrice.toLocaleString()} VND</span>
+              <span className="text-green-600 font-bold text-lg">{formatCurrency(plant.basePrice * 0.8, 'vi-VN')} VND</span>
             </div>
           ) : (
             <span className="text-green-600 font-bold text-lg">
@@ -233,6 +338,99 @@ export default function ProductCard({
           )}
         </div>
       </div>
-    </Link>
+      </Link>
+      <Drawer
+        anchor="right"
+        open={isNurseryDrawerOpen}
+        onClose={() => {
+          setIsNurseryDrawerOpen(false);
+          setSelectedNurseryId(null);
+          setSelectedNursery(null);
+          setSelectedQuantity(1);
+          setPendingAction(null);
+        }}
+      >
+        <div
+          className="w-90 max-w-[90vw] p-4"
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+          }}
+        >
+          <h3 className="text-lg font-semibold mb-2">Select nursery</h3>
+          <p className="text-sm text-gray-600 mb-4">
+            Please choose a nursery before continuing.
+          </p>
+
+          {nurseries.length === 0 ? (
+            <p className="text-sm text-gray-500">No nurseries available.</p>
+          ) : (
+            <NurseryList
+              isNurseryAvailable={nurseries}
+              selectedNurseryId={selectedNurseryId}
+              onSelectNursery={handleSelectNursery}
+            />
+          )}
+
+          {selectedNursery && (
+            <div className="mt-4">
+              <p className="text-sm text-gray-600 mb-2">Quantity</p>
+              <div className="flex items-center border border-gray-300 rounded-lg w-fit">
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    setSelectedQuantity((prev) => Math.max(1, prev - 1));
+                  }}
+                  className="px-4 py-2 hover:bg-gray-100 transition-colors"
+                  disabled={selectedQuantity <= 1}
+                >
+                  -
+                </button>
+                <span className="px-6 py-2 border-x border-gray-300 min-w-14 text-center">
+                  {selectedQuantity}
+                </span>
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    setSelectedQuantity((prev) => Math.min(selectedNurseryMaxQuantity, prev + 1));
+                  }}
+                  className="px-4 py-2 hover:bg-gray-100 transition-colors"
+                  disabled={selectedQuantity >= selectedNurseryMaxQuantity}
+                >
+                  +
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Available: {selectedNurseryMaxQuantity}</p>
+            </div>
+          )}
+
+          <div className="mt-4 flex gap-2">
+            <Button
+              variant="outlined"
+              fullWidth
+              onClick={handleCancelNurserySelection}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              fullWidth
+              disabled={!selectedNursery || selectedNurseryMaxQuantity <= 0}
+              onClick={handleConfirmWithNursery}
+              sx={{
+                bgcolor: 'var(--primary)',
+                '&:hover': { bgcolor: '#45a049' },
+              }}
+            >
+              Continue
+            </Button>
+          </div>
+        </div>
+      </Drawer>
+    </>
   );
 }

@@ -13,14 +13,34 @@ import { useTransition } from 'react';
  * Usage:
  *   <LanguageSwitcher />
  */
+
 export default function LanguageSwitcher() {
-  const locale = useLocale();
+  // Fallback: lấy locale từ useLocale, nếu không có thì lấy từ cookie, nếu vẫn không có thì dùng 'vi'
+  let locale = useLocale();
+  if (!locale || (locale !== 'vi' && locale !== 'en')) {
+    if (typeof window !== 'undefined') {
+      const match = document.cookie.match(/(?:^|; )locale=([^;]*)/);
+      const cookieLocale = match ? decodeURIComponent(match[1]) : '';
+      if (cookieLocale === 'vi' || cookieLocale === 'en') {
+        locale = cookieLocale;
+      } else {
+        locale = 'vi';
+      }
+    } else {
+      locale = 'vi';
+    }
+  }
+
   const router = useRouter();
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
   const t = useTranslations('language');
 
   const handleLocaleChange = (nextLocale: string) => {
+    // Khi đổi ngôn ngữ, cập nhật cookie locale
+    if (typeof document !== 'undefined') {
+      document.cookie = `locale=${nextLocale}; path=/; max-age=31536000`;
+    }
     startTransition(() => {
       router.replace(pathname, { locale: nextLocale });
     });

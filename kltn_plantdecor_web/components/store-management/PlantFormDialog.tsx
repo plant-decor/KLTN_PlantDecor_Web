@@ -15,338 +15,422 @@ import {
   Stack,
   Divider,
   Typography,
-  Switch,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  Alert,
+  Chip,
 } from '@mui/material';
-import { useForm, Controller } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import ImageUpload from './ImageUpload';
-import type { Plant, PlantGuide, ImageUploadData } from '@/types/store-management.types';
+import type {
+  PlantDetail,
+  PlantEnumPayload,
+  PlantFormData,
+  ImageUploadData,
+} from '@/types/store-management.types';
+
+interface OptionItem {
+  id: number;
+  name: string;
+}
 
 interface PlantFormDialogProps {
   open: boolean;
-  editingData?: Plant;
+  editingData?: PlantDetail;
+  categories: OptionItem[];
+  tags: OptionItem[];
+  enums: PlantEnumPayload;
+  enumLoading: boolean;
+  enumError: string | null;
   onClose: () => void;
-  onSubmit: (data: Plant, images: ImageUploadData[]) => void;
+  onSubmit: (data: PlantFormData, images: ImageUploadData[]) => void;
   isLoading?: boolean;
 }
 
-const defaultPlant: Plant = {
-  plantId: 0,
+const defaultPlant: PlantFormData = {
   name: '',
   specificName: '',
   origin: '',
   description: '',
   basePrice: 0,
-  placement: '',
-  size: '',
-  minHeight: 0,
-  maxHeight: 0,
+  placementType: 0,
+  size: 0,
   growthRate: '',
   toxicity: false,
   airPurifying: false,
   hasFlower: false,
+  petSafe: false,
+  childSafe: false,
   fengShuiElement: '',
   fengShuiMeaning: '',
   potIncluded: false,
   potSize: '',
-  plantType: '',
+  careLevelType: 0,
   careLevel: '',
   isActive: true,
+  isUniqueInstance: false,
+  categoryIds: [],
+  tagIds: [],
 };
 
 export default function PlantFormDialog({
   open,
   editingData,
+  categories,
+  tags,
+  enums,
+  enumLoading,
+  enumError,
   onClose,
   onSubmit,
   isLoading = false,
 }: PlantFormDialogProps) {
-  const { control, handleSubmit, reset, watch } = useForm<Plant>({
+  const { control, handleSubmit, reset, setValue } = useForm<PlantFormData>({
     defaultValues: defaultPlant,
   });
+  const potIncluded = useWatch({ control, name: 'potIncluded' });
 
   const [images, setImages] = useState<ImageUploadData[]>([]);
-  const [showGuideFields, setShowGuideFields] = useState(false);
-  const [guideData, setGuideData] = useState<PlantGuide>({
-    plantId: 0,
-    lightRequirement: '',
-    watering: '',
-    fertilizing: '',
-    pruning: '',
-    temperature: '',
-    careNotes: '',
-  });
 
   useEffect(() => {
-    if (editingData) {
-      reset(editingData);
-      setShowGuideFields(!!editingData.guide);
-      if (editingData.guide) {
-        setGuideData(editingData.guide);
-      }
-      if (editingData.images) {
-        setImages(
-          editingData.images.map((img) => ({
-            ...img,
-            file: new File([], ''),
-            preview: img.preview || img.url || '',
-          }))
-        );
-      }
-    } else {
-      reset(defaultPlant);
-      setImages([]);
-      setShowGuideFields(false);
-      setGuideData({
-        plantId: 0,
-        lightRequirement: '',
-        watering: '',
-        fertilizing: '',
-        pruning: '',
-        temperature: '',
-        careNotes: '',
-      });
+    if (!open) {
+      return;
     }
+
+    if (editingData) {
+      reset({
+        name: editingData.name,
+        specificName: editingData.specificName || '',
+        origin: editingData.origin || '',
+        description: editingData.description || '',
+        basePrice: editingData.basePrice,
+        placementType: editingData.placementType,
+        size: editingData.size,
+        growthRate: editingData.growthRate || '',
+        toxicity: editingData.toxicity,
+        airPurifying: editingData.airPurifying,
+        hasFlower: editingData.hasFlower,
+        petSafe: editingData.petSafe,
+        childSafe: editingData.childSafe,
+        fengShuiElement: editingData.fengShuiElement || '',
+        fengShuiMeaning: editingData.fengShuiMeaning || '',
+        potIncluded: editingData.potIncluded,
+        potSize: editingData.potSize || '',
+        careLevelType: editingData.careLevelType,
+        careLevel: editingData.careLevel,
+        isActive: editingData.isActive,
+        isUniqueInstance: editingData.isUniqueInstance,
+        categoryIds: editingData.categories.map((item) => item.id),
+        tagIds: editingData.tags.map((item) => item.id),
+      });
+
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setImages(
+        editingData.images.map((image) => ({
+          id: image.id,
+          existingImageId: image.id,
+          preview: image.imageUrl,
+          url: image.imageUrl,
+          isThumbnail: false,
+        }))
+      );
+      return;
+    }
+
+    reset(defaultPlant);
+    setImages([]);
   }, [editingData, open, reset]);
 
-  const handleFormSubmit = (data: Plant) => {
-    const submitData = {
-      ...data,
-      guide: showGuideFields ? guideData : undefined,
-      images: undefined,
-    };
-    onSubmit(submitData, images);
+  useEffect(() => {
+    if (!open || editingData) {
+      return;
+    }
+
+    if (enums.placementTypes[0]?.value) {
+      setValue('placementType', enums.placementTypes[0].value);
+    }
+    if (enums.sizes[0]?.value) {
+      setValue('size', enums.sizes[0].value);
+    }
+    if (enums.careLevelTypes[0]?.value) {
+      setValue('careLevelType', enums.careLevelTypes[0].value);
+    }
+  }, [editingData, enums.careLevelTypes, enums.placementTypes, enums.sizes, open, setValue]);
+
+  const handleFormSubmit = (data: PlantFormData) => {
+    onSubmit(data, images);
   };
+
+  const isEnumReady =
+    enums.placementTypes.length > 0 && enums.sizes.length > 0 && enums.careLevelTypes.length > 0;
+  const disableSubmit = isLoading || enumLoading || Boolean(enumError) || !isEnumReady;
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle className=''>{editingData ? 'Chỉnh sửa cây' : 'Thêm cây mới'}</DialogTitle>
+      <DialogTitle>{editingData ? 'Edit Plant' : 'Create Plant'}</DialogTitle>
       <DialogContent dividers sx={{ maxHeight: '80vh', overflow: 'auto' }}>
         <Stack spacing={3}>
-          {/* Basic Information */}
+          {enumError && <Alert severity="error">Failed to load plant enums. Please retry later.</Alert>}
+
           <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom>
-              Thông tin cơ bản
+              Basic information
             </Typography>
             <Grid container spacing={2}>
-              <Grid sx={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Controller
                   name="name"
                   control={control}
-                  render={({ field }) => (
-                    <TextField {...field} label="Tên cây" fullWidth required />
-                  )}
+                  rules={{ required: true }}
+                  render={({ field }) => <TextField {...field} label="Plant name" fullWidth required />}
                 />
               </Grid>
-              <Grid sx={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Controller
                   name="specificName"
                   control={control}
-                  render={({ field }) => (
-                    <TextField {...field} label="Tên khoa học" fullWidth />
-                  )}
+                  rules={{ required: true }}
+                  render={({ field }) => <TextField {...field} label="Specific name" fullWidth required />}
                 />
               </Grid>
-              <Grid sx={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Controller
                   name="origin"
                   control={control}
-                  render={({ field }) => <TextField {...field} label="Xuất xứ" fullWidth />}
+                  rules={{ required: true }}
+                  render={({ field }) => <TextField {...field} label="Origin" fullWidth required />}
                 />
               </Grid>
-              <Grid sx={{ xs: 12, sm: 6 }}>
-                <Controller
-                  name="plantType"
-                  control={control}
-                  render={({ field }) => <TextField {...field} label="Loại cây" fullWidth />}
-                />
-              </Grid>
-              <Grid sx={{ xs: 12 }}>
-                <Controller
-                  name="description"
-                  control={control}
-                  render={({ field }) => (
-                    <TextField {...field} label="Mô tả" fullWidth multiline rows={3} />
-                  )}
-                />
-              </Grid>
-            </Grid>
-          </Box>
-
-          {/* Size & Price */}
-          <Box>
-            <Typography variant="h6" fontWeight="600" gutterBottom>
-              Kích thước & Giá
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid sx={{ xs: 12, sm: 6 }}>
-                <Controller
-                  name="size"
-                  control={control}
-                  render={({ field }) => <TextField {...field} label="Kích thước" fullWidth />}
-                />
-              </Grid>
-              <Grid sx={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Controller
                   name="basePrice"
                   control={control}
+                  rules={{ required: true, min: 0 }}
                   render={({ field }) => (
                     <TextField
                       {...field}
-                      label="Giá cơ bản"
+                      label="Base price"
                       fullWidth
                       type="number"
-                      onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
                     />
                   )}
                 />
               </Grid>
-              <Grid sx={{ xs: 12, sm: 4 }}>
+              <Grid size={{ xs: 12 }}>
                 <Controller
-                  name="minHeight"
+                  name="description"
                   control={control}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="Chiều cao tối thiểu (cm)"
-                      fullWidth
-                      type="number"
-                      onChange={(e) => field.onChange(parseInt(e.target.value))}
-                    />
-                  )}
-                />
-              </Grid>
-              <Grid sx={{ xs: 12, sm: 4 }}>
-                <Controller
-                  name="maxHeight"
-                  control={control}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="Chiều cao tối đa (cm)"
-                      fullWidth
-                      type="number"
-                      onChange={(e) => field.onChange(parseInt(e.target.value))}
-                    />
-                  )}
-                />
-              </Grid>
-              <Grid sx={{ xs: 12, sm: 4 }}>
-                <Controller
-                  name="placement"
-                  control={control}
-                  render={({ field }) => (
-                    <TextField {...field} label="Vị trí đặt" fullWidth />
-                  )}
+                  rules={{ required: true }}
+                  render={({ field }) => <TextField {...field} label="Description" fullWidth multiline rows={3} required />}
                 />
               </Grid>
             </Grid>
           </Box>
 
-          {/* Growth & Care */}
+          <Divider />
+
           <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom>
-              Sinh trưởng & Chăm sóc
+              Plant attributes
             </Typography>
             <Grid container spacing={2}>
-              <Grid sx={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <Controller
-                  name="growthRate"
+                  name="placementType"
                   control={control}
+                  rules={{ required: true, min: 1 }}
                   render={({ field }) => (
-                    <TextField {...field} label="Tốc độ sinh trưởng" fullWidth />
+                    <FormControl fullWidth>
+                      <InputLabel>Placement type</InputLabel>
+                      <Select
+                        {...field}
+                        label="Placement type"
+                        onChange={(event) => field.onChange(Number(event.target.value))}
+                      >
+                        {enums.placementTypes.map((item) => (
+                          <MenuItem key={item.value} value={item.value}>{item.name}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
                   )}
                 />
               </Grid>
-              <Grid sx={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <Controller
+                  name="size"
+                  control={control}
+                  rules={{ required: true, min: 1 }}
+                  render={({ field }) => (
+                    <FormControl fullWidth>
+                      <InputLabel>Size</InputLabel>
+                      <Select
+                        {...field}
+                        label="Size"
+                        onChange={(event) => field.onChange(Number(event.target.value))}
+                      >
+                        {enums.sizes.map((item) => (
+                          <MenuItem key={item.value} value={item.value}>{item.name}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  )}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <Controller
+                  name="careLevelType"
+                  control={control}
+                  rules={{ required: true, min: 1 }}
+                  render={({ field }) => (
+                    <FormControl fullWidth>
+                      <InputLabel>Care level type</InputLabel>
+                      <Select
+                        {...field}
+                        label="Care level type"
+                        onChange={(event) => field.onChange(Number(event.target.value))}
+                      >
+                        {enums.careLevelTypes.map((item) => (
+                          <MenuItem key={item.value} value={item.value}>{item.name}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  )}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Controller
                   name="careLevel"
                   control={control}
-                  render={({ field }) => (
-                    <TextField {...field} label="Mức độ chăm sóc" fullWidth />
-                  )}
+                  rules={{ required: true }}
+                  render={({ field }) => <TextField {...field} label="Care level" fullWidth required />}
                 />
               </Grid>
-              <Grid sx={{ xs: 6, sm: 3 }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Controller
-                  name="toxicity"
+                  name="growthRate"
                   control={control}
-                  render={({ field }) => (
-                    <FormControlLabel
-                      control={<Checkbox {...field} checked={field.value} />}
-                      label="Có độc"
-                    />
-                  )}
-                />
-              </Grid>
-              <Grid sx={{ xs: 6, sm: 3 }}>
-                <Controller
-                  name="airPurifying"
-                  control={control}
-                  render={({ field }) => (
-                    <FormControlLabel
-                      control={<Checkbox {...field} checked={field.value} />}
-                      label="Lọc không khí"
-                    />
-                  )}
-                />
-              </Grid>
-              <Grid sx={{ xs: 6, sm: 3 }}>
-                <Controller
-                  name="hasFlower"
-                  control={control}
-                  render={({ field }) => (
-                    <FormControlLabel
-                      control={<Checkbox {...field} checked={field.value} />}
-                      label="Có hoa"
-                    />
-                  )}
-                />
-              </Grid>
-              <Grid sx={{ xs: 6, sm: 3 }}>
-                <Controller
-                  name="potIncluded"
-                  control={control}
-                  render={({ field }) => (
-                    <FormControlLabel
-                      control={<Checkbox {...field} checked={field.value} />}
-                      label="Có chậu"
-                    />
-                  )}
-                />
-              </Grid>
-              <Grid sx={{ xs: 12, sm: 6 }}>
-                <Controller
-                  name="potSize"
-                  control={control}
-                  render={({ field }) => (
-                    <TextField {...field} label="Kích thước chậu" fullWidth />
-                  )}
+                  rules={{ required: true }}
+                  render={({ field }) => <TextField {...field} label="Growth rate" fullWidth required />}
                 />
               </Grid>
             </Grid>
           </Box>
 
-          {/* Feng Shui */}
+          <Divider />
+
           <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom>
-              Phong Thủy
+              Extra properties
             </Typography>
             <Grid container spacing={2}>
-              <Grid sx={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Controller
                   name="fengShuiElement"
                   control={control}
-                  render={({ field }) => (
-                    <TextField {...field} label="Yếu tố phong thủy" fullWidth />
-                  )}
+                  rules={{ required: true }}
+                  render={({ field }) => <TextField {...field} label="Feng shui element" fullWidth required />}
                 />
               </Grid>
-              <Grid sx={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Controller
                   name="fengShuiMeaning"
                   control={control}
+                  rules={{ required: true }}
+                  render={({ field }) => <TextField {...field} label="Feng shui meaning" fullWidth required />}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Controller
+                  name="potSize"
+                  control={control}
+                  rules={{
+                    validate: (value) => {
+                      if (!potIncluded) {
+                        return true;
+                      }
+
+                      return Boolean(value?.trim());
+                    },
+                  }}
+                  render={({ field }) => <TextField {...field} label="Pot size" fullWidth required={potIncluded} />}
+                />
+              </Grid>
+            </Grid>
+          </Box>
+
+          <Divider />
+
+          <Box>
+            <Typography variant="h6" fontWeight="600" gutterBottom>
+              Categories and tags
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Controller
+                  name="categoryIds"
+                  control={control}
                   render={({ field }) => (
-                    <TextField {...field} label="Ý nghĩa phong thủy" fullWidth />
+                    <FormControl fullWidth>
+                      <InputLabel>Categories</InputLabel>
+                      <Select
+                        {...field}
+                        multiple
+                        label="Categories"
+                        value={field.value || []}
+                        onChange={(event) => {
+                          const raw = event.target.value as number[] | string[];
+                          field.onChange(raw.map((item) => Number(item)));
+                        }}
+                        renderValue={(selected) => (
+                          <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap">
+                            {(selected as number[]).map((id) => {
+                              const item = categories.find((category) => category.id === id);
+                              return <Chip key={id} label={item?.name ?? id} size="small" />;
+                            })}
+                          </Stack>
+                        )}
+                      >
+                        {categories.map((item) => (
+                          <MenuItem key={item.id} value={item.id}>{item.name}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  )}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Controller
+                  name="tagIds"
+                  control={control}
+                  render={({ field }) => (
+                    <FormControl fullWidth>
+                      <InputLabel>Tags</InputLabel>
+                      <Select
+                        {...field}
+                        multiple
+                        label="Tags"
+                        value={field.value || []}
+                        onChange={(event) => {
+                          const raw = event.target.value as number[] | string[];
+                          field.onChange(raw.map((item) => Number(item)));
+                        }}
+                        renderValue={(selected) => (
+                          <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap">
+                            {(selected as number[]).map((id) => {
+                              const item = tags.find((tag) => tag.id === id);
+                              return <Chip key={id} label={item?.name ?? id} size="small" />;
+                            })}
+                          </Stack>
+                        )}
+                      >
+                        {tags.map((item) => (
+                          <MenuItem key={item.id} value={item.id}>{item.name}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
                   )}
                 />
               </Grid>
@@ -355,116 +439,31 @@ export default function PlantFormDialog({
 
           <Divider />
 
-          {/* Plant Guide */}
           <Box>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={showGuideFields}
-                  onChange={(e) => setShowGuideFields(e.target.checked)}
-                />
-              }
-              label="Thêm hướng dẫn chăm sóc"
-            />
-            {showGuideFields && (
-              <Grid container spacing={2} sx={{ mt: 1 }}>
-                <Grid sx={{ xs: 12, sm: 6 }}>
-                  <TextField
-                    value={guideData.lightRequirement}
-                    onChange={(e) =>
-                      setGuideData({ ...guideData, lightRequirement: e.target.value })
-                    }
-                    label="Yêu cầu ánh sáng"
-                    fullWidth
-                  />
-                </Grid>
-                <Grid sx={{ xs: 12, sm: 6 }}>
-                  <TextField
-                    value={guideData.watering}
-                    onChange={(e) =>
-                      setGuideData({ ...guideData, watering: e.target.value })
-                    }
-                    label="Tưới nước"
-                    fullWidth
-                  />
-                </Grid>
-                <Grid sx={{ xs: 12, sm: 6 }}>
-                  <TextField
-                    value={guideData.fertilizing}
-                    onChange={(e) =>
-                      setGuideData({ ...guideData, fertilizing: e.target.value })
-                    }
-                    label="Bón phân"
-                    fullWidth
-                  />
-                </Grid>
-                <Grid sx={{ xs: 12, sm: 6 }}>
-                  <TextField
-                    value={guideData.pruning}
-                    onChange={(e) => setGuideData({ ...guideData, pruning: e.target.value })}
-                    label="Cắt tỉa"
-                    fullWidth
-                  />
-                </Grid>
-                <Grid sx={{ xs: 12, sm: 6 }}>
-                  <TextField
-                    value={guideData.temperature}
-                    onChange={(e) =>
-                      setGuideData({ ...guideData, temperature: e.target.value })
-                    }
-                    label="Nhiệt độ"
-                    fullWidth
-                  />
-                </Grid>
-                <Grid sx={{ xs: 12, sm: 6 }}>
-                  <TextField
-                    value={guideData.careNotes}
-                    onChange={(e) =>
-                      setGuideData({ ...guideData, careNotes: e.target.value })
-                    }
-                    label="Ghi chú chăm sóc"
-                    fullWidth
-                    multiline
-                    rows={3}
-                  />
-                </Grid>
-              </Grid>
-            )}
+            <Typography variant="h6" fontWeight="600" gutterBottom>
+              Boolean flags
+            </Typography>
+            <Grid container spacing={1}>
+              <Grid size={{ xs: 6, sm: 3 }}><Controller name="toxicity" control={control} render={({ field }) => <FormControlLabel control={<Checkbox checked={field.value} onChange={(e) => field.onChange(e.target.checked)} />} label="Toxicity" />} /></Grid>
+              <Grid size={{ xs: 6, sm: 3 }}><Controller name="airPurifying" control={control} render={({ field }) => <FormControlLabel control={<Checkbox checked={field.value} onChange={(e) => field.onChange(e.target.checked)} />} label="Air purifying" />} /></Grid>
+              <Grid size={{ xs: 6, sm: 3 }}><Controller name="hasFlower" control={control} render={({ field }) => <FormControlLabel control={<Checkbox checked={field.value} onChange={(e) => field.onChange(e.target.checked)} />} label="Has flower" />} /></Grid>
+              <Grid size={{ xs: 6, sm: 3 }}><Controller name="petSafe" control={control} render={({ field }) => <FormControlLabel control={<Checkbox checked={field.value} onChange={(e) => field.onChange(e.target.checked)} />} label="Pet safe" />} /></Grid>
+              <Grid size={{ xs: 6, sm: 3 }}><Controller name="childSafe" control={control} render={({ field }) => <FormControlLabel control={<Checkbox checked={field.value} onChange={(e) => field.onChange(e.target.checked)} />} label="Child safe" />} /></Grid>
+              <Grid size={{ xs: 6, sm: 3 }}><Controller name="potIncluded" control={control} render={({ field }) => <FormControlLabel control={<Checkbox checked={field.value} onChange={(e) => field.onChange(e.target.checked)} />} label="Pot included" />} /></Grid>
+              <Grid size={{ xs: 6, sm: 3 }}><Controller name="isUniqueInstance" control={control} render={({ field }) => <FormControlLabel control={<Checkbox checked={field.value} onChange={(e) => field.onChange(e.target.checked)} />} label="Unique instance" />} /></Grid>
+              <Grid size={{ xs: 6, sm: 3 }}><Controller name="isActive" control={control} render={({ field }) => <FormControlLabel control={<Checkbox checked={field.value} onChange={(e) => field.onChange(e.target.checked)} />} label="Active" />} /></Grid>
+            </Grid>
           </Box>
 
           <Divider />
 
-          {/* Images */}
-          <ImageUpload
-            images={images}
-            onImagesChange={setImages}
-            label="Hình ảnh cây"
-            maxImages={10}
-          />
-
-          {/* Active Status */}
-          <Box>
-            <Controller
-              name="isActive"
-              control={control}
-              render={({ field }) => (
-                <FormControlLabel
-                  control={<Checkbox {...field} checked={field.value} />}
-                  label="Kích hoạt"
-                />
-              )}
-            />
-          </Box>
+          <ImageUpload images={images} onImagesChange={setImages} label="Plant images" maxImages={10} />
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Hủy</Button>
-        <Button
-          onClick={handleSubmit(handleFormSubmit)}
-          variant="contained"
-          disabled={isLoading}
-        >
-          {isLoading ? 'Đang lưu...' : 'Lưu'}
+        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={handleSubmit(handleFormSubmit)} variant="contained" disabled={disableSubmit}>
+          {isLoading ? 'Saving...' : 'Save'}
         </Button>
       </DialogActions>
     </Dialog>

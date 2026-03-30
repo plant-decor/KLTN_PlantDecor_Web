@@ -492,6 +492,13 @@
     "description": "The page you are looking for does not exist or has been moved.",
     "backHome": "Back to home",
     "imageAlt": "404 Not Found"
+  },
+  "checkoutResult": {
+    "successTitle": "Payment Successful!",
+    "successMessage": "Thank you for your purchase at PlantDecor. Your order has been recorded.",
+    "failureTitle": "Payment Failed!",
+    "failureMessage": "There was an error during payment. Please try again or contact support.",
+    "title": "Payment Result",
+    "message": "Thank you for using PlantDecor. Please check your order status in your account."
   }
-  
 }

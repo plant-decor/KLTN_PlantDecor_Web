@@ -13,7 +13,6 @@ import type {
   User,
   VerifyEmailRequest,
 } from '@/types/auth.types';
-import { getOrCreateSessionId } from '@/lib/utils/deviceId';
 import { createAxiosServer } from '@/lib/axios/axiosServer';
 import { buildUserFromToken } from '@/lib/auth/getCurrentUser';
 const REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60;
@@ -70,6 +69,7 @@ interface RequestOptions {
   body?: unknown;
   auth?: AuthMode;
   token?: string;
+  clearCookiesOn401?: boolean;
 }
 
 
@@ -170,6 +170,7 @@ const callAuthenticationApi = async <TResponse>(
 ): Promise<TResponse> => {
   const cookieStore = await cookies();
   const authMode = options.auth ?? "none";
+  const shouldClearCookiesOn401 = options.clearCookiesOn401 ?? true;
 
   const bearerToken =
     options.token ||
@@ -203,7 +204,7 @@ const callAuthenticationApi = async <TResponse>(
       message?: string;
     };
 
-    if (normalized.response?.status === 401) {
+    if (normalized.response?.status === 401 && shouldClearCookiesOn401) {
       await clearAuthenticationCookies();
     }
 
@@ -219,7 +220,7 @@ const callAuthenticationApi = async <TResponse>(
   }
 };
 
-export async function loginAction(email: string, password: string) {
+export async function loginAction(email: string, password: string, deviceId?: string): Promise<AuthenticatedActionResult> {
   try {
     const data = await callAuthenticationApi<RawAuthApiResponse>(
       "/Authentication/login",
@@ -228,7 +229,7 @@ export async function loginAction(email: string, password: string) {
         body: {
           email,
           password,
-          deviceId: getOrCreateSessionId(), // hoặc getDeviceId()
+          deviceId,
         },
       }
     );
@@ -239,7 +240,7 @@ export async function loginAction(email: string, password: string) {
 
     return {
       success: true,
-      message: data.message,
+      message: data.message || "Login successful",
       user: normalized.user, // ✅ lấy từ JWT
       token: normalized.token,
       refreshToken: normalized.refreshToken,
@@ -395,14 +396,17 @@ export async function logoutAllAction(): Promise<ActionResult> {
 }
 
 export async function validateSessionAction(): Promise<{ authenticated: boolean }> {
+  const sessionValidationRequest: RequestOptions = {
+    method: 'GET',
+    auth: 'required',
+    clearCookiesOn401: false,
+  };
+
   try {
     await callAuthenticationApi<unknown>(
       '/User/user-profile',
       'Không thể xác thực phiên đăng nhập.',
-      {
-        method: 'GET',
-        auth: 'required',
-      }
+      sessionValidationRequest
     );
 
     return { authenticated: true };
@@ -410,8 +414,28 @@ export async function validateSessionAction(): Promise<{ authenticated: boolean 
     const status = (error as ErrorWithCause).status;
 
     if (status === 401) {
-      await clearAuthenticationCookies();
-      return { authenticated: false };
+      const refreshed = await refreshTokenAction();
+      if (!refreshed.success) {
+        return { authenticated: false };
+      }
+
+      try {
+        await callAuthenticationApi<unknown>(
+          '/User/user-profile',
+          'Không thể xác thực phiên đăng nhập.',
+          sessionValidationRequest
+        );
+        return { authenticated: true };
+      } catch (retryError) {
+        const retryStatus = (retryError as ErrorWithCause).status;
+        if (retryStatus === 401) {
+          await clearAuthenticationCookies();
+          return { authenticated: false };
+        }
+
+        // Keep user logged in on transient/network/server errors.
+        return { authenticated: true };
+      }
     }
 
     // Keep user logged in on transient/network/server errors.

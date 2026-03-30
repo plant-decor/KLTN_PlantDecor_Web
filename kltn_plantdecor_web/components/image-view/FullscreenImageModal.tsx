@@ -167,19 +167,21 @@ export default function FullscreenImageModal({
               justifyContent: 'center',
             }}
           >
-            <Image
-              src={images[activeStep]}
-              alt={`${alt} ${activeStep + 1}`}
-              fill
-              className="object-contain"
-              style={{
-                transform: `scale(${zoom})`,
-                transition: 'transform 0.2s ease-in-out',
-                cursor: zoom > 1 ? 'grab' : 'pointer',
-              }}
-              priority
-              quality={90}
-            />
+            <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+              <Image
+                src={images[activeStep]}
+                alt={`${alt} ${activeStep + 1}`}
+                layout="fill"
+                className="object-contain"
+                style={{
+                  transform: `scale(${zoom})`,
+                  transition: 'transform 0.2s ease-in-out',
+                  cursor: zoom > 1 ? 'grab' : 'pointer',
+                }}
+                priority
+                quality={90}
+              />
+            </div>
           </Box>
 
           {/* Navigation Arrows - Visible on larger screens */}

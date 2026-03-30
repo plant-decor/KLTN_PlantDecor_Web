@@ -33,6 +33,8 @@ const toImageUrls = (images: PlantDetailResponse['images']): string[] => {
 
   return urls;
 };
+
+import ClickableImageViewer from '@/components/image-view/ClickableImageViewer';
 import { formatCurrency } from '@/lib/utils/formatUtil';
 import { get } from '@/lib/api/apiService.server';
 import { ResponseModel } from '@/types/api.types';
@@ -158,18 +160,12 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 bg-white rounded-xl shadow-md p-8">
           <div>
-            <div className="rounded-xl overflow-hidden bg-gray-100 border border-gray-200">
-              <img src={mainImage} alt={plant.name} className="w-full aspect-square object-cover" />
-            </div>
-            {images.length > 1 && (
-              <div className="mt-4 grid grid-cols-4 gap-3">
-                {images.slice(0, 8).map((image, index) => (
-                  <div key={`${image}-${index}`} className="rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
-                    <img src={image} alt={`${plant.name}-${index + 1}`} className="w-full h-24 object-cover" />
-                  </div>
-                ))}
-              </div>
-            )}
+            <ClickableImageViewer
+              images={images.length > 0 ? images : [FALLBACK_IMAGE]}
+              alt={plant.name}
+              containerClassName="rounded-xl overflow-hidden bg-gray-100 border border-gray-200"
+              className="w-full aspect-square object-cover"
+            />
           </div>
             <div className="mb-6 space-y-3 border-t border-gray-100 pt-6">
               <h1 className="text-4xl font-bold text-gray-900 mb-2">{plant.name}</h1>

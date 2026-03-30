@@ -51,15 +51,18 @@ export default function ClickableImageViewer({
         }}
         onClick={handleImageClick}
       >
-        <Image
-          src={images[initialImageIndex]}
-          alt={alt}
-          className={className}
-          priority={initialImageIndex === 0}
-          style={{
-            transition: 'transform 0.3s ease-in-out',
-          }}
-        />
+        <div style={{ position: 'relative', width: '100%', aspectRatio: '1/1' }}>
+          <Image
+            src={images[initialImageIndex]}
+            alt={alt}
+            className={className + ' object-contain'}
+            priority={initialImageIndex === 0}
+            layout="fill"
+            style={{
+              transition: 'transform 0.3s ease-in-out',
+            }}
+          />
+        </div>
 
         {/* Zoom Hint Button - Mobile and Desktop */}
         {showZoomHint && (

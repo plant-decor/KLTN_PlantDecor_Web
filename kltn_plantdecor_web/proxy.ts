@@ -1,44 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import createIntlMiddleware from 'next-intl/middleware';
 import { routing } from '@/i18n/routing';
+import { ROLE_TO_ROUTES, ROUTE_TO_ROLES } from '@/lib/constants/roleRoutes';
 
 const intlMiddleware = createIntlMiddleware(routing);
 
-export const ROLE_TO_ROUTES: Record<string, string[]> = {
-  Admin: [
-    'admin', 'manager', 'staff', 'caretaker', 'shipper', 'categories-tags',
-    'dashboard', 'profile', 'orders', 'wishlist', 'cart', 'ai-plant-recommendation',
-  ],
-  Manager: [
-    'manager', 'staff', 'caretaker', 'shipper',
-    'dashboard', 'profile', 'orders', 'wishlist', 'cart', 'ai-plant-recommendation',
-  ],
-  Staff: [
-    'staff', 'dashboard', 'profile', 'orders', 'wishlist', 'cart', 'ai-plant-recommendation',
-  ],
-  Caretaker: [
-    'caretaker', 'dashboard', 'profile', 'orders', 'wishlist', 'cart', 'ai-plant-recommendation',
-  ],
-  Shipper: [
-    'shipper', 'dashboard', 'profile', 'orders', 'wishlist', 'cart', 'ai-plant-recommendation',
-  ],
-  Customer: [
-    'profile', 'orders', 'wishlist', 'cart', 'ai-plant-recommendation',
-  ],
-};
-
-export const ROUTE_TO_ROLES: Record<string, string[]> = {
-  admin: ['Admin'],
-  manager: ['Admin', 'Manager'],
-  staff: ['Admin', 'Manager', 'Staff'],
-  caretaker: ['Admin', 'Manager', 'Caretaker'],
-  shipper: ['Admin', 'Manager', 'Shipper'],
-  consultant: ['Admin', 'Manager', 'Staff'],
-  dashboard: ['Admin', 'Manager', 'Staff', 'Caretaker', 'Shipper'],
-  sessions: ['Admin', 'Manager', 'Staff', 'Caretaker', 'Shipper'],
-};
-
 const PROTECTED_ROUTES = Object.keys(ROUTE_TO_ROLES);
+const ROLE_NORMALIZATION_MAP: Record<string, string> = {
+  admin: 'Admin',
+  manager: 'Manager',
+  staff: 'Staff',
+  caretaker: 'Caretaker',
+  shipper: 'Shipper',
+  customer: 'Customer',
+};
+
+function normalizeRole(rawRole?: string): string {
+  if (!rawRole) return '';
+  const trimmed = rawRole.trim();
+  if (!trimmed) return '';
+  return ROLE_NORMALIZATION_MAP[trimmed.toLowerCase()] || trimmed;
+}
 
 export function hasAccess(userRole: string, route: string): boolean {
   return ROLE_TO_ROUTES[userRole]?.includes(route) ?? false;
@@ -61,7 +43,7 @@ export default function proxy(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
 
   const authToken = request.cookies.get('accessToken')?.value;
-  const userRole = request.cookies.get('userRole')?.value;
+  const userRole = normalizeRole(request.cookies.get('userRole')?.value);
 
   const segments = pathname.split('/');
   const protectedRoute = PROTECTED_ROUTES.find((route) => segments.includes(route));

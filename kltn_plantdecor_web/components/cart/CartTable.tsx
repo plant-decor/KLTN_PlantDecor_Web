@@ -30,6 +30,7 @@ export default function CartTable({
   onRemove,
   onClearCart,
 }: CartTableProps) {
+  
   return (
     <>
       <TableContainer component={Paper} sx={{ boxShadow: 1 }}>

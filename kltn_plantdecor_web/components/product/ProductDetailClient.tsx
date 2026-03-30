@@ -64,7 +64,7 @@ export default function ProductDetailClient({ plant }: ProductDetailClientProps)
             className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-center focus:ring-2 focus:ring-green-600 focus:border-transparent disabled:opacity-50"
           />
           <button
-            onClick={() => setQuantity(Math.min(plant.totalAvailableStock, quantity + 1))}
+            onClick={() => plant.totalAvailableStock && setQuantity(Math.min(plant.totalAvailableStock, quantity + 1))}
             disabled={isLoading}
             className="w-12 h-12 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-100 disabled:opacity-50"
           >

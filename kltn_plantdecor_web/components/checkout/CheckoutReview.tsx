@@ -12,34 +12,54 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
   Divider,
   Grid,
   Button,
 } from '@mui/material';
 import { Edit as EditIcon } from '@mui/icons-material';
 import type { CheckoutData } from '@/types/cart.types';
+import type { OrderCreatePayload } from '@/types/order.types';
 
 interface CheckoutReviewProps {
   checkoutData: CheckoutData;
   userId: string;
   cartId: string;
+  createdOrder?: OrderCreatePayload | null;
 }
 
 export default function CheckoutReview({
   checkoutData,
   userId,
   cartId,
+  createdOrder,
 }: CheckoutReviewProps) {
   const paymentMethodLabel = getPaymentMethodLabel(
     checkoutData.paymentMethod || ''
   );
 
+  const reviewItems =
+    createdOrder?.items?.map((item) => ({
+      id: item.id,
+      name: item.itemName,
+      quantity: item.quantity,
+      price: item.price,
+      lineTotal: item.quantity * item.price,
+    })) ??
+    checkoutData.items.map((item) => ({
+      id: item.id,
+      name: item.productName,
+      quantity: item.quantity,
+      price: item.price,
+      lineTotal: item.quantity * item.price,
+    }));
+
+  const reviewTotal =
+    createdOrder?.totalAmount ??
+    checkoutData.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
+
   return (
     <Grid container spacing={3}>
-      {/* Left Side - Review Details */}
       <Grid size={{ xs: 12, md: 8 }}>
-        {/* Shipping Details */}
         <Card sx={{ boxShadow: 1, mb: 3 }}>
           <CardContent>
             <Box
@@ -89,7 +109,6 @@ export default function CheckoutReview({
           </CardContent>
         </Card>
 
-        {/* Payment Method */}
         <Card sx={{ boxShadow: 1, mb: 3 }}>
           <CardContent>
             <Box
@@ -120,7 +139,6 @@ export default function CheckoutReview({
           </CardContent>
         </Card>
 
-        {/* Order Items */}
         <Card sx={{ boxShadow: 1 }}>
           <CardContent>
             <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
@@ -144,27 +162,22 @@ export default function CheckoutReview({
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {checkoutData.items.map((item) => (
+                  {reviewItems.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell>
-                        <Typography variant="body2">
-                          {item.plant.name}
-                        </Typography>
+                        <Typography variant="body2">{item.name}</Typography>
                       </TableCell>
                       <TableCell align="center">
                         <Typography variant="body2">{item.quantity}</Typography>
                       </TableCell>
                       <TableCell align="right">
                         <Typography variant="body2">
-                          {parseFloat(item.plant.basePrice).toLocaleString('vi-VN')}₫
+                          {item.price.toLocaleString('vi-VN')} VND
                         </Typography>
                       </TableCell>
                       <TableCell align="right">
                         <Typography variant="body2">
-                          {(parseFloat(item.plant.basePrice) * item.quantity).toLocaleString(
-                            'vi-VN'
-                          )}
-                          ₫
+                          {item.lineTotal.toLocaleString('vi-VN')} VND
                         </Typography>
                       </TableCell>
                     </TableRow>
@@ -176,7 +189,6 @@ export default function CheckoutReview({
         </Card>
       </Grid>
 
-      {/* Right Side - Order Summary */}
       <Grid size={{ xs: 12, md: 4 }}>
         <Card sx={{ boxShadow: 1 }}>
           <CardContent>
@@ -186,17 +198,13 @@ export default function CheckoutReview({
 
             <Divider sx={{ mb: 2 }} />
 
-            {/* Items */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-              <Typography variant="body2">
-                Items ({checkoutData.items.length})
-              </Typography>
+              <Typography variant="body2">Items ({reviewItems.length})</Typography>
               <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                {checkoutData.subtotal.toLocaleString('vi-VN')}₫
+                {reviewTotal.toLocaleString('vi-VN')} VND
               </Typography>
             </Box>
 
-            {/* Shipping */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
               <Typography variant="body2">Shipping</Typography>
               <Typography
@@ -209,7 +217,6 @@ export default function CheckoutReview({
 
             <Divider sx={{ mb: 2 }} />
 
-            {/* Total */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
               <Typography
                 variant="h6"
@@ -227,11 +234,10 @@ export default function CheckoutReview({
                   color: '#4CAF50',
                 }}
               >
-                {checkoutData.total.toLocaleString('vi-VN')}₫
+                {reviewTotal.toLocaleString('vi-VN')} VND
               </Typography>
             </Box>
 
-            {/* Order ID Info */}
             <Box sx={{ mt: 3, p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
               <Typography variant="caption" sx={{ color: '#666' }}>
                 User ID: {userId}
@@ -239,6 +245,16 @@ export default function CheckoutReview({
               <Typography variant="caption" sx={{ display: 'block', color: '#666' }}>
                 Cart ID: {cartId}
               </Typography>
+              {createdOrder && (
+                <>
+                  <Typography variant="caption" sx={{ display: 'block', color: '#666', mt: 1 }}>
+                    Order ID: {createdOrder.id}
+                  </Typography>
+                  <Typography variant="caption" sx={{ display: 'block', color: '#666' }}>
+                    Status: {createdOrder.statusName}
+                  </Typography>
+                </>
+              )}
             </Box>
           </CardContent>
         </Card>

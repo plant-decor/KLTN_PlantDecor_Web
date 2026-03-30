@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Box, CircularProgress, Container, Typography } from '@mui/material';
-import type { Plant } from '@/data/sampledata';
 import ProductCard from '@/components/product/ProductCard';
 import CartEmptyState from '@/components/cart/CartEmptyState';
 import { useTranslations } from 'next-intl';
@@ -11,31 +10,33 @@ import {
   fetchWishlistItems,
   type WishlistApiItem,
 } from '@/lib/api/cartWishlistService';
+import { ShopPlantListItem } from '@/lib/api/shopPlantsService';
 
 interface WishlistPageClientProps {
   userid: string;
 }
 
-const toSamplePlant = (item: WishlistApiItem): Plant => ({
-  id: item.plantId,
-  name: item.name,
-  basePrice: String(item.price),
-  size: item.size,
-  careLevel: item.careLevel,
-  isActive: true,
-  primaryImageUrl: item.imageUrl || null,
-  totalInstances: item.stock,
-  availableInstances: item.stock,
-  availableCommonQuantity: item.stock,
-  totalAvailableStock: item.stock,
-  categoryNames: [],
-  tagNames: [],
-});
 
 export default function WishlistPageClient({ userid }: WishlistPageClientProps) {
   const tWishlist = useTranslations('wishlist');
-  const [wishlistItems, setWishlistItems] = useState<Plant[]>([]);
+  const [wishlistItems, setWishlistItems] = useState<ShopPlantListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const toShopPlantListItem = (item: WishlistApiItem): ShopPlantListItem => ({
+    id: item.plantId,
+    name: item.name,
+    basePrice: item.price,
+    size: item.size,
+    careLevel: item.careLevel,
+    isActive: true,
+    primaryImageUrl: item.imageUrl,
+    totalInstances: item.stock,
+    availableInstances: item.stock,
+    availableCommonQuantity: item.stock,
+    totalAvailableStock: item.stock,
+    categoryNames: [],
+    tagNames: [],
+  });
 
   const loadWishlist = useCallback(async () => {
     try {
@@ -53,8 +54,8 @@ export default function WishlistPageClient({ userid }: WishlistPageClientProps) 
           stock: isInStock ? Math.max(1, item.stock) : 0,
         };
       });
-
-      setWishlistItems(checkedItems.map(toSamplePlant));
+      console.log('Checked wishlist items:', checkedItems);
+      setWishlistItems(checkedItems.map(toShopPlantListItem));
     } catch (error) {
       console.error('Fetch wishlist error:', error);
       setWishlistItems([]);

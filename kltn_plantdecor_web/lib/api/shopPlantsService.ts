@@ -30,7 +30,7 @@ export interface ShopPlantSearchRequest {
 export interface ShopPlantListItem {
   id: number;
   name: string;
-  basePrice: string;
+  basePrice: number;
   size: string;
   careLevel: string;
   isActive: boolean;
@@ -53,6 +53,39 @@ export interface ShopPlantSearchPayload {
   hasNext: boolean;
 }
 
+export interface NurseryPlantInstanceSearchRequest {
+  pagination: {
+    pageNumber: number;
+    pageSize: number;
+  };
+  nurseryId: number;
+  plantId: number;
+}
+
+export interface NurseryPlantInstanceItem {
+  plantInstanceId: number;
+  plantId: number;
+  plantName: string;
+  sku: string;
+  specificPrice: number;
+  height: number;
+  healthStatus: string;
+  status: number;
+  statusName: string;
+  primaryImageUrl: string | null;
+  createdAt: string;
+}
+
+export interface NurseryPlantInstanceSearchPayload {
+  items: NurseryPlantInstanceItem[];
+  totalCount: number;
+  pageNumber: number;
+  pageSize: number;
+  totalPages: number;
+  hasPrevious: boolean;
+  hasNext: boolean;
+}
+
 export const searchShopPlants = async (
   data: ShopPlantSearchRequest,
   isServer: boolean,
@@ -63,4 +96,16 @@ export const searchShopPlants = async (
   }
 
   return apiClient.post('/shop/plants/search', data, loading);
+};
+
+export const searchNurseryPlantInstances = async (
+  nurseryId: number,
+  data: NurseryPlantInstanceSearchRequest,
+  loading = true
+): Promise<ResponseModel<NurseryPlantInstanceSearchPayload>> => {
+  return apiClient.post(
+    `/shop/nurseries/${nurseryId}/plant-instances/search`,
+    data,
+    loading
+  );
 };

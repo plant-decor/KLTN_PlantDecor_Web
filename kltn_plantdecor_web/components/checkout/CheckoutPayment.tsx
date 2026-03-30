@@ -1,14 +1,17 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
+  Alert,
   Box,
+  Button,
   Card,
   CardContent,
-  Typography,
-  RadioGroup,
+  CircularProgress,
   FormControlLabel,
   Radio,
+  RadioGroup,
+  Typography,
 } from '@mui/material';
 import {
   CreditCard as CreditCardIcon,
@@ -17,10 +20,14 @@ import {
   AccountBalanceWallet as WalletIcon,
 } from '@mui/icons-material';
 import type { CheckoutData } from '@/types/cart.types';
+import type { OrderInvoice } from '@/types/order.types';
+import { createPaymentUrl, getInvoicesByOrderId } from '@/lib/api/orderService';
 
 interface CheckoutPaymentProps {
   checkoutData: CheckoutData;
   onDataChange: (data: Partial<CheckoutData>) => void;
+  orderId: number;
+  onPaymentCompleted: () => void;
 }
 
 const PAYMENT_METHODS = [
@@ -49,10 +56,58 @@ const PAYMENT_METHODS = [
 export default function CheckoutPayment({
   checkoutData,
   onDataChange,
+  orderId,
+  onPaymentCompleted,
 }: CheckoutPaymentProps) {
   const [selectedMethod, setSelectedMethod] = useState(
     checkoutData.paymentMethod || 'credit_debit'
   );
+  const [isLoadingInvoice, setIsLoadingInvoice] = useState(true);
+  const [invoiceError, setInvoiceError] = useState('');
+  const [invoices, setInvoices] = useState<OrderInvoice[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadInvoices() {
+      setIsLoadingInvoice(true);
+      setInvoiceError('');
+
+      try {
+        const response = await getInvoicesByOrderId(orderId);
+        if (!isMounted) return;
+
+        if (response.length === 0) {
+          setInvoiceError('No invoice found for this order. Please try again later.');
+          setInvoices([]);
+          return;
+        }
+
+        setInvoices(response);
+      } catch (err) {
+        if (!isMounted) return;
+        const message = err instanceof Error ? err.message : 'Failed to load invoice data.';
+        setInvoiceError(message);
+      } finally {
+        if (!isMounted) return;
+        setIsLoadingInvoice(false);
+      }
+    }
+
+    void loadInvoices();
+    return () => {
+      isMounted = false;
+    };
+  }, [orderId]);
+
+  const selectedInvoice = useMemo(() => {
+    if (invoices.length === 0) return null;
+    return (
+      invoices.find((invoice) => invoice.statusName.toLowerCase() === 'pending') ??
+      invoices[0]
+    );
+  }, [invoices]);
 
   const handlePaymentMethodChange = (
     e: React.ChangeEvent<HTMLInputElement>
@@ -62,6 +117,26 @@ export default function CheckoutPayment({
     onDataChange({
       paymentMethod: newMethod,
     });
+  };
+
+  const handleCreatePayment = async () => {
+    if (!selectedInvoice) {
+      setInvoiceError('Invoice is unavailable for payment.');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      setInvoiceError('');
+      const paymentUrl = await createPaymentUrl(selectedInvoice.id);
+      onPaymentCompleted();
+      window.location.assign(paymentUrl);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to create payment URL.';
+      setInvoiceError(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -112,8 +187,7 @@ export default function CheckoutPayment({
           </Box>
         </RadioGroup>
 
-        {/* Payment Info Box */}
-        <Box sx={{ mt: 4, p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
+        <Box sx={{ mt: 3, p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
           <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
             Selected Payment Method
           </Typography>
@@ -121,6 +195,50 @@ export default function CheckoutPayment({
             {PAYMENT_METHODS.find((m) => m.id === selectedMethod)?.label}
           </Typography>
         </Box>
+
+        <Box sx={{ mt: 3, p: 2, border: '1px solid #eee', borderRadius: 1 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
+            Invoice Summary
+          </Typography>
+
+          {isLoadingInvoice && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <CircularProgress size={18} />
+              <Typography variant="body2">Loading invoice...</Typography>
+            </Box>
+          )}
+
+          {!isLoadingInvoice && selectedInvoice && (
+            <Box>
+              <Typography variant="body2">Invoice ID: {selectedInvoice.id}</Typography>
+              <Typography variant="body2">Order ID: {selectedInvoice.orderId}</Typography>
+              <Typography variant="body2">Status: {selectedInvoice.statusName}</Typography>
+              <Typography variant="body2" sx={{ fontWeight: 600, mt: 1 }}>
+                Total: {selectedInvoice.totalAmount.toLocaleString('vi-VN')} VND
+              </Typography>
+            </Box>
+          )}
+
+          {!isLoadingInvoice && !selectedInvoice && !invoiceError && (
+            <Typography variant="body2">No invoice available.</Typography>
+          )}
+        </Box>
+
+        {invoiceError && (
+          <Alert severity="error" sx={{ mt: 2 }}>
+            {invoiceError}
+          </Alert>
+        )}
+
+        <Button
+          fullWidth
+          variant="contained"
+          onClick={() => void handleCreatePayment()}
+          disabled={isLoadingInvoice || isSubmitting || !selectedInvoice}
+          sx={{ mt: 3, backgroundColor: '#4CAF50' }}
+        >
+          {isSubmitting ? 'Creating payment...' : 'Pay with VNPay'}
+        </Button>
       </CardContent>
     </Card>
   );

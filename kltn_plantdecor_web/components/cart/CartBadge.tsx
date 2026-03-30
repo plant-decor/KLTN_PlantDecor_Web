@@ -25,7 +25,7 @@ export default function CartBadge() {
 
       try {
         const cartItems = await fetchCartItems();
-        const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+        const totalItems = cartItems.payload?.items.reduce((sum, item) => sum + item.quantity, 0) || 0;
 
         if (mounted) {
           setItemCount(totalItems);

@@ -24,7 +24,7 @@ export function normalizeApiError(
       console.error(message, errorLike.response?.data ?? err);
     }
 
-    return new Error(message);
+    return Error(message);
   }
 
   return new Error(`${base} failed with a non-error exception`);

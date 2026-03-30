@@ -1,0 +1,224 @@
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+import { useLocale } from 'next-intl';
+import { useRouter } from 'next/navigation';
+import type { Plant } from '@/data/sampledata';
+import type { NurseryResponse } from '@/types/nursery.types';
+import NurseryList from './NuseriesList';
+import AddToCartButton from '@/components/cart/AddToCartButton';
+import AddToWishlistButton from './AddToWishlistButton';
+import { useAuthStore } from '@/lib/store/authStore';
+import {
+  searchNurseryPlantInstances,
+  type NurseryPlantInstanceItem,
+} from '@/lib/api/shopPlantsService';
+
+interface ProductDetailPurchasePanelProps {
+  plant: Plant;
+  nurseries: NurseryResponse[];
+}
+
+const getNurseryStock = (nursery: NurseryResponse): number =>
+  Math.max(
+    0,
+    nursery.availableInstanceCount ?? 0,
+    nursery.availableCommonQuantity ?? 0,
+    nursery.availableComboQuantity ?? 0,
+    nursery.availableMaterialQuantity ?? 0
+  );
+
+export default function ProductDetailPurchasePanel({
+  plant,
+  nurseries,
+}: ProductDetailPurchasePanelProps) {
+  const router = useRouter();
+  const locale = useLocale();
+  const { user } = useAuthStore();
+
+  const [selectedNurseryId, setSelectedNurseryId] = useState<number | null>(
+    nurseries[0]?.nurseryId ?? null
+  );
+  const [instanceItems, setInstanceItems] = useState<NurseryPlantInstanceItem[]>([]);
+  const [selectedInstanceId, setSelectedInstanceId] = useState<number | null>(null);
+  const [isLoadingInstances, setIsLoadingInstances] = useState(false);
+
+  const isPlantInstanceFlow = plant.availableInstances > 0;
+
+  const selectedNursery = useMemo(
+    () =>
+      nurseries.find((nursery) => nursery.nurseryId === selectedNurseryId) ??
+      nurseries[0] ??
+      null,
+    [nurseries, selectedNurseryId]
+  );
+
+  useEffect(() => {
+    if (!isPlantInstanceFlow || !selectedNursery?.nurseryId) {
+      setInstanceItems([]);
+      setSelectedInstanceId(null);
+      return;
+    }
+
+    let isMounted = true;
+
+    async function loadInstances() {
+      setIsLoadingInstances(true);
+
+      try {
+        const response = await searchNurseryPlantInstances(
+          selectedNursery.nurseryId,
+          {
+            pagination: {
+              pageNumber: 1,
+              pageSize: 10,
+            },
+            nurseryId: selectedNursery.nurseryId,
+            plantId: plant.id,
+          },
+          false
+        );
+
+        if (!isMounted) return;
+
+        const payloadItems = response.payload?.items ?? [];
+        setInstanceItems(payloadItems);
+        setSelectedInstanceId(payloadItems[0]?.plantInstanceId ?? null);
+      } catch (error) {
+        if (!isMounted) return;
+        console.error('Load plant instances error:', error);
+        setInstanceItems([]);
+        setSelectedInstanceId(null);
+      } finally {
+        if (!isMounted) return;
+        setIsLoadingInstances(false);
+      }
+    }
+
+    void loadInstances();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isPlantInstanceFlow, plant.id, selectedNursery?.nurseryId]);
+
+  const handleSelectNursery = (nursery: NurseryResponse) => {
+    setSelectedNurseryId(nursery.nurseryId);
+  };
+
+  const maxQuantity = useMemo(
+    () => (selectedNursery ? getNurseryStock(selectedNursery) : null),
+    [selectedNursery]
+  );
+
+  const selectedInstance = useMemo(
+    () =>
+      instanceItems.find((instance) => instance.plantInstanceId === selectedInstanceId) ??
+      null,
+    [instanceItems, selectedInstanceId]
+  );
+
+  const handleProceedPlantInstanceCheckout = () => {
+    if (!user?.id) {
+      router.push(`/${locale}/login`);
+      return;
+    }
+
+    if (!selectedNursery || !selectedInstance) {
+      return;
+    }
+
+    const query = new URLSearchParams({
+      orderType: '2',
+      paymentStrategy: '1',
+      plantId: String(plant.id),
+      nurseryId: String(selectedNursery.nurseryId),
+      plantInstanceId: String(selectedInstance.plantInstanceId),
+      instanceName: selectedInstance.plantName,
+      instancePrice: String(selectedInstance.specificPrice),
+    });
+
+    router.push(`/${locale}/checkout/${user.id}/0?${query.toString()}`);
+  };
+
+  return (
+    <div className="space-y-3">
+      {nurseries.length > 0 ? (
+        <NurseryList
+          isNurseryAvailable={nurseries}
+          selectedNurseryId={selectedNursery?.nurseryId ?? null}
+          onSelectNursery={handleSelectNursery}
+        />
+      ) : (
+        <p className="text-sm text-gray-500">No nurseries available.</p>
+      )}
+
+      {isPlantInstanceFlow ? (
+        <div className="space-y-3">
+          {isLoadingInstances ? (
+            <p className="text-sm text-gray-500">Loading plant instances...</p>
+          ) : instanceItems.length === 0 ? (
+            <p className="text-sm text-gray-500">No available plant instance at this nursery.</p>
+          ) : (
+            <div className="space-y-2">
+              {instanceItems.map((instance) => (
+                <button
+                  key={instance.plantInstanceId}
+                  type="button"
+                  onClick={() => setSelectedInstanceId(instance.plantInstanceId)}
+                  className={`w-full rounded-lg border p-3 text-left transition-colors ${
+                    selectedInstanceId === instance.plantInstanceId
+                      ? 'border-green-600 bg-green-50'
+                      : 'border-gray-200 bg-white hover:border-green-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="font-medium text-gray-900">SKU: {instance.sku}</p>
+                      <p className="text-sm text-gray-600">Height: {instance.height} cm</p>
+                      <p className="text-sm text-gray-600">Health: {instance.healthStatus}</p>
+                    </div>
+                    <p className="text-base font-semibold text-green-700">
+                      {instance.specificPrice.toLocaleString('vi-VN')} VND
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={handleProceedPlantInstanceCheckout}
+            disabled={!selectedInstance || !selectedNursery}
+            className={`w-full rounded-lg px-6 py-3 font-semibold transition-colors ${
+              selectedInstance && selectedNursery
+                ? 'bg-green-600 text-white hover:bg-green-700'
+                : 'cursor-not-allowed bg-gray-300 text-gray-500'
+            }`}
+          >
+            Proceed to shipping
+          </button>
+        </div>
+      ) : (
+        <AddToCartButton
+          plant={plant}
+          maxQuantity={maxQuantity}
+          assumeInStock
+          disabled={!selectedNursery}
+          cartItemTarget={
+            selectedNursery
+              ? {
+                  commonPlantId: selectedNursery.commonPlantId ?? null,
+                  nurseryPlantComboId: selectedNursery.nurseryPlantComboId ?? null,
+                  nurseryMaterialId: selectedNursery.nurseryMaterialId ?? null,
+                }
+              : undefined
+          }
+        />
+      )}
+
+      <AddToWishlistButton plant={plant} fullWidth variant="outlined" />
+    </div>
+  );
+}

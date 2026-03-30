@@ -1,17 +1,33 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type { Plant } from '@/data/sampledata';
 import { useAuthStore } from '@/lib/store/authStore';
-import { addPlantToCart } from '@/lib/api/cartWishlistService';
+import { addItemToCart, addPlantToCart } from '@/lib/api/cartWishlistService';
 import { notifyCartUpdated } from '@/lib/utils/cartEvents';
+
+interface CartItemTarget {
+  commonPlantId?: number | null;
+  nurseryPlantComboId?: number | null;
+  nurseryMaterialId?: number | null;
+}
 
 interface AddToCartButtonProps {
   plant: Plant;
+  maxQuantity?: number | null;
+  cartItemTarget?: CartItemTarget;
+  assumeInStock?: boolean;
+  disabled?: boolean;
 }
 
-export default function AddToCartButton({ plant }: AddToCartButtonProps) {
+export default function AddToCartButton({
+  plant,
+  maxQuantity,
+  cartItemTarget,
+  assumeInStock = false,
+  disabled = false,
+}: AddToCartButtonProps) {
   const tProducts = useTranslations('products');
   const tCart = useTranslations('cart');
   const [quantity, setQuantity] = useState(1);
@@ -20,6 +36,27 @@ export default function AddToCartButton({ plant }: AddToCartButtonProps) {
   const [error, setError] = useState('');
   const { user } = useAuthStore();
 
+  const plantStock = Math.max(
+    0,
+    plant.totalAvailableStock || plant.availableCommonQuantity || plant.availableInstances || 0
+  );
+
+  const hasMaxQuantity = typeof maxQuantity === 'number';
+  const normalizedMaxQuantity = hasMaxQuantity ? Math.max(0, Math.floor(maxQuantity!)) : 0;
+  const availableStock = hasMaxQuantity ? normalizedMaxQuantity : plantStock;
+  const maxAllowedQuantity = hasMaxQuantity
+    ? normalizedMaxQuantity
+    : assumeInStock
+    ? Number.MAX_SAFE_INTEGER
+    : availableStock;
+  const isOutOfStock = hasMaxQuantity ? normalizedMaxQuantity <= 0 : !assumeInStock && availableStock <= 0;
+
+  useEffect(() => {
+    if (quantity > maxAllowedQuantity) {
+      setQuantity(Math.max(1, maxAllowedQuantity));
+    }
+  }, [maxAllowedQuantity, quantity]);
+
   const handleAddToCart = async () => {
     if (!user?.id) {
       setError('Vui long dang nhap de them san pham vao gio hang');
@@ -27,25 +64,34 @@ export default function AddToCartButton({ plant }: AddToCartButtonProps) {
       return;
     }
 
+    if (isOutOfStock) {
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError('');
-      
-      await addPlantToCart(plant.id, quantity);
+
+      if (cartItemTarget && (cartItemTarget.commonPlantId || cartItemTarget.nurseryPlantComboId || cartItemTarget.nurseryMaterialId)) {
+        await addItemToCart({
+          quantity,
+          commonPlantId: cartItemTarget.commonPlantId ?? null,
+          nurseryPlantComboId: cartItemTarget.nurseryPlantComboId ?? null,
+          nurseryMaterialId: cartItemTarget.nurseryMaterialId ?? null,
+        });
+      } else {
+        await addPlantToCart(plant.id, quantity);
+      }
+
       notifyCartUpdated();
-      setFeedbackMessage(
-        tCart('addedSuccess', { quantity, name: plant.name }),
-      );
+      const productDisplayName = plant.name ?? plant.productName ?? `#${plant.id}`;
+      setFeedbackMessage(tCart('addedSuccess', { quantity, name: productDisplayName }));
       setQuantity(1);
-      
-      // Clear message after 3 seconds
       setTimeout(() => setFeedbackMessage(''), 3000);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to add item to cart';
       setError(errorMessage);
       console.error('Add to cart error:', err);
-      
-      // Clear error after 3 seconds
       setTimeout(() => setError(''), 3000);
     } finally {
       setIsLoading(false);
@@ -53,7 +99,7 @@ export default function AddToCartButton({ plant }: AddToCartButtonProps) {
   };
 
   const incrementQuantity = () => {
-    if (quantity < plant.availableCommonQuantity) {
+    if (quantity < maxAllowedQuantity) {
       setQuantity(quantity + 1);
     }
   };
@@ -64,61 +110,47 @@ export default function AddToCartButton({ plant }: AddToCartButtonProps) {
     }
   };
 
+  const isButtonDisabled = disabled || isLoading || isOutOfStock;
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-4">
-        {/* Quantity Selector */}
         <div className="flex items-center border border-gray-300 rounded-lg">
           <button
             onClick={decrementQuantity}
             className="px-4 py-2 hover:bg-gray-100 transition-colors"
-            disabled={quantity <= 1}
+            disabled={quantity <= 1 || disabled}
           >
-            −
+            -
           </button>
-          <span className="px-6 py-2 border-x border-gray-300 min-w-15 text-center">
-            {quantity}
-          </span>
+          <span className="px-6 py-2 border-x border-gray-300 min-w-15 text-center">{quantity}</span>
           <button
             onClick={incrementQuantity}
             className="px-4 py-2 hover:bg-gray-100 transition-colors"
-            disabled={quantity >= plant.availableCommonQuantity || quantity >= plant.availableInstances || quantity >= plant.totalAvailableStock}
+            disabled={disabled || quantity >= maxAllowedQuantity}
           >
             +
           </button>
         </div>
 
-        {/* Add to Cart Button */}
         <button
           onClick={handleAddToCart}
-          disabled={plant.availableCommonQuantity === 0 || isLoading}
+          disabled={isButtonDisabled}
           className={`flex-1 px-8 py-3 rounded-lg font-semibold transition-colors ${
-            plant.availableCommonQuantity > 0 && !isLoading
+            !isButtonDisabled
               ? 'bg-green-600 text-white hover:bg-green-700'
               : 'bg-gray-300 text-gray-500 cursor-not-allowed'
           }`}
         >
-          {isLoading
-            ? tCart('processing')
-            : plant.availableCommonQuantity > 0
-            ? tProducts('addToCart')
-            : tProducts('outOfStock')}
+          {isLoading ? tCart('processing') : isOutOfStock ? tProducts('outOfStock') : tProducts('addToCart')}
         </button>
       </div>
 
-      {/* Feedback Message */}
       {feedbackMessage && (
-        <div className="px-4 py-3 bg-green-100 text-green-800 rounded-lg text-sm font-medium">
-          {feedbackMessage}
-        </div>
+        <div className="px-4 py-3 bg-green-100 text-green-800 rounded-lg text-sm font-medium">{feedbackMessage}</div>
       )}
 
-      {/* Error Message */}
-      {error && (
-        <div className="px-4 py-3 bg-red-100 text-red-800 rounded-lg text-sm font-medium">
-          {error}
-        </div>
-      )}
+      {error && <div className="px-4 py-3 bg-red-100 text-red-800 rounded-lg text-sm font-medium">{error}</div>}
     </div>
   );
 }

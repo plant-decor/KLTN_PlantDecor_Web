@@ -16,7 +16,6 @@ interface PageProps {
 }
 
 const DEFAULT_PAGE_SIZE = 12;
-const FALLBACK_IMAGE = '/img/background-login.jpg';
 
 const toSingle = (value: string | string[] | undefined): string | undefined => {
   if (Array.isArray(value)) {
@@ -147,34 +146,6 @@ const buildPaginationHref = (
   params.set('page', String(Math.max(1, targetPage)));
   return `/plant-store?${params.toString()}`;
 };
-
-const mapShopPlantToSamplePlant = (plant: ShopPlantListItem) => ({
-  id: plant.id,
-  name: plant.name,
-  scientificName: plant.name,
-  description: [
-    `Care level: ${plant.careLevel || 'N/A'}`,
-    `Size: ${plant.size || 'N/A'}`,
-    plant.categoryNames.length > 0 ? `Categories: ${plant.categoryNames.join(', ')}` : '',
-  ]
-    .filter(Boolean)
-    .join(' • '),
-  category: 'indoor',
-  price: plant.basePrice,
-  imageUrl: plant.primaryImageUrl || FALLBACK_IMAGE,
-  stock: plant.availableInstances ?? 0,
-  rating: 0,
-  reviewCount: 0,
-  careLevel: 'easy',
-  lightRequirement: 'medium',
-  wateringFrequency: 'weekly',
-  size: 'medium',
-  isFeatured: false,
-  isNewArrival: false,
-  isBestSeller: false,
-  tags: plant.tagNames ?? [],
-  totalInstances: plant.totalInstances ?? 0,
-});
 
 export default async function PlantStorePage({ params, searchParams }: PageProps) {
   const [{ locale }, query] = await Promise.all([params, searchParams]);

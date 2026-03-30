@@ -1,198 +1,222 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { Box, Button, Container, Typography, TextField, Paper } from '@mui/material';
-import { Add as AddIcon, Search as SearchIcon } from '@mui/icons-material';
+import { useEffect, useMemo, useState } from 'react';
 import {
-  type Product,
-  type PlantInstance,
-} from '@/data/storeCatalogData';
-import ProductModal from '@/components/store-catalog/ProductModal';
-import ProductTable from '@/components/store-catalog/ProductTable';
-import { useProductFilter } from '@/hooks/useProductFilter';
+  Alert,
+  Box,
+  Chip,
+  CircularProgress,
+  Container,
+  Paper,
+  Stack,
+  Tab,
+  Tabs,
+  Typography,
+} from '@mui/material';
+import ParkOutlinedIcon from '@mui/icons-material/ParkOutlined';
+import SpaOutlinedIcon from '@mui/icons-material/SpaOutlined';
+import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
+import WidgetsOutlinedIcon from '@mui/icons-material/WidgetsOutlined';
+import { getMyManagerNursery } from '@/lib/api/managerStoreCatalogService';
+import type { ManagerNursery } from '@/types/manager-store-catalog.types';
+import type { ResponseModel } from '@/types/api.types';
+import CommonPlantTab from '@/components/manager-store-catalog/CommonPlantTab';
+import ComingSoonTab from '@/components/manager-store-catalog/ComingSoonTab';
+
+interface TabPanelProps {
+  children: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function TabPanel({ children, value, index }: TabPanelProps) {
+  return (
+    <div role="tabpanel" hidden={value !== index} id={`store-catalog-tabpanel-${index}`}>
+      {value === index ? <Box sx={{ pt: 3 }}>{children}</Box> : null}
+    </div>
+  );
+}
+
+const getPayload = <T,>(response: ResponseModel<T>): T | undefined => {
+  return response.payload ?? response.data;
+};
+
+const getErrorMessage = (error: unknown, fallback: string): string => {
+  if (!error || typeof error !== 'object') {
+    return fallback;
+  }
+
+  const candidate = error as {
+    response?: { data?: { message?: string } };
+    message?: string;
+  };
+
+  return candidate.response?.data?.message || candidate.message || fallback;
+};
 
 export default function StoreCatalogPage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  // TODO: Implement categories and tags from API
-  const categories: any[] = [];
-  const tags: any[] = [];
-  const [productModalOpen, setProductModalOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | undefined>();
+  const [tabValue, setTabValue] = useState(0);
+  const [nursery, setNursery] = useState<ManagerNursery | null>(null);
+  const [loadingNursery, setLoadingNursery] = useState(true);
+  const [nurseryError, setNurseryError] = useState<string | null>(null);
 
-  // Use the shared filter hook
-  const {
-    filters,
-    filteredItems: filteredProducts,
-    updateFilters,
-    resetFilters,
-  } = useProductFilter(products);
+  useEffect(() => {
+    let mounted = true;
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    updateFilters({ searchQuery: e.target.value });
-  };
+    const fetchNursery = async () => {
+      setLoadingNursery(true);
+      setNurseryError(null);
 
-  const handleEditProduct = (product: Product) => {
-    setEditingProduct(product);
-    setProductModalOpen(true);
-  };
+      try {
+        const response = await getMyManagerNursery(true);
+        const payload = getPayload(response);
 
-  const handleSaveProduct = (product: Product) => {
-    if (editingProduct) {
-      setProducts((prev) =>
-        prev.map((p) => (p.id === product.id ? product : p))
-      );
-    } else {
-      setProducts((prev) => [...prev, product]);
+        if (!mounted) {
+          return;
+        }
+
+        if (!payload) {
+          setNursery(null);
+          setNurseryError('Could not load manager nursery data.');
+          return;
+        }
+
+        setNursery(payload);
+      } catch (error) {
+        if (!mounted) {
+          return;
+        }
+        setNursery(null);
+        setNurseryError(getErrorMessage(error, 'Failed to load manager nursery'));
+      } finally {
+        if (mounted) {
+          setLoadingNursery(false);
+        }
+      }
+    };
+
+    void fetchNursery();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const nurserySummary = useMemo(() => {
+    if (!nursery) {
+      return null;
     }
-    setProductModalOpen(false);
-    setEditingProduct(undefined);
-  };
 
-  const handleDeleteProduct = (productId: string) => {
-    setProducts((prev) => prev.filter((p) => p.id !== productId));
-  };
-
-  const handleUpdateInstances = (productId: string, instances: PlantInstance[]) => {
-    setProducts((prev) =>
-      prev.map((p) =>
-        p.id === productId ? { ...p, instances, updatedAt: new Date().toISOString().split('T')[0] } : p
-      )
-    );
-  };
-
-  const handleUpdateThumbnail = (productId: string, instanceId: string) => {
-    setProducts((prev) =>
-      prev.map((p) =>
-        p.id === productId ? { ...p, thumbnailInstanceId: instanceId, updatedAt: new Date().toISOString().split('T')[0] } : p
-      )
-    );
-  };
-
-  const totalProducts = products.length;
-  const totalStock = useMemo(
-    () => products.reduce((sum, p) => sum + p.instances.reduce((s, i) => s + i.quantity, 0), 0),
-    [products]
-  );
+    return {
+      name: nursery.name,
+      manager: nursery.managerName,
+      address: nursery.address,
+      totalPlants: nursery.totalPlants,
+      totalMaterials: nursery.totalMaterials,
+      isActive: nursery.isActive,
+    };
+  }, [nursery]);
 
   return (
-    <Container maxWidth="xl">
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 1 }}>
-          Store Catalog
-        </Typography>
-        <Typography variant="body2" sx={{ color: '#666' }}>
-          Manage your plant inventory, instances, and stock levels
-        </Typography>
-      </Box>
+    <Box sx={{ py: 3, minHeight: '100%' }}>
+      <Container maxWidth="xl">
+        <Stack spacing={2} sx={{ mb: 3 }}>
+          <Typography variant="h4" fontWeight={700}>
+            Manager Store Catalog
+          </Typography>
+          {loadingNursery ? (
+            <Stack direction="row" spacing={1} alignItems="center">
+              <CircularProgress size={18} />
+              <Typography variant="body2" color="text.secondary">
+                Loading nursery information...
+              </Typography>
+            </Stack>
+          ) : nurserySummary ? (
+            <Paper
+              elevation={0}
+              sx={{ border: '1px solid var(--card-border)', borderRadius: 2, p: 2, backgroundColor: 'var(--primary)' }}
+            >
+              <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} justifyContent="space-between">
+                <Box>
+                  <Typography variant="h6" fontWeight={700}>
+                    {nurserySummary.name}
+                  </Typography>
+                  <Typography variant="body2" fontWeight={600}>
+                    Manager: {nurserySummary.manager}
+                  </Typography>
+                  <Typography variant="body2" fontWeight={600}>
+                    {nurserySummary.address}
+                  </Typography>
+                </Box>
+                <Stack direction="row" spacing={1} flexWrap="wrap" alignItems="center" fontWeight={650}>
+                  <Chip label={`Plants: ${nurserySummary.totalPlants}`} sx={{ bgcolor: '#ecfff3' }} />
+                  <Chip label={`Materials: ${nurserySummary.totalMaterials}`} sx={{ bgcolor: '#ecf7ff' }} />
+                  <Chip
+                    label={nurserySummary.isActive ? 'Nursery Active' : 'Nursery Inactive'}
+                    color={nurserySummary.isActive ? 'success' : 'default'}
+                    variant="outlined"
+                    sx={{bgcolor: "#ecfff3"}}
+                  />
+                </Stack>
+              </Stack>
+            </Paper>
+          ) : null}
 
-      {/* Statistics */}
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-          gap: 2,
-          mb: 4,
-        }}
-      >
-        <Box
-          sx={{
-            p: 2,
-            backgroundColor: '#e8f5e9',
-            borderRadius: 1,
-            border: '1px solid #4caf50',
-          }}
-        >
-          <Typography variant="body2" sx={{ color: '#666' }}>
-            Total Plants
-          </Typography>
-          <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#2e7d32' }}>
-            {totalProducts}
-          </Typography>
-        </Box>
-        <Box
-          sx={{
-            p: 2,
-            backgroundColor: '#e3f2fd',
-            borderRadius: 1,
-            border: '1px solid #2196f3',
-          }}
-        >
-          <Typography variant="body2" sx={{ color: '#666' }}>
-            Total Stock
-          </Typography>
-          <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#1565c0' }}>
-            {totalStock}
-          </Typography>
-        </Box>
-      </Box>
+          {nurseryError && <Alert severity="error">{nurseryError}</Alert>}
+        </Stack>
 
-      {/* Add Button */}
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => {
-            setEditingProduct(undefined);
-            setProductModalOpen(true);
-          }}
-        >
-          Add New Plant
-        </Button>
-      </Box>
-
-      {/* Search Bar */}
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-          <TextField
-            fullWidth
-            placeholder="Search products by name, description..."
-            value={filters.searchQuery}
-            onChange={handleSearchChange}
-            InputProps={{
-              startAdornment: <SearchIcon sx={{ mr: 1, color: '#999' }} />,
+        <Paper elevation={0} sx={{ border: '1px solid var(--card-border)', borderRadius: 2 }}>
+          <Tabs
+            value={tabValue}
+            onChange={(_, value) => setTabValue(value)}
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{
+              borderBottom: '1px solid var(--card-border)',
+              '& .MuiTab-root': {
+                textTransform: 'none',
+                fontWeight: 600,
+                minHeight: 56,
+              },
+              '& .Mui-selected': {
+                color: 'var(--primary) !important',
+              },
+              '& .MuiTabs-indicator': {
+                backgroundColor: 'var(--primary)',
+              },
             }}
-            variant="outlined"
-            size="small"
-          />
-          <Button
-            variant="outlined"
-            onClick={resetFilters}
-            sx={{ minWidth: '120px' }}
           >
-            Clear Filters
-          </Button>
-        </Box>
-        {filters.searchQuery && (
-          <Typography variant="body2" sx={{ mt: 1, color: '#666' }}>
-            Found {filteredProducts.length} product(s)
-          </Typography>
-        )}
-      </Paper>
+            <Tab icon={<ParkOutlinedIcon />} iconPosition="start" label="CommonPlant" />
+            <Tab icon={<SpaOutlinedIcon />} iconPosition="start" label="PlantInstance" />
+            <Tab icon={<WidgetsOutlinedIcon />} iconPosition="start" label="PlantCombo" />
+            <Tab icon={<Inventory2OutlinedIcon />} iconPosition="start" label="Material" />
+          </Tabs>
 
-      {/* Products Table */}
-      <ProductTable
-        products={filteredProducts}
-        categories={categories}
-        tags={tags}
-        onEdit={handleEditProduct}
-        onDelete={handleDeleteProduct}
-        onUpdateInstances={handleUpdateInstances}
-        onUpdateThumbnail={handleUpdateThumbnail}
-      />
-
-      {/* Product Modal */}
-      <ProductModal
-        open={productModalOpen}
-        onClose={() => {
-          setProductModalOpen(false);
-          setEditingProduct(undefined);
-        }}
-        onSave={handleSaveProduct}
-        product={editingProduct}
-        categories={categories}
-        tags={tags}
-      />
-    </Container>
+          <Box sx={{ p: 2 }}>
+            <TabPanel value={tabValue} index={0}>
+              <CommonPlantTab nurseryId={nursery?.id ?? null} />
+            </TabPanel>
+            <TabPanel value={tabValue} index={1}>
+              <ComingSoonTab
+                title="PlantInstance API pending"
+                description="This tab is ready in CSR mode and waiting for manager import APIs."
+              />
+            </TabPanel>
+            <TabPanel value={tabValue} index={2}>
+              <ComingSoonTab
+                title="PlantCombo API pending"
+                description="This tab is prepared with the same integration structure as CommonPlant."
+              />
+            </TabPanel>
+            <TabPanel value={tabValue} index={3}>
+              <ComingSoonTab
+                title="Material API pending"
+                description="CSR structure is ready and can be wired once material manager APIs are available."
+              />
+            </TabPanel>
+          </Box>
+        </Paper>
+      </Container>
+    </Box>
   );
 }

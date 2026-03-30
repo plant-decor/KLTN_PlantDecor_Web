@@ -8,7 +8,7 @@ import { Button, Drawer } from '@mui/material';
 import { DeleteOutline as DeleteOutlineIcon, Star as StarIcon } from '@mui/icons-material';
 import { useLocale, useTranslations } from 'next-intl';
 import { useAuthStore } from '@/lib/store/authStore';
-import { addPlantToCart, removePlantFromWishlist } from '@/lib/api/cartWishlistService';
+import { addItemToCart, removePlantFromWishlist } from '@/lib/api/cartWishlistService';
 import { notifyCartUpdated } from '@/lib/utils/cartEvents';
 import { get } from '@/lib/api/apiService.client';
 import { ResponseModel } from '@/types/api.types';
@@ -40,18 +40,39 @@ export default function ProductCard({
   const { user } = useAuthStore();
   const [isWishlistRemoving, setIsWishlistRemoving] = useState(false);
   const [isNurseryDrawerOpen, setIsNurseryDrawerOpen] = useState(false);
-  const [pendingAction, setPendingAction] = useState<'cart' | 'buy' | null>(null);
+  const [pendingAction, setPendingAction] = useState<'cart' | null>(null);
   const [nurseries, setNurseries] = useState<NurseryResponse[]>([]);
   const [selectedNurseryId, setSelectedNurseryId] = useState<number | null>(null);
+  const [selectedNursery, setSelectedNursery] = useState<NurseryResponse | null>(null);
+  const [selectedQuantity, setSelectedQuantity] = useState(1);
 
   useEffect(() => {
     if (!isNurseryDrawerOpen) return;
     let isMounted = true;
     const fetchNurseries = async () => {
       try {
-        const nurseryResponse = await get<ResponseModel<NurseryResponse[]>>(`/plants/${plant.id}/nurseries`, undefined, false);
-        if (!isMounted) return;
-        setNurseries(nurseryResponse?.payload || []);
+        if (plant.availableCommonQuantity > 0) {
+          const nurseries = await get<ResponseModel<NurseryResponse[]>>(`/shop/plants/${plant.id}/common-nurseries`, undefined, false)
+          if (!isMounted) return;
+          const nurseryPayload = nurseries?.payload || [];
+          setNurseries(nurseryPayload);
+          if (nurseryPayload.length > 0) {
+            setSelectedNurseryId(nurseryPayload[0].nurseryId);
+            setSelectedNursery(nurseryPayload[0]);
+            setSelectedQuantity(1);
+          }
+          console.log('Fetch nursery list common plant', nurseries)
+        } else {
+          const nurseryResponse = await get<ResponseModel<NurseryResponse[]>>(`/plants/${plant.id}/nurseries`, undefined, false);
+          if (!isMounted) return;
+          const nurseryPayload = nurseryResponse?.payload || [];
+          setNurseries(nurseryPayload);
+          if (nurseryPayload.length > 0) {
+            setSelectedNurseryId(nurseryPayload[0].nurseryId);
+            setSelectedNursery(nurseryPayload[0]);
+            setSelectedQuantity(1);
+          }
+        }
       } catch (error) {
         console.error('Fetch nurseries error:', error);
         if (!isMounted) return;
@@ -63,7 +84,7 @@ export default function ProductCard({
     return () => {
       isMounted = false;
     };
-  }, [plant.id, isNurseryDrawerOpen]);
+  }, [plant.id, plant.availableCommonQuantity, isNurseryDrawerOpen]);
 
   const handleAddToCart = async (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
@@ -73,6 +94,9 @@ export default function ProductCard({
       router.push(`/${locale}/login`);
       return;
     }
+    setSelectedNurseryId(null);
+    setSelectedNursery(null);
+    setSelectedQuantity(1);
     setPendingAction('cart');
     setIsNurseryDrawerOpen(true);
   };
@@ -80,31 +104,50 @@ export default function ProductCard({
   const handleCreateOrder = async (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     event.stopPropagation();
-
-    if (!user?.id) {
-      router.push(`/${locale}/login`);
-      return;
-    }
-    setPendingAction('buy');
-    setIsNurseryDrawerOpen(true);
+    router.push(`/${locale}/products/${plant.id}`);
   };
 
-  const handleConfirmWithNursery = async () => {
+  const getNurseryMaxQuantity = (nursery: NurseryResponse | null): number => {
+    if (!nursery) return 0;
+    return Math.max(
+      0,
+      nursery.availableCommonQuantity ?? 0,
+      nursery.availableInstanceCount ?? 0,
+      nursery.availableComboQuantity ?? 0,
+      nursery.availableMaterialQuantity ?? 0
+    );
+  };
+
+  const selectedNurseryMaxQuantity = getNurseryMaxQuantity(selectedNursery);
+
+  const handleConfirmWithNursery = async (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+
     if (!pendingAction) return;
-    if (!selectedNurseryId) return;
+    if (!selectedNursery) return;
+    if (selectedNurseryMaxQuantity <= 0) return;
+
+    const hasCartItemId =
+      !!selectedNursery.commonPlantId ||
+      !!selectedNursery.nurseryPlantComboId ||
+      !!selectedNursery.nurseryMaterialId;
+
+    const addToCartPayload = {
+      quantity: Math.min(selectedQuantity, selectedNurseryMaxQuantity),
+      commonPlantId: hasCartItemId ? (selectedNursery.commonPlantId ?? null) : plant.id,
+      nurseryPlantComboId: selectedNursery.nurseryPlantComboId ?? null,
+      nurseryMaterialId: selectedNursery.nurseryMaterialId ?? null,
+    };
 
     try {
-      await addPlantToCart(plant.id, 1);
+      await addItemToCart(addToCartPayload);
       notifyCartUpdated();
       setIsNurseryDrawerOpen(false);
+      setPendingAction(null);
 
-      if (pendingAction === 'buy' && user?.id) {
-        router.push(`/${locale}/cart/${user.id}`);
-      }
     } catch (error) {
       console.error('Add to cart with nursery error:', error);
-    } finally {
-      setPendingAction(null);
     }
   };
 
@@ -130,16 +173,31 @@ export default function ProductCard({
 
   const isActionDisabled = isWishlistRemoving;
   const isOutOfStock = plant.availableCommonQuantity <= 0 && plant.availableInstances <= 0 && plant.totalAvailableStock <= 0;
-  const numberLocale = locale === 'vi' ? 'vi-VN' : 'en-US';
+  const handleSelectNursery = (nursery: NurseryResponse) => {
+    setSelectedNurseryId(nursery.nurseryId);
+    setSelectedNursery(nursery);
+    setSelectedQuantity(1);
+  };
+
+  const handleCancelNurserySelection = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsNurseryDrawerOpen(false);
+    setSelectedNurseryId(null);
+    setSelectedNursery(null);
+    setSelectedQuantity(1);
+    setPendingAction(null);
+  };
 
   return (
-    <Link
-      href={`/products/${plant.id}`}
-      className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow"
-    >
-      <div className="relative w-full h-48">
+    <>
+      <Link
+        href={`/products/${plant.id}`}
+        className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow"
+      >
+        <div className="relative w-full h-48">
         <Image
-          src={plant.primaryImageUrl || '/img/background-login.jpg'}
+          src={plant.primaryImageUrl || '/img/fallbackplant.avif'}
           alt={plant.name}
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
@@ -280,15 +338,25 @@ export default function ProductCard({
           )}
         </div>
       </div>
+      </Link>
       <Drawer
         anchor="right"
         open={isNurseryDrawerOpen}
         onClose={() => {
           setIsNurseryDrawerOpen(false);
+          setSelectedNurseryId(null);
+          setSelectedNursery(null);
+          setSelectedQuantity(1);
           setPendingAction(null);
         }}
       >
-        <div className="w-90 max-w-[90vw] p-4">
+        <div
+          className="w-90 max-w-[90vw] p-4"
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+          }}
+        >
           <h3 className="text-lg font-semibold mb-2">Select nursery</h3>
           <p className="text-sm text-gray-600 mb-4">
             Please choose a nursery before continuing.
@@ -300,25 +368,58 @@ export default function ProductCard({
             <NurseryList
               isNurseryAvailable={nurseries}
               selectedNurseryId={selectedNurseryId}
-              onSelectNursery={setSelectedNurseryId}
+              onSelectNursery={handleSelectNursery}
             />
+          )}
+
+          {selectedNursery && (
+            <div className="mt-4">
+              <p className="text-sm text-gray-600 mb-2">Quantity</p>
+              <div className="flex items-center border border-gray-300 rounded-lg w-fit">
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    setSelectedQuantity((prev) => Math.max(1, prev - 1));
+                  }}
+                  className="px-4 py-2 hover:bg-gray-100 transition-colors"
+                  disabled={selectedQuantity <= 1}
+                >
+                  -
+                </button>
+                <span className="px-6 py-2 border-x border-gray-300 min-w-14 text-center">
+                  {selectedQuantity}
+                </span>
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    setSelectedQuantity((prev) => Math.min(selectedNurseryMaxQuantity, prev + 1));
+                  }}
+                  className="px-4 py-2 hover:bg-gray-100 transition-colors"
+                  disabled={selectedQuantity >= selectedNurseryMaxQuantity}
+                >
+                  +
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Available: {selectedNurseryMaxQuantity}</p>
+            </div>
           )}
 
           <div className="mt-4 flex gap-2">
             <Button
               variant="outlined"
               fullWidth
-              onClick={() => {
-                setIsNurseryDrawerOpen(false);
-                setPendingAction(null);
-              }}
+              onClick={handleCancelNurserySelection}
             >
               Cancel
             </Button>
             <Button
               variant="contained"
               fullWidth
-              disabled={!selectedNurseryId}
+              disabled={!selectedNursery || selectedNurseryMaxQuantity <= 0}
               onClick={handleConfirmWithNursery}
               sx={{
                 bgcolor: 'var(--primary)',
@@ -330,6 +431,6 @@ export default function ProductCard({
           </div>
         </div>
       </Drawer>
-    </Link>
+    </>
   );
 }

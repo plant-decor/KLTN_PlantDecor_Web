@@ -4,18 +4,19 @@ import { Category, Tag } from './storeCatalogData';
 // SamplePlant Interface (used across components)
 export interface Plant {
   "id": number,
-  "productName": string,
+  "productName"?: string,
+  "name": string | null,
   "basePrice": number,
   "size": string,
   "careLevel": string,
   "isActive": boolean,
-  "primaryImageUrl": string | null,
+  "primaryImageUrl"?: string | null,
   "totalInstances": number,
   "availableInstances": number,
-  "availableCommonQuantity": number,
-  "totalAvailableStock": number,
-  "categoryNames": Category[],
-  "tagNames": Tag[]
+  "availableCommonQuantity"?: number,
+  "totalAvailableStock"?: number,
+  "categoryNames"?: Category[],
+  "tagNames"?: Tag[]
 }
 
 export interface SampleUser {

@@ -56,7 +56,7 @@ function a11yProps(index: number) {
 export default function StoreManagementPageClient({
   initialPlants = [],
   initialCombos = [],
-  initialInstances = [],
+  // initialInstances = [],
   initialMaterials = [],
 }: StoreManagementPageClientProps) {
   const [tabValue, setTabValue] = useState(0);
@@ -108,12 +108,12 @@ export default function StoreManagementPageClient({
               iconPosition="start"
               {...a11yProps(1)}
             />
-            <Tab
-              label="Mẫu Cây"
+            {/* <Tab
+              label="Cây Bán Lẻ"
               icon={<Spa sx={{ mr: 1 }} />}
               iconPosition="start"
               {...a11yProps(2)}
-            />
+            /> */}
             <Tab
               label="Vật Tư"
               icon={<Inventory2 sx={{ mr: 1 }} />}
@@ -131,9 +131,9 @@ export default function StoreManagementPageClient({
               <PlantComboTab initialCombos={initialCombos} />
             </TabPanel>
 
-            <TabPanel value={tabValue} index={2}>
+            {/* <TabPanel value={tabValue} index={2}>
               <PlantInstanceTab initialInstances={initialInstances} />
-            </TabPanel>
+            </TabPanel> */}
 
             <TabPanel value={tabValue} index={3}>
               <MaterialTab initialMaterials={initialMaterials} />

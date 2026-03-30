@@ -493,5 +493,13 @@
     "description": "Trang bạn đang tìm kiếm không tồn tại hoặc đã được di chuyển.",
     "backHome": "Về trang chủ",
     "imageAlt": "404 Không tìm thấy"
+  },
+  "checkoutResult": {
+    "successTitle": "Thanh toán thành công!",
+    "successMessage": "Cảm ơn bạn đã mua hàng tại PlantDecor. Đơn hàng của bạn đã được ghi nhận.",
+    "failureTitle": "Thanh toán thất bại!",
+    "failureMessage": "Đã có lỗi xảy ra trong quá trình thanh toán. Vui lòng thử lại hoặc liên hệ hỗ trợ.",
+    "title": "Kết quả thanh toán",
+    "message": "Cảm ơn bạn đã sử dụng dịch vụ của PlantDecor. Vui lòng kiểm tra trạng thái đơn hàng trong tài khoản của bạn."
   }
 }

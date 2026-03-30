@@ -7,6 +7,10 @@ import {
   Card,
   CardContent,
   Grid,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  Box,
 } from '@mui/material';
 import type { CheckoutData } from '@/types/cart.types';
 import type { CustomerProfile } from '@/types/auth.types';
@@ -69,18 +73,24 @@ export default function CheckoutShipping({
     const { name, value } = e.target;
     setFormData((prev) => {
       const updated = { ...prev, [name]: value };
-      
-      // Update store with new shipping info
-      onDataChange({
-        shippingInfo: {
-          fullName: updated.fullName,
-          phone: updated.phone,
-          address: updated.address,
-          notes: updated.notes,
-        },
-      });
-
       return updated;
+    });
+
+    const updatedShipping = { ...formData, [name]: value };
+    onDataChange({
+      shippingInfo: {
+        fullName: updatedShipping.fullName,
+        phone: updatedShipping.phone,
+        address: updatedShipping.address,
+        notes: updatedShipping.notes,
+      },
+    });
+  };
+
+  const handlePaymentStrategyChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = Number(event.target.value);
+    onDataChange({
+      paymentStrategy: value,
     });
   };
 
@@ -151,6 +161,29 @@ export default function CheckoutShipping({
               rows={2}
             />
           </Grid>
+
+          {checkoutData.orderType === 2 && (
+            <Grid size={{ xs: 12 }}>
+              <Box
+                sx={{
+                  border: '1px solid #ddd',
+                  borderRadius: 1,
+                  p: 2,
+                }}
+              >
+                <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                  Payment Strategy
+                </Typography>
+                <RadioGroup
+                  value={checkoutData.paymentStrategy ?? 1}
+                  onChange={handlePaymentStrategyChange}
+                >
+                  <FormControlLabel value={1} control={<Radio />} label="Full payment" />
+                  <FormControlLabel value={2} control={<Radio />} label="Deposit" />
+                </RadioGroup>
+              </Box>
+            </Grid>
+          )}
         </Grid>
 
         {/* Shipping Details */}

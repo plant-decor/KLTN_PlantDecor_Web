@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { type ReactNode } from 'react';
 import { routing } from '@/i18n/routing';
 import { AuthProvider } from '@/components/providers/AuthProvider';
-import { SignalRProvider } from '@/components/providers/SignalRProvider';
+// import { SignalRProvider } from '@/components/providers/SignalRProvider';
 import { ToastProvider } from '@/components/providers/ToastProvider';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
 import { SessionInvalidatedModal } from '@/components/auth/SessionInvalidatedModal';
@@ -36,12 +36,12 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
         <AuthProvider initialUser={initialUser}>
-          <SignalRProvider autoConnect={false}>
+          {/* <SignalRProvider autoConnect={false}> */}
             <ToastProvider />
             <LoadingOverlay />
             <SessionInvalidatedModal />
             {children}
-          </SignalRProvider>
+          {/* </SignalRProvider> */}
         </AuthProvider>
     </NextIntlClientProvider>
   );

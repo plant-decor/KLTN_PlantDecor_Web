@@ -3,7 +3,7 @@
  * Dùng trong components để check permissions
  */
 
-import { ROLE_TO_ROUTES, ROUTE_TO_ROLES } from '@/proxy';
+import { ROLE_TO_ROUTES, ROUTE_TO_ROLES } from '@/lib/constants/roleRoutes';
 
 const normalizeRole = (role: string | undefined): string | undefined => {
   if (!role) return undefined;

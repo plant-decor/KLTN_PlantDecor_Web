@@ -21,11 +21,11 @@ interface OrderCreateRequestBase {
   note: string;
   paymentStrategy: number;
   orderType: number;
+  plantInstanceId?: number | null;
 }
 
 export interface OrderCreateRequestWithCartIds extends OrderCreateRequestBase {
-  cartItemIds: number[];
-  plantInstanceId?: number | null;
+  cartItemIds?: number[];
 }
 
 export interface OrderCreateRequestWithItems extends OrderCreateRequestBase {

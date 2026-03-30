@@ -25,6 +25,9 @@ export interface CheckoutData {
   cartId: string;
   items: CartItem[];
   shippingInfo?: ShippingInfo;
+  paymentStrategy?: number;
+  orderType?: number;
+  plantInstanceId?: number | null;
   paymentMethod?: string;
   subtotal: number;
   // shippingFee: number;

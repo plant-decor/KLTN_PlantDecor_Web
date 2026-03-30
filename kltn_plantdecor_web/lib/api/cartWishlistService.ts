@@ -1,6 +1,5 @@
 import { del, get, patch, post } from '@/lib/api/apiService';
 import { ResponseModel } from '@/types/api.types';
-import { CartItem } from '@/types/cart.types';
 
 const DEFAULT_IMAGE = '/img/background-login.jpg';
 
@@ -42,6 +41,19 @@ export interface WishlistApiItem {
   size: 'small' | 'medium' | 'large';
   stock: number;
 }
+
+export interface AddCartItemRequest {
+  commonPlantId?: number | null;
+  nurseryPlantComboId?: number | null;
+  nurseryMaterialId?: number | null;
+  quantity: number;
+}
+
+export type WishlistItemType =
+  | 'CommonPlant'
+  | 'PlantInstance'
+  | 'NurseryPlantCombo'
+  | 'NurseryMaterial';
 
 const isRecord = (value: unknown): value is UnknownRecord =>
   value !== null && typeof value === 'object';
@@ -156,15 +168,25 @@ export const fetchCartItems = async (): Promise<ResponseModel<CartApiItemRespons
 };
 
 export const addPlantToCart = async (plantId: number, quantity = 1): Promise<void> => {
-  await post(
-    '/Cart/items',
-    {
-      commonPlantId: plantId,
-      quantity: Math.max(1, quantity),
-    },
-    false,
-    false
-  );
+  await addItemToCart({
+    commonPlantId: plantId,
+    quantity,
+  });
+};
+
+export const addItemToCart = async (request: AddCartItemRequest): Promise<void> => {
+  const payload: AddCartItemRequest = {
+    quantity: Math.max(1, request.quantity),
+    ...(request.commonPlantId ? { commonPlantId: request.commonPlantId } : {}),
+    ...(request.nurseryPlantComboId ? { nurseryPlantComboId: request.nurseryPlantComboId } : {}),
+    ...(request.nurseryMaterialId ? { nurseryMaterialId: request.nurseryMaterialId } : {}),
+  };
+
+  if (!payload.commonPlantId && !payload.nurseryPlantComboId && !payload.nurseryMaterialId) {
+    throw new Error('Missing product identifier for cart item');
+  }
+
+  await post('/Cart/items', payload, false, false);
 };
 
 export const updateCartItemQuantity = async (
@@ -203,16 +225,38 @@ export const fetchWishlistItems = async (): Promise<WishlistApiItem[]> => {
   return toArray(response).map(normalizeWishlistItem).filter((item) => item.plantId > 0);
 };
 
+export const addItemToWishlist = async (
+  itemType: WishlistItemType,
+  itemId: number
+): Promise<void> => {
+  await post(`/Wishlist/${itemType}/${itemId}`, undefined, false, false);
+};
+
 export const addPlantToWishlist = async (plantId: number): Promise<void> => {
-  await post(`/Wishlist/${plantId}`, undefined, false, false);
+  await addItemToWishlist('CommonPlant', plantId);
+};
+
+export const removeItemFromWishlist = async (
+  itemType: WishlistItemType,
+  itemId: number
+): Promise<void> => {
+  await del(`/Wishlist/${itemType}/${itemId}`, false, false);
 };
 
 export const removePlantFromWishlist = async (plantId: number): Promise<void> => {
-  await del(`/Wishlist/${plantId}`, false, false);
+  await removeItemFromWishlist('CommonPlant', plantId);
 };
 
-export const checkWishlistPlantInStock = async (plantId: number): Promise<boolean> => {
-  const response = await get<unknown>(`/Wishlist/${plantId}/check`, undefined, false, false);
+export const checkWishlistItem = async (
+  itemType: WishlistItemType,
+  itemId: number
+): Promise<boolean> => {
+  const response = await get<unknown>(
+    `/Wishlist/${itemType}/${itemId}/check`,
+    undefined,
+    false,
+    false
+  );
   const unwrapped = unwrapResponse(response);
 
   if (typeof unwrapped === 'boolean') {
@@ -220,6 +264,8 @@ export const checkWishlistPlantInStock = async (plantId: number): Promise<boolea
   }
 
   if (isRecord(unwrapped)) {
+    if (typeof unwrapped.inWishlist === 'boolean') return unwrapped.inWishlist;
+    if (typeof unwrapped.exists === 'boolean') return unwrapped.exists;
     if (typeof unwrapped.inStock === 'boolean') return unwrapped.inStock;
     if (typeof unwrapped.available === 'boolean') return unwrapped.available;
     if (typeof unwrapped.result === 'boolean') return unwrapped.result;
@@ -227,4 +273,8 @@ export const checkWishlistPlantInStock = async (plantId: number): Promise<boolea
   }
 
   return false;
+};
+
+export const checkWishlistPlantInStock = async (plantId: number): Promise<boolean> => {
+  return checkWishlistItem('CommonPlant', plantId);
 };

@@ -2,11 +2,11 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { getPlantById, type PlantDetailResponse } from '@/lib/api/plantsService';
-import AddToCartButton from '@/components/cart/AddToCartButton';
-import AddToWishlistButton from '@/components/product/AddToWishlistButton';
 import type { NurseryResponse } from '@/types/nursery.types';
 import type { Plant } from '@/data/sampledata';
 import { Category, Tag } from '@/data/storeCatalogData';
+import ProductDetailPurchasePanel from '@/components/product/ProductDetailPurchasePanel';
+import { getFengShuiColors, getFengShuiElementLabel } from '@/lib/utils/fengShui';
 
 interface PageProps {
   params: Promise<{ plantid: string; locale: string }>;
@@ -34,10 +34,8 @@ const toImageUrls = (images: PlantDetailResponse['images']): string[] => {
   return urls;
 };
 import { formatCurrency } from '@/lib/utils/formatUtil';
-import { List, ListItem, ListItemButton, ListItemText } from '@mui/material';
 import { get } from '@/lib/api/apiService.server';
 import { ResponseModel } from '@/types/api.types';
-import NurseryList from '@/components/product/NuseriesList';
 
 const booleanLabel = (value: boolean | null | undefined) => (value ? 'Yes' : 'No');
 
@@ -88,8 +86,6 @@ const mapPlantDetailToSamplePlant = (
   const totalAvailableStock = getTotalAvailableStock(plant);
   const availableInstances = toNumber(plant.availableInstances);
   const availableCommonQuantity = toNumber(plant.availableCommonQuantity);
-  const availableComboQuantity = toNumber(plant.availableComboQuantity);
-  const availableMaterialQuantity = toNumber(plant.availableMaterialQuantity);
 
   return {
     id: plant.id,
@@ -120,7 +116,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
   const response = await getPlantById(id, true, false);
   const plant = getPayload<PlantDetailResponse>(response);
-
+  console.log('plant detail get', plant)
   if (!plant) {
     notFound();
   }
@@ -129,15 +125,26 @@ export default async function ProductDetailPage({ params }: PageProps) {
   const mainImage = images[0] || FALLBACK_IMAGE;
   const plantForActions = mapPlantDetailToSamplePlant(plant, mainImage);
   console.log(plantForActions);
-  const inventoryRows = [
-    { label: 'Instances', value: toNumber(plant.availableInstances) },
-    { label: 'Common', value: toNumber(plant.availableCommonQuantity) },
-    { label: 'Combo', value: toNumber(plant.availableComboQuantity) },
-    { label: 'Material', value: toNumber(plant.availableMaterialQuantity) },
-  ].filter((item) => item.value > 0);
-  const totalAvailableStock = plantForActions.totalAvailableStock;
-  const nurseryAvailableResponse = await get<ResponseModel<NurseryResponse[]>>(`/plants/${id}/nurseries`);
-  const isNurseryAvailable = nurseryAvailableResponse?.payload || [];
+  const getNurseryCommonOrInstance = async (plant: PlantDetailResponse): Promise<NurseryResponse[]> => {
+    console.log('plant detail in fetch nursery', plant.totalInstances);
+    try {
+      if (plant.totalInstances == 0) {
+        const nurseriesCommon = await get<ResponseModel<NurseryResponse[]>>(
+          `/shop/plants/${plant.id}/common-nurseries`,
+          undefined
+        );
+        return getPayload<NurseryResponse[]>(nurseriesCommon) ?? [];
+      } else {
+        const nurseryInstance = await get<ResponseModel<NurseryResponse[]>>(`/plants/${plant.id}/nurseries`, undefined);
+        return getPayload<NurseryResponse[]>(nurseryInstance) ?? [];
+      }
+    } catch (error) {
+      console.error('Fetch nurseries error:', error);
+      return [];
+    }
+  };
+  const isNurseryAvailable = await getNurseryCommonOrInstance(plant);
+  console.log('nursery list in detail page', isNurseryAvailable)
   return (
     <div className="py-4 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -163,14 +170,9 @@ export default async function ProductDetailPage({ params }: PageProps) {
                 ))}
               </div>
             )}
-            {/* Nusery have this plant */}
-            {isNurseryAvailable &&
-            <NurseryList isNurseryAvailable={isNurseryAvailable} />
-            }
           </div>
-
-          <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">{plant.name}</h1>
+            <div className="mb-6 space-y-3 border-t border-gray-100 pt-6">
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">{plant.name}</h1>
             {plant.specificName && (
               <p className="text-xl text-gray-600 italic mb-6">{plant.specificName}</p>
             )}
@@ -180,7 +182,83 @@ export default async function ProductDetailPage({ params }: PageProps) {
                 {formatCurrency(plant.basePrice, locale)}
               </span>
             </div>
+              <ProductDetailPurchasePanel
+                plant={plantForActions}
+                nurseries={isNurseryAvailable}
+              />
+            {(plant.fengShuiElement || plant.fengShuiMeaning) && (
+              <div className="mb-6 rounded-lg border border-gray-200 bg-white p-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Feng Shui</h3>
+                {plant.fengShuiElement && (
+                  (() => {
+                    const fengShuiColors = getFengShuiColors(plant.fengShuiElement);
+                    const fengShuiLabel = getFengShuiElementLabel(plant.fengShuiElement);
 
+                    return (
+                      <p className="text-sm text-gray-700 mb-2">
+                        Element:{' '}
+                        <span
+                          className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold"
+                          style={{
+                            backgroundColor: fengShuiColors.bg,
+                            color: fengShuiColors.text,
+                            borderColor: fengShuiColors.border,
+                          }}
+                        >
+                          {fengShuiLabel}
+                        </span>
+                      </p>
+                    );
+                  })()
+                )}
+                {plant.fengShuiMeaning && (
+                  <p className="text-sm text-gray-700">{plant.fengShuiMeaning}</p>
+                )}
+              </div>
+            )}
+
+            {Array.isArray(plant.categories) && plant.categories.length > 0 && (
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Categories</h3>
+                <div className="flex flex-wrap gap-2">
+                  {plant.categories.map((category, index) => (
+                    <span key={`${category.name || 'category'}-${index}`} className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm">
+                      {category.name || `Category ${index + 1}`}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {Array.isArray(plant.tags) && plant.tags.length > 0 && (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Tags</h3>
+                <div className="flex flex-wrap gap-2">
+                  {plant.tags.map((tag, index) => (
+                    <span key={`${tag.tagName || 'tag'}-${index}`} className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">
+                      {tag.tagName || `Tag ${index + 1}`}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            </div>
+            
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Safety and traits</h3>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="bg-gray-50 rounded-lg px-3 py-2">Toxicity: {booleanLabel(plant.toxicity)}</div>
+                <div className="bg-gray-50 rounded-lg px-3 py-2">Air purifying: {booleanLabel(plant.airPurifying)}</div>
+                <div className="bg-gray-50 rounded-lg px-3 py-2">Has flower: {booleanLabel(plant.hasFlower)}</div>
+                <div className="bg-gray-50 rounded-lg px-3 py-2">Pet safe: {booleanLabel(plant.petSafe)}</div>
+                <div className="bg-gray-50 rounded-lg px-3 py-2">Child safe: {booleanLabel(plant.childSafe)}</div>
+                <div className="bg-gray-50 rounded-lg px-3 py-2">Pot included: {booleanLabel(plant.potIncluded)}</div>
+              </div>
+            </div>
+
+          <div>
+            
+{/* 
             <div className="mb-6">
               <span
                 className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
@@ -189,7 +267,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
               >
                 {plant.isActive ? 'Active' : 'Inactive'}
               </span>
-            </div>
+            </div> */}
 
             {plant.description && (
               <div className="mb-6">
@@ -225,82 +303,8 @@ export default async function ProductDetailPage({ params }: PageProps) {
               </div>
             </div>
 
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Safety and traits</h3>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="bg-gray-50 rounded-lg px-3 py-2">Toxicity: {booleanLabel(plant.toxicity)}</div>
-                <div className="bg-gray-50 rounded-lg px-3 py-2">Air purifying: {booleanLabel(plant.airPurifying)}</div>
-                <div className="bg-gray-50 rounded-lg px-3 py-2">Has flower: {booleanLabel(plant.hasFlower)}</div>
-                <div className="bg-gray-50 rounded-lg px-3 py-2">Pet safe: {booleanLabel(plant.petSafe)}</div>
-                <div className="bg-gray-50 rounded-lg px-3 py-2">Child safe: {booleanLabel(plant.childSafe)}</div>
-                <div className="bg-gray-50 rounded-lg px-3 py-2">Pot included: {booleanLabel(plant.potIncluded)}</div>
-              </div>
-            </div>
 
-            {(plant.fengShuiElement || plant.fengShuiMeaning) && (
-              <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Feng Shui</h3>
-                {plant.fengShuiElement && (
-                  <p className="text-sm text-gray-700 mb-1">Element: <span className="font-medium">{plant.fengShuiElement}</span></p>
-                )}
-                {plant.fengShuiMeaning && (
-                  <p className="text-sm text-gray-700">{plant.fengShuiMeaning}</p>
-                )}
-              </div>
-            )}
-
-            {/* <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Inventory</h3>
-              <p className="text-gray-700">
-                Available: <span className="font-semibold">{totalAvailableStock}</span> / Total:{' '}
-                <span className="font-semibold">{plant.totalInstances ?? 0}</span>
-              </p>
-              {inventoryRows.length > 0 && (
-                <div className="mt-2 grid grid-cols-2 gap-2 text-sm text-gray-700">
-                  {inventoryRows.map((row) => (
-                    <p key={row.label}>
-                      {row.label}: <span className="font-semibold">{row.value}</span>
-                    </p>
-                  ))}
-                </div>
-              )}
-            </div> */}
             
-
-            <div className="mb-6 space-y-3 border-t border-gray-100 pt-6">
-              <AddToCartButton plant={plantForActions} />
-              <AddToWishlistButton
-                plant={plantForActions}
-                fullWidth
-                variant="outlined"
-              />
-            </div>
-
-            {Array.isArray(plant.categories) && plant.categories.length > 0 && (
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Categories</h3>
-                <div className="flex flex-wrap gap-2">
-                  {plant.categories.map((category, index) => (
-                    <span key={`${category.name || 'category'}-${index}`} className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm">
-                      {category.name || `Category ${index + 1}`}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {Array.isArray(plant.tags) && plant.tags.length > 0 && (
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Tags</h3>
-                <div className="flex flex-wrap gap-2">
-                  {plant.tags.map((tag, index) => (
-                    <span key={`${tag.tagName || 'tag'}-${index}`} className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">
-                      {tag.tagName || `Tag ${index + 1}`}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>

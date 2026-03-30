@@ -62,14 +62,14 @@ export default function PlantFilter({
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   // Get max price from plants
-  const maxPrice = Math.max(...plants.map(p => parseFloat(p.basePrice)), 1000000);
+  const maxPrice = Math.max(...plants.map(p => p.basePrice), 1000000);
 
   const applyFilters = (newFilters: FilterState) => {
     setFilters(newFilters);
 
     let filtered = plants.filter(plant => {
       // Category filter
-      if (newFilters.category.length > 0 && !newFilters.category.includes(plant.categoryNames.join(','))) {
+      if (newFilters.category.length > 0 || plant.categoryNames && !newFilters.category.includes(plant.categoryNames.join(','))) {
         return false;
       }
 
@@ -84,7 +84,7 @@ export default function PlantFilter({
       }
 
       // Price Range filter
-      if (parseFloat(plant.basePrice) < newFilters.priceRange[0] || parseFloat(plant.basePrice) > newFilters.priceRange[1]) {
+      if (plant.basePrice < newFilters.priceRange[0] || plant.basePrice > newFilters.priceRange[1]) {
         return false;
       }
 
@@ -94,7 +94,7 @@ export default function PlantFilter({
     // Apply search filter
     if (enableSearch && searchQuery.trim()) {
       filtered = filtered.filter(plant =>
-        plant.name.toLowerCase().includes(searchQuery.toLowerCase())
+        plant.name && plant.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 

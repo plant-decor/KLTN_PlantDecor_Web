@@ -11,7 +11,7 @@ import {
   Alert,
   CircularProgress,
 } from '@mui/material';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import CheckoutShipping from '@/components/checkout/CheckoutShipping';
 import CheckoutPayment from '@/components/checkout/CheckoutPayment';
@@ -59,6 +59,7 @@ export default function CheckoutPageClient({
   cartId,
 }: CheckoutPageClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const locale = useLocale();
   const [activeStep, setActiveStep] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -68,6 +69,13 @@ export default function CheckoutPageClient({
   const [userProfile, setUserProfile] = useState<CustomerProfile | null>(null);
   const [createdOrder, setCreatedOrder] = useState<OrderCreatePayload | null>(null);
 
+  const isPlantInstanceOrder = searchParams.get('orderType') === '2';
+  const plantInstanceIdFromQuery = Number(searchParams.get('plantInstanceId') || 0);
+  const plantIdFromQuery = Number(searchParams.get('plantId') || 0);
+  const instanceNameFromQuery = searchParams.get('instanceName') || '';
+  const instancePriceFromQuery = Number(searchParams.get('instancePrice') || 0);
+  const paymentStrategyFromQuery = Number(searchParams.get('paymentStrategy') || 1);
+
   useEffect(() => {
     let isMounted = true;
 
@@ -76,14 +84,37 @@ export default function CheckoutPageClient({
       setError('');
 
       try {
-        const [cartRes, userProfileRes] = await Promise.all([
-          fetchCartItems(),
-          get<{ payload?: CustomerProfile }>(`/User/user-profile`),
-        ]);
-
-        const cartApiItems = cartRes.payload?.items ?? [];
+        const userProfileRes = await get<{ payload?: CustomerProfile }>(
+          `/User/user-profile`
+        );
         const profilePayload = userProfileRes.payload ?? null;
-        const items = cartApiItems.map(toCartItem);
+        let items: CartItem[] = [];
+
+        if (isPlantInstanceOrder && plantInstanceIdFromQuery > 0) {
+          const resolvedPrice =
+            Number.isFinite(instancePriceFromQuery) && instancePriceFromQuery > 0
+              ? instancePriceFromQuery
+              : 0;
+
+          items = [
+            {
+              id: plantInstanceIdFromQuery,
+              cartId: 0,
+              commonPlantId: plantIdFromQuery > 0 ? plantIdFromQuery : 0,
+              price: resolvedPrice,
+              productName:
+                instanceNameFromQuery || `Plant Instance #${plantInstanceIdFromQuery}`,
+              quantity: 1,
+              subtotal: resolvedPrice,
+              imageUrl: null,
+            },
+          ];
+        } else {
+          const cartRes = await fetchCartItems();
+          const cartApiItems = cartRes.payload?.items ?? [];
+          items = cartApiItems.map(toCartItem);
+        }
+
         if (items.length === 0) {
           if (!isMounted) return;
           setError('Cart is empty. Please go back to cart.');
@@ -107,6 +138,13 @@ export default function CheckoutPageClient({
           items,
           shippingInfo,
           paymentMethod: 'credit_debit',
+          paymentStrategy:
+            isPlantInstanceOrder && paymentStrategyFromQuery === 2 ? 2 : 1,
+          orderType: isPlantInstanceOrder ? 2 : 1,
+          plantInstanceId:
+            isPlantInstanceOrder && plantInstanceIdFromQuery > 0
+              ? plantInstanceIdFromQuery
+              : null,
           subtotal: items.reduce((sum, item) => sum + item.subtotal, 0),
           total: items.reduce((sum, item) => sum + item.subtotal, 0),
           createdAt: new Date().toISOString(),
@@ -126,7 +164,18 @@ export default function CheckoutPageClient({
     return () => {
       isMounted = false;
     };
-  }, [cartId, locale, router, userId]);
+  }, [
+    cartId,
+    instanceNameFromQuery,
+    instancePriceFromQuery,
+    isPlantInstanceOrder,
+    locale,
+    paymentStrategyFromQuery,
+    plantIdFromQuery,
+    plantInstanceIdFromQuery,
+    router,
+    userId,
+  ]);
 
   if (isLoading) {
     return (
@@ -184,19 +233,27 @@ export default function CheckoutPageClient({
         phone,
         customerName: fullName,
         note: notes ?? '',
-        paymentStrategy: 1,
-        orderType: 1,
+        paymentStrategy: checkoutData.paymentStrategy ?? 1,
+        orderType: checkoutData.orderType ?? 1,
+        plantInstanceId:
+          checkoutData.orderType === 2 ? checkoutData.plantInstanceId ?? null : null,
       };
       const payloadWithCartIds: OrderCreateRequestWithCartIds = {
         ...basePayload,
-        cartItemIds: checkoutData.items.map((item) => item.id),
-        plantInstanceId: null,
+        cartItemIds:
+          checkoutData.orderType === 2
+            ? undefined
+            : checkoutData.items.map((item) => item.id),
       };
 
       let created: OrderCreatePayload;
       try {
         created = await createOrder(payloadWithCartIds);
       } catch (primaryError) {
+        if (checkoutData.orderType === 2) {
+          throw primaryError;
+        }
+
         const canFallback =
           primaryError instanceof Error &&
           /(status 400|status 415|status 422)/i.test(primaryError.message);

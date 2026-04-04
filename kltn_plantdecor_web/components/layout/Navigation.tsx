@@ -40,6 +40,13 @@ const NAV_LABEL_KEYS: Record<HeaderIconKey, string> = {
   ai: 'aiRecommendation',
 };
 
+const USER_MENU_LABEL_KEYS: Record<string, string> = {
+  '/profile/[userid]': 'profile',
+  '/orders/[userid]': 'orderHistory',
+  '/wishlist/[userid]': 'wishlist',
+  '/logout': 'logout',
+};
+
 const ICONS: Record<HeaderIconKey, ReactNode> = {
   home: <HomeIcon sx={{ fontSize: 20 }} />,
   store: <StorefrontIcon sx={{ fontSize: 20 }} />,
@@ -80,6 +87,12 @@ export default function Navigation({ initialStoreCategories = [] }: NavigationPr
   const tNav = useTranslations('nav');
   const tAuth = useTranslations('auth');
   const tCommon = useTranslations('common');
+  const tUserMenu = useTranslations('headerUserMenu');
+
+  const getUserMenuLabel = (href: string) => {
+    const key = USER_MENU_LABEL_KEYS[href];
+    return key ? tUserMenu(key) : href;
+  };
 
   const activeUser = user || null;
   const rawRole = activeUser?.role ?? 'guest';
@@ -246,15 +259,17 @@ export default function Navigation({ initialStoreCategories = [] }: NavigationPr
                   </Link>
 
                   {isStoreHoverOpen && (
-                    <div className="absolute left-0 top-full z-50 mt-2 w-96 rounded-xl border border-gray-100 bg-white p-3 shadow-xl">
-                      <div className="mb-2 border-b border-gray-100 pb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                        Categories
+                    <div className="absolute left-0 top-full z-50 w-96 pt-2">
+                      <div className="rounded-xl border border-gray-100 bg-white p-3 shadow-xl">
+                        <div className="mb-2 border-b border-gray-100 pb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                          Categories
+                        </div>
+                        {filteredStoreCategories.length > 0 ? (
+                          renderStoreCategoryTree(filteredStoreCategories)
+                        ) : (
+                          <p className="px-3 py-2 text-sm text-gray-500">No categories available</p>
+                        )}
                       </div>
-                      {filteredStoreCategories.length > 0 ? (
-                        renderStoreCategoryTree(filteredStoreCategories)
-                      ) : (
-                        <p className="px-3 py-2 text-sm text-gray-500">No categories available</p>
-                      )}
                     </div>
                   )}
                 </div>
@@ -375,7 +390,7 @@ export default function Navigation({ initialStoreCategories = [] }: NavigationPr
                       className="block px-2 py-2 text-gray-700 hover:bg-green-50 hover:text-green-600 rounded-lg text-sm transition-colors"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      {item.label}
+                      {getUserMenuLabel(item.href)}
                     </Link>
                   ))}
                 </>

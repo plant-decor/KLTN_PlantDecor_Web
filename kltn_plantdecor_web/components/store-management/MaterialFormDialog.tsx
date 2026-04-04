@@ -2,186 +2,230 @@
 
 import React, { useEffect, useState } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  Grid,
   Box,
-  FormControlLabel,
+  Button,
   Checkbox,
-  Stack,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Divider,
+  FormControl,
+  FormControlLabel,
+  Grid,
+  InputLabel,
+  MenuItem,
+  Select,
+  Stack,
+  TextField,
   Typography,
 } from '@mui/material';
-import { useForm, Controller } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import ImageUpload from './ImageUpload';
-import type { Material, ImageUploadData } from '@/types/store-management.types';
+import type {
+  MaterialDetail,
+  MaterialFormData,
+  ImageUploadData,
+} from '@/types/store-management.types';
+
+interface OptionItem {
+  id: number;
+  name: string;
+}
 
 interface MaterialFormDialogProps {
   open: boolean;
-  editingData?: Material;
+  editingData?: MaterialDetail;
+  categories: OptionItem[];
+  tags: OptionItem[];
   onClose: () => void;
-  onSubmit: (data: Material, images: ImageUploadData[]) => void;
+  onSubmit: (data: MaterialFormData, images: ImageUploadData[]) => void;
   isLoading?: boolean;
 }
 
-const defaultMaterial: Material = {
-  id: 0,
+const defaultMaterial: MaterialFormData = {
   materialCode: '',
   name: '',
   description: '',
   basePrice: 0,
   unit: '',
   brand: '',
-  specifications: {},
-  expiryMonths: 0,
+  specifications: '',
+  expiryMonths: null,
   isActive: true,
+  categoryIds: [],
+  tagIds: [],
 };
 
 export default function MaterialFormDialog({
   open,
   editingData,
+  categories,
+  tags,
   onClose,
   onSubmit,
   isLoading = false,
 }: MaterialFormDialogProps) {
-  const { control, handleSubmit, reset } = useForm<Material>({
+  const { control, handleSubmit, reset } = useForm<MaterialFormData>({
     defaultValues: defaultMaterial,
   });
 
   const [images, setImages] = useState<ImageUploadData[]>([]);
-  const [specs, setSpecs] = useState<string>('{}');
   const [specsError, setSpecsError] = useState<string>('');
 
   useEffect(() => {
+    if (!open) {
+      return;
+    }
+
     if (editingData) {
-      reset(editingData);
-      setSpecs(JSON.stringify(editingData.specifications || {}, null, 2));
-      if (editingData.images) {
-        setImages(
-          editingData.images.map((img) => ({
-            ...img,
-            file: new File([], ''),
-            preview: img.preview || img.url || '',
-          }))
-        );
-      }
+      reset({
+        materialCode: editingData.materialCode,
+        name: editingData.name,
+        description: editingData.description || '',
+        basePrice: editingData.basePrice,
+        unit: editingData.unit,
+        brand: editingData.brand,
+        specifications: editingData.specifications
+          ? JSON.stringify(editingData.specifications, null, 2)
+          : '',
+        expiryMonths: editingData.expiryMonths ?? null,
+        isActive: editingData.isActive,
+        categoryIds: editingData.categories.map((item) => item.id),
+        tagIds: editingData.tags.map((item) => item.id),
+      });
+
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setImages(
+        editingData.images.map((image) => ({
+          id: image.id,
+          existingImageId: image.id,
+          preview: image.imageUrl,
+          url: image.imageUrl,
+          isThumbnail: Boolean(image.isPrimary),
+        }))
+      );
     } else {
       reset(defaultMaterial);
-      setSpecs('{}');
       setImages([]);
     }
+
     setSpecsError('');
   }, [editingData, open, reset]);
 
-  const handleFormSubmit = (data: Material) => {
-    try {
-      const parsedSpecs = JSON.parse(specs);
-      const submitData = {
-        ...data,
-        specifications: parsedSpecs,
-        images: undefined,
-      };
-      onSubmit(submitData, images);
-    } catch (error) {
-      setSpecsError('JSON không hợp lệ');
+  const handleFormSubmit = (data: MaterialFormData) => {
+    const rawSpecs = data.specifications ?? '';
+    const normalizedSpecs = rawSpecs.trim();
+
+    if (normalizedSpecs) {
+      try {
+        JSON.parse(normalizedSpecs);
+      } catch {
+        setSpecsError('Invalid JSON format');
+        return;
+      }
     }
+
+    setSpecsError('');
+    onSubmit(
+      {
+        ...data,
+        specifications: normalizedSpecs,
+      },
+      images
+    );
   };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>{editingData ? 'Chỉnh sửa vật tư' : 'Thêm vật tư mới'}</DialogTitle>
+      <DialogTitle>{editingData ? 'Edit Material' : 'Create Material'}</DialogTitle>
       <DialogContent dividers sx={{ maxHeight: '80vh', overflow: 'auto' }}>
         <Stack spacing={3}>
-          {/* Basic Information */}
           <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom>
-              Thông tin cơ bản
+              Basic information
             </Typography>
             <Grid container spacing={2}>
-              <Grid sx={{ xs: 12, sm: 6 }}>
-                <Controller
-                  name="materialCode"
-                  control={control}
-                  render={({ field }) => (
-                    <TextField {...field} label="Mã vật tư" fullWidth required />
-                  )}
-                />
-              </Grid>
-              <Grid sx={{ xs: 12, sm: 6 }}>
+              {editingData && (
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Controller
+                    name="materialCode"
+                    control={control}
+                    render={({ field }) => (
+                      <TextField {...field} label="Material code" fullWidth InputProps={{ readOnly: true }} />
+                    )}
+                  />
+                </Grid>
+              )}
+              <Grid size={{ xs: 12, sm: editingData ? 6 : 12 }}>
                 <Controller
                   name="name"
                   control={control}
-                  render={({ field }) => (
-                    <TextField {...field} label="Tên vật tư" fullWidth required />
-                  )}
+                  rules={{ required: true }}
+                  render={({ field }) => <TextField {...field} label="Material name" fullWidth required />}
                 />
               </Grid>
-              <Grid sx={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Controller
                   name="brand"
                   control={control}
-                  render={({ field }) => (
-                    <TextField {...field} label="Thương hiệu" fullWidth />
-                  )}
+                  render={({ field }) => <TextField {...field} label="Brand" fullWidth />}
                 />
               </Grid>
-              <Grid sx={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Controller
                   name="unit"
                   control={control}
-                  render={({ field }) => (
-                    <TextField {...field} label="Đơn vị (kg, lít, cái, etc.)" fullWidth />
-                  )}
+                  render={({ field }) => <TextField {...field} label="Unit" fullWidth />}
                 />
               </Grid>
-              <Grid sx={{ xs: 12 }}>
+              <Grid size={{ xs: 12 }}>
                 <Controller
                   name="description"
                   control={control}
-                  render={({ field }) => (
-                    <TextField {...field} label="Mô tả" fullWidth multiline rows={3} />
-                  )}
+                  render={({ field }) => <TextField {...field} label="Description" fullWidth multiline rows={3} />}
                 />
               </Grid>
             </Grid>
           </Box>
 
-          {/* Pricing & Expiry */}
+          <Divider />
+
           <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom>
-              Giá & Hạn sử dụng
+              Price and expiry
             </Typography>
             <Grid container spacing={2}>
-              <Grid sx={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Controller
                   name="basePrice"
                   control={control}
                   render={({ field }) => (
                     <TextField
                       {...field}
-                      label="Giá cơ bản"
+                      label="Base price"
                       fullWidth
                       type="number"
-                      onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
                     />
                   )}
                 />
               </Grid>
-              <Grid sx={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Controller
                   name="expiryMonths"
                   control={control}
                   render={({ field }) => (
                     <TextField
-                      {...field}
-                      label="Hạn sử dụng (tháng)"
+                      value={field.value ?? ''}
+                      label="Expiry months"
                       fullWidth
                       type="number"
-                      onChange={(e) => field.onChange(parseInt(e.target.value))}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        field.onChange(value === '' ? null : Number(value));
+                      }}
                     />
                   )}
                 />
@@ -191,47 +235,122 @@ export default function MaterialFormDialog({
 
           <Divider />
 
-          {/* Specifications */}
           <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom>
-              Thông số kỹ thuật (JSON)
+              Categories and tags
             </Typography>
-            <TextField
-              value={specs}
-              onChange={(e) => {
-                setSpecs(e.target.value);
-                setSpecsError('');
-              }}
-              label="Thông số kỹ thuật"
-              fullWidth
-              multiline
-              rows={6}
-              placeholder='{"color": "xanh", "size": "lớn"}'
-              error={!!specsError}
-              helperText={specsError}
-              sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Controller
+                  name="categoryIds"
+                  control={control}
+                  render={({ field }) => (
+                    <FormControl fullWidth>
+                      <InputLabel>Categories</InputLabel>
+                      <Select
+                        {...field}
+                        multiple
+                        label="Categories"
+                        value={field.value || []}
+                        onChange={(event) => {
+                          const raw = event.target.value as number[] | string[];
+                          field.onChange(raw.map((item) => Number(item)));
+                        }}
+                        renderValue={(selected) => (
+                          <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap">
+                            {(selected as number[]).map((id) => {
+                              const item = categories.find((category) => category.id === id);
+                              return <Chip key={id} label={item?.name ?? id} size="small" />;
+                            })}
+                          </Stack>
+                        )}
+                      >
+                        {categories.map((item) => (
+                          <MenuItem key={item.id} value={item.id}>
+                            {item.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  )}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Controller
+                  name="tagIds"
+                  control={control}
+                  render={({ field }) => (
+                    <FormControl fullWidth>
+                      <InputLabel>Tags</InputLabel>
+                      <Select
+                        {...field}
+                        multiple
+                        label="Tags"
+                        value={field.value || []}
+                        onChange={(event) => {
+                          const raw = event.target.value as number[] | string[];
+                          field.onChange(raw.map((item) => Number(item)));
+                        }}
+                        renderValue={(selected) => (
+                          <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap">
+                            {(selected as number[]).map((id) => {
+                              const item = tags.find((tag) => tag.id === id);
+                              return <Chip key={id} label={item?.name ?? id} size="small" />;
+                            })}
+                          </Stack>
+                        )}
+                      >
+                        {tags.map((item) => (
+                          <MenuItem key={item.id} value={item.id}>
+                            {item.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  )}
+                />
+              </Grid>
+            </Grid>
+          </Box>
+
+          <Divider />
+
+          <Box>
+            <Typography variant="h6" fontWeight="600" gutterBottom>
+              Specifications (JSON)
+            </Typography>
+            <Controller
+              name="specifications"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Specifications"
+                  fullWidth
+                  multiline
+                  rows={6}
+                  placeholder='{"color": "gray", "weight": "5kg"}'
+                  error={Boolean(specsError)}
+                  helperText={specsError}
+                />
+              )}
             />
           </Box>
 
           <Divider />
 
-          {/* Images */}
-          <ImageUpload
-            images={images}
-            onImagesChange={setImages}
-            label="Hình ảnh vật tư"
-            maxImages={10}
-          />
+          <ImageUpload images={images} onImagesChange={setImages} label="Material images" maxImages={10} />
 
-          {/* Active Status */}
           <Box>
             <Controller
               name="isActive"
               control={control}
               render={({ field }) => (
                 <FormControlLabel
-                  control={<Checkbox {...field} checked={field.value} />}
-                  label="Kích hoạt"
+                  control={
+                    <Checkbox checked={field.value} onChange={(event) => field.onChange(event.target.checked)} />
+                  }
+                  label="Active"
                 />
               )}
             />
@@ -239,13 +358,9 @@ export default function MaterialFormDialog({
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Hủy</Button>
-        <Button
-          onClick={handleSubmit(handleFormSubmit)}
-          variant="contained"
-          disabled={isLoading}
-        >
-          {isLoading ? 'Đang lưu...' : 'Lưu'}
+        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={handleSubmit(handleFormSubmit)} variant="contained" disabled={isLoading}>
+          {isLoading ? 'Saving...' : 'Save'}
         </Button>
       </DialogActions>
     </Dialog>

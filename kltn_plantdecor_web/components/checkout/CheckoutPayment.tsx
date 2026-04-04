@@ -22,6 +22,7 @@ import {
 import type { CheckoutData } from '@/types/cart.types';
 import type { OrderInvoice } from '@/types/order.types';
 import { createPaymentUrl, getInvoicesByOrderId } from '@/lib/api/orderService';
+import Image from 'next/image';
 
 interface CheckoutPaymentProps {
   checkoutData: CheckoutData;
@@ -33,23 +34,7 @@ interface CheckoutPaymentProps {
 const PAYMENT_METHODS = [
   {
     id: 'credit_debit',
-    label: 'Credit / Debit Card',
-    icon: <CreditCardIcon />,
-  },
-  {
-    id: 'bank_transfer',
-    label: 'Bank Transfer',
-    icon: <BankIcon />,
-  },
-  {
-    id: 'cod',
-    label: 'Cash on Delivery (COD)',
-    icon: <CashIcon />,
-  },
-  {
-    id: 'ewallet',
-    label: 'MoMo E-Wallet',
-    icon: <WalletIcon />,
+    icon: <Image src="/logo/vnpay_icon.svg" alt="VNPay" width={100} height={100} />,
   },
 ];
 
@@ -163,7 +148,7 @@ export default function CheckoutPayment({
                       }}
                     >
                       {method.icon}
-                      <Typography variant="body1">{method.label}</Typography>
+                      {/* <Typography variant="body1">{method.label}</Typography> */}
                     </Box>
                   }
                   sx={{
@@ -192,7 +177,7 @@ export default function CheckoutPayment({
             Selected Payment Method
           </Typography>
           <Typography variant="body2">
-            {PAYMENT_METHODS.find((m) => m.id === selectedMethod)?.label}
+            {PAYMENT_METHODS.find((m) => m.id === selectedMethod)?.icon}
           </Typography>
         </Box>
 
@@ -235,9 +220,9 @@ export default function CheckoutPayment({
           variant="contained"
           onClick={() => void handleCreatePayment()}
           disabled={isLoadingInvoice || isSubmitting || !selectedInvoice}
-          sx={{ mt: 3, backgroundColor: '#4CAF50' }}
+          sx={{ mt: 3, backgroundColor: 'var(--primary)', fontWeight: 'bold', fontSize: '16px', '&:hover': { backgroundColor: '#45a049' } }}
         >
-          {isSubmitting ? 'Creating payment...' : 'Pay with VNPay'}
+          {isSubmitting ? 'Creating payment...' : `Thanh toán thông qua VNPay`}
         </Button>
       </CardContent>
     </Card>

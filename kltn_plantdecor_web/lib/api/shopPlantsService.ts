@@ -11,6 +11,7 @@ export interface ShopPlantSearchRequest {
   keyword?: string;
   isActive?: boolean;
   placementType?: number;
+  careLevelType?: number;
   careLevel?: string;
   toxicity?: boolean;
   airPurifying?: boolean;
@@ -22,6 +23,8 @@ export interface ShopPlantSearchRequest {
   maxBasePrice?: number;
   categoryIds?: number[];
   tagIds?: number[];
+  sizes?: number[];
+  fengShuiElement?: string;
   nurseryId?: number;
   sortBy?: string;
   sortDirection?: string;
@@ -86,6 +89,47 @@ export interface NurseryPlantInstanceSearchPayload {
   hasNext: boolean;
 }
 
+export interface PlantEnumValue {
+  value: number;
+  name: string;
+}
+
+export interface PlantEnumGroup {
+  enumName: 'PlacementType' | 'PlantSize' | 'CareLevelType' | string;
+  values: PlantEnumValue[];
+}
+
+export interface ShopNurseryListItem {
+  id: number;
+  nurseryMaterialId: number | null;
+  nurseryPlantComboId: number | null;
+  commonPlantId: number | null;
+  managerId: number | null;
+  managerName: string | null;
+  name: string;
+  address: string;
+  phone: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface ShopNurserySearchRequest {
+  pagination: {
+    pageNumber: number;
+    pageSize: number;
+  };
+}
+
+export interface ShopNurserySearchPayload {
+  items: ShopNurseryListItem[];
+  totalCount: number;
+  pageNumber: number;
+  pageSize: number;
+  totalPages: number;
+  hasPrevious: boolean;
+  hasNext: boolean;
+}
+
 export const searchShopPlants = async (
   data: ShopPlantSearchRequest,
   isServer: boolean,
@@ -108,4 +152,27 @@ export const searchNurseryPlantInstances = async (
     data,
     loading
   );
+};
+
+export const getPlantEnums = async (
+  isServer: boolean,
+  loading = true
+): Promise<ResponseModel<PlantEnumGroup[]>> => {
+  if (isServer) {
+    return apiServer.get('/system/enums/plants');
+  }
+
+  return apiClient.get('/system/enums/plants', undefined, loading);
+};
+
+export const searchShopNurseries = async (
+  data: ShopNurserySearchRequest,
+  isServer: boolean,
+  loading = true
+): Promise<ResponseModel<ShopNurserySearchPayload>> => {
+  if (isServer) {
+    return apiServer.post('/shop/nurseries/search', data);
+  }
+
+  return apiClient.post('/shop/nurseries/search', data, loading);
 };

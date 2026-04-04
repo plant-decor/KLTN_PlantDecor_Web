@@ -13,20 +13,33 @@ interface CartItemTarget {
   nurseryMaterialId?: number | null;
 }
 
+interface CartDisplayItem {
+  id: number;
+  name?: string;
+  productName?: string;
+  totalAvailableStock?: number;
+  availableCommonQuantity?: number;
+  availableInstances?: number;
+}
+
 interface AddToCartButtonProps {
-  plant: Plant;
+  plant?: Plant;
+  item?: CartDisplayItem;
   maxQuantity?: number | null;
   cartItemTarget?: CartItemTarget;
   assumeInStock?: boolean;
   disabled?: boolean;
+  onAdded?: () => void;
 }
 
 export default function AddToCartButton({
   plant,
+  item,
   maxQuantity,
   cartItemTarget,
   assumeInStock = false,
   disabled = false,
+  onAdded,
 }: AddToCartButtonProps) {
   const tProducts = useTranslations('products');
   const tCart = useTranslations('cart');
@@ -35,10 +48,13 @@ export default function AddToCartButton({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const { user } = useAuthStore();
+  const currentItem = item ?? plant;
+
+  const itemId = currentItem?.id ?? 0;
 
   const plantStock = Math.max(
     0,
-    plant.totalAvailableStock || plant.availableCommonQuantity || plant.availableInstances || 0
+    currentItem?.totalAvailableStock || currentItem?.availableCommonQuantity || currentItem?.availableInstances || 0
   );
 
   const hasMaxQuantity = typeof maxQuantity === 'number';
@@ -80,13 +96,14 @@ export default function AddToCartButton({
           nurseryMaterialId: cartItemTarget.nurseryMaterialId ?? null,
         });
       } else {
-        await addPlantToCart(plant.id, quantity);
+        await addPlantToCart(itemId, quantity);
       }
 
       notifyCartUpdated();
-      const productDisplayName = plant.name ?? plant.productName ?? `#${plant.id}`;
+      const productDisplayName = currentItem?.name ?? currentItem?.productName ?? `#${itemId}`;
       setFeedbackMessage(tCart('addedSuccess', { quantity, name: productDisplayName }));
       setQuantity(1);
+      onAdded?.();
       setTimeout(() => setFeedbackMessage(''), 3000);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to add item to cart';
@@ -111,6 +128,10 @@ export default function AddToCartButton({
   };
 
   const isButtonDisabled = disabled || isLoading || isOutOfStock;
+
+  if (!currentItem || itemId <= 0) {
+    return null;
+  }
 
   return (
     <div className="flex flex-col gap-4">

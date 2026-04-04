@@ -17,6 +17,7 @@ import {
   ChatBubbleOutline as ChatIcon,
   Close as CloseIcon,
 } from '@mui/icons-material';
+import { useTranslations } from 'next-intl';
 
 interface ChatMessage {
   id: number;
@@ -24,17 +25,25 @@ interface ChatMessage {
   text: string;
 }
 
-const MOCK_MESSAGES: ChatMessage[] = [
-  { id: 1, sender: 'ai', text: 'Xin chào, mình là AI hỗ trợ FAQ Plant care.' },
-  { id: 2, sender: 'user', text: 'Cách theo dõi lịch chăm cây ở đâu?' },
-  { id: 3, sender: 'ai', text: 'Bạn vào My Plant > lịch chăm sóc theo từng chậu cây.' },
-];
-
-const QUICK_REPLIES = ['Lịch chăm cây', 'Đơn hàng', 'Dịch vụ chăm sóc'];
-
 export default function SupportChatWidget() {
+  const tChat = useTranslations('chatWidget');
   const [isOpen, setIsOpen] = useState(false);
-  const messages = useMemo(() => MOCK_MESSAGES, []);
+  const messages: ChatMessage[] = useMemo(
+    () => [
+      { id: 1, sender: 'ai' as const, text: tChat('mockMessages.welcome') },
+      { id: 2, sender: 'user' as const, text: tChat('mockMessages.userQuestion') },
+      { id: 3, sender: 'ai' as const, text: tChat('mockMessages.answer') },
+    ],
+    [tChat]
+  );
+  const quickReplies = useMemo(
+    () => [
+      tChat('quickReplies.careSchedule'),
+      tChat('quickReplies.orders'),
+      tChat('quickReplies.careServices'),
+    ],
+    [tChat]
+  );
 
   return (
     <Box
@@ -67,13 +76,13 @@ export default function SupportChatWidget() {
             <Stack direction="row" spacing={1} alignItems="center">
               <ChatIcon sx={{ fontSize: 20 }} />
               <Typography variant="subtitle1" fontWeight={600}>
-                Tin nhắn hỗ trợ Plant care
+                {tChat('title')}
               </Typography>
             </Stack>
             <IconButton
               size="small"
               onClick={() => setIsOpen(false)}
-              aria-label="Đóng khung chat hỗ trợ"
+              aria-label={tChat('aria.closeChat')}
               sx={{ color: 'common.white' }}
             >
               <CloseIcon sx={{ fontSize: 18 }} />
@@ -117,7 +126,7 @@ export default function SupportChatWidget() {
             </Stack>
 
             <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" mt={3}>
-              {QUICK_REPLIES.map((item) => (
+              {quickReplies.map((item) => (
                 <Chip
                   key={item}
                   label={item}
@@ -133,7 +142,7 @@ export default function SupportChatWidget() {
             <TextField
               fullWidth
               size="small"
-              placeholder="Tôi có thể giúp gì cho bạn?"
+              placeholder={tChat('inputPlaceholder')}
               slotProps={{
                 input: {
                   readOnly: true,
@@ -141,7 +150,7 @@ export default function SupportChatWidget() {
                     <InputAdornment position="end">
                       <IconButton
                         size="small"
-                        aria-label="Gửi tin nhắn"
+                        aria-label={tChat('aria.sendMessage')}
                         sx={{ bgcolor: 'grey.200' }}
                       >
                         <SendIcon sx={{ fontSize: 16 }} />
@@ -156,7 +165,7 @@ export default function SupportChatWidget() {
       ) : (
         <Fab
           onClick={() => setIsOpen(true)}
-          aria-label="Mở chat hỗ trợ"
+          aria-label={tChat('aria.openChat')}
           sx={{
             width:  70,
             height: 70,

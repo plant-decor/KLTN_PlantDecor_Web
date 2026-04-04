@@ -22,6 +22,8 @@ import type { ManagerNursery } from '@/types/manager-store-catalog.types';
 import type { ResponseModel } from '@/types/api.types';
 import CommonPlantTab from '@/components/manager-store-catalog/CommonPlantTab';
 import ComingSoonTab from '@/components/manager-store-catalog/ComingSoonTab';
+import PlantInstanceManagerTab from '@/components/manager-store-catalog/PlantInstanceManagerTab';
+import ManagerMaterialTab from '@/components/store-management/MaterialTab';
 
 interface TabPanelProps {
   children: React.ReactNode;
@@ -197,10 +199,7 @@ export default function StoreCatalogPage() {
               <CommonPlantTab nurseryId={nursery?.id ?? null} />
             </TabPanel>
             <TabPanel value={tabValue} index={1}>
-              <ComingSoonTab
-                title="PlantInstance API pending"
-                description="This tab is ready in CSR mode and waiting for manager import APIs."
-              />
+              <PlantInstanceManagerTab nurseryId={nursery?.id ?? null} />
             </TabPanel>
             <TabPanel value={tabValue} index={2}>
               <ComingSoonTab
@@ -209,10 +208,7 @@ export default function StoreCatalogPage() {
               />
             </TabPanel>
             <TabPanel value={tabValue} index={3}>
-              <ComingSoonTab
-                title="Material API pending"
-                description="CSR structure is ready and can be wired once material manager APIs are available."
-              />
+              <ManagerMaterialTab mode="manager" />
             </TabPanel>
           </Box>
         </Paper>

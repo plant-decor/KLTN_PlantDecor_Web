@@ -34,7 +34,6 @@ export default function LoginForm({
     setErrors({});
 
     const result = await onSubmit(email, password);
-    console.log('Login result:', result, email, password);
   };
 
   return (

@@ -2,54 +2,67 @@
 
 import React from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
   Box,
-  Grid,
-  Typography,
-  Divider,
-  Stack,
+  Button,
   Chip,
-  CardMedia,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  Grid,
+  Stack,
+  Typography,
 } from '@mui/material';
-import type { Material } from '@/types/store-management.types';
+import type { MaterialDetail } from '@/types/store-management.types';
 
 interface MaterialViewDialogProps {
   open: boolean;
-  material?: Material;
+  material?: MaterialDetail;
   onClose: () => void;
 }
 
+const formatDateTime = (value?: string) => {
+  if (!value) {
+    return '-';
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleString('vi-VN');
+};
+
 export default function MaterialViewDialog({ open, material, onClose }: MaterialViewDialogProps) {
-  if (!material) return null;
+  if (!material) {
+    return null;
+  }
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>Chi tiết vật tư</DialogTitle>
+      <DialogTitle>Material Detail</DialogTitle>
       <DialogContent dividers sx={{ maxHeight: '80vh', overflow: 'auto' }}>
         <Stack spacing={3}>
-          {/* Images */}
-          {material.images && material.images.length > 0 && (
+          {material.images.length > 0 && (
             <Box>
               <Typography variant="subtitle1" fontWeight="600" gutterBottom>
-                Hình ảnh
+                Images
               </Typography>
               <Grid container spacing={2}>
-                {material.images.map((img, index) => (
-                  <Grid sx={{ xs: 12, sm: 6, md: 4 }} key={index}>
+                {material.images.map((image) => (
+                  <Grid key={image.id} size={{ xs: 12, sm: 6, md: 4 }}>
                     <Box sx={{ position: 'relative' }}>
-                      <CardMedia
+                      <Box
                         component="img"
-                        image={img.preview || img.url}
-                        alt={`Material ${index + 1}`}
-                        sx={{ borderRadius: 1, height: 200, objectFit: 'cover' }}
+                        src={image.imageUrl}
+                        alt={`Material image ${image.id}`}
+                        sx={{ borderRadius: 1, height: 200, objectFit: 'cover', width: '100%' }}
                       />
-                      {img.isThumbnail && (
+                      {image.isPrimary && (
                         <Chip
-                          label="Ảnh chính"
+                          label="Primary"
                           size="small"
                           color="primary"
                           sx={{ position: 'absolute', top: 8, right: 8 }}
@@ -64,64 +77,62 @@ export default function MaterialViewDialog({ open, material, onClose }: Material
 
           <Divider />
 
-          {/* Basic Info */}
           <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom>
-              Thông tin cơ bản
+              Basic information
             </Typography>
             <Grid container spacing={2}>
-              <Grid sx={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="body2" color="text.secondary">
-                  Mã vật tư
+                  Material code
                 </Typography>
                 <Typography variant="body1" fontWeight="600">
                   {material.materialCode}
                 </Typography>
               </Grid>
-              <Grid sx={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="body2" color="text.secondary">
-                  Tên vật tư
+                  Name
                 </Typography>
                 <Typography variant="body1" fontWeight="600">
                   {material.name}
                 </Typography>
               </Grid>
-              <Grid sx={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="body2" color="text.secondary">
-                  Thương hiệu
+                  Brand
                 </Typography>
                 <Typography variant="body1" fontWeight="600">
-                  {material.brand}
+                  {material.brand || '-'}
                 </Typography>
               </Grid>
-              <Grid sx={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="body2" color="text.secondary">
-                  Đơn vị
+                  Unit
                 </Typography>
                 <Typography variant="body1" fontWeight="600">
-                  {material.unit}
+                  {material.unit || '-'}
                 </Typography>
               </Grid>
-              <Grid sx={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 12 }}>
                 <Typography variant="body2" color="text.secondary">
-                  Mô tả
+                  Description
                 </Typography>
-                <Typography variant="body1">{material.description}</Typography>
+                <Typography variant="body1">{material.description || '-'}</Typography>
               </Grid>
             </Grid>
           </Box>
 
           <Divider />
 
-          {/* Pricing & Expiry */}
           <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom>
-              Giá & Hạn sử dụng
+              Price and status
             </Typography>
             <Grid container spacing={2}>
-              <Grid sx={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <Typography variant="body2" color="text.secondary">
-                  Giá cơ bản
+                  Base price
                 </Typography>
                 <Typography variant="body1" fontWeight="600">
                   {material.basePrice.toLocaleString('vi-VN', {
@@ -130,23 +141,70 @@ export default function MaterialViewDialog({ open, material, onClose }: Material
                   })}
                 </Typography>
               </Grid>
-              <Grid sx={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <Typography variant="body2" color="text.secondary">
-                  Hạn sử dụng
+                  Expiry months
                 </Typography>
                 <Typography variant="body1" fontWeight="600">
-                  {material.expiryMonths} tháng
+                  {material.expiryMonths ?? '-'}
                 </Typography>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Status
+                </Typography>
+                <Chip
+                  label={material.isActive ? 'Active' : 'Inactive'}
+                  color={material.isActive ? 'success' : 'default'}
+                  variant="outlined"
+                  sx={{ mt: 0.5 }}
+                />
               </Grid>
             </Grid>
           </Box>
 
           <Divider />
 
-          {/* Specifications */}
           <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom>
-              Thông số kỹ thuật
+              Categories and tags
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              Categories
+            </Typography>
+            <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mb: 2 }}>
+              {material.categories.length > 0 ? (
+                material.categories.map((category) => (
+                  <Chip key={category.id} label={category.name} size="small" variant="outlined" />
+                ))
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  No categories
+                </Typography>
+              )}
+            </Stack>
+
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              Tags
+            </Typography>
+            <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+              {material.tags.length > 0 ? (
+                material.tags.map((tag) => (
+                  <Chip key={tag.id} label={tag.tagName} size="small" color="info" variant="outlined" />
+                ))
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  No tags
+                </Typography>
+              )}
+            </Stack>
+          </Box>
+
+          <Divider />
+
+          <Box>
+            <Typography variant="h6" fontWeight="600" gutterBottom>
+              Specifications
             </Typography>
             <Box
               sx={{
@@ -158,28 +216,39 @@ export default function MaterialViewDialog({ open, material, onClose }: Material
                 overflow: 'auto',
               }}
             >
-              <pre>{JSON.stringify(material.specifications, null, 2)}</pre>
+              <pre>{JSON.stringify(material.specifications ?? {}, null, 2)}</pre>
             </Box>
           </Box>
 
           <Divider />
 
-          {/* Status */}
           <Box>
-            <Typography variant="body2" color="text.secondary">
-              Trạng thái
+            <Typography variant="h6" fontWeight="600" gutterBottom>
+              Metadata
             </Typography>
-            <Chip
-              label={material.isActive ? 'Kích hoạt' : 'Vô hiệu'}
-              color={material.isActive ? 'success' : 'error'}
-              variant="outlined"
-              sx={{ mt: 1 }}
-            />
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Created at
+                </Typography>
+                <Typography variant="body1" fontWeight="600">
+                  {formatDateTime(material.createdAt)}
+                </Typography>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Updated at
+                </Typography>
+                <Typography variant="body1" fontWeight="600">
+                  {formatDateTime(material.updatedAt)}
+                </Typography>
+              </Grid>
+            </Grid>
           </Box>
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Đóng</Button>
+        <Button onClick={onClose}>Close</Button>
       </DialogActions>
     </Dialog>
   );

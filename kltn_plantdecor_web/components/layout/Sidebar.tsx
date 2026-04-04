@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useParams, usePathname, useRouter } from 'next/navigation';
 import { useMemo, type ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Dashboard as DashboardIcon,
   People as PeopleIcon,
@@ -86,6 +87,7 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ isOpen, onClose, role }: SidebarProps) {
+  const tSidebar = useTranslations('sidebar');
   const router = useRouter();
   const params = useParams<{ locale?: string }>();
   const pathname = usePathname();
@@ -95,7 +97,7 @@ export default function Sidebar({ isOpen, onClose, role }: SidebarProps) {
   const items = SIDEBAR_ITEMS_BY_ROLE[resolvedRole] ?? [];
   const allHrefs = items.map((item) => item.href);
   const activeItem = items.find((item) => isActiveRoute(pathname, item.href, allHrefs));
-  const headerLabel = activeItem?.label ?? 'Dashboard';
+  const headerLabel = activeItem?.label ?? tSidebar('dashboard');
 
   const handleLogout = async () => {
     try {

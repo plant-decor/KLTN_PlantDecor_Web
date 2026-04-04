@@ -12,7 +12,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import CheckoutShipping from '@/components/checkout/CheckoutShipping';
 import CheckoutPayment from '@/components/checkout/CheckoutPayment';
 import CheckoutReview from '@/components/checkout/CheckoutReview';
@@ -29,16 +29,13 @@ import {
 } from '@/lib/api/orderService';
 import type {
   OrderCreatePayload,
-  OrderCreateRequestWithCartIds,
-  OrderCreateRequestWithItems,
+  OrderCreateRequest,
 } from '@/types/order.types';
 
 interface CheckoutPageClientProps {
   userId: string;
   cartId: string;
 }
-
-const STEPS = ['Shipping', 'Review', 'Payment', 'Complete'];
 
 const toCartItem = (item: CartApiItem): CartItem => ({
   cartId: item.cartId,
@@ -61,6 +58,14 @@ export default function CheckoutPageClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const locale = useLocale();
+  const tCheckout = useTranslations('checkout');
+  const tCommon = useTranslations('common');
+  const STEPS = [
+    tCheckout('shipping'),
+    tCheckout('review'),
+    tCheckout('payment'),
+    tCheckout('complete'),
+  ];
   const [activeStep, setActiveStep] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -117,7 +122,7 @@ export default function CheckoutPageClient({
 
         if (items.length === 0) {
           if (!isMounted) return;
-          setError('Cart is empty. Please go back to cart.');
+          setError(tCheckout('errors.emptyCartGoBack'));
           setCheckoutData(null);
           setIsLoading(false);
           router.push(`/${locale}/cart/${userId}`);
@@ -151,7 +156,7 @@ export default function CheckoutPageClient({
         });
       } catch (err) {
         if (!isMounted) return;
-        const errorMessage = err instanceof Error ? err.message : 'Failed to load checkout data';
+        const errorMessage = err instanceof Error ? err.message : tCheckout('errors.loadFailed');
         setError(errorMessage);
         setCheckoutData(null);
       } finally {
@@ -174,6 +179,7 @@ export default function CheckoutPageClient({
     plantIdFromQuery,
     plantInstanceIdFromQuery,
     router,
+    tCheckout,
     userId,
   ]);
 
@@ -190,7 +196,7 @@ export default function CheckoutPageClient({
       <Box sx={{ py: 4 }}>
         <Alert severity="error" action={
           <Button size="small" onClick={() => router.push(`/${locale}/cart/${userId}`)}>
-            Back to Cart
+            {tCheckout('backToCart')}
           </Button>
         }>
           {error}
@@ -209,7 +215,7 @@ export default function CheckoutPageClient({
 
   const handleCreateOrderAndGoReview = async () => {
     if (!checkoutData.shippingInfo) {
-      setError('Missing shipping information.');
+      setError(tCheckout('errors.missingShippingInfo'));
       return;
     }
 
@@ -218,60 +224,32 @@ export default function CheckoutPageClient({
       setError('');
 
       if (checkoutData.items.length === 0) {
-        setError('Cart is empty.');
+        setError(tCheckout('errors.emptyCart'));
         return;
       }
 
       const { fullName, phone, address, notes } = checkoutData.shippingInfo;
       if (!fullName || !phone || !address) {
-        setError('Please enter full name, phone and shipping address.');
+        setError(tCheckout('errors.missingRequiredShippingFields'));
         return;
       }
 
-      const basePayload = {
+      const payload: OrderCreateRequest = {
         address,
         phone,
         customerName: fullName,
         note: notes ?? '',
         paymentStrategy: checkoutData.paymentStrategy ?? 1,
         orderType: checkoutData.orderType ?? 1,
-        plantInstanceId:
-          checkoutData.orderType === 2 ? checkoutData.plantInstanceId ?? null : null,
-      };
-      const payloadWithCartIds: OrderCreateRequestWithCartIds = {
-        ...basePayload,
         cartItemIds:
           checkoutData.orderType === 2
-            ? undefined
+            ? []
             : checkoutData.items.map((item) => item.id),
+        plantInstanceId:
+          checkoutData.orderType === 2 ? checkoutData.plantInstanceId ?? 0 : 0,
       };
 
-      let created: OrderCreatePayload;
-      try {
-        created = await createOrder(payloadWithCartIds);
-      } catch (primaryError) {
-        if (checkoutData.orderType === 2) {
-          throw primaryError;
-        }
-
-        const canFallback =
-          primaryError instanceof Error &&
-          /(status 400|status 415|status 422)/i.test(primaryError.message);
-
-        if (!canFallback) {
-          throw primaryError;
-        }
-
-        const fallbackPayload: OrderCreateRequestWithItems = {
-          ...basePayload,
-          items: checkoutData.items.map((item) => ({
-            commonPlantId: item.commonPlantId,
-            quantity: item.quantity,
-            price: item.price || 0,
-          })),
-        };
-        created = await createOrder(fallbackPayload);
-      }
+      const created: OrderCreatePayload = await createOrder(payload);
 
       setCreatedOrder(created);
 
@@ -287,7 +265,7 @@ export default function CheckoutPageClient({
       setActiveStep(1);
     } catch (err) {
       const errorMessage =
-        err instanceof Error ? err.message : 'Failed to submit order';
+        err instanceof Error ? err.message : tCheckout('errors.submitFailed');
       setError(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -296,7 +274,7 @@ export default function CheckoutPageClient({
 
   const handleReviewToPayment = () => {
     if (!createdOrder?.id) {
-      setError('Order has not been created yet.');
+      setError(tCheckout('errors.orderNotCreated'));
       return;
     }
     setError('');
@@ -327,7 +305,7 @@ export default function CheckoutPageClient({
             onClick={handleBack}
             disabled={isSubmitting}
           >
-            Back
+            {tCommon('back')}
           </Button>
         </Box>
       );
@@ -347,7 +325,7 @@ export default function CheckoutPageClient({
           onClick={handleBack}
           disabled={activeStep === 0 || isSubmitting}
         >
-          Back
+          {tCommon('back')}
         </Button>
         <Button
           variant="contained"
@@ -363,7 +341,7 @@ export default function CheckoutPageClient({
           disabled={isSubmitting}
           sx={{ backgroundColor: '#4CAF50' }}
         >
-          {activeStep === 0 ? 'Review Order' : 'Go to Payment'}
+          {activeStep === 0 ? tCheckout('actions.reviewOrder') : tCheckout('actions.goToPayment')}
         </Button>
       </Box>
     );

@@ -116,6 +116,7 @@ export default function StoreManagementPageClient({
             /> */}
             <Tab
               label="Vật Tư"
+              value={3}
               icon={<Inventory2 sx={{ mr: 1 }} />}
               iconPosition="start"
               {...a11yProps(3)}
@@ -136,7 +137,7 @@ export default function StoreManagementPageClient({
             </TabPanel> */}
 
             <TabPanel value={tabValue} index={3}>
-              <MaterialTab initialMaterials={initialMaterials} />
+              <MaterialTab initialMaterials={initialMaterials} mode="admin" />
             </TabPanel>
           </Box>
         </Paper>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/authStore';
 import CartBadge from '@/components/cart/CartBadge';
@@ -14,6 +14,14 @@ import { InputAdornment, TextField } from '@mui/material';
 import { Search as SearchIcon, ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
 import { useTranslations } from 'next-intl';
 import type { CategoryResponse } from '@/lib/api/categoriesService';
+import Image from 'next/image';
+
+const USER_MENU_LABEL_KEYS: Record<string, string> = {
+  '/profile/[userid]': 'profile',
+  '/orders/[userid]': 'orderHistory',
+  '/wishlist/[userid]': 'wishlist',
+  '/logout': 'logout',
+};
 
 /**
  * Header Component (Integrated with Navigation)
@@ -44,10 +52,22 @@ export default function Header({ initialStoreCategories = [] }: HeaderProps) {
   const isUser = !!user;
   const isGuest = !user;
   const userId = user?.id || null;
+  const avatarImageSrc = user?.avatar?.trim() || null;
   const avatarLabel = user?.name ? user.name.charAt(0).toUpperCase() : 'U';
+  const [hasAvatarImageError, setHasAvatarImageError] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const t = useTranslations('common');
   const tAuth = useTranslations('auth');
+  const tUserMenu = useTranslations('headerUserMenu');
+
+  useEffect(() => {
+    setHasAvatarImageError(false);
+  }, [avatarImageSrc]);
+
+  const getUserMenuLabel = (href: string) => {
+    const key = USER_MENU_LABEL_KEYS[href];
+    return key ? tUserMenu(key) : href;
+  };
 
   // Check if user has notification access (staff, manager, admin, shipper, caretaker)
   const hasNotificationAccess = user && ['ADMIN', 'MANAGER', 'STAFF', 'SHIPPER', 'CARETAKER'].includes(user.role?.toUpperCase() || '');
@@ -134,11 +154,22 @@ export default function Header({ initialStoreCategories = [] }: HeaderProps) {
                   <div className="relative">
                     <button
                       onClick={() => setIsUserMenuOpen((open) => !open)}
-                      className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-2 py-1 text-gray-700 hover:text-green-600"
+                      className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-2 py-1 text-gray-700 hover:text-green-600 hover:bg-primary"
                     >
-                      <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-green-600 text-sm font-semibold text-white">
-                        {avatarLabel}
-                      </span>
+                      {avatarImageSrc && !hasAvatarImageError ? (
+                        <Image
+                          src={avatarImageSrc}
+                          width={32}
+                          height={32}
+                          alt={user?.name || 'User avatar'}
+                          className="h-8 w-8 rounded-full object-cover"
+                          onError={() => setHasAvatarImageError(true)}
+                        />
+                      ) : (
+                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-green-600 text-sm font-semibold text-white">
+                          {avatarLabel}
+                        </span>
+                      )}
                       <ExpandMoreIcon sx={{ fontSize: 16 }} />
                     </button>
                     {isUserMenuOpen && (
@@ -151,7 +182,7 @@ export default function Header({ initialStoreCategories = [] }: HeaderProps) {
                               className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
                               onClick={handleLogout}
                             >
-                              {item.label}
+                              {getUserMenuLabel(item.href)}
                             </button>
                           ) : (
                             <Link
@@ -160,7 +191,7 @@ export default function Header({ initialStoreCategories = [] }: HeaderProps) {
                               className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                               onClick={() => setIsUserMenuOpen(false)}
                             >
-                              {item.label}
+                              {getUserMenuLabel(item.href)}
                             </Link>
                           )
                         )}

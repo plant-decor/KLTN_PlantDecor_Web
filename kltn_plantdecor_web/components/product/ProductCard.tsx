@@ -8,7 +8,11 @@ import { Button, Drawer } from '@mui/material';
 import { DeleteOutline as DeleteOutlineIcon, Star as StarIcon } from '@mui/icons-material';
 import { useLocale, useTranslations } from 'next-intl';
 import { useAuthStore } from '@/lib/store/authStore';
-import { addItemToCart, removePlantFromWishlist } from '@/lib/api/cartWishlistService';
+import {
+  addItemToCart,
+  removeItemFromWishlist,
+  type WishlistItemType,
+} from '@/lib/api/cartWishlistService';
 import { notifyCartUpdated } from '@/lib/utils/cartEvents';
 import { get } from '@/lib/api/apiService.client';
 import { ResponseModel } from '@/types/api.types';
@@ -17,13 +21,16 @@ import NurseryList from './NuseriesList';
 import AddToWishlistButton from './AddToWishlistButton';
 import { ShopPlantListItem } from '@/lib/api/shopPlantsService';
 import { formatCurrency } from '@/lib/utils/formatUtil';
+import QuantitySelector from './QuantitySelector';
 
 interface ProductCardProps {
   plant: ShopPlantListItem;
   showAddToWishlistButton?: boolean;
   showAddToCartButton?: boolean;
   showRemoveFromWishlistButton?: boolean;
-  onRemoveFromWishlist?: (plantId: number) => void;
+  wishlistItemType?: WishlistItemType;
+  wishlistItemId?: number;
+  onRemoveFromWishlist?: (itemType: WishlistItemType, itemId: number) => void;
 }
 
 export default function ProductCard({
@@ -31,12 +38,26 @@ export default function ProductCard({
   showAddToWishlistButton = true,
   showAddToCartButton = plant.availableInstances <= 0 ? true : false, 
   showRemoveFromWishlistButton = false,
+  wishlistItemType = 'CommonPlant',
+  wishlistItemId,
   onRemoveFromWishlist,
 }: ProductCardProps) {
+  const primaryActionButtonSx = {
+    textTransform: 'none',
+    whiteSpace: 'nowrap',
+    minHeight: 44,
+    px: 1.5,
+    fontSize: '0.95rem',
+    lineHeight: 1.2,
+    bgcolor: 'var(--primary)',
+    '&:hover': { bgcolor: '#45a049' },
+  };
+
   const router = useRouter();
   const locale = useLocale();
   const tProducts = useTranslations('products');
   const tWishlist = useTranslations('wishlist');
+  const tCommon = useTranslations('common');
   const { user } = useAuthStore();
   const [isWishlistRemoving, setIsWishlistRemoving] = useState(false);
   const [isNurseryDrawerOpen, setIsNurseryDrawerOpen] = useState(false);
@@ -162,8 +183,12 @@ export default function ProductCard({
 
     try {
       setIsWishlistRemoving(true);
-      await removePlantFromWishlist(plant.id);
-      onRemoveFromWishlist?.(plant.id);
+      const targetItemId = wishlistItemId ?? plant.id;
+      if (onRemoveFromWishlist) {
+        await Promise.resolve(onRemoveFromWishlist(wishlistItemType, targetItemId));
+      } else {
+        await removeItemFromWishlist(wishlistItemType, targetItemId);
+      }
     } catch (error) {
       console.error('Remove from wishlist error:', error);
     } finally {
@@ -218,9 +243,9 @@ export default function ProductCard({
         <h3 className="font-semibold text-gray-900 mb-2">{plant.name}</h3>
        <p className="text-gray-600 text-sm mb-4 line-clamp-2">
   {[
-    `Care level: ${plant.careLevel || 'N/A'}`,
-    `Size: ${plant.size || 'N/A'}`,
-    plant.categoryNames?.length > 0 ? `Categories: ${plant.categoryNames.map(c => c.name).join(', ')}` : ''
+      `${tProducts('careLevelLabel')}: ${plant.careLevel || tCommon('noData')}`,
+      `${tProducts('sizeLabel')}: ${plant.size || tCommon('noData')}`,
+      plant.categoryNames?.length > 0 ? `${tProducts('categoryLabel')}: ${plant.categoryNames.map(c => c.name).join(', ')}` : ''
   ].filter(Boolean).join(' • ')}
 </p>
 
@@ -299,16 +324,7 @@ export default function ProductCard({
                 size="medium"
                 fullWidth
                 disabled={isActionDisabled || isOutOfStock}
-                sx={{
-                  textTransform: 'none',
-                  whiteSpace: 'nowrap',
-                  minHeight: 44,
-                  px: 1.5,
-                  fontSize: '0.95rem',
-                  lineHeight: 1.2,
-                  bgcolor: 'var(--primary)',
-                  '&:hover': { bgcolor: '#45a049' },
-                }}
+                sx={primaryActionButtonSx}
               >
                 {isOutOfStock ? tProducts('outOfStock') : tProducts('addToCartCompact')}
               </Button>
@@ -321,16 +337,7 @@ export default function ProductCard({
                 size="medium"
                 fullWidth
                 disabled={isActionDisabled}
-                sx={{
-                  textTransform: 'none',
-                  whiteSpace: 'nowrap',
-                  minHeight: 44,
-                  px: 1.5,
-                  fontSize: '0.95rem',
-                  lineHeight: 1.2,
-                  bgcolor: 'var(--primary)',
-                  '&:hover': { bgcolor: '#45a049' },
-                }}
+                sx={primaryActionButtonSx}
               >
                 {tProducts('createOrder')}
               </Button>
@@ -357,13 +364,13 @@ export default function ProductCard({
             event.stopPropagation();
           }}
         >
-          <h3 className="text-lg font-semibold mb-2">Select nursery</h3>
+          <h3 className="text-lg font-semibold mb-2">{tProducts('nurseryDrawer.selectNursery')}</h3>
           <p className="text-sm text-gray-600 mb-4">
-            Please choose a nursery before continuing.
+            {tProducts('nurseryDrawer.chooseBeforeContinue')}
           </p>
 
           {nurseries.length === 0 ? (
-            <p className="text-sm text-gray-500">No nurseries available.</p>
+            <p className="text-sm text-gray-500">{tProducts('nurseryDrawer.noNurseries')}</p>
           ) : (
             <NurseryList
               isNurseryAvailable={nurseries}
@@ -374,37 +381,13 @@ export default function ProductCard({
 
           {selectedNursery && (
             <div className="mt-4">
-              <p className="text-sm text-gray-600 mb-2">Quantity</p>
-              <div className="flex items-center border border-gray-300 rounded-lg w-fit">
-                <button
-                  type="button"
-                  onClick={(event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    setSelectedQuantity((prev) => Math.max(1, prev - 1));
-                  }}
-                  className="px-4 py-2 hover:bg-gray-100 transition-colors"
-                  disabled={selectedQuantity <= 1}
-                >
-                  -
-                </button>
-                <span className="px-6 py-2 border-x border-gray-300 min-w-14 text-center">
-                  {selectedQuantity}
-                </span>
-                <button
-                  type="button"
-                  onClick={(event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    setSelectedQuantity((prev) => Math.min(selectedNurseryMaxQuantity, prev + 1));
-                  }}
-                  className="px-4 py-2 hover:bg-gray-100 transition-colors"
-                  disabled={selectedQuantity >= selectedNurseryMaxQuantity}
-                >
-                  +
-                </button>
-              </div>
-              <p className="text-xs text-gray-500 mt-1">Available: {selectedNurseryMaxQuantity}</p>
+              <QuantitySelector
+                value={selectedQuantity}
+                max={selectedNurseryMaxQuantity}
+                onChange={setSelectedQuantity}
+                showAvailable
+                preventEventBubbling
+              />
             </div>
           )}
 
@@ -414,7 +397,7 @@ export default function ProductCard({
               fullWidth
               onClick={handleCancelNurserySelection}
             >
-              Cancel
+              {tCommon('cancel')}
             </Button>
             <Button
               variant="contained"
@@ -426,7 +409,7 @@ export default function ProductCard({
                 '&:hover': { bgcolor: '#45a049' },
               }}
             >
-              Continue
+              {tProducts('nurseryDrawer.continue')}
             </Button>
           </div>
         </div>

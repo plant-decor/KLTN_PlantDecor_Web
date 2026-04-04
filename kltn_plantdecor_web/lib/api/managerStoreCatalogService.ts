@@ -4,11 +4,21 @@ import * as apiClient from '@/lib/api/apiService.client';
 import type { ResponseModel } from '@/types/api.types';
 import type {
   AvailableImportCommonPlantItem,
+  BatchUpdatePlantInstanceStatusRequest,
   CommonPlantInventoryItem,
+  CreatePlantInstanceBatchPayload,
+  CreatePlantInstanceBatchRequest,
   CreateCommonPlantRequest,
+  PlantInstanceEnumGroup,
+  PlantInstanceItem,
+  PlantInstanceListQuery,
+  PlantSummaryItem,
   ManagerNursery,
   PaginatedPayload,
   PaginationQuery,
+  SystemPlantSearchPayload,
+  SystemPlantSearchRequest,
+  UpdatePlantInstanceStatusRequest,
   UpdateCommonPlantRequest,
 } from '@/types/manager-store-catalog.types';
 
@@ -86,4 +96,91 @@ export const toggleManagerCommonPlantActive = async (
     undefined,
     loading
   );
+};
+
+export const getManagerPlantsSummary = async (
+  nurseryId: number,
+  loading = true
+): Promise<ResponseModel<PlantSummaryItem[]>> => {
+  return apiClient.get(`/manager/nurseries/${nurseryId}/plants-summary`, undefined, loading);
+};
+
+export const getManagerPlantInstances = async (
+  nurseryId: number,
+  query?: PlantInstanceListQuery,
+  loading = true
+): Promise<ResponseModel<PaginatedPayload<PlantInstanceItem>>> => {
+  const paginationQuery = buildPaginationParams(query);
+  const params = {
+    ...(paginationQuery ?? {}),
+    ...(typeof query?.status === 'number' ? { status: query.status } : {}),
+  };
+
+  return apiClient.get(`/manager/nurseries/${nurseryId}/plant-instances`, params, loading);
+};
+
+export const createManagerPlantInstanceBatch = async (
+  nurseryId: number,
+  request: CreatePlantInstanceBatchRequest,
+  loading = true
+): Promise<ResponseModel<CreatePlantInstanceBatchPayload>> => {
+  return apiClient.post(`/manager/nurseries/${nurseryId}/plant-instances/batch`, request, loading);
+};
+
+export const uploadManagerPlantInstanceThumbnail = async (
+  instanceId: number,
+  file: File,
+  loading = true
+): Promise<ResponseModel<unknown>> => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  return apiClient.post(`/manager/plant-instances/${instanceId}/thumbnail`, formData, loading, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+};
+
+export const uploadManagerPlantInstanceImages = async (
+  instanceId: number,
+  files: File[],
+  loading = true
+): Promise<ResponseModel<unknown>> => {
+  const formData = new FormData();
+  files.forEach((file) => formData.append('files', file));
+
+  return apiClient.post(`/manager/plant-instances/${instanceId}/images`, formData, loading, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+};
+
+export const updateManagerPlantInstanceStatus = async (
+  instanceId: number,
+  request: UpdatePlantInstanceStatusRequest,
+  loading = true
+): Promise<ResponseModel<unknown>> => {
+  return apiClient.patch(`/manager/plant-instances/${instanceId}/status`, request, loading);
+};
+
+export const batchUpdateManagerPlantInstanceStatus = async (
+  request: BatchUpdatePlantInstanceStatusRequest,
+  loading = true
+): Promise<ResponseModel<unknown>> => {
+  return apiClient.patch('/manager/plant-instances/batch-status', request, loading);
+};
+
+export const getPlantInstanceEnums = async (
+  loading = true
+): Promise<ResponseModel<PlantInstanceEnumGroup[]>> => {
+  return apiClient.get('/system/enums/plant-instances', undefined, loading);
+};
+
+export const searchSystemPlants = async (
+  request: SystemPlantSearchRequest,
+  loading = true
+): Promise<ResponseModel<SystemPlantSearchPayload>> => {
+  return apiClient.post('/system/plants/search', request, loading);
 };

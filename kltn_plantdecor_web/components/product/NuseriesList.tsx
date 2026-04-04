@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { List, ListItemButton, ListItemText } from '@mui/material';
+import { useTranslations } from 'next-intl';
 import type { NurseryResponse } from '@/types/nursery.types';
 
 interface NurseryListProps {
@@ -15,6 +16,7 @@ export default function NurseryList({
   onSelectNursery,
   selectedNurseryId,
 }: NurseryListProps) {
+  const tProducts = useTranslations('products');
   const [internalSelectedId, setInternalSelectedId] = useState<number | null>(null);
   const selectedId = selectedNurseryId ?? internalSelectedId ?? isNurseryAvailable[0]?.nurseryId ?? null;
 
@@ -22,7 +24,6 @@ export default function NurseryList({
     setInternalSelectedId(nursery.nurseryId);
     onSelectNursery?.(nursery);
   };
-  console.log('nursery list nhận', isNurseryAvailable)
 
   return (
     <>
@@ -72,13 +73,13 @@ export default function NurseryList({
                   textAlign: 'right',
                   fontWeight: 'semibold'
                 }}
-                primary={`Số lượng: ${nursery.availableInstanceCount}`}
+                primary={`${tProducts('nurseryDrawer.quantity')}: ${nursery.availableInstanceCount}`}
               />
             </ListItemButton>
           ))}
         </List>
       ) : (
-        <p>No nurseries available.</p>
+        <p>{tProducts('nurseryDrawer.noNurseries')}</p>
       )}
     </>
   );

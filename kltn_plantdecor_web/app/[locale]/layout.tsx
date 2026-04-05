@@ -1,19 +1,19 @@
-import { NextIntlClientProvider, hasLocale } from 'next-intl';
-import { getMessages } from 'next-intl/server';
-import { notFound } from 'next/navigation';
-import { type ReactNode } from 'react';
-import { routing } from '@/i18n/routing';
-import { AuthProvider } from '@/components/providers/AuthProvider';
-import { SignalRProvider } from '../../components/providers/SignalRProvider';
-import { ToastProvider } from '@/components/providers/ToastProvider';
-import { LoadingOverlay } from '@/components/LoadingOverlay';
-import { SessionInvalidatedModal } from '@/components/auth/SessionInvalidatedModal';
-import type { Metadata } from 'next';
-import { getCurrentUser } from '@/lib/auth/getCurrentUser';
+import { NextIntlClientProvider, hasLocale } from "next-intl";
+import { getMessages } from "next-intl/server";
+import { notFound } from "next/navigation";
+import { type ReactNode } from "react";
+import { routing } from "@/i18n/routing";
+import { AuthProvider } from "@/components/providers/AuthProvider";
+
+import { ToastProvider } from "@/components/providers/ToastProvider";
+import { LoadingOverlay } from "@/components/LoadingOverlay";
+import { SessionInvalidatedModal } from "@/components/auth/SessionInvalidatedModal";
+import type { Metadata } from "next";
+import { getCurrentUser } from "@/lib/auth/getCurrentUser";
 
 export const metadata: Metadata = {
-  title: 'Plant Decor',
-  description: 'Elevate your living space with AI-powered plant care.',
+  title: "Plant Decor",
+  description: "Elevate your living space with AI-powered plant care.",
 };
 
 interface LocaleLayoutProps {
@@ -21,7 +21,10 @@ interface LocaleLayoutProps {
   params: Promise<{ locale: string }>;
 }
 
-export default async function LocaleLayout({ children, params }: LocaleLayoutProps) {
+export default async function LocaleLayout({
+  children,
+  params,
+}: LocaleLayoutProps) {
   const { locale } = await params;
 
   // Validate locale — render 404 if invalid
@@ -35,14 +38,12 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
-        <AuthProvider initialUser={initialUser}>
-          <SignalRProvider autoConnect>
-            <ToastProvider />
-            <LoadingOverlay />
-            <SessionInvalidatedModal />
-            {children}
-          </SignalRProvider>
-        </AuthProvider>
+      <AuthProvider initialUser={initialUser}>
+        <ToastProvider />
+        <LoadingOverlay />
+        <SessionInvalidatedModal />
+        {children}
+      </AuthProvider>
     </NextIntlClientProvider>
   );
 }

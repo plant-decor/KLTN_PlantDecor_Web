@@ -6,6 +6,7 @@ import {
   Badge,
   Box,
   Chip,
+  CircularProgress,
   Divider,
   Fab,
   IconButton,
@@ -15,142 +16,189 @@ import {
   Typography,
 } from "@mui/material";
 import {
+  Add as AddIcon,
   ArrowBack as ArrowBackIcon,
   ChatBubbleOutline as ChatIcon,
   Close as CloseIcon,
   Search as SearchIcon,
   SendRounded as SendRoundedIcon,
 } from "@mui/icons-material";
+import { useAutoScrollToBottom } from "@/hooks/useAutoScrollToBottom";
+import { useSupportChat } from "@/hooks/useSupportChat";
+import { useSupportChatInput } from "@/hooks/useSupportChatInput";
+import { useCustomerSupportConversations } from "@/hooks/useCustomerSupportConversations";
+import { useAuthStore } from "@/lib/store/authStore";
+import type { SupportConversationMessage } from "@/types/chat.types";
+import {
+  mapConversationToCustomerConversationItem,
+  type CustomerConversationItem,
+} from "@/lib/mappers/customerSupportConversation.mapper";
 
-interface ChatMessage {
-  id: string;
-  conversationId: string;
-  sender: "me" | "support";
+type ChatMessageView = {
+  id: number;
+  isMine: boolean;
   text: string;
-  sentAt: string;
-}
-
-interface Conversation {
-  id: string;
-  name: string;
-  lastMessage: string;
-  lastTime: string;
-  isOnline?: boolean;
-  unread?: number;
-  avatar: string;
-}
-
-const CONVERSATIONS: Conversation[] = [
-  {
-    id: "c1",
-    name: "Plant Decor Support",
-    lastMessage: "Bên mình đã nhận yêu cầu hỗ trợ chăm cây của bạn.",
-    lastTime: "1 giờ",
-    isOnline: true,
-    unread: 2,
-    avatar: "/logo/logo.png",
-  },
-  {
-    id: "c2",
-    name: "Tư vấn chậu cây",
-    lastMessage: "Bạn muốn phong cách tối giản hay tropical?",
-    lastTime: "3 giờ",
-    avatar: "/logo/logo.png",
-  },
-  {
-    id: "c3",
-    name: "Theo dõi đơn hàng",
-    lastMessage: "Đơn của bạn đang giao và sẽ đến trong hôm nay.",
-    lastTime: "Hôm qua",
-    avatar: "/logo/logo.png",
-  },
-];
-
-const MOCK_MESSAGES: ChatMessage[] = [
-  {
-    id: "m1",
-    conversationId: "c1",
-    sender: "support",
-    text: "Xin chào bạn, mình là consultant từ Plant Decor. Mình có thể hỗ trợ gì cho bạn hôm nay?",
-    sentAt: "09:14",
-  },
-  {
-    id: "m2",
-    conversationId: "c1",
-    sender: "me",
-    text: "Mình muốn hỏi lịch chăm cây sau khi nhận cây mới.",
-    sentAt: "09:15",
-  },
-  {
-    id: "m3",
-    conversationId: "c1",
-    sender: "support",
-    text: "Bạn vào Hồ sơ cây của tôi > tab Lịch chăm sóc. Mình gửi bạn hướng dẫn chi tiết nhé.",
-    sentAt: "09:16",
-  },
-  {
-    id: "m4",
-    conversationId: "c2",
-    sender: "support",
-    text: "Bạn muốn chậu theo tông sáng hay tông đất?",
-    sentAt: "Hôm qua",
-  },
-  {
-    id: "m5",
-    conversationId: "c3",
-    sender: "support",
-    text: "Mình đã gửi mã vận đơn cho bạn qua email.",
-    sentAt: "Hôm qua",
-  },
-];
+  time: string;
+  isLast: boolean;
+};
 
 const QUICK_REPLIES = ["Lịch chăm cây", "Đơn hàng", "Dịch vụ chăm sóc"];
 
+const formatMessageTime = (value: string) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("vi-VN", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+};
+
+const mapRealtimeMessages = (
+  messages: SupportConversationMessage[],
+  currentUserId?: number,
+): ChatMessageView[] => {
+  return messages.map((message, index) => ({
+    id: message.id,
+    isMine: Boolean(currentUserId && message.senderId === currentUserId),
+    text: message.content,
+    time: formatMessageTime(message.createdAt),
+    isLast: index === messages.length - 1,
+  }));
+};
+
 export default function SupportChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedConversationId, setSelectedConversationId] = useState("c1");
+  const [selectedConversationId, setSelectedConversationId] = useState<
+    number | null
+  >(null);
   const [searchValue, setSearchValue] = useState("");
-  const [draftMessage, setDraftMessage] = useState("");
   const [mobileView, setMobileView] = useState<"list" | "chat">("list");
+
   const widgetRef = useRef<HTMLDivElement | null>(null);
+  const chatScrollRef = useRef<HTMLDivElement | null>(null);
 
-  const conversations = useMemo(() => CONVERSATIONS, []);
-  const activeConversation =
-    conversations.find((item) => item.id === selectedConversationId) ||
-    conversations[0];
+  const user = useAuthStore((state) => state.user);
 
-  const messages = useMemo(
-    () =>
-      MOCK_MESSAGES.filter(
-        (item) => item.conversationId === activeConversation.id,
-      ),
-    [activeConversation.id],
+  const {
+    conversations,
+    isLoading: isConversationsLoading,
+    isStarting,
+    error: conversationsError,
+    startNewConversation,
+  } = useCustomerSupportConversations({
+    enabled: Boolean(user),
+  });
+
+  const uiConversations = useMemo<CustomerConversationItem[]>(
+    () => conversations.map(mapConversationToCustomerConversationItem),
+    [conversations],
   );
+
+  useEffect(() => {
+    if (!uiConversations.length) {
+      if (selectedConversationId !== null) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setSelectedConversationId(null);
+      }
+      return;
+    }
+
+    const exists = uiConversations.some(
+      (item) => item.conversationId === selectedConversationId,
+    );
+
+    if (selectedConversationId === null || !exists) {
+      setSelectedConversationId(uiConversations[0].conversationId);
+    }
+  }, [uiConversations, selectedConversationId]);
+
+  const activeConversation =
+    uiConversations.find(
+      (item) => item.conversationId === selectedConversationId,
+    ) ?? null;
+
+  const canUseRealtime = Boolean(user && selectedConversationId);
+
+  const {
+    messages,
+    isInitialLoading,
+    isSending,
+    isHubReady,
+    isOtherUserTyping,
+    error: chatError,
+    sendMessage,
+    handleInputTyping,
+  } = useSupportChat({
+    conversationId: selectedConversationId,
+    enabled: canUseRealtime,
+  });
+
+  const { input, handleChange, submit, setInput, canSend, reset } =
+    useSupportChatInput({
+      onSend: async (content) => {
+        await sendMessage(content);
+      },
+      onTyping: handleInputTyping,
+    });
+
+  const displayedMessages = useMemo(() => {
+    return mapRealtimeMessages(messages, user?.id);
+  }, [messages, user?.id]);
+
+  useAutoScrollToBottom(chatScrollRef, {
+    dependency: `${displayedMessages.length}:${isOtherUserTyping ? 1 : 0}`,
+  });
 
   const filteredConversations = useMemo(() => {
     const keyword = searchValue.trim().toLowerCase();
     if (!keyword) {
-      return conversations;
+      return uiConversations;
     }
 
-    return conversations.filter(
+    return uiConversations.filter(
       (item) =>
         item.name.toLowerCase().includes(keyword) ||
         item.lastMessage.toLowerCase().includes(keyword),
     );
-  }, [conversations, searchValue]);
+  }, [uiConversations, searchValue]);
 
-  const openConversation = (conversationId: string) => {
+  const openConversation = (conversationId: number) => {
     setSelectedConversationId(conversationId);
     setMobileView("chat");
   };
 
-  const handleSend = () => {
-    if (!draftMessage.trim()) {
+  const handleCreateNewConversation = () => {
+    setSelectedConversationId(null);
+    setMobileView("chat");
+    reset();
+  };
+
+  const handleSend = async () => {
+    const trimmed = input.trim();
+
+    if (!trimmed || !user) return;
+
+    // Chưa có conversation nào được chọn => tạo mới bằng first message
+    if (!selectedConversationId) {
+      try {
+        const created = await startNewConversation(trimmed);
+        setSelectedConversationId(created.id);
+        setMobileView("chat");
+        reset();
+      } catch (err) {
+        console.error(err);
+      }
       return;
     }
 
-    setDraftMessage("");
+    if (!canUseRealtime || !canSend) {
+      return;
+    }
+
+    await submit();
   };
 
   useEffect(() => {
@@ -160,9 +208,7 @@ export default function SupportChatWidget() {
 
     const handlePointerDown = (event: MouseEvent | TouchEvent) => {
       const target = event.target as Node | null;
-      if (!target) {
-        return;
-      }
+      if (!target) return;
 
       if (!widgetRef.current?.contains(target)) {
         setIsOpen(false);
@@ -187,6 +233,8 @@ export default function SupportChatWidget() {
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [isOpen]);
+
+  const combinedError = chatError ?? conversationsError;
 
   return (
     <Box
@@ -236,6 +284,15 @@ export default function SupportChatWidget() {
                 >
                   Đoạn chat
                 </Typography>
+
+                <IconButton
+                  size="small"
+                  onClick={handleCreateNewConversation}
+                  sx={{ color: "#2563eb" }}
+                  aria-label="Tạo cuộc trò chuyện mới"
+                >
+                  <AddIcon />
+                </IconButton>
               </Stack>
 
               <Stack
@@ -255,7 +312,7 @@ export default function SupportChatWidget() {
                 <InputBase
                   value={searchValue}
                   onChange={(event) => setSearchValue(event.target.value)}
-                  placeholder="Tìm kiếm trên Messenger"
+                  placeholder="Tìm cuộc trò chuyện"
                   sx={{ color: "#0f172a", fontSize: 14, width: "100%" }}
                 />
               </Stack>
@@ -272,126 +329,149 @@ export default function SupportChatWidget() {
                   size="small"
                   sx={{ bgcolor: "#dbeafe", color: "#1d4ed8" }}
                 />
-                <Chip
-                  label="Chưa đọc"
-                  size="small"
-                  variant="outlined"
-                  sx={{
-                    color: "#475569",
-                    borderColor: "rgba(15, 23, 42, 0.14)",
-                  }}
-                />
-                <Chip
-                  label="Nhóm"
-                  size="small"
-                  variant="outlined"
-                  sx={{
-                    color: "#475569",
-                    borderColor: "rgba(15, 23, 42, 0.14)",
-                  }}
-                />
               </Stack>
             </Box>
 
             <Box sx={{ overflowY: "auto", px: 1.2, pb: 1.5, flex: 1 }}>
-              <Stack spacing={0.6}>
-                {filteredConversations.map((item) => {
-                  const isActive = item.id === activeConversation.id;
+              {!user ? (
+                <Box
+                  sx={{
+                    px: 2,
+                    py: 3,
+                    color: "#64748b",
+                    fontSize: 14,
+                  }}
+                >
+                  Vui lòng đăng nhập để xem các cuộc trò chuyện của bạn.
+                </Box>
+              ) : isConversationsLoading ? (
+                <Box
+                  sx={{
+                    minHeight: 180,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <CircularProgress size={24} />
+                </Box>
+              ) : filteredConversations.length === 0 ? (
+                <Box
+                  sx={{
+                    px: 2,
+                    py: 3,
+                    color: "#64748b",
+                    fontSize: 14,
+                  }}
+                >
+                  Bạn chưa có cuộc trò chuyện nào. Hãy nhập tin nhắn để bắt đầu.
+                </Box>
+              ) : (
+                <Stack spacing={0.6}>
+                  {filteredConversations.map((item) => {
+                    const isActive =
+                      item.conversationId === selectedConversationId;
 
-                  return (
-                    <Box
-                      key={item.id}
-                      role="button"
-                      onClick={() => openConversation(item.id)}
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1.25,
-                        px: 1.2,
-                        py: 1.1,
-                        borderRadius: 2,
-                        cursor: "pointer",
-                        bgcolor: isActive ? "#dbeafe" : "transparent",
-                        "&:hover": {
-                          bgcolor: isActive ? "#dbeafe" : "#f8fafc",
-                        },
-                      }}
-                    >
-                      <Badge
-                        overlap="circular"
-                        variant="dot"
-                        color="success"
-                        invisible={!item.isOnline}
-                        anchorOrigin={{
-                          vertical: "bottom",
-                          horizontal: "right",
+                    return (
+                      <Box
+                        key={item.conversationId}
+                        role="button"
+                        onClick={() => openConversation(item.conversationId)}
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1.25,
+                          px: 1.2,
+                          py: 1.1,
+                          borderRadius: 2,
+                          cursor: "pointer",
+                          bgcolor: isActive ? "#dbeafe" : "transparent",
+                          "&:hover": {
+                            bgcolor: isActive ? "#dbeafe" : "#f8fafc",
+                          },
                         }}
                       >
-                        <Avatar
-                          sx={{
-                            width: 48,
-                            height: 48,
-                            bgcolor: "#bfdbfe",
-                            color: "#1d4ed8",
-                            fontWeight: 700,
+                        <Badge
+                          overlap="circular"
+                          variant="dot"
+                          color="success"
+                          invisible={!item.isOnline}
+                          anchorOrigin={{
+                            vertical: "bottom",
+                            horizontal: "right",
                           }}
                         >
-                          {item.name.charAt(0)}
-                        </Avatar>
-                      </Badge>
+                          <Avatar
+                            src={item.avatar}
+                            sx={{
+                              width: 48,
+                              height: 48,
+                              bgcolor: "#bfdbfe",
+                              color: "#1d4ed8",
+                              fontWeight: 700,
+                            }}
+                          >
+                            {item.name.charAt(0)}
+                          </Avatar>
+                        </Badge>
 
-                      <Box sx={{ minWidth: 0, flex: 1 }}>
-                        <Stack
-                          direction="row"
-                          justifyContent="space-between"
-                          alignItems="center"
-                          gap={1}
-                        >
+                        <Box sx={{ minWidth: 0, flex: 1 }}>
+                          <Stack
+                            direction="row"
+                            justifyContent="space-between"
+                            alignItems="center"
+                            gap={1}
+                          >
+                            <Typography
+                              noWrap
+                              sx={{
+                                fontWeight: 700,
+                                fontSize: 15,
+                                color: "#0f172a",
+                              }}
+                            >
+                              {item.name}
+                            </Typography>
+                            <Typography sx={{ fontSize: 11, color: "#64748b" }}>
+                              {item.lastTime}
+                            </Typography>
+                          </Stack>
                           <Typography
                             noWrap
                             sx={{
-                              fontWeight: 700,
-                              fontSize: 15,
-                              color: "#0f172a",
+                              fontSize: 12.5,
+                              color: "#475569",
+                              mt: 0.15,
                             }}
                           >
-                            {item.name}
+                            {item.lastMessage}
                           </Typography>
-                          <Typography sx={{ fontSize: 11, color: "#64748b" }}>
-                            {item.lastTime}
-                          </Typography>
-                        </Stack>
-                        <Typography
-                          noWrap
-                          sx={{ fontSize: 12.5, color: "#475569", mt: 0.15 }}
-                        >
-                          {item.lastMessage}
-                        </Typography>
-                      </Box>
-
-                      {!!item.unread && (
-                        <Box
-                          sx={{
-                            minWidth: 20,
-                            height: 20,
-                            borderRadius: 999,
-                            px: 0.5,
-                            bgcolor: "#2563eb",
-                            color: "white",
-                            fontSize: 11,
-                            fontWeight: 700,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          {item.unread}
                         </Box>
-                      )}
-                    </Box>
-                  );
-                })}
-              </Stack>
+
+                        {!!item.unread && (
+                          <Box
+                            sx={{
+                              minWidth: 20,
+                              height: 20,
+                              borderRadius: 999,
+                              px: 0.5,
+                              bgcolor: "#2563eb",
+                              color: "white",
+                              fontSize: 11,
+                              fontWeight: 700,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                          >
+                            {item.unread}
+                          </Box>
+                        )}
+                      </Box>
+                    );
+                  })}
+                </Stack>
+              )}
             </Box>
           </Box>
 
@@ -436,14 +516,16 @@ export default function SupportChatWidget() {
                 >
                   <ArrowBackIcon fontSize="small" />
                 </IconButton>
+
                 <Badge
                   overlap="circular"
                   variant="dot"
                   color="success"
-                  invisible={!activeConversation.isOnline}
+                  invisible={!activeConversation?.isOnline}
                   anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
                 >
                   <Avatar
+                    src={activeConversation?.avatar}
                     sx={{
                       width: 42,
                       height: 42,
@@ -452,18 +534,20 @@ export default function SupportChatWidget() {
                       fontWeight: 700,
                     }}
                   >
-                    {activeConversation.name.charAt(0)}
+                    {(activeConversation?.name ?? "P").charAt(0)}
                   </Avatar>
                 </Badge>
+
                 <Box sx={{ minWidth: 0 }}>
                   <Typography
                     noWrap
                     sx={{ fontWeight: 800, fontSize: 16, color: "#0f172a" }}
                   >
-                    {activeConversation.name}
+                    {activeConversation?.name ?? "Cuộc trò chuyện mới"}
                   </Typography>
                 </Box>
               </Stack>
+
               <IconButton
                 size="small"
                 aria-label="Đóng chat"
@@ -475,6 +559,7 @@ export default function SupportChatWidget() {
             </Box>
 
             <Box
+              ref={chatScrollRef}
               sx={{
                 flex: 1,
                 overflowY: "auto",
@@ -484,10 +569,59 @@ export default function SupportChatWidget() {
                   "radial-gradient(circle at center, rgba(59,130,246,0.08) 0, rgba(255,255,255,0.65) 23%, rgba(255,255,255,0) 60%), #f8fbff",
               }}
             >
+              {selectedConversationId && isInitialLoading ? (
+                <Box
+                  sx={{
+                    minHeight: 220,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#64748b",
+                    fontSize: 14,
+                  }}
+                >
+                  Đang tải lịch sử chat...
+                </Box>
+              ) : null}
+
+              {combinedError ? (
+                <Box
+                  sx={{
+                    mb: 1.5,
+                    px: 1.5,
+                    py: 1,
+                    borderRadius: 2,
+                    bgcolor: "rgba(239,68,68,0.08)",
+                    color: "#b91c1c",
+                    fontSize: 13,
+                  }}
+                >
+                  {combinedError}
+                </Box>
+              ) : null}
+
+              {!selectedConversationId && !displayedMessages.length ? (
+                <Box
+                  sx={{
+                    minHeight: 220,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#64748b",
+                    fontSize: 14,
+                    textAlign: "center",
+                    px: 3,
+                  }}
+                >
+                  Hãy nhập tin nhắn đầu tiên để bắt đầu cuộc trò chuyện mới với
+                  Plant Decor.
+                </Box>
+              ) : null}
+
               <Stack spacing={1.1}>
-                {messages.map((entry, index) => {
-                  const isMe = entry.sender === "me";
-                  const isLast = index === messages.length - 1;
+                {displayedMessages.map((entry) => {
+                  const isMe = entry.isMine;
+                  const isLast = entry.isLast;
 
                   return (
                     <Box
@@ -501,6 +635,7 @@ export default function SupportChatWidget() {
                     >
                       {!isMe && (
                         <Avatar
+                          src={activeConversation?.avatar}
                           sx={{
                             width: 28,
                             height: 28,
@@ -510,7 +645,7 @@ export default function SupportChatWidget() {
                             fontWeight: 700,
                           }}
                         >
-                          {activeConversation.name.charAt(0)}
+                          {(activeConversation?.name ?? "P").charAt(0)}
                         </Avatar>
                       )}
 
@@ -536,6 +671,7 @@ export default function SupportChatWidget() {
                             {entry.text}
                           </Typography>
                         </Box>
+
                         <Typography
                           sx={{
                             mt: 0.45,
@@ -544,7 +680,7 @@ export default function SupportChatWidget() {
                             textAlign: isMe ? "right" : "left",
                           }}
                         >
-                          {entry.sentAt}
+                          {entry.time}
                           {isMe && isLast ? " • Đã gửi" : ""}
                         </Typography>
                       </Box>
@@ -566,6 +702,12 @@ export default function SupportChatWidget() {
                     </Box>
                   );
                 })}
+
+                {isOtherUserTyping ? (
+                  <Typography sx={{ fontSize: 12, color: "#64748b" }}>
+                    Tư vấn viên đang nhập...
+                  </Typography>
+                ) : null}
               </Stack>
             </Box>
 
@@ -576,6 +718,7 @@ export default function SupportChatWidget() {
                     key={item}
                     label={item}
                     clickable
+                    onClick={() => setInput(item)}
                     sx={{
                       bgcolor: "#eff6ff",
                       color: "#1d4ed8",
@@ -605,26 +748,43 @@ export default function SupportChatWidget() {
                   }}
                 >
                   <InputBase
-                    value={draftMessage}
-                    onChange={(event) => setDraftMessage(event.target.value)}
+                    value={input}
+                    onChange={(event) => void handleChange(event.target.value)}
                     onKeyDown={(event) => {
                       if (event.key === "Enter" && !event.shiftKey) {
                         event.preventDefault();
-                        handleSend();
+                        void handleSend();
                       }
                     }}
                     placeholder="Aa"
                     sx={{ color: "#0f172a", width: "100%", fontSize: 14 }}
                   />
+
                   <IconButton
-                    onClick={handleSend}
-                    disabled={!draftMessage.trim()}
+                    onClick={() => void handleSend()}
+                    disabled={!input.trim() || !user || isSending || isStarting}
                     sx={{ color: "#2563eb" }}
                   >
-                    <SendRoundedIcon />
+                    {isStarting ? (
+                      <CircularProgress size={18} />
+                    ) : (
+                      <SendRoundedIcon />
+                    )}
                   </IconButton>
                 </Box>
               </Stack>
+
+              {!user ? (
+                <Typography sx={{ mt: 0.75, fontSize: 11.5, color: "#64748b" }}>
+                  Cần đăng nhập để dùng chat hỗ trợ.
+                </Typography>
+              ) : null}
+
+              {selectedConversationId && !isHubReady ? (
+                <Typography sx={{ mt: 0.75, fontSize: 11.5, color: "#64748b" }}>
+                  Đang kết nối tới chat realtime...
+                </Typography>
+              ) : null}
             </Box>
           </Box>
         </Paper>

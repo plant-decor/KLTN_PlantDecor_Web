@@ -42,6 +42,15 @@ function getLocalizedPath(pathname: string, basePath: string): string {
 export default function proxy(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
 
+  const isTemplateLocalePath =
+    pathname === '/[locale]' || pathname.startsWith('/[locale]/') || pathname.includes('/[locale]/');
+
+  // Next.js may issue internal/server-action POST requests against route templates
+  // (e.g. /[locale]/admin). Those must bypass intl/auth rewrites to avoid 404/rebuild loops.
+  if (isTemplateLocalePath) {
+    return NextResponse.next();
+  }
+
   const authToken = request.cookies.get('accessToken')?.value;
   const userRole = normalizeRole(request.cookies.get('userRole')?.value);
 

@@ -1,242 +1,222 @@
-// 'use client';
+'use client';
 
-// /**
-//  * SignalR Provider - Quản lý SignalR connection cho toàn bộ app
-//  * 
-//  * 🎯 Chức năng:
-//  * - Tự động connect/disconnect theo user authentication
-//  * - Cung cấp context cho các components
-//  * - Quản lý connection state theo user role
-//  * - Tự động reconnect khi mất kết nối
-//  * 
-//  * 📍 Sử dụng:
-//  * - Wrap app layout với <SignalRProvider>
-//  * - Access trong components bằng useSignalR() hook
-//  */
+import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { signalRService } from '@/lib/services/signalRService';
+import { ROLE_HUB_ACCESS, type UserRole } from '@/lib/constants/signalr';
+import { useAuthStore } from '@/lib/store/authStore';
+import type {
+  ChatMessage,
+  ConnectionState,
+  NotificationMessage,
+  OnlineStatus,
+  SignalRContextValue,
+  TypingIndicator,
+} from '@/types/signalr.types';
 
-// import React, { createContext, useEffect, useState, useCallback, useRef } from 'react';
-// import { signalRService } from '@/lib/services/signalRService';
-// import { useAuthStore } from '@/lib/store/authStore';
-// import { ROLE_HUB_ACCESS, type UserRole } from '@/lib/constants/signalr';
-// import type { 
-//   SignalRContextValue, 
-//   ConnectionState,
-//   ChatMessage,
-//   NotificationMessage,
-//   TypingIndicator,
-//   OnlineStatus,
-// } from '@/types/signalr.types';
+export const SignalRContext = createContext<SignalRContextValue | null>(null);
 
-// export const SignalRContext = createContext<SignalRContextValue | null>(null);
+interface SignalRProviderProps {
+  children: React.ReactNode;
+  autoConnect?: boolean;
+}
 
-// interface SignalRProviderProps {
-//   children: React.ReactNode;
-//   autoConnect?: boolean; // Auto connect khi user login
-// }
+export function SignalRProvider({ children, autoConnect = true }: SignalRProviderProps) {
+  const { user, isAuthenticated } = useAuthStore();
 
-// export function SignalRProvider({ children, autoConnect = true }: SignalRProviderProps) {
-//   const { user, isAuthenticated } = useAuthStore();
-  
-//   const [chatConnectionState, setChatConnectionState] = useState<ConnectionState>('Disconnected');
-//   const [notificationConnectionState, setNotificationConnectionState] = useState<ConnectionState>('Disconnected');
-//   const [dashboardConnectionState, setDashboardConnectionState] = useState<ConnectionState>('Disconnected');
-  
-//   const [connectionId, setConnectionId] = useState<string | null>(null);
-//   const isConnectingRef = useRef(false);
+  const [chatConnectionState, setChatConnectionState] = useState<ConnectionState>('Disconnected');
+  const [notificationConnectionState, setNotificationConnectionState] = useState<ConnectionState>('Disconnected');
+  const [dashboardConnectionState, setDashboardConnectionState] = useState<ConnectionState>('Disconnected');
+  const [connectionId, setConnectionId] = useState<string | null>(null);
 
-//   // Determine which hubs user can access based on role
-//   const getUserHubAccess = useCallback((): string[] => {
-//     if (!user || !user.role) return [];
-//     const role = user.role.toUpperCase() as UserRole;
-//     return [...(ROLE_HUB_ACCESS[role] || [])];
-//   }, [user]);
+  const isConnectingRef = useRef(false);
 
-//   // Connect to appropriate hubs based on user role
-//   const connect = useCallback(async () => {
-//     if (!isAuthenticated || !user || isConnectingRef.current) return;
-    
-//     isConnectingRef.current = true;
-//     const hubAccess = getUserHubAccess();
-    
-//     try {
-//       // Connect to chat hub (for users with chat access)
-//       if (hubAccess.includes('chat')) {
-//         setChatConnectionState('Connecting');
-//         await signalRService.connectChatHub();
-//         setChatConnectionState('Connected');
-//         const chatConnId = signalRService.getConnectionId('chat');
-//         if (chatConnId) setConnectionId(chatConnId);
-//         console.log('✅ Chat Hub connected');
-//       }
+  const getUserHubAccess = useCallback((): string[] => {
+    const role = String(user?.role ?? '').trim().toUpperCase() as UserRole;
+    return [...(ROLE_HUB_ACCESS[role] ?? [])];
+  }, [user?.role]);
 
-//       // Connect to notification hub (for staff, manager, admin)
-//       if (hubAccess.includes('notification')) {
-//         setNotificationConnectionState('Connecting');
-//         await signalRService.connectNotificationHub();
-//         setNotificationConnectionState('Connected');
-//         console.log('✅ Notification Hub connected');
-//       }
+  const connect = useCallback(async () => {
+    if (!isAuthenticated || !user || isConnectingRef.current) {
+      return;
+    }
 
-//       // Connect to dashboard hub (for manager, admin)
-//       if (hubAccess.includes('dashboard')) {
-//         setDashboardConnectionState('Connecting');
-//         await signalRService.connectDashboardHub();
-//         setDashboardConnectionState('Connected');
-//         console.log('✅ Dashboard Hub connected');
-//       }
-//     } catch (error) {
-//       console.error('❌ Failed to connect SignalR:', error);
-//       setChatConnectionState('Disconnected');
-//       setNotificationConnectionState('Disconnected');
-//       setDashboardConnectionState('Disconnected');
-//     } finally {
-//       isConnectingRef.current = false;
-//     }
-//   }, [isAuthenticated, user, getUserHubAccess]);
+    isConnectingRef.current = true;
+    const hubAccess = getUserHubAccess();
 
-//   // Disconnect from all hubs
-//   const disconnect = useCallback(async () => {
-//     await signalRService.disconnectAll();
-//     setChatConnectionState('Disconnected');
-//     setNotificationConnectionState('Disconnected');
-//     setDashboardConnectionState('Disconnected');
-//     setConnectionId(null);
-//     console.log('🔌 All SignalR hubs disconnected');
-//   }, []);
+    try {
+      if (hubAccess.includes('chat')) {
+        setChatConnectionState('Connecting');
+        await signalRService.connectChatHub();
+        setChatConnectionState('Connected');
+        setConnectionId(signalRService.getConnectionId('chat'));
+      }
 
-//   // Auto connect/disconnect based on authentication
-//   useEffect(() => {
-//     if (autoConnect && isAuthenticated && user) {
-//       connect();
-//     } else if (!isAuthenticated) {
-//       disconnect();
-//     }
+      if (hubAccess.includes('notification')) {
+        setNotificationConnectionState('Connecting');
+        await signalRService.connectNotificationHub();
+        setNotificationConnectionState('Connected');
+      }
 
-//     return () => {
-//       if (!isAuthenticated) {
-//         disconnect();
-//       }
-//     };
-//   }, [isAuthenticated, user, autoConnect, connect, disconnect]);
+      if (hubAccess.includes('dashboard')) {
+        setDashboardConnectionState('Connecting');
+        await signalRService.connectDashboardHub();
+        setDashboardConnectionState('Connected');
+      }
+    } catch (error) {
+      console.error('Failed to connect SignalR', error);
+      setChatConnectionState('Disconnected');
+      setNotificationConnectionState('Disconnected');
+      setDashboardConnectionState('Disconnected');
+      setConnectionId(null);
+    } finally {
+      isConnectingRef.current = false;
+    }
+  }, [getUserHubAccess, isAuthenticated, user]);
 
-//   // Setup lifecycle event listeners
-//   useEffect(() => {
-//     const unsubscribeReconnecting = signalRService.on('reconnecting', ({ hubName }) => {
-//       console.log(`🔄 ${hubName} reconnecting...`);
-//       if (hubName.includes('Chat')) setChatConnectionState('Reconnecting');
-//       if (hubName.includes('Notification')) setNotificationConnectionState('Reconnecting');
-//       if (hubName.includes('Dashboard')) setDashboardConnectionState('Reconnecting');
-//     });
+  const disconnect = useCallback(async () => {
+    await signalRService.disconnectAll();
+    setChatConnectionState('Disconnected');
+    setNotificationConnectionState('Disconnected');
+    setDashboardConnectionState('Disconnected');
+    setConnectionId(null);
+  }, []);
 
-//     const unsubscribeReconnected = signalRService.on('reconnected', ({ hubName, connectionId }) => {
-//       console.log(`✅ ${hubName} reconnected:`, connectionId);
-//       if (hubName.includes('Chat')) {
-//         setChatConnectionState('Connected');
-//         setConnectionId(connectionId);
-//       }
-//       if (hubName.includes('Notification')) setNotificationConnectionState('Connected');
-//       if (hubName.includes('Dashboard')) setDashboardConnectionState('Connected');
-//     });
+  useEffect(() => {
+    if (autoConnect && isAuthenticated && user) {
+      void connect();
+    } else if (!isAuthenticated) {
+      void disconnect();
+    }
+  }, [autoConnect, connect, disconnect, isAuthenticated, user]);
 
-//     const unsubscribeConnectionClosed = signalRService.on('connectionClosed', ({ hubName }) => {
-//       console.log(`❌ ${hubName} connection closed`);
-//       if (hubName.includes('Chat')) setChatConnectionState('Disconnected');
-//       if (hubName.includes('Notification')) setNotificationConnectionState('Disconnected');
-//       if (hubName.includes('Dashboard')) setDashboardConnectionState('Disconnected');
-//     });
+  useEffect(() => {
+    const unsubscribeReconnecting = signalRService.on<{ hubName: string }>('reconnecting', ({ hubName }) => {
+      if (hubName.includes('Chat')) {
+        setChatConnectionState('Reconnecting');
+      }
+      if (hubName.includes('Notification')) {
+        setNotificationConnectionState('Reconnecting');
+      }
+      if (hubName.includes('Dashboard')) {
+        setDashboardConnectionState('Reconnecting');
+      }
+    });
 
-//     return () => {
-//       unsubscribeReconnecting();
-//       unsubscribeReconnected();
-//       unsubscribeConnectionClosed();
-//     };
-//   }, []);
+    const unsubscribeReconnected = signalRService.on<{ hubName: string; connectionId?: string | null }>('reconnected', ({ hubName, connectionId: nextConnectionId }) => {
+      if (hubName.includes('Chat')) {
+        setChatConnectionState('Connected');
+        setConnectionId(nextConnectionId ?? null);
+      }
+      if (hubName.includes('Notification')) {
+        setNotificationConnectionState('Connected');
+      }
+      if (hubName.includes('Dashboard')) {
+        setDashboardConnectionState('Connected');
+      }
+    });
 
-//   // ===== Chat Methods =====
+    const unsubscribeConnectionClosed = signalRService.on<{ hubName: string }>('connectionClosed', ({ hubName }) => {
+      if (hubName.includes('Chat')) {
+        setChatConnectionState('Disconnected');
+      }
+      if (hubName.includes('Notification')) {
+        setNotificationConnectionState('Disconnected');
+      }
+      if (hubName.includes('Dashboard')) {
+        setDashboardConnectionState('Disconnected');
+      }
+    });
 
-//   const sendChatMessage = useCallback(async (message: ChatMessage) => {
-//     await signalRService.sendChatMessage(message);
-//   }, []);
+    return () => {
+      unsubscribeReconnecting();
+      unsubscribeReconnected();
+      unsubscribeConnectionClosed();
+    };
+  }, []);
 
-//   const joinChatRoom = useCallback(async (roomId: string) => {
-//     await signalRService.joinChatRoom(roomId);
-//   }, []);
+  const sendChatMessage = useCallback(async (message: ChatMessage) => {
+    await signalRService.sendChatMessage(message);
+  }, []);
 
-//   const leaveChatRoom = useCallback(async (roomId: string) => {
-//     await signalRService.leaveChatRoom(roomId);
-//   }, []);
+  const joinChatRoom = useCallback(async (conversationId: number) => {
+    await signalRService.joinChatRoom(conversationId);
+  }, []);
 
-//   const sendTypingIndicator = useCallback(async (roomId: string, isTyping: boolean) => {
-//     await signalRService.sendTypingIndicator(roomId, isTyping);
-//   }, []);
+  const leaveChatRoom = useCallback(async (conversationId: number) => {
+    await signalRService.leaveChatRoom(conversationId);
+  }, []);
 
-//   // ===== Notification Methods =====
+  const sendTypingIndicator = useCallback(async (conversationId: number, isTyping: boolean) => {
+    await signalRService.sendTypingIndicator(conversationId, isTyping);
+  }, []);
 
-//   const markNotificationAsRead = useCallback(async (notificationId: string) => {
-//     await signalRService.markNotificationAsRead(notificationId);
-//   }, []);
+  const markNotificationAsRead = useCallback(async (notificationId: string) => {
+    await signalRService.markNotificationAsRead(notificationId);
+  }, []);
 
-//   const markAllNotificationsAsRead = useCallback(async () => {
-//     await signalRService.markAllNotificationsAsRead();
-//   }, []);
+  const markAllNotificationsAsRead = useCallback(async () => {
+    await signalRService.markAllNotificationsAsRead();
+  }, []);
 
-//   // ===== Event Listeners =====
+  const onChatMessage = useCallback((callback: (message: ChatMessage) => void) => signalRService.on('chatMessage', callback), []);
+  const onNotification = useCallback(
+    (callback: (notification: NotificationMessage) => void) => signalRService.on('notification', callback),
+    []
+  );
+  const onTypingIndicator = useCallback(
+    (callback: (indicator: TypingIndicator) => void) => signalRService.on('typingIndicator', callback),
+    []
+  );
+  const onUserOnlineStatus = useCallback((callback: (status: OnlineStatus) => void) => {
+    const unsubscribeOnline = signalRService.on('userOnline', callback);
+    const unsubscribeOffline = signalRService.on('userOffline', callback);
 
-//   const onChatMessage = useCallback((callback: (message: ChatMessage) => void) => {
-//     return signalRService.on('chatMessage', callback);
-//   }, []);
+    return () => {
+      unsubscribeOnline();
+      unsubscribeOffline();
+    };
+  }, []);
 
-//   const onNotification = useCallback((callback: (notification: NotificationMessage) => void) => {
-//     return signalRService.on('notification', callback);
-//   }, []);
+  const value = useMemo<SignalRContextValue>(
+    () => ({
+      connectionState: chatConnectionState,
+      isConnected:
+        chatConnectionState === 'Connected' ||
+        notificationConnectionState === 'Connected' ||
+        dashboardConnectionState === 'Connected',
+      connectionId,
+      connect,
+      disconnect,
+      sendChatMessage,
+      joinChatRoom,
+      leaveChatRoom,
+      sendTypingIndicator,
+      markNotificationAsRead,
+      markAllNotificationsAsRead,
+      onChatMessage,
+      onNotification,
+      onTypingIndicator,
+      onUserOnlineStatus,
+    }),
+    [
+      chatConnectionState,
+      connectionId,
+      connect,
+      dashboardConnectionState,
+      disconnect,
+      joinChatRoom,
+      leaveChatRoom,
+      markAllNotificationsAsRead,
+      markNotificationAsRead,
+      notificationConnectionState,
+      onChatMessage,
+      onNotification,
+      onTypingIndicator,
+      onUserOnlineStatus,
+      sendChatMessage,
+      sendTypingIndicator,
+    ]
+  );
 
-//   const onTypingIndicator = useCallback((callback: (indicator: TypingIndicator) => void) => {
-//     return signalRService.on('typingIndicator', callback);
-//   }, []);
-
-//   const onUserOnlineStatus = useCallback((callback: (status: OnlineStatus) => void) => {
-//     const unsubscribeOnline = signalRService.on('userOnline', callback);
-//     const unsubscribeOffline = signalRService.on('userOffline', callback);
-    
-//     return () => {
-//       unsubscribeOnline();
-//       unsubscribeOffline();
-//     };
-//   }, []);
-
-//   // Context value
-//   const value: SignalRContextValue = {
-//     // Connection state
-//     connectionState: chatConnectionState, // Primary connection state
-//     isConnected: chatConnectionState === 'Connected' || 
-//                  notificationConnectionState === 'Connected' || 
-//                  dashboardConnectionState === 'Connected',
-//     connectionId,
-
-//     // Connection methods
-//     connect,
-//     disconnect,
-
-//     // Chat methods
-//     sendChatMessage,
-//     joinChatRoom,
-//     leaveChatRoom,
-//     sendTypingIndicator,
-
-//     // Notification methods
-//     markNotificationAsRead,
-//     markAllNotificationsAsRead,
-
-//     // Event listeners
-//     onChatMessage,
-//     onNotification,
-//     onTypingIndicator,
-//     onUserOnlineStatus,
-//   };
-
-//   return (
-//     <SignalRContext.Provider value={value}>
-//       {children}
-//     </SignalRContext.Provider>
-//   );
-// }
+  return <SignalRContext.Provider value={value}>{children}</SignalRContext.Provider>;
+}

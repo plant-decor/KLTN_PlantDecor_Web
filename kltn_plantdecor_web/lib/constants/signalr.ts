@@ -34,10 +34,9 @@ export const SIGNALR_CONFIG = {
 // Server -> Client Event Names (Nhận từ server)
 export const SERVER_EVENTS = {
   // Chat events
-  RECEIVE_MESSAGE: 'ReceiveMessage',
-  USER_JOINED: 'UserJoined',
-  USER_LEFT: 'UserLeft',
-  USER_TYPING: 'UserTyping',
+  MESSAGE_RECEIVED: 'messageReceived',
+  USER_TYPING: 'userTyping',
+  USER_STOPPED_TYPING: 'userStoppedTyping',
   USER_ONLINE: 'UserOnline',
   USER_OFFLINE: 'UserOffline',
   MESSAGE_DELIVERED: 'MessageDelivered',
@@ -61,9 +60,10 @@ export const SERVER_EVENTS = {
 export const CLIENT_METHODS = {
   // Chat methods
   SEND_MESSAGE: 'SendMessage',
-  JOIN_ROOM: 'JoinRoom',
-  LEAVE_ROOM: 'LeaveRoom',
-  TYPING_INDICATOR: 'TypingIndicator',
+  JOIN_CONVERSATION: 'JoinConversation',
+  LEAVE_CONVERSATION: 'LeaveConversation',
+  USER_TYPING: 'UserTyping',
+  USER_STOPPED_TYPING: 'UserStoppedTyping',
   MARK_MESSAGE_READ: 'MarkMessageRead',
   
   // Notification methods
@@ -81,9 +81,11 @@ export const ROLE_HUB_ACCESS = {
   ADMIN: ['chat', 'notification', 'dashboard'],
   MANAGER: ['chat', 'notification', 'dashboard'],
   STAFF: ['chat', 'notification'],
+  CONSULTANT: ['chat', 'notification'],
   SHIPPER: ['notification'],
   CARETAKER: ['notification'],
   USER: ['chat'],
+  CUSTOMER: ['chat'],
 } as const;
 
 export type UserRole = keyof typeof ROLE_HUB_ACCESS;

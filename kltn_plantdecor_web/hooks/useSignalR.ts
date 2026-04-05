@@ -1,327 +1,243 @@
-// 'use client';
+'use client';
 
-// /**
-//  * SignalR Custom Hooks
-//  * Các hooks tiện ích để sử dụng SignalR trong React components
-//  */
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { SignalRContext } from '@/components/providers/SignalRProvider';
+import { signalRService } from '@/lib/services/signalRService';
+import { useAuthStore } from '@/lib/store/authStore';
+import type { ChatMessage, NotificationMessage, OnlineStatus, TypingIndicator } from '@/types/signalr.types';
 
-// import { useContext, useEffect, useState, useCallback, useRef } from 'react';
-// import { SignalRContext } from '@/components/providers/SignalRProvider';
-// import { signalRService } from '@/lib/services/signalRService';
-// import type { 
-//   ChatMessage, 
-//   NotificationMessage, 
-//   TypingIndicator,
-//   OnlineStatus,
-// } from '@/types/signalr.types';
+export function useSignalR() {
+  const context = useContext(SignalRContext);
+  if (!context) {
+    throw new Error('useSignalR must be used within SignalRProvider');
+  }
+  return context;
+}
 
-// /**
-//  * Main hook to access SignalR context
-//  */
-// export function useSignalR() {
-//   const context = useContext(SignalRContext);
-//   if (!context) {
-//     throw new Error('useSignalR must be used within SignalRProvider');
-//   }
-//   return context;
-// }
+export function useNotifications() {
+  const { isConnected, markNotificationAsRead, markAllNotificationsAsRead } = useSignalR();
+  const [notifications, setNotifications] = useState<NotificationMessage[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
-// /**
-//  * Hook để lắng nghe chat messages
-//  * @param onMessage - Callback khi nhận được message mới
-//  */
-// export function useChatMessages(onMessage: (message: ChatMessage) => void) {
-//   const { isConnected } = useSignalR();
+  useEffect(() => {
+    if (!isConnected) {
+      return;
+    }
 
-//   useEffect(() => {
-//     if (!isConnected) return;
+    const unsubscribe = signalRService.on('notification', (notification: NotificationMessage) => {
+      setNotifications((prev) => [notification, ...prev]);
+      if (!notification.isRead) {
+        setUnreadCount((count) => count + 1);
+      }
+    });
 
-//     const unsubscribe = signalRService.on('chatMessage', onMessage);
-//     return unsubscribe;
-//   }, [isConnected, onMessage]);
-// }
+    return unsubscribe;
+  }, [isConnected]);
 
-// /**
-//  * Hook để lắng nghe notifications với state management
-//  * @returns { notifications, unreadCount, markAsRead, markAllAsRead }
-//  */
-// export function useNotifications() {
-//   const { isConnected, markNotificationAsRead, markAllNotificationsAsRead } = useSignalR();
-//   const [notifications, setNotifications] = useState<NotificationMessage[]>([]);
-//   const [unreadCount, setUnreadCount] = useState(0);
+  const markAsRead = useCallback(
+    async (notificationId: string) => {
+      await markNotificationAsRead(notificationId);
+      setNotifications((prev) => prev.map((item) => (item.id === notificationId ? { ...item, isRead: true } : item)));
+      setUnreadCount((count) => Math.max(0, count - 1));
+    },
+    [markNotificationAsRead]
+  );
 
-//   // Listen for new notifications
-//   useEffect(() => {
-//     if (!isConnected) return;
+  const markAllAsRead = useCallback(async () => {
+    await markAllNotificationsAsRead();
+    setNotifications((prev) => prev.map((item) => ({ ...item, isRead: true })));
+    setUnreadCount(0);
+  }, [markAllNotificationsAsRead]);
 
-//     const unsubscribe = signalRService.on('notification', (notification: NotificationMessage) => {
-//       setNotifications((prev) => [notification, ...prev]);
-//       if (!notification.isRead) {
-//         setUnreadCount((count) => count + 1);
-//       }
-//     });
+  return {
+    notifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+  };
+}
 
-//     return unsubscribe;
-//   }, [isConnected]);
+export function useTypingIndicator(conversationId: number | null) {
+  const { isConnected, sendTypingIndicator } = useSignalR();
+  const { user } = useAuthStore();
+  const [typingUserIds, setTypingUserIds] = useState<Array<number | string>>([]);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-//   // Mark notification as read
-//   const markAsRead = useCallback(async (notificationId: string) => {
-//     await markNotificationAsRead(notificationId);
-//     setNotifications((prev) =>
-//       prev.map((n) =>
-//         n.id === notificationId ? { ...n, isRead: true } : n
-//       )
-//     );
-//     setUnreadCount((count) => Math.max(0, count - 1));
-//   }, [markNotificationAsRead]);
+  useEffect(() => {
+    if (!isConnected || !conversationId) {
+      return;
+    }
 
-//   // Mark all as read
-//   const markAllAsRead = useCallback(async () => {
-//     await markAllNotificationsAsRead();
-//     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-//     setUnreadCount(0);
-//   }, [markAllNotificationsAsRead]);
+    const unsubscribe = signalRService.on('typingIndicator', (indicator: TypingIndicator) => {
+      if (indicator.conversationId !== conversationId) {
+        return;
+      }
 
-//   // Clear notifications
-//   const clearNotifications = useCallback(() => {
-//     setNotifications([]);
-//     setUnreadCount(0);
-//   }, []);
+      if (String(indicator.userId) === String(user?.id)) {
+        return;
+      }
 
-//   return {
-//     notifications,
-//     unreadCount,
-//     markAsRead,
-//     markAllAsRead,
-//     clearNotifications,
-//   };
-// }
+      setTypingUserIds((prev) => {
+        const exists = prev.some((item) => String(item) === String(indicator.userId));
+        if (indicator.isTyping && !exists) {
+          return [...prev, indicator.userId];
+        }
 
-// /**
-//  * Hook để quản lý typing indicators trong chat room
-//  * @param roomId - ID của chat room
-//  */
-// export function useTypingIndicator(roomId: string) {
-//   const { isConnected, sendTypingIndicator } = useSignalR();
-//   const [typingUsers, setTypingUsers] = useState<string[]>([]);
-//   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+        if (!indicator.isTyping) {
+          return prev.filter((item) => String(item) !== String(indicator.userId));
+        }
 
-//   // Listen for typing indicators
-//   useEffect(() => {
-//     if (!isConnected) return;
+        return prev;
+      });
+    });
 
-//     const unsubscribe = signalRService.on('typingIndicator', (indicator: TypingIndicator) => {
-//       if (indicator.roomId !== roomId) return;
+    return unsubscribe;
+  }, [conversationId, isConnected, user?.id]);
 
-//       setTypingUsers((prev) => {
-//         if (indicator.isTyping) {
-//           return prev.includes(indicator.userName)
-//             ? prev
-//             : [...prev, indicator.userName];
-//         } else {
-//           return prev.filter((user) => user !== indicator.userName);
-//         }
-//       });
-//     });
+  const startTyping = useCallback(() => {
+    if (!conversationId) {
+      return;
+    }
 
-//     return unsubscribe;
-//   }, [isConnected, roomId]);
+    void sendTypingIndicator(conversationId, true);
 
-//   // Send typing indicator
-//   const startTyping = useCallback(() => {
-//     sendTypingIndicator(roomId, true);
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
 
-//     // Clear previous timeout
-//     if (typingTimeoutRef.current) {
-//       clearTimeout(typingTimeoutRef.current);
-//     }
+    typingTimeoutRef.current = setTimeout(() => {
+      void sendTypingIndicator(conversationId, false);
+    }, 2000);
+  }, [conversationId, sendTypingIndicator]);
 
-//     // Auto stop typing after 3 seconds
-//     typingTimeoutRef.current = setTimeout(() => {
-//       sendTypingIndicator(roomId, false);
-//     }, 3000);
-//   }, [roomId, sendTypingIndicator]);
+  const stopTyping = useCallback(() => {
+    if (!conversationId) {
+      return;
+    }
 
-//   const stopTyping = useCallback(() => {
-//     sendTypingIndicator(roomId, false);
-//     if (typingTimeoutRef.current) {
-//       clearTimeout(typingTimeoutRef.current);
-//     }
-//   }, [roomId, sendTypingIndicator]);
+    void sendTypingIndicator(conversationId, false);
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+  }, [conversationId, sendTypingIndicator]);
 
-//   return {
-//     typingUsers,
-//     startTyping,
-//     stopTyping,
-//   };
-// }
+  return {
+    typingUserIds,
+    startTyping,
+    stopTyping,
+  };
+}
 
-// /**
-//  * Hook để theo dõi online status của users
-//  */
-// export function useOnlineStatus() {
-//   const { isConnected } = useSignalR();
-//   const [onlineUsers, setOnlineUsers] = useState<Map<string, OnlineStatus>>(new Map());
+export function useChatRoom(conversationId: number | null) {
+  const { isConnected, joinChatRoom, leaveChatRoom, sendChatMessage } = useSignalR();
+  const { user } = useAuthStore();
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const hasJoinedRef = useRef(false);
 
-//   useEffect(() => {
-//     if (!isConnected) return;
+  useEffect(() => {
+    if (!isConnected || !conversationId || hasJoinedRef.current) {
+      return;
+    }
 
-//     const unsubscribeOnline = signalRService.on('userOnline', (status: OnlineStatus) => {
-//       setOnlineUsers((prev) => {
-//         const newMap = new Map(prev);
-//         newMap.set(status.userId, { ...status, isOnline: true });
-//         return newMap;
-//       });
-//     });
+    const join = async () => {
+      try {
+        await joinChatRoom(conversationId);
+        hasJoinedRef.current = true;
+      } catch (error) {
+        console.error('Failed to join conversation', error);
+      }
+    };
 
-//     const unsubscribeOffline = signalRService.on('userOffline', (status: OnlineStatus) => {
-//       setOnlineUsers((prev) => {
-//         const newMap = new Map(prev);
-//         newMap.set(status.userId, { ...status, isOnline: false });
-//         return newMap;
-//       });
-//     });
+    void join();
 
-//     return () => {
-//       unsubscribeOnline();
-//       unsubscribeOffline();
-//     };
-//   }, [isConnected]);
+    return () => {
+      if (hasJoinedRef.current) {
+        void leaveChatRoom(conversationId);
+        hasJoinedRef.current = false;
+      }
+    };
+  }, [conversationId, isConnected, joinChatRoom, leaveChatRoom]);
 
-//   const isUserOnline = useCallback((userId: string): boolean => {
-//     return onlineUsers.get(userId)?.isOnline ?? false;
-//   }, [onlineUsers]);
+  useEffect(() => {
+    if (!isConnected || !conversationId) {
+      return;
+    }
 
-//   const getUserLastSeen = useCallback((userId: string): Date | undefined => {
-//     return onlineUsers.get(userId)?.lastSeen;
-//   }, [onlineUsers]);
+    const unsubscribe = signalRService.on('chatMessage', (message: ChatMessage) => {
+      if (message.conversationId !== conversationId) {
+        return;
+      }
 
-//   return {
-//     onlineUsers,
-//     isUserOnline,
-//     getUserLastSeen,
-//   };
-// }
+      setMessages((prev) => {
+        if (prev.some((item) => String(item.id) === String(message.id))) {
+          return prev;
+        }
+        return [...prev, message];
+      });
+    });
 
-// /**
-//  * Hook để quản lý chat room
-//  * @param roomId - ID của chat room
-//  */
-// export function useChatRoom(roomId: string | null) {
-//   const { isConnected, joinChatRoom, leaveChatRoom, sendChatMessage } = useSignalR();
-//   const [messages, setMessages] = useState<ChatMessage[]>([]);
-//   const hasJoinedRef = useRef(false);
+    return unsubscribe;
+  }, [conversationId, isConnected]);
 
-//   // Auto join/leave room
-//   useEffect(() => {
-//     if (!isConnected || !roomId || hasJoinedRef.current) return;
+  const sendMessage = useCallback(
+    async (content: string) => {
+      const trimmed = content.trim();
+      if (!conversationId || !trimmed) {
+        return;
+      }
 
-//     const joinRoom = async () => {
-//       try {
-//         await joinChatRoom(roomId);
-//         hasJoinedRef.current = true;
-//         console.log(`✅ Joined chat room: ${roomId}`);
-//       } catch (error) {
-//         console.error(`❌ Failed to join room ${roomId}:`, error);
-//       }
-//     };
+      const pendingId = crypto.randomUUID();
+      const pendingMessage: ChatMessage = {
+        id: pendingId,
+        conversationId,
+        senderId: user?.id ?? 'me',
+        senderName: user?.name ?? '',
+        content: trimmed,
+        message: trimmed,
+        timestamp: new Date(),
+        isRead: false,
+        messageType: 'text',
+      };
 
-//     joinRoom();
+      setMessages((prev) => [...prev, pendingMessage]);
 
-//     return () => {
-//       if (hasJoinedRef.current && roomId) {
-//         leaveChatRoom(roomId);
-//         hasJoinedRef.current = false;
-//         console.log(`👋 Left chat room: ${roomId}`);
-//       }
-//     };
-//   }, [isConnected, roomId, joinChatRoom, leaveChatRoom]);
+      try {
+        await sendChatMessage(pendingMessage);
+      } catch (error) {
+        setMessages((prev) => prev.filter((item) => item.id !== pendingId));
+        throw error;
+      }
+    },
+    [conversationId, sendChatMessage, user?.id, user?.name]
+  );
 
-//   // Listen for messages in this room
-//   useEffect(() => {
-//     if (!isConnected || !roomId) return;
+  return {
+    messages,
+    setMessages,
+    sendMessage,
+  };
+}
 
-//     const unsubscribe = signalRService.on('chatMessage', (message: ChatMessage) => {
-//       if (message.roomId === roomId) {
-//         setMessages((prev) => [...prev, message]);
-//       }
-//     });
+export function useOnlineStatus() {
+  const [onlineUsers] = useState<Map<string, OnlineStatus>>(new Map());
 
-//     return unsubscribe;
-//   }, [isConnected, roomId]);
+  const isUserOnline = useCallback(
+    (userId: string): boolean => {
+      return onlineUsers.get(userId)?.isOnline ?? false;
+    },
+    [onlineUsers]
+  );
 
-//   // Send message
-//   const sendMessage = useCallback(async (messageText: string, attachments?: string[]) => {
-//     if (!roomId) return;
+  const getUserLastSeen = useCallback(
+    (userId: string): Date | undefined => {
+      return onlineUsers.get(userId)?.lastSeen;
+    },
+    [onlineUsers]
+  );
 
-//     const message: ChatMessage = {
-//       id: crypto.randomUUID(),
-//       senderId: '', // Will be set by server
-//       senderName: '', // Will be set by server
-//       roomId,
-//       message: messageText,
-//       timestamp: new Date(),
-//       isRead: false,
-//       attachments,
-//       messageType: 'text',
-//     };
-
-//     await sendChatMessage(message);
-//   }, [roomId, sendChatMessage]);
-
-//   return {
-//     messages,
-//     sendMessage,
-//     setMessages, // For clearing or initializing messages
-//   };
-// }
-
-// /**
-//  * Hook để lắng nghe dashboard real-time updates (for admin/manager)
-//  */
-// export function useDashboardUpdates() {
-//   const { isConnected } = useSignalR();
-//   const [updates, setUpdates] = useState<any[]>([]);
-
-//   useEffect(() => {
-//     if (!isConnected) return;
-
-//     const unsubscribeUpdate = signalRService.on('dashboardUpdate', (data: any) => {
-//       setUpdates((prev) => [data, ...prev].slice(0, 50)); // Keep last 50 updates
-//     });
-
-//     const unsubscribeNewOrder = signalRService.on('newOrder', (order: any) => {
-//       setUpdates((prev) => [{ type: 'newOrder', data: order, timestamp: new Date() }, ...prev].slice(0, 50));
-//     });
-
-//     const unsubscribeOrderStatus = signalRService.on('orderStatusChanged', (data: any) => {
-//       setUpdates((prev) => [{ type: 'orderStatus', data, timestamp: new Date() }, ...prev].slice(0, 50));
-//     });
-
-//     const unsubscribeInventory = signalRService.on('inventoryAlert', (alert: any) => {
-//       setUpdates((prev) => [{ type: 'inventory', data: alert, timestamp: new Date() }, ...prev].slice(0, 50));
-//     });
-
-//     const unsubscribeTaskAssigned = signalRService.on('taskAssigned', (task: any) => {
-//       setUpdates((prev) => [{ type: 'taskAssigned', data: task, timestamp: new Date() }, ...prev].slice(0, 50));
-//     });
-
-//     const unsubscribeTaskCompleted = signalRService.on('taskCompleted', (task: any) => {
-//       setUpdates((prev) => [{ type: 'taskCompleted', data: task, timestamp: new Date() }, ...prev].slice(0, 50));
-//     });
-
-//     return () => {
-//       unsubscribeUpdate();
-//       unsubscribeNewOrder();
-//       unsubscribeOrderStatus();
-//       unsubscribeInventory();
-//       unsubscribeTaskAssigned();
-//       unsubscribeTaskCompleted();
-//     };
-//   }, [isConnected]);
-
-//   return {
-//     updates,
-//     clearUpdates: () => setUpdates([]),
-//   };
-// }
+  return {
+    onlineUsers,
+    isUserOnline,
+    getUserLastSeen,
+  };
+}

@@ -1,228 +1,670 @@
-'use client';
+"use client";
 
-import { Box, Button, Chip, Paper, Stack, TextField, Typography } from '@mui/material';
+import { useMemo, useState } from "react";
+import {
+  Avatar,
+  Badge,
+  Box,
+  Chip,
+  Divider,
+  IconButton,
+  InputBase,
+  Paper,
+  Stack,
+  Typography,
+} from "@mui/material";
+import {
+  Add as AddIcon,
+  ArrowBack as ArrowBackIcon,
+  InfoOutlined as InfoOutlinedIcon,
+  MoreHoriz as MoreHorizIcon,
+  PhoneRounded as PhoneRoundedIcon,
+  Search as SearchIcon,
+  SendRounded as SendRoundedIcon,
+  VideocamRounded as VideocamRoundedIcon,
+} from "@mui/icons-material";
 
 const CHAT_SESSIONS = [
   {
-    id: 'S-1021',
-    customerName: 'Nguyễn Văn An',
-    summary: 'AI chưa xử lý được yêu cầu đổi lịch chăm cây...',
+    id: "S-1021",
+    customerName: "Nguyễn Văn An",
+    summary: "AI chưa xử lý được yêu cầu đổi lịch chăm cây...",
     waitingMinutes: 10,
-    status: 'waiting' as const,
+    preview: "Võ Văn Hòa",
+    lastMessage: "https://drive.google.com/...",
+    status: "waiting" as const,
+    unread: 3,
+    online: true,
   },
   {
-    id: 'S-1020',
-    customerName: 'Trần Thu Hà',
-    summary: 'Cần xác nhận lại đơn dịch vụ định kỳ',
+    id: "S-1020",
+    customerName: "Trần Thu Hà",
+    summary: "Cần xác nhận lại đơn dịch vụ định kỳ",
     waitingMinutes: 6,
-    status: 'waiting' as const,
+    preview: "Ban: Don may cai code cua K-1 giờ",
+    lastMessage: "Bên mình sẽ hỗ trợ ngay",
+    status: "waiting" as const,
+    unread: 1,
+    online: false,
   },
   {
-    id: 'S-1019',
-    customerName: 'Lê Minh Khoa',
-    summary: 'AI hỗ trợ xong FAQ về vận chuyển cây',
+    id: "S-1019",
+    customerName: "Lê Minh Khoa",
+    summary: "AI hỗ trợ xong FAQ về vận chuyển cây",
     waitingMinutes: 2,
-    status: 'active' as const,
+    preview: "Bạn: giỏi quá",
+    lastMessage: "Mình đã cập nhật thông tin đơn",
+    status: "active" as const,
+    unread: 0,
+    online: true,
   },
   {
-    id: 'S-1018',
-    customerName: 'Phạm Ngọc My',
-    summary: 'Phiên chat đã đóng bởi consultant',
+    id: "S-1018",
+    customerName: "Phạm Ngọc My",
+    summary: "Phiên chat đã đóng bởi consultant",
     waitingMinutes: 0,
-    status: 'closed' as const,
+    preview: "Phạm Ngọc My",
+    lastMessage: "Phiên chat đã đóng",
+    status: "closed" as const,
+    unread: 0,
+    online: false,
   },
 ];
 
 const CHAT_LOG = [
-  { id: 1, sender: 'customer' as const, text: 'or we could make this?' },
-  { id: 2, sender: 'consultant' as const, text: 'that looks so good!' },
+  {
+    id: 1,
+    sender: "consultant" as const,
+    text: "Mình đã kiểm tra, bạn có thể đổi lịch chăm cây sang hôm sau được.",
+    time: "09:12",
+  },
+  {
+    id: 2,
+    sender: "customer" as const,
+    text: "Vậy lịch mới là lúc nào ạ?",
+    time: "09:13",
+  },
+  {
+    id: 3,
+    sender: "consultant" as const,
+    text: "Khung còn trống là 14:00 - 16:00. Bạn chọn giúp mình một slot nhé.",
+    time: "09:14",
+  },
+  {
+    id: 4,
+    sender: "customer" as const,
+    text: "Chốt 15:00 nha.",
+    time: "09:15",
+  },
+];
+
+const QUICK_REPLIES = [
+  "Mình sẽ kiểm tra ngay",
+  "Bạn chờ mình một chút",
+  "Mình đã tiếp nhận yêu cầu",
 ];
 
 export default function ChatSupportPage() {
-  const waitingCount = CHAT_SESSIONS.filter((s) => s.status === 'waiting').length;
-  const activeCount = CHAT_SESSIONS.filter((s) => s.status === 'active').length;
-  const closedCount = CHAT_SESSIONS.filter((s) => s.status === 'closed').length;
+  const [activeSessionId, setActiveSessionId] = useState("S-1021");
+  const [mobileView, setMobileView] = useState<"list" | "chat">("list");
+  const [searchValue, setSearchValue] = useState("");
+  const [draft, setDraft] = useState("");
+
+  const activeSession = useMemo(
+    () =>
+      CHAT_SESSIONS.find((session) => session.id === activeSessionId) ??
+      CHAT_SESSIONS[0],
+    [activeSessionId],
+  );
+
+  const filteredSessions = useMemo(() => {
+    const keyword = searchValue.trim().toLowerCase();
+    if (!keyword) {
+      return CHAT_SESSIONS;
+    }
+
+    return CHAT_SESSIONS.filter((session) => {
+      return (
+        session.customerName.toLowerCase().includes(keyword) ||
+        session.summary.toLowerCase().includes(keyword) ||
+        session.preview.toLowerCase().includes(keyword)
+      );
+    });
+  }, [searchValue]);
+
+  const openSession = (sessionId: string) => {
+    setActiveSessionId(sessionId);
+    setMobileView("chat");
+  };
+
+  const handleSend = () => {
+    if (!draft.trim()) return;
+    setDraft("");
+  };
+
+  const waitingCount = CHAT_SESSIONS.filter(
+    (s) => s.status === "waiting",
+  ).length;
+  const activeCount = CHAT_SESSIONS.filter((s) => s.status === "active").length;
+  const closedCount = CHAT_SESSIONS.filter((s) => s.status === "closed").length;
 
   return (
-    <Box sx={{ py: 4 }}>
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" fontWeight="bold" gutterBottom>
-          Chat Support
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Provide real-time consultation to customers when AI chat is escalated
-        </Typography>
-      </Box>
-
-      {/* Stats */}
-      <Box
+    <Box
+      sx={{
+        minHeight: "calc(100vh - 48px)",
+        py: 2,
+        px: { xs: 0.5, md: 2 },
+        bgcolor: "#eef3fb",
+      }}
+    >
+      <Paper
+        elevation={0}
         sx={{
-          display: 'grid',
-          gap: 1.5,
-          gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, minmax(0, 1fr))' },
-          mb: 3,
+          height: { xs: "calc(100vh - 32px)", md: "calc(100vh - 64px)" },
+          borderRadius: { xs: 2, md: 4 },
+          overflow: "hidden",
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", lg: "360px minmax(0, 1fr)" },
+          border: "1px solid rgba(15, 23, 42, 0.08)",
+          bgcolor: "#ffffff",
         }}
       >
-        <Paper sx={{ p: 2 }}>
-          <Typography variant="caption" color="text.secondary">
-            Waiting
-          </Typography>
-          <Typography variant="h5" fontWeight={600} color="warning.main">
-            {waitingCount}
-          </Typography>
-        </Paper>
-        <Paper sx={{ p: 2 }}>
-          <Typography variant="caption" color="text.secondary">
-            Active
-          </Typography>
-          <Typography variant="h5" fontWeight={600} color="info.main">
-            {activeCount}
-          </Typography>
-        </Paper>
-        <Paper sx={{ p: 2 }}>
-          <Typography variant="caption" color="text.secondary">
-            Closed Today
-          </Typography>
-          <Typography variant="h5" fontWeight={600} color="success.main">
-            {closedCount}
-          </Typography>
-        </Paper>
-      </Box>
+        <Box
+          sx={{
+            display: {
+              xs: mobileView === "list" ? "flex" : "none",
+              lg: "flex",
+            },
+            flexDirection: "column",
+            bgcolor: "#ffffff",
+            color: "#0f172a",
+            borderRight: { lg: "1px solid rgba(15, 23, 42, 0.08)" },
+          }}
+        >
+          <Box sx={{ px: 2, pt: 1.5, pb: 1.25 }}>
+            <Stack
+              direction="row"
+              alignItems="center"
+              justifyContent="space-between"
+            >
+              <Typography
+                sx={{ fontSize: 28, fontWeight: 800, letterSpacing: -0.8 }}
+              >
+                Đoạn chat
+              </Typography>
+              <Stack direction="row" spacing={0.5}>
+                <IconButton size="small" sx={{ color: "#64748b" }}>
+                  <MoreHorizIcon fontSize="small" />
+                </IconButton>
+                <IconButton size="small" sx={{ color: "#64748b" }}>
+                  <AddIcon fontSize="small" />
+                </IconButton>
+              </Stack>
+            </Stack>
 
-      {/* Chat Interface */}
-      <Box
-        sx={{
-          display: 'grid',
-          gap: 2,
-          gridTemplateColumns: { xs: '1fr', xl: '280px minmax(0, 1fr)' },
-        }}
-      >
-        {/* Chat Sessions Panel */}
-        <Paper variant="outlined" sx={{ p: 1.5, overflow: 'auto' }}>
-          <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1.5}>
-            <Typography variant="subtitle2" fontWeight={600}>
-              Chat Sessions
-            </Typography>
-            <Button size="small" variant="outlined">
-              Refresh
-            </Button>
-          </Stack>
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={1}
+              sx={{
+                mt: 1.5,
+                px: 1.5,
+                py: 0.85,
+                borderRadius: 999,
+                bgcolor: "#f1f5f9",
+                border: "1px solid rgba(15, 23, 42, 0.06)",
+              }}
+            >
+              <SearchIcon sx={{ fontSize: 19, color: "#94a3b8" }} />
+              <InputBase
+                value={searchValue}
+                onChange={(event) => setSearchValue(event.target.value)}
+                placeholder="Tìm kiếm trên Messenger"
+                sx={{ color: "#0f172a", fontSize: 14, width: "100%" }}
+              />
+            </Stack>
 
-          <Stack direction="row" spacing={1} mb={1.5}>
-            <Chip label="Waiting" color="success" size="small" />
-            <Chip label="Active" variant="outlined" size="small" />
-            <Chip label="Closed" variant="outlined" size="small" />
-          </Stack>
-
-          <Stack spacing={1}>
-            {CHAT_SESSIONS.map((session, index) => (
-              <Button
-                key={session.id}
+            <Stack
+              direction="row"
+              spacing={1}
+              mt={1.5}
+              flexWrap="wrap"
+              useFlexGap
+            >
+              <Chip
+                label="Tất cả"
+                size="small"
+                sx={{ bgcolor: "#dbeafe", color: "#1d4ed8" }}
+              />
+              <Chip
+                label="Chưa đọc"
+                size="small"
                 variant="outlined"
+                sx={{ color: "#475569", borderColor: "rgba(15, 23, 42, 0.14)" }}
+              />
+              <Chip
+                label="Nhóm"
+                size="small"
+                variant="outlined"
+                sx={{ color: "#475569", borderColor: "rgba(15, 23, 42, 0.14)" }}
+              />
+            </Stack>
+
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                gap: 1,
+                mt: 1.5,
+              }}
+            >
+              <Box
                 sx={{
-                  display: 'block',
-                  textAlign: 'left',
-                  borderColor: index === 0 ? 'success.light' : 'divider',
-                  bgcolor: index === 0 ? 'success.light' : 'common.white',
-                  color: 'text.primary',
-                  textTransform: 'none',
+                  p: 1,
                   borderRadius: 2,
-                  py: 1.25,
-                  px: 1.5,
+                  bgcolor: "#f8fafc",
+                  border: "1px solid rgba(15,23,42,0.06)",
                 }}
               >
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Typography variant="body2" fontWeight={600}>
-                    {session.customerName}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {session.waitingMinutes} min
-                  </Typography>
-                </Box>
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ mt: 0.5, display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
-                >
-                  {session.summary}
+                <Typography sx={{ fontSize: 11, color: "#64748b" }}>
+                  Chờ
                 </Typography>
-              </Button>
-            ))}
-          </Stack>
-        </Paper>
-
-        {/* Chat Window */}
-        <Paper variant="outlined" sx={{ overflow: 'hidden', display: 'grid', gridTemplateRows: 'auto 1fr auto' }}>
-          {/* Chat Header */}
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              px: 2,
-              py: 1.5,
-              borderBottom: '1px solid',
-              borderColor: 'divider',
-            }}
-          >
-            <Typography fontWeight={600}>Nguyễn Văn An</Typography>
-            <Stack direction="row" spacing={1}>
-              <Button size="small" variant="outlined" sx={{ textTransform: 'none' }}>
-                Customer Info
-              </Button>
-              <Button size="small" variant="contained" sx={{ textTransform: 'none' }}>
-                Take Chat
-              </Button>
-            </Stack>
+                <Typography
+                  sx={{ fontSize: 18, fontWeight: 800, color: "#ff9900" }}
+                >
+                  {waitingCount}
+                </Typography>
+              </Box>
+              <Box
+                sx={{
+                  p: 1,
+                  borderRadius: 2,
+                  bgcolor: "#f8fafc",
+                  border: "1px solid rgba(15,23,42,0.06)",
+                }}
+              >
+                <Typography sx={{ fontSize: 11, color: "#64748b" }}>
+                  Đang mở
+                </Typography>
+                <Typography
+                  sx={{ fontSize: 18, fontWeight: 800, color: "#2563eb" }}
+                >
+                  {activeCount}
+                </Typography>
+              </Box>
+              <Box
+                sx={{
+                  p: 1,
+                  borderRadius: 2,
+                  bgcolor: "#f8fafc",
+                  border: "1px solid rgba(15,23,42,0.06)",
+                }}
+              >
+                <Typography sx={{ fontSize: 11, color: "#64748b" }}>
+                  Đã đóng
+                </Typography>
+                <Typography
+                  sx={{ fontSize: 18, fontWeight: 800, color: "#16a34a" }}
+                >
+                  {closedCount}
+                </Typography>
+              </Box>
+            </Box>
           </Box>
 
-          {/* Chat Messages */}
-          <Box sx={{ bgcolor: 'grey.50', p: 2, overflow: 'auto' }}>
-            <Stack spacing={1.5}>
-              {CHAT_LOG.map((entry) => (
-                <Box
-                  key={entry.id}
-                  sx={{ display: 'flex', justifyContent: entry.sender === 'customer' ? 'flex-end' : 'flex-start' }}
-                >
+          <Box sx={{ px: 1.2, pb: 1.5, overflowY: "auto", flex: 1 }}>
+            <Stack spacing={0.6}>
+              {filteredSessions.map((session) => {
+                const isActive = session.id === activeSession.id;
+
+                return (
                   <Box
+                    key={session.id}
+                    onClick={() => openSession(session.id)}
+                    role="button"
                     sx={{
-                      borderRadius: 3,
-                      px: 1.5,
-                      py: 1,
-                      fontSize: 14,
-                      bgcolor: entry.sender === 'customer' ? 'secondary.dark' : 'secondary.light',
-                      color: entry.sender === 'customer' ? 'common.white' : 'text.primary',
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1.25,
+                      px: 1.2,
+                      py: 1.1,
+                      borderRadius: 2,
+                      cursor: "pointer",
+                      bgcolor: isActive ? "#dbeafe" : "transparent",
+                      "&:hover": { bgcolor: isActive ? "#dbeafe" : "#f8fafc" },
                     }}
                   >
-                    {entry.text}
+                    <Badge
+                      overlap="circular"
+                      variant="dot"
+                      color="success"
+                      invisible={!session.online}
+                      anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                    >
+                      <Avatar
+                        sx={{
+                          width: 48,
+                          height: 48,
+                          bgcolor: "#bfdbfe",
+                          color: "#1d4ed8",
+                          fontWeight: 700,
+                        }}
+                      >
+                        {session.customerName.charAt(0)}
+                      </Avatar>
+                    </Badge>
+
+                    <Box sx={{ minWidth: 0, flex: 1 }}>
+                      <Stack
+                        direction="row"
+                        justifyContent="space-between"
+                        alignItems="center"
+                        gap={1}
+                      >
+                        <Typography
+                          noWrap
+                          sx={{
+                            fontWeight: 700,
+                            fontSize: 15,
+                            color: "#0f172a",
+                          }}
+                        >
+                          {session.customerName}
+                        </Typography>
+                        <Typography sx={{ fontSize: 11, color: "#64748b" }}>
+                          {session.waitingMinutes
+                            ? `${session.waitingMinutes} phút`
+                            : "Hôm qua"}
+                        </Typography>
+                      </Stack>
+                      <Typography
+                        noWrap
+                        sx={{ fontSize: 12.5, color: "#475569", mt: 0.15 }}
+                      >
+                        {session.summary}
+                      </Typography>
+                      <Typography
+                        noWrap
+                        sx={{ fontSize: 11.5, color: "#94a3b8", mt: 0.15 }}
+                      >
+                        {session.preview} • {session.lastMessage}
+                      </Typography>
+                    </Box>
+
+                    {session.unread ? (
+                      <Box
+                        sx={{
+                          minWidth: 20,
+                          height: 20,
+                          borderRadius: 999,
+                          px: 0.5,
+                          bgcolor: "#2563eb",
+                          color: "white",
+                          fontSize: 11,
+                          fontWeight: 700,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        {session.unread}
+                      </Box>
+                    ) : null}
                   </Box>
-                </Box>
+                );
+              })}
+            </Stack>
+          </Box>
+        </Box>
+
+        <Box
+          sx={{
+            display: {
+              xs: mobileView === "chat" ? "flex" : "none",
+              lg: "flex",
+            },
+            flexDirection: "column",
+            bgcolor: "#f7f9fc",
+            color: "#0f172a",
+            position: "relative",
+          }}
+        >
+          <Box
+            sx={{
+              px: 2,
+              py: 1.4,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              borderBottom: "1px solid rgba(15, 23, 42, 0.08)",
+              bgcolor: "#ffffff",
+            }}
+          >
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={1.25}
+              sx={{ minWidth: 0 }}
+            >
+              <IconButton
+                size="small"
+                onClick={() => setMobileView("list")}
+                sx={{
+                  display: { xs: "inline-flex", lg: "none" },
+                  color: "#475569",
+                }}
+              >
+                <ArrowBackIcon fontSize="small" />
+              </IconButton>
+              <Badge
+                overlap="circular"
+                variant="dot"
+                color="success"
+                invisible={!activeSession.online}
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+              >
+                <Avatar
+                  sx={{
+                    width: 42,
+                    height: 42,
+                    bgcolor: "#bfdbfe",
+                    color: "#1d4ed8",
+                    fontWeight: 700,
+                  }}
+                >
+                  {activeSession.customerName.charAt(0)}
+                </Avatar>
+              </Badge>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography
+                  noWrap
+                  sx={{ fontWeight: 800, fontSize: 16, color: "#0f172a" }}
+                >
+                  {activeSession.customerName}
+                </Typography>
+                <Stack direction="row" alignItems="center" spacing={0.8}>
+                  <Box
+                    sx={{
+                      width: 9,
+                      height: 9,
+                      borderRadius: "50%",
+                      bgcolor: "#22c55e",
+                    }}
+                  />
+                  <Typography sx={{ fontSize: 12.5, color: "#64748b" }}>
+                    Đang hoạt động
+                  </Typography>
+                </Stack>
+              </Box>
+            </Stack>
+
+            <Stack direction="row" spacing={0.5}>
+              <IconButton size="small" sx={{ color: "#475569" }}>
+                <PhoneRoundedIcon fontSize="small" />
+              </IconButton>
+              <IconButton size="small" sx={{ color: "#475569" }}>
+                <VideocamRoundedIcon fontSize="small" />
+              </IconButton>
+              <IconButton size="small" sx={{ color: "#475569" }}>
+                <InfoOutlinedIcon fontSize="small" />
+              </IconButton>
+            </Stack>
+          </Box>
+
+          <Box
+            sx={{
+              flex: 1,
+              overflowY: "auto",
+              px: { xs: 1.2, md: 2.4 },
+              py: 2,
+              background:
+                "radial-gradient(circle at center, rgba(59,130,246,0.08) 0, rgba(255,255,255,0.65) 23%, rgba(255,255,255,0) 60%), #f8fbff",
+            }}
+          >
+            <Stack spacing={1.1}>
+              {CHAT_LOG.map((entry, index) => {
+                const isCustomer = entry.sender === "customer";
+                const isLast = index === CHAT_LOG.length - 1;
+
+                return (
+                  <Box
+                    key={entry.id}
+                    sx={{
+                      display: "flex",
+                      alignItems: "flex-end",
+                      justifyContent: isCustomer ? "flex-end" : "flex-start",
+                      gap: 1,
+                    }}
+                  >
+                    {!isCustomer && (
+                      <Avatar
+                        sx={{
+                          width: 28,
+                          height: 28,
+                          bgcolor: "#bfdbfe",
+                          color: "#1d4ed8",
+                          fontSize: 12,
+                          fontWeight: 700,
+                        }}
+                      >
+                        {activeSession.customerName.charAt(0)}
+                      </Avatar>
+                    )}
+
+                    <Box sx={{ maxWidth: { xs: "86%", md: "68%" } }}>
+                      <Box
+                        sx={{
+                          px: 1.5,
+                          py: 1.05,
+                          borderRadius: 3,
+                          bgcolor: isCustomer ? "#dbeafe" : "#ffffff",
+                          color: "#0f172a",
+                          boxShadow: isCustomer
+                            ? "none"
+                            : "0 6px 18px rgba(15,23,42,0.08)",
+                          border: isCustomer
+                            ? "none"
+                            : "1px solid rgba(15,23,42,0.08)",
+                          borderTopLeftRadius: isCustomer ? 3 : 1,
+                          borderTopRightRadius: isCustomer ? 1 : 3,
+                        }}
+                      >
+                        <Typography sx={{ fontSize: 14, lineHeight: 1.5 }}>
+                          {entry.text}
+                        </Typography>
+                      </Box>
+                      <Typography
+                        sx={{
+                          mt: 0.45,
+                          fontSize: 11,
+                          color: "#64748b",
+                          textAlign: isCustomer ? "right" : "left",
+                        }}
+                      >
+                        {entry.time}
+                        {isCustomer && isLast ? " • Đã gửi" : ""}
+                      </Typography>
+                    </Box>
+
+                    {isCustomer && (
+                      <Avatar
+                        sx={{
+                          width: 28,
+                          height: 28,
+                          bgcolor: "#e2e8f0",
+                          color: "#334155",
+                          fontSize: 12,
+                          fontWeight: 700,
+                        }}
+                      >
+                        C
+                      </Avatar>
+                    )}
+                  </Box>
+                );
+              })}
+            </Stack>
+          </Box>
+
+          <Box sx={{ px: 2, pb: 1.2 }}>
+            <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+              {QUICK_REPLIES.map((item) => (
+                <Chip
+                  key={item}
+                  label={item}
+                  clickable
+                  sx={{
+                    bgcolor: "#eff6ff",
+                    color: "#1d4ed8",
+                    border: "1px solid rgba(59,130,246,0.12)",
+                    "&:hover": { bgcolor: "#dbeafe" },
+                  }}
+                />
               ))}
             </Stack>
-
-            <Stack direction="row" spacing={1} justifyContent="flex-end" mt={3}>
-              <Chip label="Let's do it" clickable sx={{ bgcolor: 'secondary.light' }} />
-              <Chip label="Great!" clickable sx={{ bgcolor: 'secondary.light' }} />
-            </Stack>
           </Box>
 
-          {/* Input Area */}
-          <Box sx={{ p: 1.5, borderTop: '1px solid', borderColor: 'divider' }}>
+          <Divider sx={{ borderColor: "rgba(15,23,42,0.08)" }} />
+
+          <Box sx={{ px: 1.5, py: 1.2, bgcolor: "#ffffff" }}>
             <Stack direction="row" spacing={1} alignItems="center">
-              <TextField
-                fullWidth
-                size="small"
-                placeholder="Type your response..."
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 999 } }}
-              />
-              <Button variant="contained" sx={{ borderRadius: 999, textTransform: 'none' }}>
-                Send
-              </Button>
+              <Box
+                sx={{
+                  flex: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                  px: 1.5,
+                  py: 1.05,
+                  borderRadius: 999,
+                  bgcolor: "#f1f5f9",
+                  border: "1px solid rgba(15,23,42,0.08)",
+                }}
+              >
+                <InputBase
+                  value={draft}
+                  onChange={(event) => setDraft(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && !event.shiftKey) {
+                      event.preventDefault();
+                      handleSend();
+                    }
+                  }}
+                  placeholder="Aa"
+                  sx={{ color: "#0f172a", width: "100%", fontSize: 14 }}
+                />
+                <IconButton
+                  onClick={handleSend}
+                  disabled={!draft.trim()}
+                  sx={{ color: "#2563eb" }}
+                >
+                  <SendRoundedIcon />
+                </IconButton>
+              </Box>
             </Stack>
           </Box>
-        </Paper>
-      </Box>
+        </Box>
+      </Paper>
     </Box>
   );
 }

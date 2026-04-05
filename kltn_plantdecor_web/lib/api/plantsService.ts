@@ -34,7 +34,7 @@ export interface PlantDetailResponse {
   hasFlower: boolean | null;
   petSafe: boolean;
   childSafe: boolean;
-  fengShuiElement: string | null;
+  fengShuiElement: number | null;
   fengShuiMeaning: string | null;
   potIncluded: boolean | null;
   potSize: string | null;

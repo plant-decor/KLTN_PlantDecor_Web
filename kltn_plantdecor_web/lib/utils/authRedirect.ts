@@ -31,6 +31,19 @@ const withLocalePrefix = (path: string, locale: string): string => {
   return `/${locale}${path}`;
 };
 
+const normalizeRedirectPath = (path: string): string => {
+  // Guard against accidental route template values like /[locale]/admin.
+  const withoutLocaleTemplate = path
+    .replace(/^\/\[locale\](?=\/|$)/, '')
+    .replace(/\/\[locale\](?=\/|$)/g, '');
+
+  const normalized = withoutLocaleTemplate.startsWith('/')
+    ? withoutLocaleTemplate
+    : `/${withoutLocaleTemplate}`;
+
+  return normalized || '/';
+};
+
 export const resolvePostLoginRedirect = ({
   redirectToRaw,
   userId,
@@ -41,7 +54,7 @@ export const resolvePostLoginRedirect = ({
 
   const basePath =
     redirectToRaw && redirectToRaw.startsWith('/')
-      ? redirectToRaw
+      ? normalizeRedirectPath(redirectToRaw)
       : withLocalePrefix(getDefaultPath(userRole), locale);
 
   return userId

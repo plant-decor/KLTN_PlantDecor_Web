@@ -1,40 +1,67 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Box, Card, Tab, Tabs, Typography } from '@mui/material';
+import { useTranslations } from 'next-intl';
 import OrderDetailModal from '@/components/order-history/OrderDetailModal';
 import OrderHistoryList from '@/components/order-history/OrderHistoryList';
 import { STATUS_TABS } from '@/components/order-history/orderHistoryUtils';
-import { getMyOrderById, getMyOrders } from '@/lib/api/orderService';
+import { getMyOrderById, getMyOrders, retryPayment } from '@/lib/api/orderService';
 import type { Order } from '@/types/order.types';
 
 export default function OrdersPage() {
+  const tOrderHistory = useTranslations('orderHistory');
   const [currentTab, setCurrentTab] = useState(0);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const requestSequenceRef = useRef(0);
+
+  const [retryLoadingPaymentId, setRetryLoadingPaymentId] = useState<number | null>(null);
+  const [retryError, setRetryError] = useState('');
 
   const [detailOrder, setDetailOrder] = useState<Order | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState('');
   const [detailOpen, setDetailOpen] = useState(false);
 
+  const selectedStatus = STATUS_TABS[currentTab]?.value ?? 'All';
+
   useEffect(() => {
+    let isMounted = true;
+    const requestId = ++requestSequenceRef.current;
+
     const fetchOrders = async () => {
       try {
         setLoading(true);
         setError('');
-        const list = await getMyOrders();
+        const orderStatus = selectedStatus === 'All' ? undefined : selectedStatus;
+        const list = await getMyOrders(orderStatus);
+
+        if (!isMounted || requestId !== requestSequenceRef.current) {
+          return;
+        }
+
         setOrders(Array.isArray(list) ? list : []);
       } catch (err) {
+        if (!isMounted || requestId !== requestSequenceRef.current) {
+          return;
+        }
+
         setError(err instanceof Error ? err.message : 'Cannot load order list');
       } finally {
-        setLoading(false);
+        if (isMounted && requestId === requestSequenceRef.current) {
+          setLoading(false);
+        }
       }
     };
 
-    fetchOrders();
-  }, []);
+    void fetchOrders();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedStatus]);
 
   const handleViewDetail = useCallback(async (orderId: number) => {
     try {
@@ -57,19 +84,29 @@ export default function OrdersPage() {
     }
   }, []);
 
-  const selectedStatus = STATUS_TABS[currentTab]?.value ?? 'All';
-
-  const filteredOrders = useMemo(() => {
-    if (selectedStatus === 'All') {
-      return orders;
+  const handleRetryPayment = useCallback(async (paymentId: number) => {
+    try {
+      setRetryLoadingPaymentId(paymentId);
+      setRetryError('');
+      const paymentUrl = await retryPayment(paymentId);
+      window.location.assign(paymentUrl);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : tOrderHistory('retryPaymentFailed');
+      setRetryError(message);
+    } finally {
+      setRetryLoadingPaymentId(null);
     }
-    return orders.filter((order) => order.statusName === selectedStatus);
-  }, [orders, selectedStatus]);
+  }, [tOrderHistory]);
+
+  const closeDetailModal = useCallback(() => {
+    setDetailOpen(false);
+    setRetryError('');
+  }, []);
 
   return (
     <Box sx={{ py: 4, px: { xs: 2, md: 4 }, maxWidth: 1400, mx: 'auto' }}>
       <Typography variant="h4" fontWeight="bold" gutterBottom sx={{ mb: 4 }}>
-        Order history
+        {tOrderHistory('title')}
       </Typography>
 
       {error ? (
@@ -96,14 +133,28 @@ export default function OrdersPage() {
         </Tabs>
       </Card>
 
-      <OrderHistoryList orders={filteredOrders} loading={loading} onViewDetail={handleViewDetail} />
+      {retryError ? (
+        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setRetryError('')}>
+          {retryError}
+        </Alert>
+      ) : null}
+
+      <OrderHistoryList
+        orders={orders}
+        loading={loading}
+        retryLoadingPaymentId={retryLoadingPaymentId}
+        onViewDetail={handleViewDetail}
+        onRetryPayment={handleRetryPayment}
+      />
 
       <OrderDetailModal
         open={detailOpen}
         order={detailOrder}
         loading={detailLoading}
         error={detailError}
-        onClose={() => setDetailOpen(false)}
+        retryLoadingPaymentId={retryLoadingPaymentId}
+        onRetryPayment={handleRetryPayment}
+        onClose={closeDetailModal}
       />
     </Box>
   );

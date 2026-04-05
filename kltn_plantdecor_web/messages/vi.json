@@ -423,6 +423,7 @@
     "noOrders": "Bạn chưa có đơn hàng nào"
   },
   "orderHistory": {
+    "title": "Lịch sử đơn hàng",
     "noOrdersFound": "Không tìm thấy đơn hàng",
     "orderType": {
       "uniquePlant": "Cây độc bản",
@@ -431,7 +432,10 @@
     "orderedAt": "Đặt lúc",
     "moreItems": "sản phẩm khác",
     "total": "Tổng cộng",
-    "viewDetail": "Xem chi tiết"
+    "viewDetail": "Xem chi tiết",
+    "retryPayment": "Thanh toán lại",
+    "retryingPayment": "Đang tạo lại thanh toán...",
+    "retryPaymentFailed": "Không thể thanh toán lại. Vui lòng thử lại."
   },
   "chatWidget": {
     "title": "Tin nhắn hỗ trợ Plant Care",
@@ -506,6 +510,9 @@
   "productDetail": {
     "home": "Trang chủ",
     "store": "Cửa hàng",
+    "yes": "Có",
+    "no": "Không",
+    "notAvailable": "N/A",
     "reviewsWithCount": "{count} đánh giá",
     "priceFrom": "Giá từ:",
     "priceTo": "đến {price}",
@@ -524,6 +531,36 @@
     "propagation": "Nhân giống",
     "commonPests": "Sâu bệnh thường gặp",
     "careInstructions": "Hướng dẫn chăm sóc",
+    "origin": "Nguồn gốc",
+    "placement": "Vị trí",
+    "growthRate": "Tốc độ phát triển",
+    "uniqueInstance": "Cá thể độc bản",
+    "categories": "Danh mục",
+    "tags": "Thẻ",
+    "categoryFallback": "Danh mục {index}",
+    "tagFallback": "Thẻ {index}",
+    "safetyAndTraits": "An toàn và đặc điểm",
+    "traits": {
+      "toxicity": "Độc tính",
+      "airPurifying": "Lọc không khí",
+      "hasFlower": "Có hoa",
+      "petSafe": "An toàn cho thú cưng",
+      "childSafe": "An toàn cho trẻ em",
+      "potIncluded": "Kèm chậu"
+    },
+    "fengShui": {
+      "title": "Phong thủy",
+      "element": "Mệnh"
+    },
+    "purchasePanel": {
+      "noNurseriesAvailable": "Không có nhà vườn khả dụng.",
+      "loadingPlantInstances": "Đang tải các cây cá thể...",
+      "noPlantInstancesAtNursery": "Không có cây cá thể khả dụng tại nhà vườn này.",
+      "sku": "Mã SKU",
+      "height": "Chiều cao",
+      "health": "Tình trạng",
+      "proceedToShipping": "Tiếp tục đến giao hàng"
+    },
     "myPlants": "Cây của tôi",
     "ownedCount": "Bạn đang sở hữu {count} cây loại này",
     "boughtFrom": "Mua từ",
@@ -629,6 +666,9 @@
     "successMessage": "Cảm ơn bạn đã mua hàng tại PlantDecor. Đơn hàng của bạn đã được ghi nhận.",
     "failureTitle": "Thanh toán thất bại!",
     "failureMessage": "Đã có lỗi xảy ra trong quá trình thanh toán. Vui lòng thử lại hoặc liên hệ hỗ trợ.",
+    "autoRedirect": "Hệ thống sẽ tự động chuyển về trang đơn hàng sau {countdown} giây...",
+    "viewOrderHistory": "Xem lịch sử đơn hàng ngay",
+    "backHome": "Quay lại trang chủ",
     "title": "Kết quả thanh toán",
     "message": "Cảm ơn bạn đã sử dụng dịch vụ của PlantDecor. Vui lòng kiểm tra trạng thái đơn hàng trong tài khoản của bạn."
   }

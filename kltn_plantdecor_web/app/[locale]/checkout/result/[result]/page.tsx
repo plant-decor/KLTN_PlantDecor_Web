@@ -13,6 +13,7 @@ import {
   Fade,
 } from '@mui/material';
 import { Cancel, CheckCircle, HistoryOutlined, Home } from '@mui/icons-material';
+import { useTranslations } from 'next-intl';
 import { useAuthStore } from '@/lib/store/authStore';
 import { routing } from '@/i18n/routing';
 
@@ -21,7 +22,7 @@ function buildLocalizedPath(locale: string, path: string): string {
 }
 
 export default function CheckoutResultPage() {
-  const params = useParams();
+  const params = useParams<{ locale?: string | string[]; result?: string | string[] }>();
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -29,14 +30,15 @@ export default function CheckoutResultPage() {
   const result = params.result;
 
   const [countdown, setCountdown] = useState(5);
+  const tCheckoutResult = useTranslations('checkoutResult');
   const user = useAuthStore((state) => state.user);
   const userId = user?.id ? String(user.id) : null;
 
-  const resolvedLocale = useMemo(() => {
+  const resolvedLocale = useMemo<'vi' | 'en'>(() => {
     if (Array.isArray(locale)) {
-      return locale[0] ?? routing.defaultLocale;
+      return locale[0] === 'en' ? 'en' : 'vi';
     }
-    return locale ?? routing.defaultLocale;
+    return locale === 'en' ? 'en' : 'vi';
   }, [locale]);
 
   const normalizedResult = useMemo(() => {
@@ -109,14 +111,16 @@ export default function CheckoutResultPage() {
               <Cancel sx={{ color: '#d32f2f', width: 80, height: 80 }} />
             )}
             <Typography variant="h4" className="mt-4 font-bold text-slate-800">
-              {isSuccess ? 'Thanh toan thanh cong!' : 'Thanh toan that bai'}
+              {isSuccess
+                ? tCheckoutResult('successTitle')
+                : tCheckoutResult('failureTitle')}
             </Typography>
           </Box>
 
           <Typography variant="body1" color="textSecondary" className="mb-6 px-4">
             {isSuccess
-              ? 'Cam on ban! Don hang cua ban dang duoc xu ly.'
-              : 'Da co loi xay ra trong qua trinh thanh toan. Vui long thu lai.'}
+              ? tCheckoutResult('successMessage')
+              : tCheckoutResult('failureMessage')}
           </Typography>
 
           <Box className="relative inline-flex items-center justify-center mb-8">
@@ -134,7 +138,7 @@ export default function CheckoutResultPage() {
           </Box>
 
           <Typography variant="body2" className="text-slate-400 italic mb-8">
-            He thong se tu dong chuyen ve trang don hang sau {countdown} giay...
+            {tCheckoutResult('autoRedirect', { countdown })}
           </Typography>
 
           <Divider className="mb-8" />
@@ -153,7 +157,7 @@ export default function CheckoutResultPage() {
               }}
               className="hover:opacity-90 shadow-lg"
             >
-              Xem lich su don hang ngay
+              {tCheckoutResult('viewOrderHistory')}
             </Button>
 
             <Button
@@ -163,7 +167,7 @@ export default function CheckoutResultPage() {
               onClick={() => router.push(buildLocalizedPath(resolvedLocale, '/'))}
               className="text-slate-500 normal-case"
             >
-              Quay lai trang chu
+              {tCheckoutResult('backHome')}
             </Button>
           </Box>
         </Paper>

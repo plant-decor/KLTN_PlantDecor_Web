@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import type { Plant } from '@/data/sampledata';
 import type { NurseryResponse } from '@/types/nursery.types';
@@ -34,6 +34,7 @@ export default function ProductDetailPurchasePanel({
 }: ProductDetailPurchasePanelProps) {
   const router = useRouter();
   const locale = useLocale();
+  const t = useTranslations('productDetail');
   const { user } = useAuthStore();
 
   const [selectedNurseryId, setSelectedNurseryId] = useState<number | null>(
@@ -150,15 +151,15 @@ export default function ProductDetailPurchasePanel({
           onSelectNursery={handleSelectNursery}
         />
       ) : (
-        <p className="text-sm text-gray-500">No nurseries available.</p>
+        <p className="text-sm text-gray-500">{t('purchasePanel.noNurseriesAvailable')}</p>
       )}
 
       {isPlantInstanceFlow ? (
         <div className="space-y-3">
           {isLoadingInstances ? (
-            <p className="text-sm text-gray-500">Loading plant instances...</p>
+            <p className="text-sm text-gray-500">{t('purchasePanel.loadingPlantInstances')}</p>
           ) : instanceItems.length === 0 ? (
-            <p className="text-sm text-gray-500">No available plant instance at this nursery.</p>
+            <p className="text-sm text-gray-500">{t('purchasePanel.noPlantInstancesAtNursery')}</p>
           ) : (
             <div className="space-y-2">
               {instanceItems.map((instance) => (
@@ -174,9 +175,9 @@ export default function ProductDetailPurchasePanel({
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className="font-medium text-gray-900">SKU: {instance.sku}</p>
-                      <p className="text-sm text-gray-600">Height: {instance.height} cm</p>
-                      <p className="text-sm text-gray-600">Health: {instance.healthStatus}</p>
+                      <p className="font-medium text-gray-900">{t('purchasePanel.sku')}: {instance.sku}</p>
+                      <p className="text-sm text-gray-600">{t('purchasePanel.height')}: {instance.height} cm</p>
+                      <p className="text-sm text-gray-600">{t('purchasePanel.health')}: {instance.healthStatus}</p>
                     </div>
                     <p className="text-base font-semibold text-green-700">
                       {instance.specificPrice.toLocaleString('vi-VN')} VND
@@ -197,7 +198,7 @@ export default function ProductDetailPurchasePanel({
                 : 'cursor-not-allowed bg-gray-300 text-gray-500'
             }`}
           >
-            Proceed to shipping
+            {t('purchasePanel.proceedToShipping')}
           </button>
         </div>
       ) : (

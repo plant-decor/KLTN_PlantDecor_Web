@@ -76,7 +76,7 @@ export interface PlantDetail {
   hasFlower: boolean;
   petSafe: boolean;
   childSafe: boolean;
-  fengShuiElement: string | null;
+  fengShuiElement: number | null;
   fengShuiMeaning: string | null;
   potIncluded: boolean;
   potSize: string | null;
@@ -108,7 +108,7 @@ export interface PlantUpsertRequest {
   hasFlower: boolean;
   petSafe: boolean;
   childSafe: boolean;
-  fengShuiElement: string;
+  fengShuiElement: number;
   fengShuiMeaning: string;
   potIncluded: boolean;
   potSize: string;
@@ -132,7 +132,7 @@ export interface PlantCombo {
   description: string;
   suitableSpace: string;
   suitableRooms: string;
-  fengShuiElement: string;
+  fengShuiElement: number | null;
   fengShuiPurpose: string;
   themeName: string;
   themeDescription: string;
@@ -261,6 +261,8 @@ export interface MaterialUpsertRequest {
   specifications?: string | null;
   expiryMonths?: number | null;
   isActive: boolean;
+  categoryId?: number[];
+  tagId?: number[];
 }
 
 export interface MaterialFormData extends MaterialUpsertRequest {

@@ -39,8 +39,6 @@ import { formatCurrency } from '@/lib/utils/formatUtil';
 import { get } from '@/lib/api/apiService.server';
 import { ResponseModel } from '@/types/api.types';
 
-const booleanLabel = (value: boolean | null | undefined) => (value ? 'Yes' : 'No');
-
 const toCategoryNames = (categories: PlantDetailResponse['categories']): Category[] => {
   if (!Array.isArray(categories)) return [];
 
@@ -110,6 +108,7 @@ const mapPlantDetailToSamplePlant = (
 export default async function ProductDetailPage({ params }: PageProps) {
   const { plantid, locale } = await params;
   const t = await getTranslations({ locale, namespace: 'productDetail' });
+  const booleanLabel = (value: boolean | null | undefined) => (value ? t('yes') : t('no'));
 
   const id = Number(plantid);
   if (!Number.isFinite(id) || id <= 0) {
@@ -166,25 +165,9 @@ export default async function ProductDetailPage({ params }: PageProps) {
               containerClassName="rounded-xl overflow-hidden bg-gray-100 border border-gray-200"
               className="w-full aspect-square object-cover"
             />
-          </div>
-            <div className="mb-6 space-y-3 border-t border-gray-100 pt-6">
-              <h1 className="text-4xl font-bold text-gray-900 mb-2">{plant.name}</h1>
-            {plant.specificName && (
-              <p className="text-xl text-gray-600 italic mb-6">{plant.specificName}</p>
-            )}
-
-            <div className="mb-6">
-              <span className="text-3xl font-bold text-green-600">
-                {formatCurrency(plant.basePrice, locale)}
-              </span>
-            </div>
-              <ProductDetailPurchasePanel
-                plant={plantForActions}
-                nurseries={isNurseryAvailable}
-              />
-            {(plant.fengShuiElement || plant.fengShuiMeaning) && (
+             {(plant.fengShuiElement || plant.fengShuiMeaning) && (
               <div className="mb-6 rounded-lg border border-gray-200 bg-white p-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Feng Shui</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('fengShui.title')}</h3>
                 {plant.fengShuiElement && (
                   (() => {
                     const fengShuiColors = getFengShuiColors(plant.fengShuiElement);
@@ -192,7 +175,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
                     return (
                       <p className="text-sm text-gray-700 mb-2">
-                        Element:{' '}
+                        {t('fengShui.element')}:{' '}
                         <span
                           className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold"
                           style={{
@@ -215,11 +198,11 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
             {Array.isArray(plant.categories) && plant.categories.length > 0 && (
               <div className="mb-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Categories</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('categories')}</h3>
                 <div className="flex flex-wrap gap-2">
                   {plant.categories.map((category, index) => (
                     <span key={`${category.name || 'category'}-${index}`} className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm">
-                      {category.name || `Category ${index + 1}`}
+                      {category.name || t('categoryFallback', { index: index + 1 })}
                     </span>
                   ))}
                 </div>
@@ -228,11 +211,11 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
             {Array.isArray(plant.tags) && plant.tags.length > 0 && (
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Tags</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('tags')}</h3>
                 <div className="flex flex-wrap gap-2">
                   {plant.tags.map((tag, index) => (
                     <span key={`${tag.tagName || 'tag'}-${index}`} className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">
-                      {tag.tagName || `Tag ${index + 1}`}
+                      {tag.tagName || t('tagFallback', { index: index + 1 })}
                     </span>
                   ))}
                 </div>
@@ -240,15 +223,33 @@ export default async function ProductDetailPage({ params }: PageProps) {
             )}
             </div>
             
+            <div className="mb-6 space-y-3 border-t border-gray-100 pt-6">
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">{plant.name}</h1>
+            {plant.specificName && (
+              <p className="text-xl text-gray-600 italic mb-6">{plant.specificName}</p>
+            )}
+
             <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Safety and traits</h3>
+              <span className="text-3xl font-bold text-green-600">
+                {formatCurrency(plant.basePrice, locale)}
+              </span>
+            </div>
+              <ProductDetailPurchasePanel
+                plant={plantForActions}
+                nurseries={isNurseryAvailable}
+              />
+            </div>
+
+                       
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('safetyAndTraits')}</h3>
               <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="bg-gray-50 rounded-lg px-3 py-2">Toxicity: {booleanLabel(plant.toxicity)}</div>
-                <div className="bg-gray-50 rounded-lg px-3 py-2">Air purifying: {booleanLabel(plant.airPurifying)}</div>
-                <div className="bg-gray-50 rounded-lg px-3 py-2">Has flower: {booleanLabel(plant.hasFlower)}</div>
-                <div className="bg-gray-50 rounded-lg px-3 py-2">Pet safe: {booleanLabel(plant.petSafe)}</div>
-                <div className="bg-gray-50 rounded-lg px-3 py-2">Child safe: {booleanLabel(plant.childSafe)}</div>
-                <div className="bg-gray-50 rounded-lg px-3 py-2">Pot included: {booleanLabel(plant.potIncluded)}</div>
+                <div className="bg-gray-50 rounded-lg px-3 py-2">{t('traits.toxicity')}: {booleanLabel(plant.toxicity)}</div>
+                <div className="bg-gray-50 rounded-lg px-3 py-2">{t('traits.airPurifying')}: {booleanLabel(plant.airPurifying)}</div>
+                <div className="bg-gray-50 rounded-lg px-3 py-2">{t('traits.hasFlower')}: {booleanLabel(plant.hasFlower)}</div>
+                <div className="bg-gray-50 rounded-lg px-3 py-2">{t('traits.petSafe')}: {booleanLabel(plant.petSafe)}</div>
+                <div className="bg-gray-50 rounded-lg px-3 py-2">{t('traits.childSafe')}: {booleanLabel(plant.childSafe)}</div>
+                <div className="bg-gray-50 rounded-lg px-3 py-2">{t('traits.potIncluded')}: {booleanLabel(plant.potIncluded)}</div>
               </div>
             </div>
 
@@ -274,27 +275,27 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-sm text-gray-500 mb-1">Origin</p>
-                <p className="font-semibold text-gray-900">{plant.origin || 'N/A'}</p>
+                <p className="text-sm text-gray-500 mb-1">{t('origin')}</p>
+                <p className="font-semibold text-gray-900">{plant.origin || t('notAvailable')}</p>
               </div>
               <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-sm text-gray-500 mb-1">Placement</p>
-                <p className="font-semibold text-gray-900">{plant.placementTypeName || 'N/A'}</p>
+                <p className="text-sm text-gray-500 mb-1">{t('placement')}</p>
+                <p className="font-semibold text-gray-900">{plant.placementTypeName || t('notAvailable')}</p>
               </div>
               <div className="bg-gray-50 rounded-lg p-4">
                 <p className="text-sm text-gray-500 mb-1">{t('size')}</p>
-                <p className="font-semibold text-gray-900">{plant.size || 'N/A'}</p>
+                <p className="font-semibold text-gray-900">{plant.size || t('notAvailable')}</p>
               </div>
               <div className="bg-gray-50 rounded-lg p-4">
                 <p className="text-sm text-gray-500 mb-1">{t('careLevel')}</p>
-                <p className="font-semibold text-gray-900">{plant.careLevel || 'N/A'}</p>
+                <p className="font-semibold text-gray-900">{plant.careLevel || t('notAvailable')}</p>
               </div>
               <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-sm text-gray-500 mb-1">Growth rate</p>
-                <p className="font-semibold text-gray-900">{plant.growthRate || 'N/A'}</p>
+                <p className="text-sm text-gray-500 mb-1">{t('growthRate')}</p>
+                <p className="font-semibold text-gray-900">{plant.growthRate || t('notAvailable')}</p>
               </div>
               <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-sm text-gray-500 mb-1">Unique instance</p>
+                <p className="text-sm text-gray-500 mb-1">{t('uniqueInstance')}</p>
                 <p className="font-semibold text-gray-900">{booleanLabel(plant.isUniqueInstance)}</p>
               </div>
             </div>

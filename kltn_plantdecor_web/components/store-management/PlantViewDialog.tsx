@@ -17,7 +17,7 @@ import {
 } from '@mui/material';
 import { Check, Close } from '@mui/icons-material';
 import type { PlantDetail, PlantEnumPayload } from '@/types/store-management.types';
-import { getFengShuiColors } from '@/lib/utils/fengShui';
+import { getFengShuiColors, getFengShuiElementLabel } from '@/lib/utils/fengShui';
 
 interface PlantViewDialogProps {
   open: boolean;
@@ -46,6 +46,7 @@ const formatDateTime = (value?: string) => {
 export default function PlantViewDialog({ open, plant, enums, onClose }: PlantViewDialogProps) {
   if (!plant) return null;
   const fengShuiColors = getFengShuiColors(plant.fengShuiElement);
+  const fengShuiLabel = getFengShuiElementLabel(plant.fengShuiElement);
 
   const renderBooleanCell = (value: boolean) => (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -166,7 +167,7 @@ export default function PlantViewDialog({ open, plant, enums, onClose }: PlantVi
                   Element
                 </Typography>
                 <Chip
-                  label={plant.fengShuiElement || '-'}
+                  label={plant.fengShuiElement ? fengShuiLabel : '-'}
                   size="small"
                   variant="outlined"
                   sx={{

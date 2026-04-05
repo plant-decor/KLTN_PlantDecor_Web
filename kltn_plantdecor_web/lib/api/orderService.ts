@@ -9,11 +9,12 @@ import type {
   OrderCreateRequest,
   OrderInvoice,
   PaymentCreateResponse,
+  OrderStatusName,
 } from '@/types/order.types';
 
 const ORDER_ENDPOINT = '/Order';
 const INVOICE_BY_ORDER_ENDPOINT = '/Invoice/order';
-const PAYMENT_CREATE_ENDPOINT = '/Payment/create';
+const PAYMENT_ENDPOINT = '/Payment';
 
 type ApiResponseFallback<T> = Partial<{
   payload: T;
@@ -48,10 +49,11 @@ export async function getInvoicesByOrderId(
   return response.payload ?? [];
 }
 
-export async function getMyOrders(): Promise<Order[]> {
+export async function getMyOrders(orderStatus?: OrderStatusName): Promise<Order[]> {
+  const params = orderStatus ? { orderStatus } : undefined;
   const response = await get<MyOrdersResponse & ApiResponseFallback<Order[]>>(
     `${ORDER_ENDPOINT}/my`,
-    undefined,
+    params,
     false,
     false
   );
@@ -70,8 +72,18 @@ export async function getMyOrderById(orderId: number): Promise<Order | null> {
 
 export async function createPaymentUrl(invoiceId: number): Promise<string> {
   const response = await post<PaymentCreateResponse>(
-    PAYMENT_CREATE_ENDPOINT,
+    `${PAYMENT_ENDPOINT}/create`,
     { invoiceId },
+    false,
+    false
+  );
+  return response.payload.paymentUrl;
+}
+
+export async function retryPayment(paymentId: number): Promise<string> {
+  const response = await post<PaymentCreateResponse>(
+    `${PAYMENT_ENDPOINT}/${paymentId}/retry`,
+    {},
     false,
     false
   );

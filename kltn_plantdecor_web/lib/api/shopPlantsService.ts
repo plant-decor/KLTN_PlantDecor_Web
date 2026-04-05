@@ -24,7 +24,7 @@ export interface ShopPlantSearchRequest {
   categoryIds?: number[];
   tagIds?: number[];
   sizes?: number[];
-  fengShuiElement?: string;
+  fengShuiElement?: number;
   nurseryId?: number;
   sortBy?: string;
   sortDirection?: string;

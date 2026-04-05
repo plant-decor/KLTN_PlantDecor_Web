@@ -19,6 +19,7 @@ import ProductCard from '@/components/product/ProductCard';
 import MaterialCard from '@/components/product/MaterialCard';
 import type { CategoryResponse } from '@/lib/api/categoriesService';
 import { Select } from '@mui/material';
+import { FENG_SHUI_ELEMENT_OPTIONS } from '@/lib/utils/fengShui';
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -144,7 +145,7 @@ const buildPlantRequestBody = (
     categoryIds: uniqueCategoryIds.length > 0 ? uniqueCategoryIds : undefined,
     tagIds: uniqueTagIds.length > 0 ? uniqueTagIds : undefined,
     sizes: sizes.length > 0 ? sizes : undefined,
-    fengShuiElement: toSingle(query.fengShuiElement)?.trim() || undefined,
+    fengShuiElement: parseIntOrUndefined(toSingle(query.fengShuiElement)),
     nurseryId: parseIntOrUndefined(toSingle(query.nurseryId)),
     sortBy,
     sortDirection,
@@ -471,12 +472,17 @@ export default async function PlantStorePage({ params, searchParams }: PageProps
                     native
                     id="fengShuiElement"
                     name="fengShuiElement"
-                    defaultValue={plantRequestBody.fengShuiElement || ''}
+                    defaultValue={
+                      plantRequestBody.fengShuiElement !== undefined
+                        ? String(plantRequestBody.fengShuiElement)
+                        : ''
+                    }
                     className="w-full border border-gray-300 rounded-lg text-sm"
                   >
-                    {['', 'Mộc', 'Hỏa', 'Thổ', 'Kim', 'Thủy'].map((element) => (
-                      <option key={element} value={element}>
-                        {element === '' ? t('filters.none') : element}
+                    <option value="">{t('filters.none')}</option>
+                    {FENG_SHUI_ELEMENT_OPTIONS.map((option) => (
+                      <option key={option.value} value={String(option.value)}>
+                        {option.label}
                       </option>
                     ))}
                   </Select>

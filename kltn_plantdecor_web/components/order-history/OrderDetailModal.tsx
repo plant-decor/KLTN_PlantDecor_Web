@@ -24,6 +24,7 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
+import { useTranslations } from 'next-intl';
 import type { Order } from '@/types/order.types';
 import {
   formatCurrency,
@@ -37,6 +38,8 @@ interface OrderDetailModalProps {
   order: Order | null;
   loading: boolean;
   error: string;
+  retryLoadingPaymentId: number | null;
+  onRetryPayment: (paymentId: number) => Promise<void>;
   onClose: () => void;
 }
 
@@ -45,9 +48,13 @@ export default function OrderDetailModal({
   order,
   loading,
   error,
+  retryLoadingPaymentId,
+  onRetryPayment,
   onClose,
 }: OrderDetailModalProps) {
+  const tOrderHistory = useTranslations('orderHistory');
   const statusInfo = order ? getStatusInfo(order.statusName) : null;
+  const retryPaymentId = order?.statusName === 'Pending' ? order.id : null;
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -247,6 +254,19 @@ export default function OrderDetailModal({
                     <Typography variant="body1" fontWeight="bold" sx={{ mt: 1 }}>
                       {formatCurrency(invoice.totalAmount)}
                     </Typography>
+                    {invoice.statusName === 'Pending' && retryPaymentId !== null ? (
+                      <Button
+                        variant="contained"
+                        size="small"
+                        sx={{ mt: 1.5 }}
+                        onClick={() => void onRetryPayment(retryPaymentId)}
+                        disabled={retryLoadingPaymentId === retryPaymentId}
+                      >
+                        {retryLoadingPaymentId === retryPaymentId
+                          ? tOrderHistory('retryingPayment')
+                          : tOrderHistory('retryPayment')}
+                      </Button>
+                    ) : null}
                   </Card>
                 ))}
               </>

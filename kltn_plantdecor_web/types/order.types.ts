@@ -5,6 +5,24 @@ export interface ApiResponseWithPayload<T> {
   payload: T;
 }
 
+export type OrderStatusName =
+  | 'Pending'
+  | 'DepositPaid'
+  | 'Paid'
+  | 'Assigned'
+  | 'Shipping'
+  | 'Delivered'
+  | 'RemainingPaymentPending'
+  | 'Completed'
+  | 'Cancelled'
+  | 'Failed'
+  | 'RefundRequested'
+  | 'Refunded'
+  | 'Rejected'
+  | 'PendingConfirmation';
+
+export type OrderStatusFilter = 'All' | OrderStatusName;
+
 export interface OrderCreateRequest {
   address: string;
   phone: string;

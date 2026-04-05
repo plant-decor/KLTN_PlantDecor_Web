@@ -20,13 +20,17 @@ import { formatCurrency, formatDate, getStatusInfo } from './orderHistoryUtils';
 interface OrderHistoryListProps {
   orders: Order[];
   loading: boolean;
+  retryLoadingPaymentId: number | null;
   onViewDetail: (orderId: number) => void;
+  onRetryPayment: (paymentId: number) => Promise<void>;
 }
 
 export default function OrderHistoryList({
   orders,
   loading,
+  retryLoadingPaymentId,
   onViewDetail,
+  onRetryPayment,
 }: OrderHistoryListProps) {
   const tOrderHistory = useTranslations('orderHistory');
 
@@ -59,6 +63,8 @@ export default function OrderHistoryList({
         const statusInfo = getStatusInfo(order.statusName);
         const displayItems = order.items.slice(0, 2);
         const remainingItems = order.items.length - displayItems.length;
+        const retryPaymentId = order.statusName === 'Pending' ? order.id : null;
+        const isRetrying = retryPaymentId !== null && retryLoadingPaymentId === retryPaymentId;
 
         return (
           <Card key={order.id} sx={{ boxShadow: 2, '&:hover': { boxShadow: 4 } }}>
@@ -155,6 +161,16 @@ export default function OrderHistoryList({
                 >
                   {tOrderHistory('viewDetail')}
                 </Button>
+                {retryPaymentId !== null ? (
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={() => void onRetryPayment(retryPaymentId)}
+                    disabled={isRetrying}
+                  >
+                    {isRetrying ? tOrderHistory('retryingPayment') : tOrderHistory('retryPayment')}
+                  </Button>
+                ) : null}
               </Box>
             </CardContent>
           </Card>

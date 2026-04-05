@@ -30,6 +30,7 @@ import type {
   PlantFormData,
   ImageUploadData,
 } from '@/types/store-management.types';
+import { FENG_SHUI_ELEMENT_OPTIONS } from '@/lib/utils/fengShui';
 
 interface OptionItem {
   id: number;
@@ -63,7 +64,7 @@ const defaultPlant: PlantFormData = {
   hasFlower: false,
   petSafe: false,
   childSafe: false,
-  fengShuiElement: '',
+  fengShuiElement: 0,
   fengShuiMeaning: '',
   potIncluded: false,
   potSize: '',
@@ -114,7 +115,7 @@ export default function PlantFormDialog({
         hasFlower: editingData.hasFlower,
         petSafe: editingData.petSafe,
         childSafe: editingData.childSafe,
-        fengShuiElement: editingData.fengShuiElement || '',
+        fengShuiElement: editingData.fengShuiElement ?? 0,
         fengShuiMeaning: editingData.fengShuiMeaning || '',
         potIncluded: editingData.potIncluded,
         potSize: editingData.potSize || '',
@@ -330,8 +331,24 @@ export default function PlantFormDialog({
                 <Controller
                   name="fengShuiElement"
                   control={control}
-                  rules={{ required: true }}
-                  render={({ field }) => <TextField {...field} label="Feng shui element" fullWidth required />}
+                  rules={{ required: true, min: 1 }}
+                  render={({ field }) => (
+                    <FormControl fullWidth required>
+                      <InputLabel>Feng shui element</InputLabel>
+                      <Select
+                        {...field}
+                        label="Feng shui element"
+                        onChange={(event) => field.onChange(Number(event.target.value))}
+                      >
+                        <MenuItem value={0} disabled>
+                          Select element
+                        </MenuItem>
+                        {FENG_SHUI_ELEMENT_OPTIONS.map((item) => (
+                          <MenuItem key={item.value} value={item.value}>{item.label}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  )}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>

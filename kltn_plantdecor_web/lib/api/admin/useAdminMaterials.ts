@@ -82,12 +82,12 @@ const normalizeError = (err: unknown): string => {
   return candidate.response?.data?.message || candidate.message || 'An error occurred';
 };
 
-const toUpsertPayload = (data: MaterialFormData): MaterialUpsertRequest => {
+const toUpsertPayload = (data: MaterialFormData, isCreateMode = false): MaterialUpsertRequest => {
   const normalizeText = (value: string | undefined | null) => (value ?? '').trim();
   const normalizedExpiry = data.expiryMonths ?? null;
   const specificationValue = normalizeText(data.specifications ?? undefined);
 
-  return {
+  const basePayload: MaterialUpsertRequest = {
     materialCode: data.materialCode ? normalizeText(data.materialCode) : undefined,
     name: normalizeText(data.name),
     description: normalizeText(data.description),
@@ -98,6 +98,57 @@ const toUpsertPayload = (data: MaterialFormData): MaterialUpsertRequest => {
     expiryMonths: normalizedExpiry,
     isActive: Boolean(data.isActive),
   };
+
+  if (!isCreateMode) {
+    return basePayload;
+  }
+
+  return {
+    ...basePayload,
+    categoryId: data.categoryIds,
+    tagId: data.tagIds,
+  };
+};
+
+const normalizeIdArray = (ids: number[]): number[] => {
+  return [...new Set(ids)].sort((left, right) => left - right);
+};
+
+const hasSameIds = (actualIds: number[], expectedIds: number[]): boolean => {
+  if (actualIds.length !== expectedIds.length) {
+    return false;
+  }
+
+  return actualIds.every((id, index) => id === expectedIds[index]);
+};
+
+const createResponseHasExpectedRelations = (responsePayload: unknown, formData: MaterialFormData): boolean => {
+  if (!responsePayload || typeof responsePayload !== 'object') {
+    return false;
+  }
+
+  const candidate = responsePayload as {
+    categories?: Array<{ id?: number }>;
+    tags?: Array<{ id?: number }>;
+  };
+
+  if (!Array.isArray(candidate.categories) || !Array.isArray(candidate.tags)) {
+    return false;
+  }
+
+  const responseCategoryIds = normalizeIdArray(
+    candidate.categories
+      .map((category) => category.id)
+      .filter((id): id is number => typeof id === 'number')
+  );
+  const responseTagIds = normalizeIdArray(
+    candidate.tags.map((tag) => tag.id).filter((id): id is number => typeof id === 'number')
+  );
+
+  const expectedCategoryIds = normalizeIdArray(formData.categoryIds);
+  const expectedTagIds = normalizeIdArray(formData.tagIds);
+
+  return hasSameIds(responseCategoryIds, expectedCategoryIds) && hasSameIds(responseTagIds, expectedTagIds);
 };
 
 const toMaterialId = (payload: unknown): number | null => {
@@ -218,7 +269,8 @@ export const useAdminMaterials = (): UseAdminMaterialsReturn => {
       setError(null);
 
       try {
-        const payload = toUpsertPayload(formData);
+        const isCreateMode = !editingMaterialId;
+        const payload = toUpsertPayload(formData, isCreateMode);
 
         const response = editingMaterialId
           ? await updateAdminMaterial(editingMaterialId, payload, true)
@@ -245,8 +297,15 @@ export const useAdminMaterials = (): UseAdminMaterialsReturn => {
           await uploadAdminMaterialThumbnail(materialId, selectedThumbnail.file, true);
         }
 
-        await syncCategories(materialId, currentCategoryIds, formData.categoryIds);
-        await syncTags(materialId, currentTagIds, formData.tagIds);
+        const shouldRunRelationshipFallback = editingMaterialId
+          ? true
+          : !createResponseHasExpectedRelations(upsertPayload, formData);
+
+        if (shouldRunRelationshipFallback) {
+          await syncCategories(materialId, currentCategoryIds, formData.categoryIds);
+          await syncTags(materialId, currentTagIds, formData.tagIds);
+        }
+
         await fetchMaterials();
 
         return true;

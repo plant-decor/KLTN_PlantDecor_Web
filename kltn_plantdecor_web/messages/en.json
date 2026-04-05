@@ -422,6 +422,7 @@
     "noOrders": "You have no orders yet"
   },
   "orderHistory": {
+    "title": "Order history",
     "noOrdersFound": "No orders found",
     "orderType": {
       "uniquePlant": "Unique plant",
@@ -430,7 +431,10 @@
     "orderedAt": "Ordered at",
     "moreItems": "more item(s)",
     "total": "Total",
-    "viewDetail": "View detail"
+    "viewDetail": "View detail",
+    "retryPayment": "Retry payment",
+    "retryingPayment": "Retrying...",
+    "retryPaymentFailed": "Failed to retry payment. Please try again."
   },
   "chatWidget": {
     "title": "Plant Care Support Chat",
@@ -505,6 +509,9 @@
   "productDetail": {
     "home": "Home",
     "store": "Store",
+    "yes": "Yes",
+    "no": "No",
+    "notAvailable": "N/A",
     "reviewsWithCount": "{count} reviews",
     "priceFrom": "Price from:",
     "priceTo": "to {price}",
@@ -523,6 +530,36 @@
     "propagation": "Propagation",
     "commonPests": "Common pests",
     "careInstructions": "Care instructions",
+    "origin": "Origin",
+    "placement": "Placement",
+    "growthRate": "Growth rate",
+    "uniqueInstance": "Unique instance",
+    "categories": "Categories",
+    "tags": "Tags",
+    "categoryFallback": "Category {index}",
+    "tagFallback": "Tag {index}",
+    "safetyAndTraits": "Safety and traits",
+    "traits": {
+      "toxicity": "Toxicity",
+      "airPurifying": "Air purifying",
+      "hasFlower": "Has flower",
+      "petSafe": "Pet safe",
+      "childSafe": "Child safe",
+      "potIncluded": "Pot included"
+    },
+    "fengShui": {
+      "title": "Feng Shui",
+      "element": "Element"
+    },
+    "purchasePanel": {
+      "noNurseriesAvailable": "No nurseries available.",
+      "loadingPlantInstances": "Loading plant instances...",
+      "noPlantInstancesAtNursery": "No available plant instance at this nursery.",
+      "sku": "SKU",
+      "height": "Height",
+      "health": "Health",
+      "proceedToShipping": "Proceed to shipping"
+    },
     "myPlants": "My plants",
     "ownedCount": "You currently own {count} plants of this type",
     "boughtFrom": "Bought on",

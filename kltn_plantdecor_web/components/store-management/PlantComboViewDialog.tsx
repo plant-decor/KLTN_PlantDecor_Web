@@ -16,7 +16,7 @@ import {
   CardMedia,
 } from '@mui/material';
 import type { PlantCombo } from '@/types/store-management.types';
-import { getFengShuiColors } from '@/lib/utils/fengShui';
+import { getFengShuiColors, getFengShuiElementLabel } from '@/lib/utils/fengShui';
 
 interface PlantComboViewDialogProps {
   open: boolean;
@@ -27,6 +27,7 @@ interface PlantComboViewDialogProps {
 export default function PlantComboViewDialog({ open, combo, onClose }: PlantComboViewDialogProps) {
   if (!combo) return null;
   const fengShuiColors = getFengShuiColors(combo.fengShuiElement);
+  const fengShuiLabel = getFengShuiElementLabel(combo.fengShuiElement);
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -149,7 +150,7 @@ export default function PlantComboViewDialog({ open, combo, onClose }: PlantComb
                   Yếu tố phong thủy
                 </Typography>
                 <Chip
-                  label={combo.fengShuiElement || '-'}
+                  label={combo.fengShuiElement ? fengShuiLabel : '-'}
                   size="small"
                   variant="outlined"
                   sx={{

@@ -147,18 +147,23 @@ export default function MaterialFormDialog({
               Basic information
             </Typography>
             <Grid container spacing={2}>
-              {editingData && (
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Controller
-                    name="materialCode"
-                    control={control}
-                    render={({ field }) => (
-                      <TextField {...field} label="Material code" fullWidth InputProps={{ readOnly: true }} />
-                    )}
-                  />
-                </Grid>
-              )}
-              <Grid size={{ xs: 12, sm: editingData ? 6 : 12 }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Controller
+                  name="materialCode"
+                  control={control}
+                  rules={editingData ? undefined : { required: true }}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="Material code"
+                      fullWidth
+                      required={!editingData}
+                      InputProps={{ readOnly: Boolean(editingData) }}
+                    />
+                  )}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Controller
                   name="name"
                   control={control}

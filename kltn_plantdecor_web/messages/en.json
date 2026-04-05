@@ -665,6 +665,9 @@
     "successMessage": "Thank you for your purchase at PlantDecor. Your order has been recorded.",
     "failureTitle": "Payment Failed!",
     "failureMessage": "There was an error during payment. Please try again or contact support.",
+    "autoRedirect": "The system will automatically redirect you to your order page in {countdown} seconds...",
+    "viewOrderHistory": "View order history now",
+    "backHome": "Back to home",
     "title": "Payment Result",
     "message": "Thank you for using PlantDecor. Please check your order status in your account."
   }

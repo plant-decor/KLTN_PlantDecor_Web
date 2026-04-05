@@ -128,7 +128,7 @@ const toUpsertPayload = (data: PlantFormData): PlantUpsertRequest => {
     hasFlower: data.hasFlower,
     petSafe: data.petSafe,
     childSafe: data.childSafe,
-    fengShuiElement: normalizeText(data.fengShuiElement),
+    fengShuiElement: Number.isFinite(data.fengShuiElement) ? data.fengShuiElement : 0,
     fengShuiMeaning: normalizeText(data.fengShuiMeaning),
     potIncluded: data.potIncluded,
     potSize: normalizeText(data.potSize),

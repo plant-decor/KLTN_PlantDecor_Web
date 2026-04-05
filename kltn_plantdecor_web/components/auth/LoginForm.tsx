@@ -45,6 +45,7 @@ export default function LoginForm({
           alt="Background"
           width={1920}
           height={1080}
+          loading="eager"
           className="w-full h-full object-cover"
         />
       </div>

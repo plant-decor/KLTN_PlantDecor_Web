@@ -15,10 +15,15 @@ import {
   Stack,
   Divider,
   Typography,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
 } from '@mui/material';
 import { useForm, Controller } from 'react-hook-form';
 import ImageUpload from './ImageUpload';
 import type { PlantCombo, ImageUploadData } from '@/types/store-management.types';
+import { FENG_SHUI_ELEMENT_OPTIONS } from '@/lib/utils/fengShui';
 
 interface PlantComboFormDialogProps {
   open: boolean;
@@ -36,7 +41,7 @@ const defaultCombo: PlantCombo = {
   description: '',
   suitableSpace: '',
   suitableRooms: '',
-  fengShuiElement: '',
+  fengShuiElement: 0,
   fengShuiPurpose: '',
   themeName: '',
   themeDescription: '',
@@ -187,7 +192,19 @@ export default function PlantComboFormDialog({
                   name="fengShuiElement"
                   control={control}
                   render={({ field }) => (
-                    <TextField {...field} label="Yếu tố phong thủy" fullWidth />
+                    <FormControl fullWidth>
+                      <InputLabel>Yếu tố phong thủy</InputLabel>
+                      <Select
+                        {...field}
+                        label="Yếu tố phong thủy"
+                        onChange={(event) => field.onChange(Number(event.target.value))}
+                      >
+                        <MenuItem value={0}>Chọn mệnh</MenuItem>
+                        {FENG_SHUI_ELEMENT_OPTIONS.map((item) => (
+                          <MenuItem key={item.value} value={item.value}>{item.label}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
                   )}
                 />
               </Grid>

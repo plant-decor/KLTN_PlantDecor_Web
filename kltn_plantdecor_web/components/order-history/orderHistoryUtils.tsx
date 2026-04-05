@@ -8,23 +8,7 @@ import HourglassTopIcon from '@mui/icons-material/HourglassTop';
 import ReplayIcon from '@mui/icons-material/Replay';
 import type { ReactElement } from 'react';
 import type { ChipProps } from '@mui/material/Chip';
-
-export type OrderStatusFilter =
-  | 'All'
-  | 'Pending'
-  | 'DepositPaid'
-  | 'Paid'
-  | 'Assigned'
-  | 'Shipping'
-  | 'Delivered'
-  | 'RemainingPaymentPending'
-  | 'Completed'
-  | 'Failed'
-  | 'RefundRequested'
-  | 'Refunded'
-  | 'Rejected'
-  | 'PendingConfirmation'
-  | 'Cancelled';
+import type { OrderStatusFilter } from '@/types/order.types';
 
 export const STATUS_TABS: Array<{ value: OrderStatusFilter; label: string }> = [
   { value: 'All', label: 'All' },

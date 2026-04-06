@@ -8,6 +8,7 @@ import type {
   GetConversationsResponse,
   GetConversationMessagesParams,
   GetConversationMessagesResponse,
+  GetLatestActiveConversationResponse,
   GetWaitingSupportConversationsResponse,
   StartSupportConversationRequest,
   StartSupportConversationResponse,
@@ -79,6 +80,20 @@ export const closeSupportConversation = async (
 ): Promise<CloseSupportConversationResponse> => {
   return apiClient.post(
     `/support-conversations/${conversationId}/close`,
+    undefined,
+    loading,
+  );
+};
+
+/**
+ * GET /api/support-conversations/latest-active
+ * Get the latest active conversation of current customer.
+ */
+export const getLatestActiveConversation = async (
+  loading = true,
+): Promise<GetLatestActiveConversationResponse> => {
+  return apiClient.get(
+    "/support-conversations/latest-active",
     undefined,
     loading,
   );

@@ -72,3 +72,6 @@ export type CloseSupportConversationResponse = ResponseModel<null>;
 
 export type GetConversationMessagesResponse =
   ResponseModel<ConversationMessagesPayload>;
+
+export type GetLatestActiveConversationResponse =
+  ResponseModel<SupportConversationPayload | null>;

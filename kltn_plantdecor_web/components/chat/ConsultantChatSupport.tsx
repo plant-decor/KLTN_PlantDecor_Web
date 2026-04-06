@@ -14,10 +14,8 @@ import {
   Typography,
 } from "@mui/material";
 import {
-  Add as AddIcon,
   ArrowBack as ArrowBackIcon,
   InfoOutlined as InfoOutlinedIcon,
-  MoreHoriz as MoreHorizIcon,
   PhoneRounded as PhoneRoundedIcon,
   Search as SearchIcon,
   SendRounded as SendRoundedIcon,
@@ -38,21 +36,28 @@ type ChatSession = {
   id: string;
   conversationId: number;
   customerName: string;
+  customerEmail: string;
+  customerAvatarUrl: string | null;
   summary: string;
   waitingMinutes: number;
-  preview: string;
   lastMessage: string;
   status: "waiting" | "active" | "closed";
-  unread: number;
   online: boolean;
 };
 
 const mapConversationToSession = (
   conv: SupportConversationPayload,
+  currentUserId?: number,
 ): ChatSession => {
-  const customer = conv.participants.find((p) => p.userId !== undefined);
+  const customer =
+    conv.participants.find((p) =>
+      currentUserId ? p.userId !== currentUserId : true,
+    ) ?? conv.participants[conv.participants.length - 1];
+
   const customerName =
     customer?.fullName ?? customer?.email ?? `Khách #${conv.id}`;
+  const customerEmail = customer?.email ?? "";
+  const customerAvatarUrl = customer?.avatarUrl ?? null;
 
   const startedAt = new Date(conv.startedAt);
   const waitingMinutes = Math.floor((Date.now() - startedAt.getTime()) / 60000);
@@ -65,42 +70,15 @@ const mapConversationToSession = (
     id: String(conv.id),
     conversationId: conv.id,
     customerName,
+    customerEmail,
+    customerAvatarUrl,
     summary: conv.latestMessage?.content ?? "Chưa có tin nhắn",
     waitingMinutes,
-    preview: customerName,
     lastMessage: conv.latestMessage?.content ?? "",
     status,
-    unread: 0,
     online: conv.status === SupportConversationStatus.Waiting,
   };
 };
-
-const FALLBACK_CHAT_LOG = [
-  {
-    id: 1,
-    sender: "consultant" as const,
-    text: "Mình đã kiểm tra, bạn có thể đổi lịch chăm cây sang hôm sau được.",
-    time: "09:12",
-  },
-  {
-    id: 2,
-    sender: "customer" as const,
-    text: "Vậy lịch mới là lúc nào ạ?",
-    time: "09:13",
-  },
-  {
-    id: 3,
-    sender: "consultant" as const,
-    text: "Khung còn trống là 14:00 - 16:00. Bạn chọn giúp mình một slot nhé.",
-    time: "09:14",
-  },
-  {
-    id: 4,
-    sender: "customer" as const,
-    text: "Chốt 15:00 nha.",
-    time: "09:15",
-  },
-];
 
 type ChatMessageView = {
   id: number;
@@ -135,22 +113,6 @@ const mapRealtimeMessages = (
   }));
 };
 
-const mapFallbackMessages = (): ChatMessageView[] => {
-  return FALLBACK_CHAT_LOG.map((message, index) => ({
-    id: message.id,
-    isMine: message.sender === "customer",
-    text: message.text,
-    time: message.time,
-    isLast: index === FALLBACK_CHAT_LOG.length - 1,
-  }));
-};
-
-const QUICK_REPLIES = [
-  "Mình sẽ kiểm tra ngay",
-  "Bạn chờ mình một chút",
-  "Mình đã tiếp nhận yêu cầu",
-];
-
 export default function ConsultantChatSupport() {
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [mobileView, setMobileView] = useState<"list" | "chat">("list");
@@ -166,8 +128,9 @@ export default function ConsultantChatSupport() {
   } = useClaimedSupportConversations();
 
   const chatSessions = useMemo(
-    () => claimedConversations.map(mapConversationToSession),
-    [claimedConversations],
+    () =>
+      claimedConversations.map((c) => mapConversationToSession(c, user?.id)),
+    [claimedConversations, user?.id],
   );
 
   const activeSession = useMemo(
@@ -194,21 +157,17 @@ export default function ConsultantChatSupport() {
     enabled: canUseRealtime,
   });
 
-  const { input, handleChange, submit, setInput, canSend } =
-    useSupportChatInput({
-      onSend: async (content) => {
-        await sendMessage(content);
-      },
-      onTyping: handleInputTyping,
-    });
+  const { input, handleChange, submit, canSend } = useSupportChatInput({
+    onSend: async (content) => {
+      await sendMessage(content);
+    },
+    onTyping: handleInputTyping,
+  });
 
-  const displayedMessages = useMemo(() => {
-    if (canUseRealtime) {
-      return mapRealtimeMessages(messages, user?.id);
-    }
-
-    return mapFallbackMessages();
-  }, [canUseRealtime, messages, user?.id]);
+  const displayedMessages = useMemo(
+    () => mapRealtimeMessages(messages, user?.id),
+    [messages, user?.id],
+  );
 
   useAutoScrollToBottom(chatScrollRef, {
     dependency: `${displayedMessages.length}:${isOtherUserTyping ? 1 : 0}`,
@@ -224,7 +183,7 @@ export default function ConsultantChatSupport() {
       return (
         session.customerName.toLowerCase().includes(keyword) ||
         session.summary.toLowerCase().includes(keyword) ||
-        session.preview.toLowerCase().includes(keyword)
+        session.lastMessage.toLowerCase().includes(keyword)
       );
     });
   }, [searchValue, chatSessions]);
@@ -234,15 +193,8 @@ export default function ConsultantChatSupport() {
     setMobileView("chat");
   };
 
-  const handleClose = async (conversationId: number) => {
-    await closeConversation(conversationId);
-  };
-
-  const waitingCount = chatSessions.filter(
-    (s) => s.status === "waiting",
-  ).length;
-  const activeCount = chatSessions.filter((s) => s.status === "active").length;
-  const closedCount = chatSessions.filter((s) => s.status === "closed").length;
+  const handleClose = (conversationId: number) =>
+    closeConversation(conversationId);
 
   return (
     <Box
@@ -251,6 +203,7 @@ export default function ConsultantChatSupport() {
         py: 2,
         px: { xs: 0.5, md: 2 },
         bgcolor: "#eef3fb",
+        fontFamily: "Arial, sans-serif",
       }}
     >
       <Paper
@@ -284,18 +237,15 @@ export default function ConsultantChatSupport() {
               justifyContent="space-between"
             >
               <Typography
-                sx={{ fontSize: 28, fontWeight: 800, letterSpacing: -0.8 }}
+                sx={{
+                  fontSize: 28,
+                  fontWeight: 800,
+                  letterSpacing: -0.8,
+                  fontFamily: "Arial, sans-serif",
+                }}
               >
                 Đoạn chat
               </Typography>
-              <Stack direction="row" spacing={0.5}>
-                <IconButton size="small" sx={{ color: "#64748b" }}>
-                  <MoreHorizIcon fontSize="small" />
-                </IconButton>
-                <IconButton size="small" sx={{ color: "#64748b" }}>
-                  <AddIcon fontSize="small" />
-                </IconButton>
-              </Stack>
             </Stack>
 
             <Stack
@@ -315,97 +265,10 @@ export default function ConsultantChatSupport() {
               <InputBase
                 value={searchValue}
                 onChange={(event) => setSearchValue(event.target.value)}
-                placeholder="Tìm kiếm trên Messenger"
+                placeholder="Tìm kiếm ở đây"
                 sx={{ color: "#0f172a", fontSize: 14, width: "100%" }}
               />
             </Stack>
-
-            <Stack
-              direction="row"
-              spacing={1}
-              mt={1.5}
-              flexWrap="wrap"
-              useFlexGap
-            >
-              <Chip
-                label="Tất cả"
-                size="small"
-                sx={{ bgcolor: "#dbeafe", color: "#1d4ed8" }}
-              />
-              <Chip
-                label="Chưa đọc"
-                size="small"
-                variant="outlined"
-                sx={{ color: "#475569", borderColor: "rgba(15, 23, 42, 0.14)" }}
-              />
-              <Chip
-                label="Nhóm"
-                size="small"
-                variant="outlined"
-                sx={{ color: "#475569", borderColor: "rgba(15, 23, 42, 0.14)" }}
-              />
-            </Stack>
-
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-                gap: 1,
-                mt: 1.5,
-              }}
-            >
-              <Box
-                sx={{
-                  p: 1,
-                  borderRadius: 2,
-                  bgcolor: "#f8fafc",
-                  border: "1px solid rgba(15,23,42,0.06)",
-                }}
-              >
-                <Typography sx={{ fontSize: 11, color: "#64748b" }}>
-                  Chờ
-                </Typography>
-                <Typography
-                  sx={{ fontSize: 18, fontWeight: 800, color: "#ff9900" }}
-                >
-                  {waitingCount}
-                </Typography>
-              </Box>
-              <Box
-                sx={{
-                  p: 1,
-                  borderRadius: 2,
-                  bgcolor: "#f8fafc",
-                  border: "1px solid rgba(15,23,42,0.06)",
-                }}
-              >
-                <Typography sx={{ fontSize: 11, color: "#64748b" }}>
-                  Đang mở
-                </Typography>
-                <Typography
-                  sx={{ fontSize: 18, fontWeight: 800, color: "#2563eb" }}
-                >
-                  {activeCount}
-                </Typography>
-              </Box>
-              <Box
-                sx={{
-                  p: 1,
-                  borderRadius: 2,
-                  bgcolor: "#f8fafc",
-                  border: "1px solid rgba(15,23,42,0.06)",
-                }}
-              >
-                <Typography sx={{ fontSize: 11, color: "#64748b" }}>
-                  Đã đóng
-                </Typography>
-                <Typography
-                  sx={{ fontSize: 18, fontWeight: 800, color: "#16a34a" }}
-                >
-                  {closedCount}
-                </Typography>
-              </Box>
-            </Box>
           </Box>
 
           <Box sx={{ px: 1.2, pb: 1.5, overflowY: "auto", flex: 1 }}>
@@ -452,6 +315,7 @@ export default function ConsultantChatSupport() {
                       anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
                     >
                       <Avatar
+                        src={session.customerAvatarUrl ?? undefined}
                         sx={{
                           width: 48,
                           height: 48,
@@ -477,6 +341,7 @@ export default function ConsultantChatSupport() {
                             fontWeight: 700,
                             fontSize: 15,
                             color: "#0f172a",
+                            fontFamily: "Arial, sans-serif",
                           }}
                         >
                           {session.customerName}
@@ -492,12 +357,6 @@ export default function ConsultantChatSupport() {
                         sx={{ fontSize: 12.5, color: "#475569", mt: 0.15 }}
                       >
                         {session.summary}
-                      </Typography>
-                      <Typography
-                        noWrap
-                        sx={{ fontSize: 11.5, color: "#94a3b8", mt: 0.15 }}
-                      >
-                        {session.preview} • {session.lastMessage}
                       </Typography>
                     </Box>
 
@@ -520,24 +379,6 @@ export default function ConsultantChatSupport() {
                           "&:hover": { bgcolor: "#fecaca" },
                         }}
                       />
-                    ) : session.unread ? (
-                      <Box
-                        sx={{
-                          minWidth: 20,
-                          height: 20,
-                          borderRadius: 999,
-                          px: 0.5,
-                          bgcolor: "#2563eb",
-                          color: "white",
-                          fontSize: 11,
-                          fontWeight: 700,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        {session.unread}
-                      </Box>
                     ) : null}
                   </Box>
                 );
@@ -608,6 +449,7 @@ export default function ConsultantChatSupport() {
                     anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
                   >
                     <Avatar
+                      src={activeSession.customerAvatarUrl ?? undefined}
                       sx={{
                         width: 42,
                         height: 42,
@@ -626,32 +468,7 @@ export default function ConsultantChatSupport() {
                     >
                       {activeSession.customerName}
                     </Typography>
-                    <Stack direction="row" alignItems="center" spacing={0.8}>
-                      <Box
-                        sx={{
-                          width: 9,
-                          height: 9,
-                          borderRadius: "50%",
-                          bgcolor: "#22c55e",
-                        }}
-                      />
-                      <Typography sx={{ fontSize: 12.5, color: "#64748b" }}>
-                        Đang hoạt động
-                      </Typography>
-                    </Stack>
                   </Box>
-                </Stack>
-
-                <Stack direction="row" spacing={0.5}>
-                  <IconButton size="small" sx={{ color: "#475569" }}>
-                    <PhoneRoundedIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton size="small" sx={{ color: "#475569" }}>
-                    <VideocamRoundedIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton size="small" sx={{ color: "#475569" }}>
-                    <InfoOutlinedIcon fontSize="small" />
-                  </IconButton>
                 </Stack>
               </Box>
 
@@ -786,25 +603,6 @@ export default function ConsultantChatSupport() {
                     Khách đang nhập...
                   </Typography>
                 ) : null}
-              </Box>
-
-              <Box sx={{ px: 2, pb: 1.2 }}>
-                <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-                  {QUICK_REPLIES.map((item) => (
-                    <Chip
-                      key={item}
-                      label={item}
-                      clickable
-                      onClick={() => setInput(item)}
-                      sx={{
-                        bgcolor: "#eff6ff",
-                        color: "#1d4ed8",
-                        border: "1px solid rgba(59,130,246,0.12)",
-                        "&:hover": { bgcolor: "#dbeafe" },
-                      }}
-                    />
-                  ))}
-                </Stack>
               </Box>
 
               <Divider sx={{ borderColor: "rgba(15,23,42,0.08)" }} />

@@ -2,55 +2,68 @@
 
 import React from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
   Box,
-  Grid,
-  Typography,
-  Divider,
-  Stack,
   Chip,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Button,
+  Divider,
+  Grid,
+  Stack,
+  Typography,
   CardMedia,
 } from '@mui/material';
 import type { PlantCombo } from '@/types/store-management.types';
 import { getFengShuiColors, getFengShuiElementLabel } from '@/lib/utils/fengShui';
+import { formatCurrency } from '@/lib/utils/formatUtil';
+import type { ShopNurseryListItem } from '@/lib/api/shopPlantsService';
 
 interface PlantComboViewDialogProps {
   open: boolean;
   combo?: PlantCombo;
+  nurseries?: ShopNurseryListItem[];
+  nurseriesLoading?: boolean;
   onClose: () => void;
 }
 
-export default function PlantComboViewDialog({ open, combo, onClose }: PlantComboViewDialogProps) {
-  if (!combo) return null;
+export default function PlantComboViewDialog({
+  open,
+  combo,
+  nurseries = [],
+  nurseriesLoading = false,
+  onClose,
+}: PlantComboViewDialogProps) {
+  if (!combo) {
+    return null;
+  }
+
   const fengShuiColors = getFengShuiColors(combo.fengShuiElement);
   const fengShuiLabel = getFengShuiElementLabel(combo.fengShuiElement);
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
       <DialogTitle>Chi tiết combo cây</DialogTitle>
       <DialogContent dividers sx={{ maxHeight: '80vh', overflow: 'auto' }}>
         <Stack spacing={3}>
-          {/* Images */}
           {combo.images && combo.images.length > 0 && (
             <Box>
               <Typography variant="subtitle1" fontWeight="600" gutterBottom>
                 Hình ảnh
               </Typography>
               <Grid container spacing={2}>
-                {combo.images.map((img, index) => (
-                  <Grid sx={{ xs: 12, sm: 6, md: 4 }} key={index}>
+                {combo.images.map((img) => (
+                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={img.id}>
                     <Box sx={{ position: 'relative' }}>
                       <CardMedia
                         component="img"
-                        image={img.preview || img.url}
-                        alt={`Combo ${index + 1}`}
+                        image={img.imageUrl}
+                        alt={combo.comboName}
                         sx={{ borderRadius: 1, height: 200, objectFit: 'cover' }}
                       />
-                      {img.isThumbnail && (
+                      {img.isPrimary && (
                         <Chip
                           label="Ảnh chính"
                           size="small"
@@ -67,88 +80,67 @@ export default function PlantComboViewDialog({ open, combo, onClose }: PlantComb
 
           <Divider />
 
-          {/* Basic Info */}
           <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom>
               Thông tin cơ bản
             </Typography>
             <Grid container spacing={2}>
-              <Grid sx={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Mã combo
-                </Typography>
-                <Typography variant="body1" fontWeight="600">
-                  {combo.comboCode}
-                </Typography>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="body2" color="text.secondary">Mã combo</Typography>
+                <Typography variant="body1" fontWeight="600">{combo.comboCode}</Typography>
               </Grid>
-              <Grid sx={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Tên combo
-                </Typography>
-                <Typography variant="body1" fontWeight="600">
-                  {combo.comboName}
-                </Typography>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="body2" color="text.secondary">Tên combo</Typography>
+                <Typography variant="body1" fontWeight="600">{combo.comboName}</Typography>
               </Grid>
-              <Grid sx={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Loại combo
-                </Typography>
-                <Typography variant="body1" fontWeight="600">
-                  {combo.comboType}
-                </Typography>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="body2" color="text.secondary">Loại combo</Typography>
+                <Typography variant="body1">{combo.comboTypeName || combo.comboType}</Typography>
               </Grid>
-              <Grid sx={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Mùa
-                </Typography>
-                <Typography variant="body1" fontWeight="600">
-                  {combo.season}
-                </Typography>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="body2" color="text.secondary">Mùa</Typography>
+                <Typography variant="body1">{combo.seasonName || combo.season}</Typography>
               </Grid>
-              <Grid sx={{ xs: 12 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Mô tả
-                </Typography>
-                <Typography variant="body1">{combo.description}</Typography>
+              <Grid size={{ xs: 12 }}>
+                <Typography variant="body2" color="text.secondary">Mô tả</Typography>
+                <Typography variant="body1">{combo.description || '-'}</Typography>
               </Grid>
             </Grid>
           </Box>
 
           <Divider />
 
-          {/* Suitable Conditions */}
           <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom>
               Điều kiện phù hợp
             </Typography>
             <Grid container spacing={2}>
-              <Grid sx={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Không gian phù hợp
-                </Typography>
-                <Typography variant="body1">{combo.suitableSpace}</Typography>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="body2" color="text.secondary">Không gian phù hợp</Typography>
+                <Typography variant="body1">{combo.suitableSpace || '-'}</Typography>
               </Grid>
-              <Grid sx={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Phòng phù hợp
-                </Typography>
-                <Typography variant="body1">{combo.suitableRooms}</Typography>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="body2" color="text.secondary">Phòng phù hợp</Typography>
+                <Stack direction="row" spacing={1} flexWrap="wrap">
+                  {(combo.suitableRooms || []).length === 0 ? (
+                    <Typography variant="body1">-</Typography>
+                  ) : (
+                    combo.suitableRooms.map((room) => <Chip key={room} size="small" label={room} sx={{ mb: 0.5 }} />)
+                  )}
+                </Stack>
               </Grid>
             </Grid>
           </Box>
 
           <Divider />
 
-          {/* Feng Shui & Theme */}
           <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom>
-              Phong Thủy & Chủ đề
+              Phong thủy và chủ đề
             </Typography>
             <Grid container spacing={2}>
-              <Grid sx={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Yếu tố phong thủy
-                </Typography>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="body2" color="text.secondary">Yếu tố phong thủy</Typography>
                 <Chip
                   label={combo.fengShuiElement ? fengShuiLabel : '-'}
                   size="small"
@@ -162,132 +154,135 @@ export default function PlantComboViewDialog({ open, combo, onClose }: PlantComb
                   }}
                 />
               </Grid>
-              <Grid sx={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Mục đích phong thủy
-                </Typography>
-                <Typography variant="body1">{combo.fengShuiPurpose}</Typography>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="body2" color="text.secondary">Mục đích phong thủy</Typography>
+                <Typography variant="body1">{combo.fengShuiPurpose || '-'}</Typography>
               </Grid>
-              <Grid sx={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Tên chủ đề
-                </Typography>
-                <Typography variant="body1">{combo.themeName}</Typography>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="body2" color="text.secondary">Tên chủ đề</Typography>
+                <Typography variant="body1">{combo.themeName || '-'}</Typography>
               </Grid>
-              <Grid sx={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Mô tả chủ đề
-                </Typography>
-                <Typography variant="body1">{combo.themeDescription}</Typography>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="body2" color="text.secondary">Mô tả chủ đề</Typography>
+                <Typography variant="body1">{combo.themeDescription || '-'}</Typography>
               </Grid>
-              {combo.tags && (
-                <Grid sx={{ xs: 12 }}>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Tags
-                  </Typography>
-                  <Stack direction="row" spacing={1} flexWrap="wrap">
-                    {combo.tags.split(',').map((tag, idx) => (
-                      <Chip key={idx} label={tag.trim()} size="small" />
-                    ))}
-                  </Stack>
-                </Grid>
-              )}
+              <Grid size={{ xs: 12 }}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Tags
+                </Typography>
+                <Stack direction="row" spacing={1} flexWrap="wrap">
+                  {(combo.tagsNavigation || []).length === 0 ? (
+                    <Typography variant="body1">-</Typography>
+                  ) : (
+                    combo.tagsNavigation?.map((tag) => <Chip key={tag.id} size="small" label={tag.tagName} sx={{ mb: 0.5 }} />)
+                  )}
+                </Stack>
+              </Grid>
             </Grid>
           </Box>
 
           <Divider />
 
-          {/* Pricing */}
           <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom>
-              Định giá
+              Giá và trạng thái
             </Typography>
             <Grid container spacing={2}>
-              <Grid sx={{ xs: 12, sm: 4 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Giá gốc
-                </Typography>
-                <Typography variant="body1" fontWeight="600">
-                  {combo.originalPrice.toLocaleString('vi-VN', {
-                    style: 'currency',
-                    currency: 'VND',
-                  })}
-                </Typography>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <Typography variant="body2" color="text.secondary">Giá combo</Typography>
+                <Typography variant="body1" fontWeight="600">{formatCurrency(combo.comboPrice, 'vi-VN')}</Typography>
               </Grid>
-              <Grid sx={{ xs: 12, sm: 4 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Giá combo
-                </Typography>
-                <Typography variant="body1" fontWeight="600">
-                  {combo.comboPrice.toLocaleString('vi-VN', {
-                    style: 'currency',
-                    currency: 'VND',
-                  })}
-                </Typography>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <Typography variant="body2" color="text.secondary">Lượt xem</Typography>
+                <Typography variant="body1" fontWeight="600">{combo.viewCount}</Typography>
               </Grid>
-              <Grid sx={{ xs: 12, sm: 4 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Giảm giá
-                </Typography>
-                <Typography variant="body1" fontWeight="600">
-                  {combo.discountPercent}%
-                </Typography>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <Typography variant="body2" color="text.secondary">Lượt mua</Typography>
+                <Typography variant="body1" fontWeight="600">{combo.purchaseCount ?? 0}</Typography>
               </Grid>
-            </Grid>
-          </Box>
-
-          <Divider />
-
-          {/* Plants Range */}
-          <Box>
-            <Typography variant="h6" fontWeight="600" gutterBottom>
-              Số lượng cây
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid sx={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Tối thiểu
-                </Typography>
-                <Typography variant="body1" fontWeight="600">
-                  {combo.minPlants}
-                </Typography>
-              </Grid>
-              <Grid sx={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Tối đa
-                </Typography>
-                <Typography variant="body1" fontWeight="600">
-                  {combo.maxPlants}
-                </Typography>
-              </Grid>
-            </Grid>
-          </Box>
-
-          <Divider />
-
-          {/* Status & Views */}
-          <Box>
-            <Grid container spacing={2}>
-              <Grid sx={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Lượt xem
-                </Typography>
-                <Typography variant="body1" fontWeight="600">
-                  {combo.viewCount}
-                </Typography>
-              </Grid>
-              <Grid sx={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Trạng thái
-                </Typography>
+              <Grid size={{ xs: 12 }}>
                 <Chip
                   label={combo.isActive ? 'Kích hoạt' : 'Vô hiệu'}
-                  color={combo.isActive ? 'success' : 'error'}
+                  color={combo.isActive ? 'success' : 'default'}
                   variant="outlined"
-                  sx={{ mt: 0.5 }}
                 />
               </Grid>
             </Grid>
+          </Box>
+
+          <Divider />
+
+          <Box>
+            <Typography variant="h6" fontWeight="600" gutterBottom>
+              Cây trong combo
+            </Typography>
+            {(combo.comboItems || []).length === 0 ? (
+              <Typography variant="body2" color="text.secondary">
+                Combo chưa có cây.
+              </Typography>
+            ) : (
+              <Stack spacing={1}>
+                {combo.comboItems?.map((item) => (
+                  <Box key={item.id || `${item.plantId}-${item.plantName}`} sx={{ p: 1.5, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+                    <Typography variant="body1" fontWeight="600">
+                      {item.plantName || `Plant #${item.plantId}`}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Số lượng: {item.quantity}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Ghi chú: {item.notes || '-'}
+                    </Typography>
+                  </Box>
+                ))}
+              </Stack>
+            )}
+          </Box>
+
+          <Divider />
+
+          <Box>
+            <Typography variant="h6" fontWeight="600" gutterBottom>
+              Danh sách vựa đang bán combo
+            </Typography>
+            {nurseriesLoading ? (
+              <Stack direction="row" spacing={1} alignItems="center">
+                <CircularProgress size={18} />
+                <Typography variant="body2" color="text.secondary">
+                  Đang tải danh sách vựa...
+                </Typography>
+              </Stack>
+            ) : nurseries.length === 0 ? (
+              <Typography variant="body2" color="text.secondary">
+                Chưa có vựa nào đang bán combo này.
+              </Typography>
+            ) : (
+              <Stack spacing={1.25}>
+                {nurseries.map((nursery) => (
+                  <Box
+                    key={`${nursery.id}-${nursery.nurseryPlantComboId ?? 0}`}
+                    sx={{ p: 1.5, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}
+                  >
+                    <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1}>
+                      <Box>
+                        <Typography variant="body1" fontWeight="600">{nursery.name}</Typography>
+                        <Typography variant="body2" color="text.secondary">{nursery.address}</Typography>
+                        <Typography variant="body2" color="text.secondary">{nursery.phone}</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Manager: {nursery.managerName || 'N/A'}
+                        </Typography>
+                      </Box>
+                      <Chip
+                        size="small"
+                        label={nursery.isActive ? 'Đang hoạt động' : 'Ngưng hoạt động'}
+                        color={nursery.isActive ? 'success' : 'default'}
+                        variant="outlined"
+                      />
+                    </Stack>
+                  </Box>
+                ))}
+              </Stack>
+            )}
           </Box>
         </Stack>
       </DialogContent>
@@ -297,4 +292,3 @@ export default function PlantComboViewDialog({ open, combo, onClose }: PlantComb
     </Dialog>
   );
 }
-

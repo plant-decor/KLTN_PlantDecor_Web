@@ -48,6 +48,7 @@ import type {
   SystemPlantSearchItem,
 } from '@/types/manager-store-catalog.types';
 import { toast } from 'react-toastify';
+import { formatCurrency } from '@/lib/utils/formatUtil';
 import PlantInstanceCreateDialog, { type PlantInstanceCreateSubmitValue } from './PlantInstanceCreateDialog';
 
 interface PlantInstanceManagerTabProps {
@@ -81,14 +82,6 @@ const getErrorMessage = (error: unknown, fallback: string): string => {
   };
 
   return candidate.response?.data?.message || candidate.message || fallback;
-};
-
-const formatCurrency = (value: number): string => {
-  return value.toLocaleString('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
-    maximumFractionDigits: 0,
-  });
 };
 
 const statusColorMap: Record<number, 'success' | 'warning' | 'default' | 'error' | 'info'> = {
@@ -553,7 +546,7 @@ export default function PlantInstanceManagerTab({ nurseryId }: PlantInstanceMana
                     </Stack>
                   </TableCell>
                   <TableCell>{item.sku ?? '-'}</TableCell>
-                  <TableCell align="right">{formatCurrency(item.specificPrice)}</TableCell>
+                  <TableCell align="right">{formatCurrency(item.specificPrice, 'vi')}</TableCell>
                   <TableCell align="right">{item.height} cm</TableCell>
                   <TableCell>{item.healthStatus}</TableCell>
                   <TableCell>

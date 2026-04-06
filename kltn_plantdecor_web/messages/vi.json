@@ -184,6 +184,7 @@
     "result": {
       "foundPlants": "Tìm thấy {count} cây",
       "foundMaterials": "Tìm thấy {count} vật tư",
+      "itemsPerPage": "Số mục mỗi trang",
       "pageOf": "Trang {current}/{total}",
       "noPlants": "Không có cây phù hợp bộ lọc",
       "clearFilters": "Xóa bộ lọc",

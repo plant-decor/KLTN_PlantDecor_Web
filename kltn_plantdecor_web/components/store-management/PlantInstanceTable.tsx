@@ -19,6 +19,7 @@ import {
 } from '@mui/material';
 import { Edit, Delete, Visibility } from '@mui/icons-material';
 import type { PlantInstance } from '@/types/store-management.types';
+import { formatCurrency } from '@/lib/utils/formatUtil';
 
 interface PlantInstanceTableProps {
   instances: PlantInstance[];
@@ -118,10 +119,7 @@ export default function PlantInstanceTable({
                   </TableCell>
                   <TableCell align="right">
                     <Typography variant="body2" fontWeight="600">
-                      {instance.specificPrice.toLocaleString('vi-VN', {
-                        style: 'currency',
-                        currency: 'VND',
-                      })}
+                      {formatCurrency(instance.specificPrice, 'vi')}
                     </Typography>
                   </TableCell>
                   <TableCell>

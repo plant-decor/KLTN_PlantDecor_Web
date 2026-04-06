@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useParams, usePathname, useRouter } from 'next/navigation';
 import { useMemo, type ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Dashboard as DashboardIcon,
   People as PeopleIcon,
@@ -86,6 +87,7 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ isOpen, onClose, role }: SidebarProps) {
+  const tSidebar = useTranslations('sidebar');
   const router = useRouter();
   const params = useParams<{ locale?: string }>();
   const pathname = usePathname();
@@ -95,23 +97,28 @@ export default function Sidebar({ isOpen, onClose, role }: SidebarProps) {
   const items = SIDEBAR_ITEMS_BY_ROLE[resolvedRole] ?? [];
   const allHrefs = items.map((item) => item.href);
   const activeItem = items.find((item) => isActiveRoute(pathname, item.href, allHrefs));
-  const headerLabel = activeItem?.label ?? 'Dashboard';
+  const headerLabel = activeItem?.label ?? tSidebar('dashboard');
+
+  const redirectToLogin = () => {
+    clearAll();
+    onClose();
+
+    const locale = Array.isArray(params?.locale) ? params.locale[0] : params?.locale;
+    const loginPath = locale ? `/${locale}/login` : '/login';
+    router.replace(loginPath);
+  };
 
   const handleLogout = async () => {
     try {
       const result = await logoutAction();
-
-      if (result.success) {
-        // Clear Zustand store (user + tokens)
-        clearAll();
-        onClose();
-
-        const locale = Array.isArray(params?.locale) ? params.locale[0] : params?.locale;
-        const loginPath = locale ? `/${locale}/login` : '/login';
-        router.replace(loginPath);
+      if (!result.success) {
+        console.warn('Logout action reported failure, continuing with local cleanup.');
       }
     } catch (error) {
       console.error('Logout error:', error);
+    } finally {
+      // Keep logout fail-soft: local cleanup and redirect should always happen.
+      redirectToLogin();
     }
   };
 

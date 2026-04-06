@@ -1,7 +1,7 @@
 import { del, get, patch, post } from '@/lib/api/apiService';
 import { ResponseModel } from '@/types/api.types';
 
-const DEFAULT_IMAGE = '/img/background-login.jpg';
+const DEFAULT_IMAGE = '/img/fallbackplant.avif';
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -30,18 +30,6 @@ export interface CartApiItem {
   imageUrl: string | null;
 }
 
-export interface WishlistApiItem {
-  plantId: number;
-  name: string;
-  scientificName: string;
-  description: string;
-  price: number;
-  imageUrl: string | null;
-  careLevel: 'easy' | 'medium' | 'hard';
-  size: 'small' | 'medium' | 'large';
-  stock: number;
-}
-
 export interface AddCartItemRequest {
   commonPlantId?: number | null;
   nurseryPlantComboId?: number | null;
@@ -54,6 +42,35 @@ export type WishlistItemType =
   | 'PlantInstance'
   | 'NurseryPlantCombo'
   | 'NurseryMaterial';
+
+export interface WishlistListItem {
+  id: number;
+  itemType: WishlistItemType;
+  itemId: number;
+  itemName: string;
+  itemImageUrl: string | null;
+  price: number;
+  quantity: number;
+  additionalInfo: string;
+  createdAt: string;
+}
+
+export interface WishlistPagedPayload {
+  items: WishlistListItem[];
+  totalCount: number;
+  pageNumber: number;
+  pageSize: number;
+  totalPages: number;
+  hasPrevious: boolean;
+  hasNext: boolean;
+}
+
+export interface FetchWishlistParams {
+  pageNumber?: number;
+  pageSize?: number;
+  skip?: number;
+  take?: number;
+}
 
 const isRecord = (value: unknown): value is UnknownRecord =>
   value !== null && typeof value === 'object';
@@ -101,56 +118,59 @@ const unwrapResponse = (response: unknown): unknown => {
   return response;
 };
 
-const toArray = (response: unknown): UnknownRecord[] => {
-  const unwrapped = unwrapResponse(response);
-
-  if (Array.isArray(unwrapped)) {
-    return unwrapped.filter(isRecord);
-  }
-
-  if (isRecord(unwrapped) && Array.isArray(unwrapped.items)) {
-    return unwrapped.items.filter(isRecord);
-  }
-
-  return [];
+const parseWishlistItemType = (value: unknown): WishlistItemType => {
+  const raw = toStringSafe(value);
+  if (raw === 'PlantInstance') return 'PlantInstance';
+  if (raw === 'NurseryPlantCombo') return 'NurseryPlantCombo';
+  if (raw === 'NurseryMaterial') return 'NurseryMaterial';
+  return 'CommonPlant';
 };
 
-
-const normalizeWishlistItem = (item: UnknownRecord): WishlistApiItem => {
-  const plantId = toNumber(item.commonPlantId ?? item.plantId ?? item.id);
-  const name = toStringSafe(
-    item.commonPlantName ?? item.plantName ?? item.name,
-    `Plant #${plantId}`
-  );
-  const scientificName = toStringSafe(
-    item.commonPlantScientificName ?? item.scientificName,
-    name
-  );
-  const description = toStringSafe(item.description, '');
-  const price = toNumber(item.basePrice ?? item.price ?? item.unitPrice);
-  const imageUrl = toStringSafe(
-    item.commonPlantImageUrl ?? item.imageUrl ?? item.primaryImageUrl,
-    DEFAULT_IMAGE
-  );
-  const careLevelRaw = toStringSafe(item.careLevel, 'easy').toLowerCase();
-  const sizeRaw = toStringSafe(item.size, 'medium').toLowerCase();
-  const stock = Math.max(0, toNumber(item.availableInstances ?? item.stock, 0));
-
-  const careLevel: WishlistApiItem['careLevel'] =
-    careLevelRaw === 'hard' || careLevelRaw === 'medium' ? careLevelRaw : 'easy';
-  const size: WishlistApiItem['size'] =
-    sizeRaw === 'small' || sizeRaw === 'large' ? sizeRaw : 'medium';
+const normalizeWishlistItem = (item: UnknownRecord): WishlistListItem => {
+  const id = toNumber(item.id);
+  const itemId = toNumber(item.itemId ?? item.commonPlantId ?? item.id);
+  const itemType = parseWishlistItemType(item.itemType);
+  const itemName = toStringSafe(item.itemName ?? item.name, `Item #${itemId || id}`);
+  const itemImageUrl = toStringSafe(item.itemImageUrl ?? item.imageUrl, DEFAULT_IMAGE);
 
   return {
-    plantId,
-    name,
-    scientificName,
-    description,
-    price,
-    imageUrl,
-    careLevel,
-    size,
-    stock,
+    id,
+    itemType,
+    itemId,
+    itemName,
+    itemImageUrl,
+    price: toNumber(item.price),
+    quantity: Math.max(0, toNumber(item.quantity)),
+    additionalInfo: toStringSafe(item.additionalInfo),
+    createdAt: toStringSafe(item.createdAt),
+  };
+};
+
+const normalizeWishlistPayload = (response: unknown): WishlistPagedPayload => {
+  const unwrapped = unwrapResponse(response);
+
+  if (!isRecord(unwrapped)) {
+    return {
+      items: [],
+      totalCount: 0,
+      pageNumber: 1,
+      pageSize: 10,
+      totalPages: 0,
+      hasPrevious: false,
+      hasNext: false,
+    };
+  }
+
+  const rawItems = Array.isArray(unwrapped.items) ? unwrapped.items.filter(isRecord) : [];
+
+  return {
+    items: rawItems.map(normalizeWishlistItem).filter((item) => item.itemId > 0),
+    totalCount: Math.max(0, toNumber(unwrapped.totalCount)),
+    pageNumber: Math.max(1, toNumber(unwrapped.pageNumber, 1)),
+    pageSize: Math.max(1, toNumber(unwrapped.pageSize, 10)),
+    totalPages: Math.max(0, toNumber(unwrapped.totalPages)),
+    hasPrevious: Boolean(unwrapped.hasPrevious),
+    hasNext: Boolean(unwrapped.hasNext),
   };
 };
 
@@ -211,18 +231,30 @@ export const clearCartItems = async (): Promise<void> => {
   await del('/Cart', false, false);
 };
 
-export const fetchWishlistItems = async (): Promise<WishlistApiItem[]> => {
+export const fetchWishlistItems = async (
+  params: FetchWishlistParams = {}
+): Promise<WishlistPagedPayload> => {
+  const query: Record<string, number> = {
+    PageNumber: Math.max(1, params.pageNumber ?? 1),
+    PageSize: Math.max(1, params.pageSize ?? 10),
+  };
+
+  if (typeof params.skip === 'number' && Number.isFinite(params.skip)) {
+    query.Skip = Math.max(0, Math.floor(params.skip));
+  }
+
+  if (typeof params.take === 'number' && Number.isFinite(params.take)) {
+    query.Take = Math.max(1, Math.floor(params.take));
+  }
+
   const response = await get<unknown>(
     '/Wishlist',
-    {
-      PageNumber: 1,
-      PageSize: 100,
-    },
+    query,
     false,
     false
   );
 
-  return toArray(response).map(normalizeWishlistItem).filter((item) => item.plantId > 0);
+  return normalizeWishlistPayload(response);
 };
 
 export const addItemToWishlist = async (

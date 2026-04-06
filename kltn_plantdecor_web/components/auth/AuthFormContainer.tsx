@@ -204,6 +204,7 @@ export default function AuthFormContainer() {
         src="/img/background-login.jpg"
         fill
         alt="Login Background Image with plants decoration in a cozy room setting, featuring a comfortable armchair, a small coffee table with a cup of tea, and various potted plants around, creating a warm and inviting atmosphere."
+        loading="eager"
         className="object-cover object-center opacity-50 blur-xs"
       />
 

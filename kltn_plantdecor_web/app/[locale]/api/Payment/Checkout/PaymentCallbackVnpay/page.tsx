@@ -2,12 +2,15 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter, useParams } from 'next/navigation';
+import { useAuthStore } from '@/lib/store/authStore';
 
 function PaymentCallbackContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const params = useParams();
   const locale = params.locale || 'vi'; // Lấy locale hiện tại từ URL
+  const user = useAuthStore((state) => state.user);
+  const userId = user?.id ? String(user.id) : null;
 
   const [status, setStatus] = useState<{
     loading: boolean;
@@ -55,10 +58,9 @@ function PaymentCallbackContent() {
   }, [searchParams]);
 
   const handleRedirect = () => {
-    // Điều hướng về trang lịch sử đơn hàng
-    // Lưu ý: Bạn cần đảm bảo đã có logic lấy userId ở Client (từ Auth Context hoặc LocalStorage)
-    // Ở đây tôi ví dụ dùng một giá trị placeholder hoặc đơn giản là về danh sách orders chung
-    router.push(`/${locale}/orders`); 
+    const resolvedLocale = Array.isArray(locale) ? locale[0] : locale;
+    const targetPath = userId ? `/${resolvedLocale}/orders/${userId}` : `/${resolvedLocale}/orders`;
+    router.push(targetPath);
   };
 
   if (status.loading) {

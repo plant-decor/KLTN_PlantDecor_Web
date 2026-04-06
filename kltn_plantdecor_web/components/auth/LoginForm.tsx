@@ -34,7 +34,6 @@ export default function LoginForm({
     setErrors({});
 
     const result = await onSubmit(email, password);
-    console.log('Login result:', result, email, password);
   };
 
   return (
@@ -46,6 +45,7 @@ export default function LoginForm({
           alt="Background"
           width={1920}
           height={1080}
+          loading="eager"
           className="w-full h-full object-cover"
         />
       </div>

@@ -5,36 +5,34 @@ export interface ApiResponseWithPayload<T> {
   payload: T;
 }
 
-export interface OrderItemFallbackRequest {
-  commonPlantId?: number;
-  plantInstanceId?: number;
-  nurseryPlantComboId?: number;
-  nurseryMaterialId?: number;
-  quantity: number;
-  price: number;
-}
+export type OrderStatusName =
+  | 'Pending'
+  | 'DepositPaid'
+  | 'Paid'
+  | 'Assigned'
+  | 'Shipping'
+  | 'Delivered'
+  | 'RemainingPaymentPending'
+  | 'Completed'
+  | 'Cancelled'
+  | 'Failed'
+  | 'RefundRequested'
+  | 'Refunded'
+  | 'Rejected'
+  | 'PendingConfirmation';
 
-interface OrderCreateRequestBase {
+export type OrderStatusFilter = 'All' | OrderStatusName;
+
+export interface OrderCreateRequest {
   address: string;
   phone: string;
   customerName: string;
   note: string;
   paymentStrategy: number;
   orderType: number;
-  plantInstanceId?: number | null;
+  cartItemIds: number[];
+  plantInstanceId: number;
 }
-
-export interface OrderCreateRequestWithCartIds extends OrderCreateRequestBase {
-  cartItemIds?: number[];
-}
-
-export interface OrderCreateRequestWithItems extends OrderCreateRequestBase {
-  items: OrderItemFallbackRequest[];
-}
-
-export type OrderCreateRequest =
-  | OrderCreateRequestWithCartIds
-  | OrderCreateRequestWithItems;
 
 export interface OrderInvoiceDetail {
   id: number;
@@ -56,6 +54,49 @@ export interface OrderInvoice {
   details: OrderInvoiceDetail[];
 }
 
+export interface OrderItem {
+  id: number;
+  itemName: string;
+  quantity: number;
+  price: number;
+  status: number;
+  statusName: string;
+}
+
+export interface NurseryOrder {
+  id: number;
+  nurseryId: number;
+  nurseryName: string;
+  shipperId: number | null;
+  shipperName: string | null;
+  subTotalAmount: number;
+  status: number;
+  statusName: string;
+  shipperNote: string | null;
+  items: OrderItem[];
+}
+
+export interface Order {
+  id: number;
+  userId: number;
+  address: string;
+  phone: string;
+  customerName: string;
+  totalAmount: number;
+  depositAmount: number | null;
+  remainingAmount: number | null;
+  status: number;
+  statusName: string;
+  paymentStrategy: number;
+  orderType: number;
+  note: string;
+  createdAt: string;
+  updatedAt: string;
+  items: OrderItem[];
+  nurseryOrders: NurseryOrder[];
+  invoices: OrderInvoice[];
+}
+
 export interface OrderCreatePayload {
   id: number;
   userId: number;
@@ -73,20 +114,15 @@ export interface OrderCreatePayload {
   note: string;
   createdAt: string;
   updatedAt: string;
-  items: Array<{
-    id: number;
-    itemName: string;
-    quantity: number;
-    price: number;
-    status: number;
-    statusName: string;
-  }>;
+  items: OrderItem[];
   invoices?: OrderInvoice[];
 }
 
 export type CreateOrderResponse = ApiResponseWithPayload<OrderCreatePayload>;
 
 export type InvoiceByOrderResponse = ApiResponseWithPayload<OrderInvoice[]>;
+export type MyOrdersResponse = ApiResponseWithPayload<Order[]>;
+export type MyOrderDetailResponse = ApiResponseWithPayload<Order>;
 
 export interface PaymentCreatePayload {
   paymentId: number;

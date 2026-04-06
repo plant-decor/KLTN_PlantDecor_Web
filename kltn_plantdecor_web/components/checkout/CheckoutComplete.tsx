@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import {
   Box,
   Card,
@@ -17,6 +17,7 @@ import {
   Home as HomeIcon,
   ShoppingCart as ShoppingCartIcon,
 } from '@mui/icons-material';
+import { useLocale, useTranslations } from 'next-intl';
 import type { CheckoutData } from '@/types/cart.types';
 
 interface CheckoutCompleteProps {
@@ -30,7 +31,9 @@ export default function CheckoutComplete({
   userId,
   orderId,
 }: CheckoutCompleteProps) {
-  const displayOrderId = orderId ?? 'N/A';
+  const locale = useLocale();
+  const tCheckout = useTranslations('checkout');
+  const displayOrderId = orderId ?? tCheckout('completeDetails.notAvailable');
 
   return (
     <Grid container spacing={3} justifyContent="center">
@@ -46,7 +49,7 @@ export default function CheckoutComplete({
           }}
         >
           <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#4CAF50' }}>
-            Order Placed Successfully!
+            {tCheckout('orderSuccess')}
           </Typography>
         </Alert>
 
@@ -54,7 +57,7 @@ export default function CheckoutComplete({
         <Card sx={{ boxShadow: 1, mb: 3 }}>
           <CardContent>
             <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
-              Order Confirmation
+              {tCheckout('completeDetails.orderConfirmation')}
             </Typography>
 
             <Divider sx={{ mb: 2 }} />
@@ -62,7 +65,7 @@ export default function CheckoutComplete({
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <Box>
                 <Typography variant="caption" sx={{ color: '#666' }}>
-                  Order ID
+                  {tCheckout('completeDetails.orderId')}
                 </Typography>
                 <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#333' }}>
                   {displayOrderId}
@@ -70,7 +73,7 @@ export default function CheckoutComplete({
               </Box>
 
               <Typography variant="body2" sx={{ color: '#666' }}>
-                You will receive an email confirmation shortly.
+                {tCheckout('completeDetails.emailConfirmation')}
               </Typography>
             </Box>
           </CardContent>
@@ -80,7 +83,7 @@ export default function CheckoutComplete({
         <Card sx={{ boxShadow: 1, mb: 3 }}>
           <CardContent>
             <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
-              Shipping Details
+              {tCheckout('completeDetails.shippingDetails')}
             </Typography>
 
             <Divider sx={{ mb: 2 }} />
@@ -88,18 +91,18 @@ export default function CheckoutComplete({
             {checkoutData.shippingInfo ? (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <Typography variant="body2">
-                  <strong>Name:</strong> {checkoutData.shippingInfo.fullName}
+                  <strong>{tCheckout('fullName')}:</strong> {checkoutData.shippingInfo.fullName}
                 </Typography>
                 <Typography variant="body2">
-                  <strong>Phone:</strong> {checkoutData.shippingInfo.phone}
+                  <strong>{tCheckout('phone')}:</strong> {checkoutData.shippingInfo.phone}
                 </Typography>
                 <Typography variant="body2">
-                  <strong>Address:</strong> {checkoutData.shippingInfo.address}
+                  <strong>{tCheckout('address')}:</strong> {checkoutData.shippingInfo.address}
                 </Typography>
               </Box>
             ) : (
               <Typography variant="body2" sx={{ color: '#999' }}>
-                No shipping information provided
+                {tCheckout('completeDetails.noShippingInfo')}
               </Typography>
             )}
           </CardContent>
@@ -109,22 +112,22 @@ export default function CheckoutComplete({
         <Card sx={{ boxShadow: 1, mb: 3 }}>
           <CardContent>
             <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
-              Order Summary
+              {tCheckout('orderSummary')}
             </Typography>
 
             <Divider sx={{ mb: 2 }} />
 
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-              <Typography variant="body2">Subtotal</Typography>
+              <Typography variant="body2">{tCheckout('completeDetails.subtotal')}</Typography>
               <Typography variant="body2">
-                {checkoutData.subtotal.toLocaleString('vi-VN')}₫
+                {new Intl.NumberFormat(locale, { style: 'currency', currency: 'VND' }).format(checkoutData.subtotal)}
               </Typography>
             </Box>
 
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-              <Typography variant="body2">Shipping</Typography>
+              <Typography variant="body2">{tCheckout('completeDetails.shipping')}</Typography>
               <Typography variant="body2" sx={{ color: '#4CAF50' }}>
-                Free
+                {tCheckout('completeDetails.free')}
               </Typography>
             </Box>
 
@@ -132,13 +135,13 @@ export default function CheckoutComplete({
 
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
               <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                Total
+                {tCheckout('completeDetails.total')}
               </Typography>
               <Typography
                 variant="h6"
                 sx={{ fontWeight: 'bold', color: '#4CAF50' }}
               >
-                {checkoutData.total.toLocaleString('vi-VN')}₫
+                {new Intl.NumberFormat(locale, { style: 'currency', currency: 'VND' }).format(checkoutData.total)}
               </Typography>
             </Box>
           </CardContent>
@@ -168,7 +171,7 @@ export default function CheckoutComplete({
               },
             }}
           >
-            Go to Orders History
+            {tCheckout('completeDetails.goToOrdersHistory')}
           </Button>
 
           <Button
@@ -189,7 +192,7 @@ export default function CheckoutComplete({
               },
             }}
           >
-            Continue Shopping
+            {tCheckout('completeDetails.continueShopping')}
           </Button>
         </Box>
       </Grid>

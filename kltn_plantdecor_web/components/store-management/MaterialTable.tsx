@@ -1,149 +1,158 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React from 'react';
 import {
+  Box,
+  Chip,
+  IconButton,
+  Paper,
+  Stack,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
-  TableRow,
-  Paper,
-  IconButton,
-  Stack,
-  TextField,
-  Box,
-  Chip,
-  Typography,
   TablePagination,
+  TableRow,
+  Tooltip,
+  Typography,
 } from '@mui/material';
-import { Edit, Delete, Visibility } from '@mui/icons-material';
+import {
+  Edit,
+  Visibility,
+  ToggleOn as ToggleOnIcon,
+  ToggleOff as ToggleOffIcon,
+} from '@mui/icons-material';
+import Image from 'next/image';
 import type { Material } from '@/types/store-management.types';
+import { formatCurrency } from '@/lib/utils/formatUtil';
 
 interface MaterialTableProps {
   materials: Material[];
+  pageNumber: number;
+  pageSize: number;
+  totalCount: number;
+  onPageChange: (pageNumber: number) => void;
+  onRowsPerPageChange: (pageSize: number) => void;
   onEdit: (material: Material) => void;
-  onDelete: (id: number) => void;
+  onToggleActive: (material: Material) => void;
   onView: (material: Material) => void;
 }
 
-export default function MaterialTable({ materials, onEdit, onDelete, onView }: MaterialTableProps) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-
-  const filteredMaterials = useMemo(() => {
-    return materials.filter((material) =>
-      material.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      material.materialCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      material.brand.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [materials, searchTerm]);
-
-  const paginatedMaterials = useMemo(() => {
-    const startIndex = page * rowsPerPage;
-    return filteredMaterials.slice(startIndex, startIndex + rowsPerPage);
-  }, [filteredMaterials, page, rowsPerPage]);
-
+export default function MaterialTable({
+  materials,
+  pageNumber,
+  pageSize,
+  totalCount,
+  onPageChange,
+  onRowsPerPageChange,
+  onEdit,
+  onToggleActive,
+  onView,
+}: MaterialTableProps) {
   const handleChangePage = (_event: unknown, newPage: number) => {
-    setPage(newPage);
+    onPageChange(newPage + 1);
   };
 
   const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
+    onRowsPerPageChange(parseInt(event.target.value, 10));
   };
 
   return (
     <Box>
-      <TextField
-        placeholder="Tìm kiếm vật tư (tên, mã, thương hiệu)..."
-        fullWidth
-        size="small"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        sx={{ mb: 2 }}
-      />
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        Search is currently disabled for Material tab. List is loaded by server pagination.
+      </Typography>
 
       <TableContainer component={Paper}>
         <Table size="small">
           <TableHead sx={{ backgroundColor: 'var(--primary)' }}>
             <TableRow>
-              <TableCell sx={{ fontWeight: 600 }}>Mã</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Tên vật tư</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Thương hiệu</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>ID</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Image</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Code</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Material Name</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Brand</TableCell>
               <TableCell sx={{ fontWeight: 600 }} align="right">
-                Giá
+                Base Price
               </TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Đơn vị</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Unit</TableCell>
               <TableCell sx={{ fontWeight: 600 }} align="center">
-                Hạn (tháng)
+                Expiry
               </TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Trạng thái</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
               <TableCell sx={{ fontWeight: 600 }} align="center">
-                Thao tác
+                Actions
               </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredMaterials.length === 0 ? (
+            {materials.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} align="center" sx={{ py: 3 }}>
-                  <Typography color="text.secondary">Không có dữ liệu</Typography>
+                <TableCell colSpan={10} align="center" sx={{ py: 3 }}>
+                  <Typography color="text.secondary">No data</Typography>
                 </TableCell>
               </TableRow>
             ) : (
-              paginatedMaterials.map((material) => (
+              materials.map((material) => (
                 <TableRow key={material.id} hover>
+                  <TableCell>{material.id}</TableCell>
+                  <TableCell>
+                    <Image
+                      src={material.primaryImageUrl || '/img/fallbackplant.avif'}
+                      alt={material.name}
+                      width={60}
+                      height={60}
+                      style={{ objectFit: 'cover', borderRadius: 4 }}
+                    />
+                  </TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>{material.materialCode}</TableCell>
                   <TableCell>{material.name}</TableCell>
-                  <TableCell>{material.brand}</TableCell>
+                  <TableCell>{material.brand || '-'}</TableCell>
                   <TableCell align="right">
                     <Typography variant="body2" fontWeight="600">
-                      {material.basePrice.toLocaleString('vi-VN', {
-                        style: 'currency',
-                        currency: 'VND',
-                      })}
+                      {formatCurrency(material.basePrice, 'vi-VN')}
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    <Chip label={material.unit} size="small" variant="outlined" />
+                    <Chip label={material.unit || '-'} size="small" variant="outlined" />
                   </TableCell>
-                  <TableCell align="center">{material.expiryMonths}</TableCell>
+                  <TableCell align="center">
+                    {material.expiryMonths != null ? `${material.expiryMonths} months` : '-'}
+                  </TableCell>
                   <TableCell>
                     <Chip
-                      label={material.isActive ? 'Kích hoạt' : 'Vô hiệu'}
-                      color={material.isActive ? 'success' : 'error'}
+                      label={material.isActive ? 'Active' : 'Inactive'}
+                      color={material.isActive ? 'success' : 'default'}
                       size="small"
                       variant="outlined"
                     />
                   </TableCell>
                   <TableCell align="center">
                     <Stack direction="row" spacing={0.5} justifyContent="center">
-                      <IconButton
-                        size="small"
-                        color="info"
-                        onClick={() => onView(material)}
-                        title="Xem chi tiết"
-                      >
-                        <Visibility fontSize="small" />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        color="primary"
-                        onClick={() => onEdit(material)}
-                        title="Chỉnh sửa"
-                      >
-                        <Edit fontSize="small" />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        color="error"
-                        onClick={() => onDelete(material.id)}
-                        title="Xóa"
-                      >
-                        <Delete fontSize="small" />
-                      </IconButton>
+                      <Tooltip title="View details">
+                        <IconButton size="small" color="info" onClick={() => onView(material)}>
+                          <Visibility fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Edit material">
+                        <IconButton size="small" color="primary" onClick={() => onEdit(material)}>
+                          <Edit fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title={material.isActive ? 'Deactivate material' : 'Activate material'}>
+                        <IconButton
+                          size="small"
+                          color={material.isActive ? 'success' : 'default'}
+                          onClick={() => onToggleActive(material)}
+                        >
+                          {material.isActive ? (
+                            <ToggleOnIcon fontSize="small" />
+                          ) : (
+                            <ToggleOffIcon fontSize="small" />
+                          )}
+                        </IconButton>
+                      </Tooltip>
                     </Stack>
                   </TableCell>
                 </TableRow>
@@ -152,17 +161,14 @@ export default function MaterialTable({ materials, onEdit, onDelete, onView }: M
           </TableBody>
         </Table>
         <TablePagination
-          rowsPerPageOptions={[5, 10, 25, 50]}
+          rowsPerPageOptions={[10, 20, 50]}
           component="div"
-          count={filteredMaterials.length}
-          rowsPerPage={rowsPerPage}
-          page={page}
+          count={totalCount}
+          rowsPerPage={pageSize}
+          page={Math.max(pageNumber - 1, 0)}
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
-          labelRowsPerPage="Số hàng mỗi trang:"
-          labelDisplayedRows={({ from, to, count }) =>
-            `${from}–${to} trong tổng số ${count !== -1 ? count : `hơn ${to}`}`
-          }
+          labelRowsPerPage="Rows per page:"
         />
       </TableContainer>
     </Box>

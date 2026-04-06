@@ -1,14 +1,25 @@
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { getTranslations } from 'next-intl/server';
 import { getCategoryTreeSSR } from '@/lib/api/categoriesService.server';
 import {
+  getPlantEnums,
+  searchShopNurseries,
   searchShopPlants,
-  type ShopPlantListItem,
+  type PlantEnumGroup,
+  type ShopNurserySearchPayload,
   type ShopPlantSearchPayload,
   type ShopPlantSearchRequest,
 } from '@/lib/api/shopPlantsService';
+import {
+  searchShopMaterials,
+  type ShopMaterialSearchPayload,
+  type ShopMaterialSearchRequest,
+} from '@/lib/api/shopMaterialsService';
 import ProductCard from '@/components/product/ProductCard';
-import { CategoryResponse } from '@/lib/api/categoriesService';
+import MaterialCard from '@/components/product/MaterialCard';
+import type { CategoryResponse } from '@/lib/api/categoriesService';
+import { Select } from '@mui/material';
+import { FENG_SHUI_ELEMENT_OPTIONS } from '@/lib/utils/fengShui';
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -16,6 +27,8 @@ interface PageProps {
 }
 
 const DEFAULT_PAGE_SIZE = 12;
+const DEFAULT_TAB = 'plants';
+const NURSERY_FILTER_PAGE_SIZE = 100;
 
 const toSingle = (value: string | string[] | undefined): string | undefined => {
   if (Array.isArray(value)) {
@@ -86,7 +99,14 @@ const getPayload = <T,>(response: { payload?: T; data?: T } | null | undefined):
   return response.payload ?? response.data ?? null;
 };
 
-const buildRequestBody = (query: Record<string, string | string[] | undefined>): ShopPlantSearchRequest => {
+const getActiveTab = (query: Record<string, string | string[] | undefined>) => {
+  const tab = toSingle(query.tab)?.toLowerCase();
+  return tab === 'materials' ? 'materials' : DEFAULT_TAB;
+};
+
+const buildPlantRequestBody = (
+  query: Record<string, string | string[] | undefined>
+): ShopPlantSearchRequest => {
   const page = parsePositiveInt(toSingle(query.page), 1);
   const pageSize = parsePositiveInt(toSingle(query.pageSize), DEFAULT_PAGE_SIZE);
   const sortByDirect = toSingle(query.sortBy)?.trim();
@@ -96,10 +116,7 @@ const buildRequestBody = (query: Record<string, string | string[] | undefined>):
   const sortBy = sortByDirect || sortByCombined || undefined;
   const sortDirection = sortDirectionDirect || sortDirectionCombined || undefined;
 
-  const categoryIds = [
-    ...parseNumberArray(query.categoryIds),
-    ...parseNumberArray(query.categoryId),
-  ];
+  const categoryIds = [...parseNumberArray(query.categoryIds), ...parseNumberArray(query.categoryId)];
   const uniqueCategoryIds = [...new Set(categoryIds)];
 
   const tagIdsFromArray = parseNumberArray(query.tagIds);
@@ -108,11 +125,14 @@ const buildRequestBody = (query: Record<string, string | string[] | undefined>):
     .filter((item) => Number.isFinite(item) && item > 0);
   const uniqueTagIds = [...new Set([...tagIdsFromArray, ...tagIdsFromCsv])];
 
+  const sizes = parseNumberArray(query.sizes);
+
   return {
     pagination: { pageNumber: page, pageSize },
     keyword: toSingle(query.q)?.trim() || undefined,
     isActive: parseBooleanOrUndefined(toSingle(query.isActive)) ?? true,
     placementType: parseIntOrUndefined(toSingle(query.placementType)),
+    careLevelType: parseIntOrUndefined(toSingle(query.careLevelType)),
     careLevel: toSingle(query.careLevel)?.trim() || undefined,
     toxicity: parseBooleanOrUndefined(toSingle(query.toxicity)),
     airPurifying: parseBooleanOrUndefined(toSingle(query.airPurifying)),
@@ -124,68 +144,142 @@ const buildRequestBody = (query: Record<string, string | string[] | undefined>):
     maxBasePrice: parseIntOrUndefined(toSingle(query.maxBasePrice)),
     categoryIds: uniqueCategoryIds.length > 0 ? uniqueCategoryIds : undefined,
     tagIds: uniqueTagIds.length > 0 ? uniqueTagIds : undefined,
+    sizes: sizes.length > 0 ? sizes : undefined,
+    fengShuiElement: parseIntOrUndefined(toSingle(query.fengShuiElement)),
     nurseryId: parseIntOrUndefined(toSingle(query.nurseryId)),
     sortBy,
     sortDirection,
   };
 };
 
-const buildPaginationHref = (
-  query: Record<string, string | string[] | undefined>,
-  targetPage: number,
-): string => {
+const buildMaterialRequestBody = (
+  query: Record<string, string | string[] | undefined>
+): ShopMaterialSearchRequest => {
+  const page = parsePositiveInt(toSingle(query.mPage), 1);
+  const pageSize = parsePositiveInt(toSingle(query.mPageSize), DEFAULT_PAGE_SIZE);
+
+  return {
+    pagination: {
+      pageNumber: page,
+      pageSize,
+    },
+  };
+};
+
+const cloneQuery = (query: Record<string, string | string[] | undefined>) => {
   const params = new URLSearchParams();
   Object.entries(query).forEach(([key, value]) => {
     if (value === undefined) return;
     if (Array.isArray(value)) {
       value.forEach((v) => params.append(key, v));
-    } else if (value !== '') {
+      return;
+    }
+    if (value !== '') {
       params.set(key, value);
     }
   });
-  params.set('page', String(Math.max(1, targetPage)));
+  return params;
+};
+
+const buildTabHref = (
+  query: Record<string, string | string[] | undefined>,
+  tab: 'plants' | 'materials'
+) => {
+  const params = cloneQuery(query);
+  params.set('tab', tab);
   return `/plant-store?${params.toString()}`;
 };
+
+const buildPaginationHref = (
+  query: Record<string, string | string[] | undefined>,
+  key: 'page' | 'mPage',
+  targetPage: number
+): string => {
+  const params = cloneQuery(query);
+  params.set(key, String(Math.max(1, targetPage)));
+  return `/plant-store?${params.toString()}`;
+};
+
+const getEnumValues = (groups: PlantEnumGroup[], key: string) =>
+  groups.find((item) => item.enumName === key)?.values ?? [];
 
 export default async function PlantStorePage({ params, searchParams }: PageProps) {
   const [{ locale }, query] = await Promise.all([params, searchParams]);
   const t = await getTranslations({ locale, namespace: 'plantStore' });
-  const requestBody = buildRequestBody(query);
+  const tFilter = await getTranslations({ locale, namespace: 'filter' });
+  const tCommon = await getTranslations({ locale, namespace: 'common' });
+  const activeTab = getActiveTab(query);
 
-  const [plantsResult, categoriesResult] = await Promise.allSettled([
-    searchShopPlants(requestBody, true, false),
-    getCategoryTreeSSR(),
-  ]);
+  const plantRequestBody = buildPlantRequestBody(query);
+  const materialRequestBody = buildMaterialRequestBody(query);
+
+  const [plantsResult, categoriesResult, enumsResult, materialsResult, nurseriesResult] =
+    await Promise.allSettled([
+    activeTab === 'plants' ? searchShopPlants(plantRequestBody, true, false) : Promise.resolve(null),
+    activeTab === 'plants' ? getCategoryTreeSSR() : Promise.resolve(null),
+    activeTab === 'plants' ? getPlantEnums(true, false) : Promise.resolve(null),
+    activeTab === 'materials' ? searchShopMaterials(materialRequestBody, true, false) : Promise.resolve(null),
+    activeTab === 'plants'
+      ? searchShopNurseries(
+          {
+            pagination: { pageNumber: 1, pageSize: NURSERY_FILTER_PAGE_SIZE },
+          },
+          true,
+          false
+        )
+      : Promise.resolve(null),
+    ]);
 
   const plantsResponse = plantsResult.status === 'fulfilled' ? plantsResult.value : null;
   const categoriesResponse = categoriesResult.status === 'fulfilled' ? categoriesResult.value : null;
+  const enumsResponse = enumsResult.status === 'fulfilled' ? enumsResult.value : null;
+  const materialsResponse = materialsResult.status === 'fulfilled' ? materialsResult.value : null;
+  const nurseriesResponse = nurseriesResult.status === 'fulfilled' ? nurseriesResult.value : null;
 
   const plantsPayload = getPayload<ShopPlantSearchPayload>(plantsResponse) ?? {
     items: [],
     totalCount: 0,
-    pageNumber: requestBody.pagination.pageNumber,
-    pageSize: requestBody.pagination.pageSize,
+    pageNumber: plantRequestBody.pagination.pageNumber,
+    pageSize: plantRequestBody.pagination.pageSize,
     totalPages: 1,
     hasPrevious: false,
     hasNext: false,
   };
-  console.log('Fetched plants on server render:', plantsPayload);
 
-  if (plantsResult.status === 'rejected') {
-    console.error('Failed to fetch shop plants on server render:', plantsResult.reason);
-  }
-
-  if (categoriesResult.status === 'rejected') {
-    console.error('Failed to fetch category tree on server render:', categoriesResult.reason);
-  }
+  const materialsPayload = getPayload<ShopMaterialSearchPayload>(materialsResponse) ?? {
+    items: [],
+    totalCount: 0,
+    pageNumber: materialRequestBody.pagination.pageNumber,
+    pageSize: materialRequestBody.pagination.pageSize,
+    totalPages: 1,
+    hasPrevious: false,
+    hasNext: false,
+  };
+  const nurseriesPayload = getPayload<ShopNurserySearchPayload>(nurseriesResponse) ?? {
+    items: [],
+    totalCount: 0,
+    pageNumber: 1,
+    pageSize: NURSERY_FILTER_PAGE_SIZE,
+    totalPages: 1,
+    hasPrevious: false,
+    hasNext: false,
+  };
 
   const categoryTree = getPayload<CategoryResponse[]>(categoriesResponse) ?? [];
   const categoryOptions = flattenCategories(categoryTree).filter((item) => item.isActive);
-  const selectedCategories = new Set(requestBody.categoryIds ?? []);
+  const selectedCategories = new Set(plantRequestBody.categoryIds ?? []);
+  const selectedSizes = new Set(plantRequestBody.sizes ?? []);
 
-  const selectedSort = `${requestBody.sortBy || ''}:${requestBody.sortDirection || ''}`;
-  const prevHref = buildPaginationHref(query, (plantsPayload.pageNumber || 1) - 1);
-  const nextHref = buildPaginationHref(query, (plantsPayload.pageNumber || 1) + 1);
+  const plantEnums = getPayload<PlantEnumGroup[]>(enumsResponse) ?? [];
+  const placementTypeOptions = getEnumValues(plantEnums, 'PlacementType');
+  const careLevelTypeOptions = getEnumValues(plantEnums, 'CareLevelType');
+  const sizeOptions = getEnumValues(plantEnums, 'PlantSize');
+
+  const selectedSort = `${plantRequestBody.sortBy || ''}:${plantRequestBody.sortDirection || ''}`;
+  const plantsPrevHref = buildPaginationHref(query, 'page', (plantsPayload.pageNumber || 1) - 1);
+  const plantsNextHref = buildPaginationHref(query, 'page', (plantsPayload.pageNumber || 1) + 1);
+  const materialsPrevHref = buildPaginationHref(query, 'mPage', (materialsPayload.pageNumber || 1) - 1);
+  const materialsNextHref = buildPaginationHref(query, 'mPage', (materialsPayload.pageNumber || 1) + 1);
 
   return (
     <div className="py-10 bg-gray-50">
@@ -195,246 +289,464 @@ export default async function PlantStorePage({ params, searchParams }: PageProps
           <p className="text-xl text-gray-600">{t('subtitle')}</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
-          <div className="hidden md:block md:col-span-1">
-            <form method="get" className="bg-white rounded-lg shadow-md p-6 sticky top-4 space-y-6">
-              <h2 className="text-xl font-bold text-gray-900">Filters</h2>
+        <div className="mb-6 border-b border-gray-200">
+          <div className="flex gap-2">
+            <Link
+              href={buildTabHref(query, 'plants')}
+              locale={locale}
+              className={`px-4 py-3 text-sm font-medium rounded-t-lg border ${
+                activeTab === 'plants'
+                  ? 'border-gray-300 border-b-white bg-white text-green-700'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              {t('tabs.plants')}
+            </Link>
+            <Link
+              href={buildTabHref(query, 'materials')}
+              locale={locale}
+              className={`px-4 py-3 text-sm font-medium rounded-t-lg border ${
+                activeTab === 'materials'
+                  ? 'border-gray-300 border-b-white bg-white text-green-700'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              {t('tabs.materials')}
+            </Link>
+          </div>
+        </div>
 
-              <div>
-                <label htmlFor="q" className="font-semibold text-gray-900 mb-2 block">Search</label>
-                <input
-                  id="q"
-                  name="q"
-                  defaultValue={requestBody.keyword || ''}
-                  placeholder="Search by name..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                />
+        {activeTab === 'plants' ? (
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
+            <div className="hidden md:block md:col-span-1">
+              <form method="get" className="bg-white rounded-lg shadow-md p-6 sticky top-4 space-y-6">
+                <h2 className="text-xl font-bold text-gray-900">{tFilter('title')}</h2>
+
+                <div>
+                  <label htmlFor="q" className="font-semibold text-gray-900 mb-2 block">
+                    {tCommon('search')}
+                  </label>
+                  <input
+                    id="q"
+                    name="q"
+                    defaultValue={plantRequestBody.keyword || ''}
+                    placeholder={t('filters.searchByNamePlaceholder')}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  />
+                </div>
+
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2">{tFilter('category')}</h3>
+                  <div className="max-h-48 overflow-auto space-y-2 pr-1">
+                    {categoryOptions.map((category) => (
+                      <label key={category.id} className="flex items-center text-sm text-gray-700">
+                        <input
+                          type="checkbox"
+                          name="categoryIds"
+                          value={String(category.id)}
+                          defaultChecked={selectedCategories.has(category.id)}
+                          className="mr-2"
+                        />
+                        {category.name}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="placementType" className="font-semibold text-gray-900 mb-2 block">
+                    {t('filters.placementType')}
+                  </label>
+                  <select
+                    id="placementType"
+                    name="placementType"
+                    defaultValue={
+                      plantRequestBody.placementType !== undefined
+                        ? String(plantRequestBody.placementType)
+                        : ''
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  >
+                    <option value="">{t('filters.all')}</option>
+                    {placementTypeOptions.map((option) => (
+                      <option key={option.value} value={String(option.value)}>
+                        {option.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="careLevelType" className="font-semibold text-gray-900 mb-2 block">
+                    {t('filters.careLevelType')}
+                  </label>
+                  <select
+                    id="careLevelType"
+                    name="careLevelType"
+                    defaultValue={
+                      plantRequestBody.careLevelType !== undefined
+                        ? String(plantRequestBody.careLevelType)
+                        : ''
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  >
+                    <option value="">{t('filters.all')}</option>
+                    {careLevelTypeOptions.map((option) => (
+                      <option key={option.value} value={String(option.value)}>
+                        {option.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* <div>
+                  <label htmlFor="careLevel" className="font-semibold text-gray-900 mb-2 block">
+                    Care level text
+                  </label>
+                  <input
+                    id="careLevel"
+                    name="careLevel"
+                    defaultValue={plantRequestBody.careLevel || ''}
+                    placeholder="Ex: Easy, Medium, Hard"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  />
+                </div> */}
+
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2">{tFilter('size')}</h3>
+                  <div className="space-y-2">
+                    {sizeOptions.map((option) => (
+                      <label key={option.value} className="flex items-center text-sm text-gray-700">
+                        <input
+                          type="checkbox"
+                          name="sizes"
+                          value={String(option.value)}
+                          defaultChecked={selectedSizes.has(option.value)}
+                          className="mr-2"
+                        />
+                        {option.name}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label htmlFor="minBasePrice" className="font-semibold text-gray-900 mb-2 block">
+                      {t('filters.minPrice')}
+                    </label>
+                    <input
+                      id="minBasePrice"
+                      name="minBasePrice"
+                      type="number"
+                      defaultValue={plantRequestBody.minBasePrice ?? ''}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="maxBasePrice" className="font-semibold text-gray-900 mb-2 block">
+                      {t('filters.maxPrice')}
+                    </label>
+                    <input
+                      id="maxBasePrice"
+                      name="maxBasePrice"
+                      type="number"
+                      defaultValue={plantRequestBody.maxBasePrice ?? ''}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="fengShuiElement" className="font-semibold text-gray-900 mb-2 block">
+                    {t('filters.fengShuiElement')}
+                  </label>
+                  {/* <input
+                    id="fengShuiElement"
+                    name="fengShuiElement"
+                    defaultValue={plantRequestBody.fengShuiElement || ''}
+                    placeholder="Ex: Metal, Wood, Water"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  /> */}
+                  <Select
+                    native
+                    id="fengShuiElement"
+                    name="fengShuiElement"
+                    defaultValue={
+                      plantRequestBody.fengShuiElement !== undefined
+                        ? String(plantRequestBody.fengShuiElement)
+                        : ''
+                    }
+                    className="w-full border border-gray-300 rounded-lg text-sm"
+                  >
+                    <option value="">{t('filters.none')}</option>
+                    {FENG_SHUI_ELEMENT_OPTIONS.map((option) => (
+                      <option key={option.value} value={String(option.value)}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+
+                {/* <div>
+                  <label htmlFor="tagIdsCsv" className="font-semibold text-gray-900 mb-2 block">
+                    Tag IDs (csv)
+                  </label>
+                  <input
+                    id="tagIdsCsv"
+                    name="tagIdsCsv"
+                    defaultValue={(plantRequestBody.tagIds || []).join(',')}
+                    placeholder="1,2,3"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  />
+                </div> */}
+
+                <div>
+                  <label htmlFor="nurseryId" className="font-semibold text-gray-900 mb-2 block">
+                    {t('filters.nursery')}
+                  </label>
+                  <select
+                    id="nurseryId"
+                    name="nurseryId"
+                    defaultValue={
+                      plantRequestBody.nurseryId !== undefined ? String(plantRequestBody.nurseryId) : ''
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  >
+                    <option value="">{t('filters.allNurseries')}</option>
+                    {nurseriesPayload.items
+                      .filter((nursery) => nursery.isActive)
+                      .map((nursery) => (
+                        <option key={nursery.id} value={String(nursery.id)}>
+                          {nursery.name}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="flex items-center text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      name="toxicity"
+                      value="true"
+                      defaultChecked={plantRequestBody.toxicity === true}
+                      className="mr-2"
+                    />
+                    {t('filters.toxicity')}
+                  </label>
+                  <label className="flex items-center text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      name="airPurifying"
+                      value="true"
+                      defaultChecked={plantRequestBody.airPurifying === true}
+                      className="mr-2"
+                    />
+                    {t('filters.airPurifying')}
+                  </label>
+                  <label className="flex items-center text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      name="hasFlower"
+                      value="true"
+                      defaultChecked={plantRequestBody.hasFlower === true}
+                      className="mr-2"
+                    />
+                    {t('filters.hasFlower')}
+                  </label>
+                  <label className="flex items-center text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      name="petSafe"
+                      value="true"
+                      defaultChecked={plantRequestBody.petSafe === true}
+                      className="mr-2"
+                    />
+                    {t('filters.petSafe')}
+                  </label>
+                  <label className="flex items-center text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      name="childSafe"
+                      value="true"
+                      defaultChecked={plantRequestBody.childSafe === true}
+                      className="mr-2"
+                    />
+                    {t('filters.childSafe')}
+                  </label>
+                  <label className="flex items-center text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      name="isUniqueInstance"
+                      value="true"
+                      defaultChecked={plantRequestBody.isUniqueInstance === true}
+                      className="mr-2"
+                    />
+                    {t('filters.uniqueInstance')}
+                  </label>
+                </div>
+
+                <div>
+                  <label htmlFor="sort" className="font-semibold text-gray-900 mb-2 block">
+                    {t('filters.sort')}
+                  </label>
+                  <select
+                    id="sort"
+                    name="sort"
+                    defaultValue={selectedSort}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  >
+                    <option value=":">{t('sort.default')}</option>
+                    <option value="name:asc">{t('sort.nameAsc')}</option>
+                    <option value="name:desc">{t('sort.nameDesc')}</option>
+                    <option value="basePrice:asc">{t('sort.priceAsc')}</option>
+                    <option value="basePrice:desc">{t('sort.priceDesc')}</option>
+                    <option value="createdAt:desc">{t('sort.newest')}</option>
+                    <option value="createdAt:asc">{t('sort.oldest')}</option>
+                    <option value="updatedAt:desc">{t('sort.updatedDesc')}</option>
+                    <option value="updatedAt:asc">{t('sort.updatedAsc')}</option>
+                    <option value="size:asc">{t('sort.sizeAsc')}</option>
+                    <option value="size:desc">{t('sort.sizeDesc')}</option>
+                    <option value="careLevel:asc">{t('sort.careLevelAsc')}</option>
+                    <option value="careLevel:desc">{t('sort.careLevelDesc')}</option>
+                    <option value="availableInstances:desc">{t('sort.availableDesc')}</option>
+                    <option value="availableInstances:asc">{t('sort.availableAsc')}</option>
+                  </select>
+                </div>
+
+                <input type="hidden" name="tab" value="plants" />
+                <input type="hidden" name="page" value="1" />
+                <input type="hidden" name="pageSize" value={String(plantRequestBody.pagination.pageSize)} />
+
+                <div className="flex gap-2">
+                  <button
+                    type="submit"
+                    className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium"
+                  >
+                    {t('filters.apply')}
+                  </button>
+                  <Link
+                    href="/plant-store?tab=plants"
+                    locale={locale}
+                    className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors text-sm flex items-center"
+                  >
+                    {tFilter('reset')}
+                  </Link>
+                </div>
+              </form>
+            </div>
+
+            <div className="md:col-span-4">
+              <div className="mb-4 flex items-center justify-between text-sm text-gray-600">
+                <p>
+                  {t('result.foundPlants', { count: plantsPayload.totalCount })}
+                </p>
+                <p>
+                  {t('result.pageOf', {
+                    current: plantsPayload.pageNumber,
+                    total: Math.max(1, plantsPayload.totalPages),
+                  })}
+                </p>
               </div>
 
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-2">Categories</h3>
-                <div className="max-h-48 overflow-auto space-y-2 pr-1">
-                  {categoryOptions.map((category) => (
-                    <label key={category.id} className="flex items-center text-sm text-gray-700">
-                      <input
-                        type="checkbox"
-                        name="categoryIds"
-                        value={String(category.id)}
-                        defaultChecked={selectedCategories.has(category.id)}
-                        className="mr-2"
-                      />
-                      {category.name}
-                    </label>
+              {plantsPayload.items.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {plantsPayload.items.map((plant) => (
+                    <ProductCard key={plant.id} plant={plant} />
                   ))}
                 </div>
-              </div>
-
-              <div>
-                <label htmlFor="careLevel" className="font-semibold text-gray-900 mb-2 block">Care level</label>
-                <input
-                  id="careLevel"
-                  name="careLevel"
-                  defaultValue={requestBody.careLevel || ''}
-                  placeholder="VD: Dễ, Trung bình, Khó"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="placementType" className="font-semibold text-gray-900 mb-2 block">Placement type</label>
-                <select
-                  id="placementType"
-                  name="placementType"
-                  defaultValue={requestBody.placementType !== undefined ? String(requestBody.placementType) : ''}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                >
-                  <option value="">All</option>
-                  <option value="0">Indoor</option>
-                  <option value="1">Semi-outdoor</option>
-                  <option value="2">Outdoor</option>
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label htmlFor="minBasePrice" className="font-semibold text-gray-900 mb-2 block">Min price</label>
-                  <input
-                    id="minBasePrice"
-                    name="minBasePrice"
-                    type="number"
-                    defaultValue={requestBody.minBasePrice ?? ''}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                  />
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
+                  <p className="text-lg text-gray-600 mb-4">{t('result.noPlants')}</p>
+                  <Link
+                    href="/plant-store?tab=plants"
+                    locale={locale}
+                    className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    {t('result.clearFilters')}
+                  </Link>
                 </div>
-                <div>
-                  <label htmlFor="maxBasePrice" className="font-semibold text-gray-900 mb-2 block">Max price</label>
-                  <input
-                    id="maxBasePrice"
-                    name="maxBasePrice"
-                    type="number"
-                    defaultValue={requestBody.maxBasePrice ?? ''}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                  />
-                </div>
-              </div>
+              )}
 
-              <div>
-                <label htmlFor="tagIdsCsv" className="font-semibold text-gray-900 mb-2 block">Tag IDs (csv)</label>
-                <input
-                  id="tagIdsCsv"
-                  name="tagIdsCsv"
-                  defaultValue={(requestBody.tagIds || []).join(',')}
-                  placeholder="1,2,3"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="nurseryId" className="font-semibold text-gray-900 mb-2 block">Nursery ID</label>
-                <input
-                  id="nurseryId"
-                  name="nurseryId"
-                  type="number"
-                  defaultValue={requestBody.nurseryId ?? ''}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="flex items-center text-sm text-gray-700">
-                  <input type="checkbox" name="toxicity" value="true" defaultChecked={requestBody.toxicity === true} className="mr-2" />
-                  Toxicity
-                </label>
-                <label className="flex items-center text-sm text-gray-700">
-                  <input type="checkbox" name="airPurifying" value="true" defaultChecked={requestBody.airPurifying === true} className="mr-2" />
-                  Air Purifying
-                </label>
-                <label className="flex items-center text-sm text-gray-700">
-                  <input type="checkbox" name="hasFlower" value="true" defaultChecked={requestBody.hasFlower === true} className="mr-2" />
-                  Has Flower
-                </label>
-                <label className="flex items-center text-sm text-gray-700">
-                  <input type="checkbox" name="petSafe" value="true" defaultChecked={requestBody.petSafe === true} className="mr-2" />
-                  Pet Safe
-                </label>
-                <label className="flex items-center text-sm text-gray-700">
-                  <input type="checkbox" name="childSafe" value="true" defaultChecked={requestBody.childSafe === true} className="mr-2" />
-                  Child Safe
-                </label>
-                <label className="flex items-center text-sm text-gray-700">
-                  <input
-                    type="checkbox"
-                    name="isUniqueInstance"
-                    value="true"
-                    defaultChecked={requestBody.isUniqueInstance === true}
-                    className="mr-2"
-                  />
-                  Unique Instance
-                </label>
-              </div>
-
-              <div>
-                <label htmlFor="sort" className="font-semibold text-gray-900 mb-2 block">Sort</label>
-                <select
-                  id="sort"
-                  name="sort"
-                  defaultValue={selectedSort}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                >
-                  <option value=":">Default</option>
-                  <option value="name:asc">Name A-Z</option>
-                  <option value="name:desc">Name Z-A</option>
-                  <option value="basePrice:asc">Price low-high</option>
-                  <option value="basePrice:desc">Price high-low</option>
-                  <option value="createdAt:desc">Newest</option>
-                  <option value="createdAt:asc">Oldest</option>
-                  <option value="updatedAt:desc">Updated desc</option>
-                  <option value="updatedAt:asc">Updated asc</option>
-                  <option value="size:asc">Size asc</option>
-                  <option value="size:desc">Size desc</option>
-                  <option value="careLevel:asc">Care level asc</option>
-                  <option value="careLevel:desc">Care level desc</option>
-                  <option value="availableInstances:desc">Available desc</option>
-                  <option value="availableInstances:asc">Available asc</option>
-                </select>
-              </div>
-
-              <input type="hidden" name="page" value="1" />
-              <input type="hidden" name="pageSize" value={String(requestBody.pagination.pageSize)} />
-
-              <div className="flex gap-2">
-                <button
-                  type="submit"
-                  className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium"
-                >
-                  Apply
-                </button>
+              <div className="mt-8 flex items-center justify-center gap-3">
                 <Link
-                  href="/plant-store"
+                  href={plantsPrevHref}
                   locale={locale}
-                  className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors text-sm flex items-center"
+                  className={`rounded-lg border px-4 py-2 text-sm ${
+                    plantsPayload.hasPrevious
+                      ? 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                      : 'pointer-events-none border-gray-200 bg-gray-100 text-gray-400'
+                  }`}
                 >
-                  Reset
+                  {tCommon('previous')}
+                </Link>
+                <Link
+                  href={plantsNextHref}
+                  locale={locale}
+                  className={`rounded-lg border px-4 py-2 text-sm ${
+                    plantsPayload.hasNext
+                      ? 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                      : 'pointer-events-none border-gray-200 bg-gray-100 text-gray-400'
+                  }`}
+                >
+                  {tCommon('next')}
                 </Link>
               </div>
-            </form>
+            </div>
           </div>
-
-          <div className="md:col-span-4">
+        ) : (
+          <div>
             <div className="mb-4 flex items-center justify-between text-sm text-gray-600">
               <p>
-                Found <span className="font-semibold text-gray-900">{plantsPayload.totalCount}</span> plants
+                {t('result.foundMaterials', { count: materialsPayload.totalCount })}
               </p>
               <p>
-                Page {plantsPayload.pageNumber}/{Math.max(1, plantsPayload.totalPages)}
+                {t('result.pageOf', {
+                  current: materialsPayload.pageNumber,
+                  total: Math.max(1, materialsPayload.totalPages),
+                })}
               </p>
             </div>
 
-            {plantsPayload.items.length > 0 ? (
+            {materialsPayload.items.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {plantsPayload.items.map((plant) => (
-                  <ProductCard key={plant.id} plant={plant} />
+                {materialsPayload.items.map((material) => (
+                  <MaterialCard key={material.id} material={material} />
                 ))}
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
-                <p className="text-lg text-gray-600 mb-4">No plants match your filters</p>
-                <Link
-                  href="/plant-store"
-                  locale={locale}
-                  className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  Clear Filters
-                </Link>
+                <p className="text-lg text-gray-600 mb-4">{t('result.noMaterials')}</p>
               </div>
             )}
 
             <div className="mt-8 flex items-center justify-center gap-3">
               <Link
-                href={prevHref}
+                href={materialsPrevHref}
                 locale={locale}
                 className={`rounded-lg border px-4 py-2 text-sm ${
-                  plantsPayload.hasPrevious
+                  materialsPayload.hasPrevious
                     ? 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
                     : 'pointer-events-none border-gray-200 bg-gray-100 text-gray-400'
                 }`}
               >
-                Previous
+                {tCommon('previous')}
               </Link>
               <Link
-                href={nextHref}
+                href={materialsNextHref}
                 locale={locale}
                 className={`rounded-lg border px-4 py-2 text-sm ${
-                  plantsPayload.hasNext
+                  materialsPayload.hasNext
                     ? 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
                     : 'pointer-events-none border-gray-200 bg-gray-100 text-gray-400'
                 }`}
               >
-                Next
+                {tCommon('next')}
               </Link>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

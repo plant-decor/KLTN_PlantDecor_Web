@@ -85,6 +85,12 @@
     "logoAlt": "Plant Decor Logo",
     "cartBadgeAlt": "Giỏ hàng"
   },
+  "headerUserMenu": {
+    "profile": "Hồ sơ",
+    "orderHistory": "Lịch sử đơn hàng",
+    "wishlist": "Danh sách yêu thích",
+    "logout": "Đăng xuất"
+  },
   "sidebar": {
     "systemDashboard": "Bảng điều khiển hệ thống",
     "reminderManagement": "Quản lý nhắc nhở",
@@ -133,7 +139,56 @@
   },
   "plantStore": {
     "title": "Cửa hàng cây cảnh",
-    "subtitle": "Khám phá bộ sưu tập cây cảnh đa dạng của chúng tôi"
+    "subtitle": "Khám phá bộ sưu tập cây cảnh đa dạng của chúng tôi",
+    "tabs": {
+      "plants": "Cây cảnh",
+      "materials": "Vật tư trồng cây"
+    },
+    "filters": {
+      "searchByNamePlaceholder": "Tìm theo tên...",
+      "placementType": "Kiểu vị trí",
+      "careLevelType": "Mức độ chăm sóc",
+      "all": "Tất cả",
+      "minPrice": "Giá thấp nhất",
+      "maxPrice": "Giá cao nhất",
+      "fengShuiElement": "Mệnh ngũ hành",
+      "none": "Không chọn",
+      "nursery": "Nhà vườn",
+      "allNurseries": "Tất cả nhà vườn",
+      "toxicity": "Có độc tính",
+      "airPurifying": "Lọc không khí",
+      "hasFlower": "Có hoa",
+      "petSafe": "An toàn cho thú cưng",
+      "childSafe": "An toàn cho trẻ em",
+      "uniqueInstance": "Cá thể độc bản",
+      "sort": "Sắp xếp",
+      "apply": "Áp dụng"
+    },
+    "sort": {
+      "default": "Mặc định",
+      "nameAsc": "Tên A-Z",
+      "nameDesc": "Tên Z-A",
+      "priceAsc": "Giá thấp-cao",
+      "priceDesc": "Giá cao-thấp",
+      "newest": "Mới nhất",
+      "oldest": "Cũ nhất",
+      "updatedDesc": "Cập nhật giảm dần",
+      "updatedAsc": "Cập nhật tăng dần",
+      "sizeAsc": "Kích thước tăng dần",
+      "sizeDesc": "Kích thước giảm dần",
+      "careLevelAsc": "Độ chăm sóc tăng dần",
+      "careLevelDesc": "Độ chăm sóc giảm dần",
+      "availableDesc": "Sẵn có giảm dần",
+      "availableAsc": "Sẵn có tăng dần"
+    },
+    "result": {
+      "foundPlants": "Tìm thấy {count} cây",
+      "foundMaterials": "Tìm thấy {count} vật tư",
+      "pageOf": "Trang {current}/{total}",
+      "noPlants": "Không có cây phù hợp bộ lọc",
+      "clearFilters": "Xóa bộ lọc",
+      "noMaterials": "Không tìm thấy vật tư"
+    }
   },
   "filter": {
     "title": "Lọc cây cảnh",
@@ -167,7 +222,23 @@
     "productDetail": "Chi tiết sản phẩm",
     "description": "Mô tả",
     "reviews": "Đánh giá",
-  "sale": "Giảm giá"
+    "sale": "Giảm giá",
+    "careLevelLabel": "Độ chăm sóc",
+    "sizeLabel": "Kích thước",
+    "categoryLabel": "Danh mục",
+    "material": {
+      "brand": "Thương hiệu",
+      "unit": "Đơn vị"
+    },
+    "nurseryDrawer": {
+      "selectNursery": "Chọn nhà vườn",
+      "chooseBeforeContinue": "Vui lòng chọn nhà vườn trước khi tiếp tục.",
+      "quantity": "Số lượng",
+      "noNurseries": "Không có nhà vườn khả dụng.",
+      "loadingNurseries": "Đang tải danh sách nhà vườn...",
+      "noMaterialNursery": "Không có nhà vườn đang bán vật tư này.",
+      "continue": "Tiếp tục"
+    }
   },
   "cart": {
     "title": "Giỏ hàng",
@@ -196,6 +267,7 @@
     "complete": "Hoàn tất",
     "shippingAddress": "Địa chỉ giao hàng",
     "fullName": "Họ và tên",
+    "phone": "Số điện thoại",
     "address": "Địa chỉ",
     "city": "Thành phố",
     "zipCode": "Mã bưu điện",
@@ -206,7 +278,35 @@
     "placeOrder": "Đặt hàng",
     "orderSuccess": "Đặt hàng thành công!",
     "orderSuccessDesc": "Cảm ơn bạn đã mua sắm. Chúng tôi sẽ liên hệ sớm.",
-    "backToHome": "Về trang chủ"
+    "backToHome": "Về trang chủ",
+    "backToCart": "Quay lại giỏ hàng",
+    "actions": {
+      "reviewOrder": "Xem lại đơn hàng",
+      "goToPayment": "Đến thanh toán"
+    },
+    "errors": {
+      "emptyCartGoBack": "Giỏ hàng đang trống. Vui lòng quay lại giỏ hàng.",
+      "loadFailed": "Không thể tải dữ liệu thanh toán",
+      "missingShippingInfo": "Thiếu thông tin giao hàng.",
+      "emptyCart": "Giỏ hàng đang trống.",
+      "missingRequiredShippingFields": "Vui lòng nhập đầy đủ họ tên, số điện thoại và địa chỉ giao hàng.",
+      "submitFailed": "Không thể gửi đơn hàng",
+      "orderNotCreated": "Đơn hàng chưa được tạo."
+    },
+    "completeDetails": {
+      "notAvailable": "Không có",
+      "orderConfirmation": "Xác nhận đơn hàng",
+      "orderId": "Mã đơn hàng",
+      "emailConfirmation": "Bạn sẽ sớm nhận được email xác nhận.",
+      "shippingDetails": "Thông tin giao hàng",
+      "noShippingInfo": "Không có thông tin giao hàng",
+      "subtotal": "Tạm tính",
+      "shipping": "Vận chuyển",
+      "free": "Miễn phí",
+      "total": "Tổng cộng",
+      "goToOrdersHistory": "Đến lịch sử đơn hàng",
+      "continueShopping": "Tiếp tục mua sắm"
+    }
   },
   "services": {
     "title": "Dịch vụ",
@@ -322,6 +422,40 @@
     "viewDetails": "Xem chi tiết",
     "noOrders": "Bạn chưa có đơn hàng nào"
   },
+  "orderHistory": {
+    "title": "Lịch sử đơn hàng",
+    "noOrdersFound": "Không tìm thấy đơn hàng",
+    "orderType": {
+      "uniquePlant": "Cây độc bản",
+      "product": "Sản phẩm"
+    },
+    "orderedAt": "Đặt lúc",
+    "moreItems": "sản phẩm khác",
+    "total": "Tổng cộng",
+    "viewDetail": "Xem chi tiết",
+    "retryPayment": "Thanh toán lại",
+    "retryingPayment": "Đang tạo lại thanh toán...",
+    "retryPaymentFailed": "Không thể thanh toán lại. Vui lòng thử lại."
+  },
+  "chatWidget": {
+    "title": "Tin nhắn hỗ trợ Plant Care",
+    "inputPlaceholder": "Tôi có thể giúp gì cho bạn?",
+    "quickReplies": {
+      "careSchedule": "Lịch chăm cây",
+      "orders": "Đơn hàng",
+      "careServices": "Dịch vụ chăm sóc"
+    },
+    "mockMessages": {
+      "welcome": "Xin chào, mình là AI hỗ trợ FAQ Plant care.",
+      "userQuestion": "Cách theo dõi lịch chăm cây ở đâu?",
+      "answer": "Bạn vào My Plant > lịch chăm sóc theo từng chậu cây."
+    },
+    "aria": {
+      "openChat": "Mở chat hỗ trợ",
+      "closeChat": "Đóng khung chat hỗ trợ",
+      "sendMessage": "Gửi tin nhắn"
+    }
+  },
   "profile": {
     "title": "Hồ sơ",
     "editProfile": "Chỉnh sửa hồ sơ",
@@ -376,6 +510,9 @@
   "productDetail": {
     "home": "Trang chủ",
     "store": "Cửa hàng",
+    "yes": "Có",
+    "no": "Không",
+    "notAvailable": "N/A",
     "reviewsWithCount": "{count} đánh giá",
     "priceFrom": "Giá từ:",
     "priceTo": "đến {price}",
@@ -394,6 +531,36 @@
     "propagation": "Nhân giống",
     "commonPests": "Sâu bệnh thường gặp",
     "careInstructions": "Hướng dẫn chăm sóc",
+    "origin": "Nguồn gốc",
+    "placement": "Vị trí",
+    "growthRate": "Tốc độ phát triển",
+    "uniqueInstance": "Cá thể độc bản",
+    "categories": "Danh mục",
+    "tags": "Thẻ",
+    "categoryFallback": "Danh mục {index}",
+    "tagFallback": "Thẻ {index}",
+    "safetyAndTraits": "An toàn và đặc điểm",
+    "traits": {
+      "toxicity": "Độc tính",
+      "airPurifying": "Lọc không khí",
+      "hasFlower": "Có hoa",
+      "petSafe": "An toàn cho thú cưng",
+      "childSafe": "An toàn cho trẻ em",
+      "potIncluded": "Kèm chậu"
+    },
+    "fengShui": {
+      "title": "Phong thủy",
+      "element": "Mệnh"
+    },
+    "purchasePanel": {
+      "noNurseriesAvailable": "Không có nhà vườn khả dụng.",
+      "loadingPlantInstances": "Đang tải các cây cá thể...",
+      "noPlantInstancesAtNursery": "Không có cây cá thể khả dụng tại nhà vườn này.",
+      "sku": "Mã SKU",
+      "height": "Chiều cao",
+      "health": "Tình trạng",
+      "proceedToShipping": "Tiếp tục đến giao hàng"
+    },
     "myPlants": "Cây của tôi",
     "ownedCount": "Bạn đang sở hữu {count} cây loại này",
     "boughtFrom": "Mua từ",
@@ -499,6 +666,9 @@
     "successMessage": "Cảm ơn bạn đã mua hàng tại PlantDecor. Đơn hàng của bạn đã được ghi nhận.",
     "failureTitle": "Thanh toán thất bại!",
     "failureMessage": "Đã có lỗi xảy ra trong quá trình thanh toán. Vui lòng thử lại hoặc liên hệ hỗ trợ.",
+    "autoRedirect": "Hệ thống sẽ tự động chuyển về trang đơn hàng sau {countdown} giây...",
+    "viewOrderHistory": "Xem lịch sử đơn hàng ngay",
+    "backHome": "Quay lại trang chủ",
     "title": "Kết quả thanh toán",
     "message": "Cảm ơn bạn đã sử dụng dịch vụ của PlantDecor. Vui lòng kiểm tra trạng thái đơn hàng trong tài khoản của bạn."
   }

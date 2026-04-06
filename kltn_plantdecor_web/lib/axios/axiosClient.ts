@@ -148,6 +148,11 @@ const tryRefreshAccessToken = async (forceRefresh = false): Promise<string | nul
     return existingToken;
   }
 
+  const refreshToken = getClientRefreshToken();
+  if (!refreshToken) {
+    return null;
+  }
+
   if (isRefreshing) {
     try {
       await new Promise((resolve, reject) => {
@@ -162,9 +167,7 @@ const tryRefreshAccessToken = async (forceRefresh = false): Promise<string | nul
   isRefreshing = true;
 
   try {
-    const refreshToken = getClientRefreshToken();
-    const requestBody = refreshToken ? { refreshToken } : {};
-
+    const requestBody = { refreshToken };
 
     const refreshResponse = await axios.post(
       `${process.env.NEXT_PUBLIC_API_URL}/Authentication/refreshToken`,
@@ -187,6 +190,13 @@ const tryRefreshAccessToken = async (forceRefresh = false): Promise<string | nul
     processQueue(null);
     return refreshedToken;
   } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const refreshStatus = error.response?.status;
+      if (refreshStatus === 400 || refreshStatus === 401) {
+        clearClientAccessToken();
+      }
+    }
+
     processQueue(error);
     return null;
   } finally {

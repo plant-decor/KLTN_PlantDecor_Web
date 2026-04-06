@@ -1,8 +1,7 @@
 'use client';
 
-import { useMemo, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Menu as MenuIcon } from '@mui/icons-material';
-import { useTranslations } from 'next-intl';
 import Sidebar from '@/components/layout/Sidebar';
 import { useAuthStore } from '@/lib/store/authStore';
 import { SIDEBAR_ITEMS_BY_ROLE } from '@/lib/constants/sidebar';
@@ -14,7 +13,6 @@ interface DashboardShellProps {
 }
 
 export default function DashboardShell({ children, role }: DashboardShellProps) {
-  const t = useTranslations('common');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { user } = useAuthStore();
   const resolvedRole = role ?? (user?.role as UserRole | undefined) ?? 'guest';
@@ -29,10 +27,10 @@ export default function DashboardShell({ children, role }: DashboardShellProps) 
               type="button"
               onClick={() => setIsSidebarOpen(true)}
               className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
-              aria-label="Open sidebar"
+              aria-label="Mở menu bên"
             >
               <MenuIcon sx={{ fontSize: 20 }} />
-              {t('menu')}
+              Menu
             </button>
             <span className="text-sm text-gray-500">{resolvedRole.toUpperCase()}</span>
           </div>
@@ -46,7 +44,7 @@ export default function DashboardShell({ children, role }: DashboardShellProps) 
                   type="button"
                   className="fixed inset-0 z-30 bg-black/40 lg:hidden"
                   onClick={() => setIsSidebarOpen(false)}
-                  aria-label="Close sidebar overlay"
+                  aria-label="Đóng menu bên"
                 />
               )}
               <Sidebar

@@ -3,7 +3,6 @@
 import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/authStore';
 import { logoutAction } from '@/app/actions/loginAction';
-import { clearClientAccessToken } from '@/lib/axios/tokenStorage';
 
 /**
  * Logout Button Component
@@ -16,24 +15,27 @@ import { clearClientAccessToken } from '@/lib/axios/tokenStorage';
 export default function LogoutButton() {
   const router = useRouter();
   const params = useParams<{ locale?: string }>();
-  const { clearUser } = useAuthStore();
+  const { clearAll } = useAuthStore();
+
+  const redirectToLogin = () => {
+    clearAll();
+    const locale = Array.isArray(params?.locale) ? params.locale[0] : params?.locale;
+    const loginPath = locale ? `/${locale}/login` : '/login';
+    router.replace(loginPath);
+  };
 
   const handleLogout = async () => {
     try {
       // Gọi Server Action để xóa cookies
       const result = await logoutAction();
-
-      if (result.success) {
-        // Clear Zustand store
-        clearUser();
-        clearClientAccessToken();
-
-        const locale = Array.isArray(params?.locale) ? params.locale[0] : params?.locale;
-        const loginPath = locale ? `/${locale}/login` : '/login';
-        router.replace(loginPath);
+      if (!result.success) {
+        console.warn('Logout action reported failure, continuing with local cleanup.');
       }
     } catch (error) {
       console.error('Logout error:', error);
+    } finally {
+      // Keep logout fail-soft: local cleanup and redirect should always happen.
+      redirectToLogin();
     }
   };
 

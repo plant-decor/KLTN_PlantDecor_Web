@@ -84,6 +84,12 @@
     "logoAlt": "Plant Decor Logo",
     "cartBadgeAlt": "Shopping cart"
   },
+  "headerUserMenu": {
+    "profile": "Profile",
+    "orderHistory": "Order history",
+    "wishlist": "Wishlist",
+    "logout": "Log out"
+  },
   "sidebar": {
     "systemDashboard": "System Dashboard",
     "reminderManagement": "Reminder Management",
@@ -132,7 +138,56 @@
   },
   "plantStore": {
     "title": "Plant Store",
-    "subtitle": "Explore our diverse collection of ornamental plants"
+    "subtitle": "Explore our diverse collection of ornamental plants",
+    "tabs": {
+      "plants": "Plant Store",
+      "materials": "Planting Supplies"
+    },
+    "filters": {
+      "searchByNamePlaceholder": "Search by name...",
+      "placementType": "Placement type",
+      "careLevelType": "Care level type",
+      "all": "All",
+      "minPrice": "Min price",
+      "maxPrice": "Max price",
+      "fengShuiElement": "Feng Shui element",
+      "none": "None",
+      "nursery": "Nursery",
+      "allNurseries": "All nurseries",
+      "toxicity": "Toxicity",
+      "airPurifying": "Air purifying",
+      "hasFlower": "Has flower",
+      "petSafe": "Pet safe",
+      "childSafe": "Child safe",
+      "uniqueInstance": "Unique instance",
+      "sort": "Sort",
+      "apply": "Apply"
+    },
+    "sort": {
+      "default": "Default",
+      "nameAsc": "Name A-Z",
+      "nameDesc": "Name Z-A",
+      "priceAsc": "Price low-high",
+      "priceDesc": "Price high-low",
+      "newest": "Newest",
+      "oldest": "Oldest",
+      "updatedDesc": "Updated desc",
+      "updatedAsc": "Updated asc",
+      "sizeAsc": "Size asc",
+      "sizeDesc": "Size desc",
+      "careLevelAsc": "Care level asc",
+      "careLevelDesc": "Care level desc",
+      "availableDesc": "Available desc",
+      "availableAsc": "Available asc"
+    },
+    "result": {
+      "foundPlants": "Found {count} plants",
+      "foundMaterials": "Found {count} materials",
+      "pageOf": "Page {current}/{total}",
+      "noPlants": "No plants match your filters",
+      "clearFilters": "Clear Filters",
+      "noMaterials": "No materials found"
+    }
   },
   "filter": {
     "title": "Filter Plants",
@@ -166,7 +221,23 @@
     "productDetail": "Product detail",
     "description": "Description",
     "reviews": "Reviews",
-    "sale": "Sale"
+    "sale": "Sale",
+    "careLevelLabel": "Care level",
+    "sizeLabel": "Size",
+    "categoryLabel": "Categories",
+    "material": {
+      "brand": "Brand",
+      "unit": "Unit"
+    },
+    "nurseryDrawer": {
+      "selectNursery": "Select nursery",
+      "chooseBeforeContinue": "Please choose a nursery before continuing.",
+      "quantity": "Quantity",
+      "noNurseries": "No nurseries available.",
+      "loadingNurseries": "Loading nurseries...",
+      "noMaterialNursery": "No nursery is selling this material.",
+      "continue": "Continue"
+    }
   },
   "cart": {
     "title": "Shopping Cart",
@@ -195,6 +266,7 @@
     "complete": "Complete",
     "shippingAddress": "Shipping address",
     "fullName": "Full name",
+    "phone": "Phone",
     "address": "Address",
     "city": "City",
     "zipCode": "Zip code",
@@ -205,7 +277,35 @@
     "placeOrder": "Place order",
     "orderSuccess": "Order placed successfully!",
     "orderSuccessDesc": "Thank you for shopping. We will contact you soon.",
-    "backToHome": "Back to home"
+    "backToHome": "Back to home",
+    "backToCart": "Back to cart",
+    "actions": {
+      "reviewOrder": "Review Order",
+      "goToPayment": "Go to Payment"
+    },
+    "errors": {
+      "emptyCartGoBack": "Cart is empty. Please go back to cart.",
+      "loadFailed": "Failed to load checkout data",
+      "missingShippingInfo": "Missing shipping information.",
+      "emptyCart": "Cart is empty.",
+      "missingRequiredShippingFields": "Please enter full name, phone and shipping address.",
+      "submitFailed": "Failed to submit order",
+      "orderNotCreated": "Order has not been created yet."
+    },
+    "completeDetails": {
+      "notAvailable": "N/A",
+      "orderConfirmation": "Order Confirmation",
+      "orderId": "Order ID",
+      "emailConfirmation": "You will receive an email confirmation shortly.",
+      "shippingDetails": "Shipping Details",
+      "noShippingInfo": "No shipping information provided",
+      "subtotal": "Subtotal",
+      "shipping": "Shipping",
+      "free": "Free",
+      "total": "Total",
+      "goToOrdersHistory": "Go to Orders History",
+      "continueShopping": "Continue Shopping"
+    }
   },
   "services": {
     "title": "Services",
@@ -321,6 +421,40 @@
     "viewDetails": "View details",
     "noOrders": "You have no orders yet"
   },
+  "orderHistory": {
+    "title": "Order history",
+    "noOrdersFound": "No orders found",
+    "orderType": {
+      "uniquePlant": "Unique plant",
+      "product": "Product"
+    },
+    "orderedAt": "Ordered at",
+    "moreItems": "more item(s)",
+    "total": "Total",
+    "viewDetail": "View detail",
+    "retryPayment": "Retry payment",
+    "retryingPayment": "Retrying...",
+    "retryPaymentFailed": "Failed to retry payment. Please try again."
+  },
+  "chatWidget": {
+    "title": "Plant Care Support Chat",
+    "inputPlaceholder": "How can I help you?",
+    "quickReplies": {
+      "careSchedule": "Care schedule",
+      "orders": "Orders",
+      "careServices": "Care services"
+    },
+    "mockMessages": {
+      "welcome": "Hi, I am an AI assistant for Plant Care FAQs.",
+      "userQuestion": "Where can I track my plant care schedule?",
+      "answer": "Go to My Plant > care schedule for each pot."
+    },
+    "aria": {
+      "openChat": "Open support chat",
+      "closeChat": "Close support chat",
+      "sendMessage": "Send message"
+    }
+  },
   "profile": {
     "title": "Profile",
     "editProfile": "Edit profile",
@@ -375,6 +509,9 @@
   "productDetail": {
     "home": "Home",
     "store": "Store",
+    "yes": "Yes",
+    "no": "No",
+    "notAvailable": "N/A",
     "reviewsWithCount": "{count} reviews",
     "priceFrom": "Price from:",
     "priceTo": "to {price}",
@@ -393,6 +530,36 @@
     "propagation": "Propagation",
     "commonPests": "Common pests",
     "careInstructions": "Care instructions",
+    "origin": "Origin",
+    "placement": "Placement",
+    "growthRate": "Growth rate",
+    "uniqueInstance": "Unique instance",
+    "categories": "Categories",
+    "tags": "Tags",
+    "categoryFallback": "Category {index}",
+    "tagFallback": "Tag {index}",
+    "safetyAndTraits": "Safety and traits",
+    "traits": {
+      "toxicity": "Toxicity",
+      "airPurifying": "Air purifying",
+      "hasFlower": "Has flower",
+      "petSafe": "Pet safe",
+      "childSafe": "Child safe",
+      "potIncluded": "Pot included"
+    },
+    "fengShui": {
+      "title": "Feng Shui",
+      "element": "Element"
+    },
+    "purchasePanel": {
+      "noNurseriesAvailable": "No nurseries available.",
+      "loadingPlantInstances": "Loading plant instances...",
+      "noPlantInstancesAtNursery": "No available plant instance at this nursery.",
+      "sku": "SKU",
+      "height": "Height",
+      "health": "Health",
+      "proceedToShipping": "Proceed to shipping"
+    },
     "myPlants": "My plants",
     "ownedCount": "You currently own {count} plants of this type",
     "boughtFrom": "Bought on",
@@ -498,6 +665,9 @@
     "successMessage": "Thank you for your purchase at PlantDecor. Your order has been recorded.",
     "failureTitle": "Payment Failed!",
     "failureMessage": "There was an error during payment. Please try again or contact support.",
+    "autoRedirect": "The system will automatically redirect you to your order page in {countdown} seconds...",
+    "viewOrderHistory": "View order history now",
+    "backHome": "Back to home",
     "title": "Payment Result",
     "message": "Thank you for using PlantDecor. Please check your order status in your account."
   }

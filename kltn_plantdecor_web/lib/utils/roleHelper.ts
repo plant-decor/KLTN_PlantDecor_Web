@@ -3,7 +3,7 @@
  * Dùng trong components để check permissions
  */
 
-import { ROLE_TO_ROUTES, ROUTE_TO_ROLES } from '@/lib/constants/roleRoutes';
+import { ROLE_TO_ROUTES, ROUTE_TO_ROLES } from "@/lib/constants/roleRoutes";
 
 const normalizeRole = (role: string | undefined): string | undefined => {
   if (!role) return undefined;
@@ -11,13 +11,14 @@ const normalizeRole = (role: string | undefined): string | undefined => {
   if (!trimmed) return undefined;
 
   const map: Record<string, string> = {
-    admin: 'Admin',
-    manager: 'Manager',
-    staff: 'Staff',
-    caretaker: 'Caretaker',
-    shipper: 'Shipper',
-    customer: 'Customer',
-    user: 'User',
+    admin: "Admin",
+    manager: "Manager",
+    staff: "Staff",
+    consultant: "Consultant",
+    caretaker: "Caretaker",
+    shipper: "Shipper",
+    customer: "Customer",
+    user: "User",
   };
 
   return map[trimmed.toLowerCase()] || trimmed;
@@ -26,7 +27,10 @@ const normalizeRole = (role: string | undefined): string | undefined => {
 /**
  * Check if user role has access to a specific route
  */
-export function canAccessRoute(userRole: string | undefined, route: string): boolean {
+export function canAccessRoute(
+  userRole: string | undefined,
+  route: string,
+): boolean {
   const normalizedRole = normalizeRole(userRole);
   if (!normalizedRole) return false;
   return ROLE_TO_ROUTES[normalizedRole]?.includes(route) ?? false;
@@ -52,21 +56,23 @@ export function getAllowedRoles(route: string): string[] {
  * Check if user is admin
  */
 export function isAdmin(userRole: string | undefined): boolean {
-  return normalizeRole(userRole) === 'Admin';
+  return normalizeRole(userRole) === "Admin";
 }
 
 /**
  * Check if user is staff (Admin, Manager, Staff, Caretaker, Shipper)
  */
 export function isStaff(userRole: string | undefined): boolean {
-  return ['Admin', 'Manager', 'Staff', 'Caretaker', 'Shipper'].includes(normalizeRole(userRole) || '');
+  return ["Admin", "Manager", "Staff", "Caretaker", "Shipper"].includes(
+    normalizeRole(userRole) || "",
+  );
 }
 
 /**
  * Check if user is regular user
  */
 export function isRegularUser(userRole: string | undefined): boolean {
-  return normalizeRole(userRole) === 'User';
+  return normalizeRole(userRole) === "User";
 }
 
 /**
@@ -75,13 +81,13 @@ export function isRegularUser(userRole: string | undefined): boolean {
  */
 export function filterMenuByRole<T extends { route: string }>(
   menuItems: T[],
-  userRole: string | undefined
+  userRole: string | undefined,
 ): T[] {
   const normalizedRole = normalizeRole(userRole);
   if (!normalizedRole) return [];
-  
+
   const accessibleRoutes = getAccessibleRoutes(normalizedRole);
-  return menuItems.filter(item => accessibleRoutes.includes(item.route));
+  return menuItems.filter((item) => accessibleRoutes.includes(item.route));
 }
 
 // Example menu structure for reference
@@ -96,12 +102,13 @@ export interface MenuItem {
  * Role-specific default redirect paths
  */
 export const ROLE_DEFAULT_PATHS: Record<string, string> = {
-  'Admin': '/admin',
-  'Manager': '/manager',
-  'Staff': '/staff',
-  'Caretaker': '/caretaker',
-  'Shipper': '/shipper',
-  'User': '/profile',
+  Admin: "/admin",
+  Manager: "/manager",
+  Staff: "/staff",
+  Consultant: "/consultant",
+  Caretaker: "/caretaker",
+  Shipper: "/shipper",
+  User: "/profile",
 };
 
 /**
@@ -109,6 +116,6 @@ export const ROLE_DEFAULT_PATHS: Record<string, string> = {
  */
 export function getDefaultPath(userRole: string | undefined): string {
   const normalizedRole = normalizeRole(userRole);
-  if (!normalizedRole) return '/';
-  return ROLE_DEFAULT_PATHS[normalizedRole] ?? '/';
+  if (!normalizedRole) return "/";
+  return ROLE_DEFAULT_PATHS[normalizedRole] ?? "/";
 }

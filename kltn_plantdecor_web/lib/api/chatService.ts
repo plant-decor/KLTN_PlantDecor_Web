@@ -6,8 +6,8 @@ import type {
   CloseSupportConversationResponse,
   GetClaimedSupportConversationsResponse,
   GetConversationsResponse,
-  GetConversationMessagesParams,
-  GetConversationMessagesResponse,
+  GetConversationDetailsParams,
+  GetConversationDetailsResponse,
   GetLatestActiveConversationResponse,
   GetWaitingSupportConversationsResponse,
   StartSupportConversationRequest,
@@ -100,16 +100,17 @@ export const getLatestActiveConversation = async (
 };
 
 /**
- * GET /api/support-conversations/{conversationId}/messages?pageNumber=1&pageSize=50
- * Get messages history of a conversation with pagination.
+ * GET /api/support-conversations/{conversationId}?pageNumber=1&pageSize=30
+ * Get conversation details with the most recent messages (paginated).
+ * Increase pageNumber to load older messages.
  */
-export const getConversationMessages = async (
+export const getConversationDetails = async (
   conversationId: number,
-  params: GetConversationMessagesParams = { pageNumber: 1, pageSize: 50 },
+  params: GetConversationDetailsParams = { pageNumber: 1, pageSize: 30 },
   loading = true,
-): Promise<GetConversationMessagesResponse> => {
+): Promise<GetConversationDetailsResponse> => {
   return apiClient.get(
-    `/support-conversations/${conversationId}/messages`,
+    `/support-conversations/${conversationId}`,
     params,
     loading,
   );

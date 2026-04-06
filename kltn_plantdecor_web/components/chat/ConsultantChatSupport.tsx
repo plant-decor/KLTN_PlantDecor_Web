@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Avatar,
   Badge,
   Box,
   Chip,
+  CircularProgress,
   Divider,
   IconButton,
   InputBase,
@@ -15,11 +16,8 @@ import {
 } from "@mui/material";
 import {
   ArrowBack as ArrowBackIcon,
-  InfoOutlined as InfoOutlinedIcon,
-  PhoneRounded as PhoneRoundedIcon,
   Search as SearchIcon,
   SendRounded as SendRoundedIcon,
-  VideocamRounded as VideocamRoundedIcon,
 } from "@mui/icons-material";
 import { useAutoScrollToBottom } from "@/hooks/chat/useAutoScrollToBottom";
 import { useSupportChat } from "@/hooks/chat/useSupportChat";
@@ -146,10 +144,13 @@ export default function ConsultantChatSupport() {
   const {
     messages,
     isInitialLoading,
+    isLoadingOlder,
+    hasOlderMessages,
     isSending,
     isHubReady,
     isOtherUserTyping,
     error,
+    loadOlderMessages,
     sendMessage,
     handleInputTyping,
   } = useSupportChat({
@@ -172,6 +173,22 @@ export default function ConsultantChatSupport() {
   useAutoScrollToBottom(chatScrollRef, {
     dependency: `${displayedMessages.length}:${isOtherUserTyping ? 1 : 0}`,
   });
+
+  // Scroll up to load older messages
+  const handleScroll = useCallback(() => {
+    const el = chatScrollRef.current;
+    if (!el || !hasOlderMessages || isLoadingOlder) return;
+    if (el.scrollTop < 80) {
+      void loadOlderMessages();
+    }
+  }, [hasOlderMessages, isLoadingOlder, loadOlderMessages]);
+
+  useEffect(() => {
+    const el = chatScrollRef.current;
+    if (!el) return;
+    el.addEventListener("scroll", handleScroll, { passive: true });
+    return () => el.removeEventListener("scroll", handleScroll);
+  }, [handleScroll]);
 
   const filteredSessions = useMemo(() => {
     const keyword = searchValue.trim().toLowerCase();
@@ -199,17 +216,21 @@ export default function ConsultantChatSupport() {
   return (
     <Box
       sx={{
-        minHeight: "calc(100vh - 48px)",
+        height: "calc(100vh - 120px)",
         py: 2,
         px: { xs: 0.5, md: 2 },
-        bgcolor: "#eef3fb",
+
         fontFamily: "Arial, sans-serif",
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
       <Paper
         elevation={0}
         sx={{
-          height: { xs: "calc(100vh - 32px)", md: "calc(100vh - 64px)" },
+          flex: 1,
+          minHeight: 0,
           borderRadius: { xs: 2, md: 4 },
           overflow: "hidden",
           display: "grid",
@@ -394,6 +415,8 @@ export default function ConsultantChatSupport() {
               lg: "flex",
             },
             flexDirection: "column",
+            minHeight: 0,
+            overflow: "hidden",
             bgcolor: "#f7f9fc",
             color: "#0f172a",
             position: "relative",
@@ -495,6 +518,28 @@ export default function ConsultantChatSupport() {
                     }}
                   >
                     Đang tải lịch sử chat...
+                  </Box>
+                ) : null}
+                {isLoadingOlder ? (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "center",
+                      py: 1,
+                    }}
+                  >
+                    <CircularProgress size={18} sx={{ color: "#94a3b8" }} />
+                  </Box>
+                ) : hasOlderMessages ? (
+                  <Box
+                    sx={{
+                      textAlign: "center",
+                      py: 0.5,
+                      fontSize: 11,
+                      color: "#94a3b8",
+                    }}
+                  >
+                    Cuộn lên để xem tin nhắn cũ hơn
                   </Box>
                 ) : null}
                 {error ? (

@@ -5,7 +5,7 @@ export const mapRealtimeMessageToConversationMessage = (
   payload: MessageReceivedPayload,
 ): SupportConversationMessage => ({
   id: payload.messageId,
-  conversationId: payload.conversationId,
+  chatSessionId: payload.conversationId,
   senderId: payload.senderId,
   senderName: null,
   content: payload.content,

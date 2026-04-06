@@ -112,7 +112,7 @@ export default function SupportChatWidget() {
   );
 
   useAutoScrollToBottom(chatScrollRef, {
-    dependency: `${displayedMessages.length}:${isOtherUserTyping ? 1 : 0}`,
+    dependency: `${conversationId}:${isOpen ? 1 : 0}:${displayedMessages.length}:${isOtherUserTyping ? 1 : 0}`,
   });
 
   const handleSend = async () => {

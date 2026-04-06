@@ -20,8 +20,11 @@ export function useSupportChat(options: UseSupportChatOptions) {
   const {
     messages,
     isLoading: isInitialLoading,
+    isLoadingOlder,
+    hasOlderMessages,
     error: messagesError,
     loadMessages,
+    loadOlderMessages,
     appendMessage,
   } = useConversationMessages({ pageSize });
 
@@ -205,11 +208,14 @@ export function useSupportChat(options: UseSupportChatOptions) {
   return {
     messages: sortedMessages,
     isInitialLoading,
+    isLoadingOlder,
+    hasOlderMessages,
     isSending,
     isHubReady,
     isOtherUserTyping,
     error,
     reloadMessages: fetchMessages,
+    loadOlderMessages,
     sendMessage,
     sendTyping,
     sendStopTyping,

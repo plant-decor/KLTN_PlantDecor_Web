@@ -21,7 +21,7 @@ export interface SupportConversationParticipant {
 
 export interface SupportConversationMessage {
   id: number;
-  conversationId: number;
+  chatSessionId: number;
   senderId: number;
   senderName: string | null;
   content: string;
@@ -37,18 +37,17 @@ export interface SupportConversationPayload {
   latestMessage: SupportConversationMessage | null;
 }
 
-export interface GetConversationMessagesParams {
+export interface GetConversationDetailsParams {
   pageNumber?: number;
   pageSize?: number;
 }
 
-export interface ConversationMessagesPayload {
-  conversationId: number;
+export interface ConversationDetailPayload extends SupportConversationPayload {
   messages: SupportConversationMessage[];
-  totalCount: number;
+  totalMessages: number;
+  totalPages: number;
   pageNumber: number;
   pageSize: number;
-  totalPages: number;
 }
 
 export type StartSupportConversationResponse =
@@ -70,8 +69,8 @@ export type ClaimSupportConversationResponse = ResponseModel<null>;
 
 export type CloseSupportConversationResponse = ResponseModel<null>;
 
-export type GetConversationMessagesResponse =
-  ResponseModel<ConversationMessagesPayload>;
+export type GetConversationDetailsResponse =
+  ResponseModel<ConversationDetailPayload>;
 
 export type GetLatestActiveConversationResponse =
   ResponseModel<SupportConversationPayload | null>;

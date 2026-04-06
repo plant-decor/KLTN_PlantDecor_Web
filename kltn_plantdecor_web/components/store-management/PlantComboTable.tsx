@@ -1,82 +1,84 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React from 'react';
 import {
+  Box,
+  Chip,
+  IconButton,
+  Paper,
+  Stack,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
-  TableRow,
-  Paper,
-  IconButton,
-  Stack,
-  TextField,
-  Box,
-  Chip,
-  Typography,
   TablePagination,
+  TableRow,
+  Tooltip,
+  Typography,
 } from '@mui/material';
-import { Edit, Delete, Visibility } from '@mui/icons-material';
+import {
+  Edit,
+  Visibility,
+  ToggleOn as ToggleOnIcon,
+  ToggleOff as ToggleOffIcon,
+} from '@mui/icons-material';
+import Image from 'next/image';
 import type { PlantCombo } from '@/types/store-management.types';
+import { formatCurrency } from '@/lib/utils/formatUtil';
 
 interface PlantComboTableProps {
   combos: PlantCombo[];
+  pageNumber: number;
+  pageSize: number;
+  totalCount: number;
+  onPageChange: (pageNumber: number) => void;
+  onRowsPerPageChange: (pageSize: number) => void;
   onEdit: (combo: PlantCombo) => void;
-  onDelete: (comboId: number) => void;
+  onToggleActive: (combo: PlantCombo) => void;
   onView: (combo: PlantCombo) => void;
 }
 
-export default function PlantComboTable({ combos, onEdit, onDelete, onView }: PlantComboTableProps) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-
-  const filteredCombos = useMemo(() => {
-    return combos.filter((combo) =>
-      combo.comboName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      combo.comboCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      combo.comboType.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [combos, searchTerm]);
-
-  const paginatedCombos = useMemo(() => {
-    const startIndex = page * rowsPerPage;
-    return filteredCombos.slice(startIndex, startIndex + rowsPerPage);
-  }, [filteredCombos, page, rowsPerPage]);
-
+export default function PlantComboTable({
+  combos,
+  pageNumber,
+  pageSize,
+  totalCount,
+  onPageChange,
+  onRowsPerPageChange,
+  onEdit,
+  onToggleActive,
+  onView,
+}: PlantComboTableProps) {
   const handleChangePage = (_event: unknown, newPage: number) => {
-    setPage(newPage);
+    onPageChange(newPage + 1);
   };
 
   const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
+    onRowsPerPageChange(parseInt(event.target.value, 10));
   };
 
   return (
     <Box>
-      <TextField
-        placeholder="Tìm kiếm combo (tên, mã, loại)..."
-        fullWidth
-        size="small"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        sx={{ mb: 2 }}
-      />
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        Danh sách combo được tải theo phân trang từ server.
+      </Typography>
 
       <TableContainer component={Paper}>
         <Table size="small">
           <TableHead sx={{ backgroundColor: 'var(--primary)' }}>
             <TableRow>
+              <TableCell sx={{ fontWeight: 600 }}>ID</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Ảnh</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Mã combo</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Tên combo</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Loại</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Mùa</TableCell>
               <TableCell sx={{ fontWeight: 600 }} align="right">
                 Giá combo
               </TableCell>
-              <TableCell sx={{ fontWeight: 600 }} align="right">
-                Giảm giá
+              <TableCell sx={{ fontWeight: 600 }} align="center">
+                Số cây
               </TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Trạng thái</TableCell>
               <TableCell sx={{ fontWeight: 600 }} align="center">
@@ -85,70 +87,72 @@ export default function PlantComboTable({ combos, onEdit, onDelete, onView }: Pl
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredCombos.length === 0 ? (
+            {combos.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
+                <TableCell colSpan={10} align="center" sx={{ py: 3 }}>
                   <Typography color="text.secondary">Không có dữ liệu</Typography>
                 </TableCell>
               </TableRow>
             ) : (
-              paginatedCombos.map((combo) => (
-                <TableRow key={combo.plantComboId} hover>
+              combos.map((combo) => (
+                <TableRow key={combo.id} hover>
+                  <TableCell>{combo.id}</TableCell>
+                  <TableCell>
+                    <Image
+                      src={combo.primaryImageUrl || '/img/fallbackplant.avif'}
+                      alt={combo.comboName}
+                      width={60}
+                      height={60}
+                      style={{ objectFit: 'cover', borderRadius: 4 }}
+                    />
+                  </TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>{combo.comboCode}</TableCell>
                   <TableCell>{combo.comboName}</TableCell>
                   <TableCell>
-                    <Chip label={combo.comboType} size="small" variant="outlined" />
+                    <Chip label={combo.comboTypeName || combo.comboType} size="small" variant="outlined" />
                   </TableCell>
+                  <TableCell>{combo.seasonName || '-'}</TableCell>
                   <TableCell align="right">
                     <Typography variant="body2" fontWeight="600">
-                      {combo.comboPrice.toLocaleString('vi-VN', {
-                        style: 'currency',
-                        currency: 'VND',
-                      })}
+                      {formatCurrency(combo.comboPrice, 'vi-VN')}
                     </Typography>
                   </TableCell>
-                  <TableCell align="right">
-                    <Chip
-                      label={`-${combo.discountPercent}%`}
-                      color="success"
-                      size="small"
-                      variant="outlined"
-                    />
+                  <TableCell align="center">
+                    <Chip label={combo.totalItems ?? combo.comboItems?.length ?? 0} size="small" variant="outlined" />
                   </TableCell>
                   <TableCell>
                     <Chip
                       label={combo.isActive ? 'Kích hoạt' : 'Vô hiệu'}
-                      color={combo.isActive ? 'success' : 'error'}
+                      color={combo.isActive ? 'success' : 'default'}
                       size="small"
                       variant="outlined"
                     />
                   </TableCell>
                   <TableCell align="center">
                     <Stack direction="row" spacing={0.5} justifyContent="center">
-                      <IconButton
-                        size="small"
-                        color="info"
-                        onClick={() => onView(combo)}
-                        title="Xem chi tiết"
-                      >
-                        <Visibility fontSize="small" />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        color="primary"
-                        onClick={() => onEdit(combo)}
-                        title="Chỉnh sửa"
-                      >
-                        <Edit fontSize="small" />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        color="error"
-                        onClick={() => onDelete(combo.plantComboId)}
-                        title="Xóa"
-                      >
-                        <Delete fontSize="small" />
-                      </IconButton>
+                      <Tooltip title="Xem chi tiết">
+                        <IconButton size="small" color="info" onClick={() => onView(combo)}>
+                          <Visibility fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Chỉnh sửa combo">
+                        <IconButton size="small" color="primary" onClick={() => onEdit(combo)}>
+                          <Edit fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title={combo.isActive ? 'Vô hiệu combo' : 'Kích hoạt combo'}>
+                        <IconButton
+                          size="small"
+                          color={combo.isActive ? 'success' : 'default'}
+                          onClick={() => onToggleActive(combo)}
+                        >
+                          {combo.isActive ? (
+                            <ToggleOnIcon fontSize="small" />
+                          ) : (
+                            <ToggleOffIcon fontSize="small" />
+                          )}
+                        </IconButton>
+                      </Tooltip>
                     </Stack>
                   </TableCell>
                 </TableRow>
@@ -157,17 +161,14 @@ export default function PlantComboTable({ combos, onEdit, onDelete, onView }: Pl
           </TableBody>
         </Table>
         <TablePagination
-          rowsPerPageOptions={[5, 10, 25, 50]}
+          rowsPerPageOptions={[10, 20, 50]}
           component="div"
-          count={filteredCombos.length}
-          rowsPerPage={rowsPerPage}
-          page={page}
+          count={totalCount}
+          rowsPerPage={pageSize}
+          page={Math.max(pageNumber - 1, 0)}
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
-          labelRowsPerPage="Số hàng mỗi trang:"
-          labelDisplayedRows={({ from, to, count }) =>
-            `${from}–${to} trong tổng số ${count !== -1 ? count : `hơn ${to}`}`
-          }
+          labelRowsPerPage="Rows per page:"
         />
       </TableContainer>
     </Box>

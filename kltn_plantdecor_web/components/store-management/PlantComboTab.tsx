@@ -1,140 +1,230 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
-import { Box, Button, Stack, Dialog, DialogTitle, DialogContent, DialogActions, Typography } from '@mui/material';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  Alert,
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Stack,
+  Typography,
+} from '@mui/material';
 import { Add } from '@mui/icons-material';
 import PlantComboTable from './PlantComboTable';
 import PlantComboFormDialog from './PlantComboFormDialog';
 import PlantComboViewDialog from './PlantComboViewDialog';
-import type { PlantCombo, ImageUploadData } from '@/types/store-management.types';
+import type { PlantCombo, PlantComboFormData, ImageUploadData } from '@/types/store-management.types';
+import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
+import { useAdminPlantCombos } from '@/lib/api/admin/useAdminPlantCombos';
+import { useAdminTags } from '@/lib/api/admin/useAdminTags';
+import { getPlantComboNurseries, type ShopNurseryListItem } from '@/lib/api/shopPlantsService';
 
 interface PlantComboTabProps {
-    initialCombos?: PlantCombo[];
+  initialCombos?: PlantCombo[];
 }
 
-export default function PlantComboTab({ initialCombos = [] }: PlantComboTabProps) {
-    const [combos, setCombos] = useState<PlantCombo[]>(initialCombos);
-    const [formOpen, setFormOpen] = useState(false);
-    const [viewOpen, setViewOpen] = useState(false);
-    const [deleteOpen, setDeleteOpen] = useState(false);
-    const [editingData, setEditingData] = useState<PlantCombo | undefined>();
-    const [viewingData, setViewingData] = useState<PlantCombo | undefined>();
-    const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
+interface OptionItem {
+  id: number;
+  name: string;
+}
 
-    const handleCreate = useCallback(() => {
-        setEditingData(undefined);
-        setFormOpen(true);
-    }, []);
+export default function PlantComboTab({}: PlantComboTabProps) {
+  const [formOpen, setFormOpen] = useState(false);
+  const [viewOpen, setViewOpen] = useState(false);
+  const [editingData, setEditingData] = useState<PlantCombo | undefined>();
+  const [viewingData, setViewingData] = useState<PlantCombo | undefined>();
+  const [viewNurseries, setViewNurseries] = useState<ShopNurseryListItem[]>([]);
+  const [nurseriesLoading, setNurseriesLoading] = useState(false);
+  const [toggleOpen, setToggleOpen] = useState(false);
+  const [toggleTarget, setToggleTarget] = useState<PlantCombo | null>(null);
 
-    const handleEdit = useCallback((combo: PlantCombo) => {
-        setEditingData(combo);
-        setFormOpen(true);
-    }, []);
+  const {
+    combos,
+    comboPlants,
+    loading,
+    saving,
+    detailLoading,
+    plantsLoading,
+    error,
+    pagination,
+    fetchCombos,
+    fetchComboById,
+    fetchComboPlants,
+    savePlantCombo,
+    toggleComboActive,
+    setPage,
+    setPageSize,
+    clearError,
+  } = useAdminPlantCombos();
 
-    const handleView = useCallback((combo: PlantCombo) => {
-        setViewingData(combo);
-        setViewOpen(true);
-    }, []);
+  const {
+    tags,
+    error: tagError,
+    fetchTags,
+  } = useAdminTags();
 
-    const handleDelete = useCallback((comboId: number) => {
-        setDeleteTargetId(comboId);
-        setDeleteOpen(true);
-    }, []);
+  useEffect(() => {
+    void fetchCombos({ pageNumber: 1, pageSize: 10 });
+    void fetchComboPlants();
+    void fetchTags({ pageNumber: 1, pageSize: 1000 });
+  }, [fetchComboPlants, fetchCombos, fetchTags]);
 
-    const confirmDelete = useCallback(() => {
-        if (deleteTargetId !== null) {
-            setCombos((prev) => prev.filter((c) => c.plantComboId !== deleteTargetId));
-            setDeleteOpen(false);
-            setDeleteTargetId(null);
-        }
-    }, [deleteTargetId]);
+  const tagOptions = useMemo<OptionItem[]>(() => {
+    return tags.map((tag) => ({ id: tag.id, name: tag.tagName }));
+  }, [tags]);
 
-    const handleFormSubmit = useCallback(
-        (data: PlantCombo, images: ImageUploadData[]) => {
-            setIsLoading(true);
-            setTimeout(() => {
-                if (editingData) {
-                    // Update existing
-                    setCombos((prev) =>
-                        prev.map((c) =>
-                            c.plantComboId === editingData.plantComboId
-                                ? {
-                                    ...data,
-                                    plantComboId: editingData.plantComboId,
-                                    images: images.map(img => ({
-                                        id: img.id,
-                                        plantComboId: editingData.plantComboId,
-                                        url: img.url || img.preview,
-                                        isThumbnail: img.isThumbnail,
-                                        createdAt: img.createdAt
-                                    }))
-                                }
-                                : c
-                        )
-                    );
-                } else {
-                    // Create new
-                    const newCombo: PlantCombo = {
-                        ...data,
-                        plantComboId: Math.max(0, ...combos.map((c) => c.plantComboId)) + 1,
-                        images: images.map(img => ({
-                            id: img.id,
-                            plantComboId: Math.max(0, ...combos.map((c) => c.plantComboId)) + 1,
-                            url: img.url || img.preview,
-                            isThumbnail: img.isThumbnail,
-                            createdAt: img.createdAt,
-                            file: undefined
-                        }))
-                    };
-                    setCombos((prev) => [...prev, newCombo]);
-                }
-                setFormOpen(false);
-                setEditingData(undefined);
-                setIsLoading(false);
-            }, 500);
-        },
-        [editingData, combos]
-    );
+  const handleCreate = useCallback(() => {
+    setEditingData(undefined);
+    setFormOpen(true);
+  }, []);
 
-    return (
-        <Box>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
-                <Typography variant="h6" fontWeight="600">
-                    Danh sách combo ({combos.length})
-                </Typography>
-                <Button variant="contained" startIcon={<Add />} onClick={handleCreate}>
-                    Thêm combo mới
-                </Button>
-            </Stack>
+  const handleEdit = useCallback(async (combo: PlantCombo) => {
+    const detail = await fetchComboById(combo.id);
+    if (!detail) {
+      return;
+    }
 
-            <PlantComboTable combos={combos} onEdit={handleEdit} onDelete={handleDelete} onView={handleView} />
+    setEditingData(detail);
+    setFormOpen(true);
+  }, [fetchComboById]);
 
-            <PlantComboFormDialog
-                open={formOpen}
-                editingData={editingData}
-                onClose={() => {
-                    setFormOpen(false);
-                    setEditingData(undefined);
-                }}
-                onSubmit={handleFormSubmit}
-                isLoading={isLoading}
-            />
+  const handleView = useCallback(async (combo: PlantCombo) => {
+    setNurseriesLoading(true);
 
-            <PlantComboViewDialog open={viewOpen} combo={viewingData} onClose={() => setViewOpen(false)} />
+    try {
+      const [detail, nurseriesResponse] = await Promise.all([
+        fetchComboById(combo.id),
+        getPlantComboNurseries(combo.id, false, true),
+      ]);
 
-            <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)}>
-                <DialogTitle>Xác nhận xóa</DialogTitle>
-                <DialogContent>
-                    <Typography>Bạn có chắc chắn muốn xóa combo này? Hành động này không thể hoàn tác.</Typography>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setDeleteOpen(false)}>Hủy</Button>
-                    <Button onClick={confirmDelete} color="error" variant="contained">
-                        Xóa
-                    </Button>
-                </DialogActions>
-            </Dialog>
-        </Box>
-    );
+      if (!detail) {
+        return;
+      }
+
+      const nurseryPayload = nurseriesResponse.payload ?? nurseriesResponse.data ?? [];
+      setViewingData(detail);
+      setViewNurseries(nurseryPayload);
+      setViewOpen(true);
+    } catch {
+      setViewingData(undefined);
+      setViewNurseries([]);
+    } finally {
+      setNurseriesLoading(false);
+    }
+  }, [fetchComboById]);
+
+  const handleToggle = useCallback((combo: PlantCombo) => {
+    setToggleTarget(combo);
+    setToggleOpen(true);
+  }, []);
+
+  const confirmToggle = useCallback(async () => {
+    if (!toggleTarget) {
+      return;
+    }
+
+    const success = await toggleComboActive(toggleTarget.id);
+
+    setToggleOpen(false);
+    setToggleTarget(null);
+  }, [toggleComboActive, toggleTarget]);
+
+  const handleFormSubmit = useCallback(async (data: PlantComboFormData, images: ImageUploadData[]) => {
+    const success = await savePlantCombo({
+      formData: data,
+      images,
+      editingCombo: editingData,
+    });
+
+    if (success) {
+      setFormOpen(false);
+      setEditingData(undefined);
+      return;
+    }
+  }, [editingData, savePlantCombo]);
+
+  const handlePageChange = useCallback((pageNumber: number) => {
+    void setPage(pageNumber);
+  }, [setPage]);
+
+  const handleRowsPerPageChange = useCallback((rows: number) => {
+    void setPageSize(rows);
+  }, [setPageSize]);
+
+  return (
+    <Box>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
+        <Typography variant="h6" fontWeight="600">
+          Danh sách combo ({pagination.totalCount})
+        </Typography>
+        <Button variant="contained" startIcon={<Add />} onClick={handleCreate} sx={{ ...hoverLiftStyle }} className="bg-primary!">
+          Thêm combo mới
+        </Button>
+      </Stack>
+
+      {(error || tagError) && (
+        <Alert severity="error" onClose={clearError} sx={{ mb: 2 }}>
+          {error || tagError}
+        </Alert>
+      )}
+
+      <PlantComboTable
+        combos={combos}
+        pageNumber={pagination.pageNumber}
+        pageSize={pagination.pageSize}
+        totalCount={pagination.totalCount}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+        onEdit={handleEdit}
+        onToggleActive={handleToggle}
+        onView={handleView}
+      />
+
+      <PlantComboFormDialog
+        open={formOpen}
+        editingData={editingData}
+        plants={comboPlants}
+        plantsLoading={plantsLoading}
+        tags={tagOptions}
+        onClose={() => {
+          setFormOpen(false);
+          setEditingData(undefined);
+        }}
+        onSubmit={handleFormSubmit}
+        isLoading={saving || detailLoading || loading}
+      />
+
+      <PlantComboViewDialog
+        open={viewOpen}
+        combo={viewingData}
+        nurseries={viewNurseries}
+        nurseriesLoading={nurseriesLoading}
+        onClose={() => {
+          setViewOpen(false);
+          setViewingData(undefined);
+          setViewNurseries([]);
+        }}
+      />
+
+      <Dialog open={toggleOpen} onClose={() => setToggleOpen(false)}>
+        <DialogTitle>Xác nhận cập nhật trạng thái</DialogTitle>
+        <DialogContent>
+          <Typography>
+            {toggleTarget
+              ? `Bạn có chắc muốn ${toggleTarget.isActive ? 'vô hiệu' : 'kích hoạt'} combo này?`
+              : 'Bạn có chắc muốn cập nhật trạng thái combo này?'}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setToggleOpen(false)}>Hủy</Button>
+          <Button onClick={confirmToggle} color="primary" variant="contained" disabled={saving}>
+            Xác nhận
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
+  );
 }

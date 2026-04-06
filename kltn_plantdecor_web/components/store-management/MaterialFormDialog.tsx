@@ -28,6 +28,7 @@ import type {
   MaterialFormData,
   ImageUploadData,
 } from '@/types/store-management.types';
+import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils/formatUtil';
 
 interface OptionItem {
   id: number;
@@ -209,10 +210,12 @@ export default function MaterialFormDialog({
                   render={({ field }) => (
                     <TextField
                       {...field}
+                      value={formatCurrencyInput(field.value ?? 0, 'vi')}
                       label="Base price"
                       fullWidth
-                      type="number"
-                      onChange={(e) => field.onChange(Number(e.target.value))}
+                      type="text"
+                      inputProps={{ inputMode: 'numeric' }}
+                      onChange={(e) => field.onChange(parseCurrencyInput(e.target.value))}
                     />
                   )}
                 />

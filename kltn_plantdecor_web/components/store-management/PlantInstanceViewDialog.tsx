@@ -16,6 +16,7 @@ import {
   CardMedia,
 } from '@mui/material';
 import type { PlantInstance } from '@/types/store-management.types';
+import { formatCurrency } from '@/lib/utils/formatUtil';
 
 interface PlantInstanceViewDialogProps {
   open: boolean;
@@ -181,10 +182,7 @@ export default function PlantInstanceViewDialog({
               Giá cụ thể
             </Typography>
             <Typography variant="h6" fontWeight="600">
-              {instance.specificPrice.toLocaleString('vi-VN', {
-                style: 'currency',
-                currency: 'VND',
-              })}
+              {formatCurrency(instance.specificPrice, 'vi')}
             </Typography>
           </Box>
         </Stack>

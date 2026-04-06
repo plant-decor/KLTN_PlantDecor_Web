@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import CartBadge from '@/components/cart/CartBadge';
@@ -29,6 +30,7 @@ import {
   type HeaderIconKey,
 } from '@/lib/constants/header';
 import { useAuthStore } from '@/lib/store/authStore';
+import { logoutAction } from '@/app/actions/loginAction';
 
 const NAV_LABEL_KEYS: Record<HeaderIconKey, string> = {
   home: 'home',
@@ -79,11 +81,13 @@ const getInitials = (name: string) => {
 };
 
 export default function Navigation({ initialStoreCategories = [] }: NavigationProps) {
+  const router = useRouter();
+  const params = useParams<{ locale?: string }>();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isStoreHoverOpen, setIsStoreHoverOpen] = useState(false);
   const [isMobileStoreOpen, setIsMobileStoreOpen] = useState(false);
   const [storeCategories, setStoreCategories] = useState<CategoryResponse[]>(initialStoreCategories);
-  const { user } = useAuthStore();
+  const { user, clearAll } = useAuthStore();
   const tNav = useTranslations('nav');
   const tAuth = useTranslations('auth');
   const tCommon = useTranslations('common');
@@ -114,6 +118,28 @@ export default function Navigation({ initialStoreCategories = [] }: NavigationPr
   const canShowStoreCategoryMenu = isGuest || isCustomerLike;
   const userId = activeUser?.id ?? null;
   const avatarLabel = activeUser?.email ? getInitials(activeUser.email) : 'U';
+
+  const redirectToLogin = () => {
+    clearAll();
+    setIsMenuOpen(false);
+    const locale = Array.isArray(params?.locale) ? params.locale[0] : params?.locale;
+    const loginPath = locale ? `/${locale}/login` : '/login';
+    router.replace(loginPath);
+  };
+
+  const handleLogout = async () => {
+    try {
+      const result = await logoutAction();
+      if (!result.success) {
+        console.warn('Logout action reported failure, continuing with local cleanup.');
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      // Keep logout fail-soft: local cleanup and redirect should always happen.
+      redirectToLogin();
+    }
+  };
 
   useEffect(() => {
     if (!canShowStoreCategoryMenu) {
@@ -384,14 +410,25 @@ export default function Navigation({ initialStoreCategories = [] }: NavigationPr
                     <span className="text-sm font-medium text-gray-700">{activeUser?.email}</span>
                   </div>
                   {USER_MENU_ITEMS.map((item) => (
-                    <Link
-                      key={item.label}
-                      href={resolveHref(item.href, userId) as any}
-                      className="block px-2 py-2 text-gray-700 hover:bg-green-50 hover:text-green-600 rounded-lg text-sm transition-colors"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      {getUserMenuLabel(item.href)}
-                    </Link>
+                    item.href === '/logout' ? (
+                      <button
+                        key={item.label}
+                        type="button"
+                        className="block w-full px-2 py-2 text-left text-gray-700 hover:bg-green-50 hover:text-green-600 rounded-lg text-sm transition-colors"
+                        onClick={handleLogout}
+                      >
+                        {getUserMenuLabel(item.href)}
+                      </button>
+                    ) : (
+                      <Link
+                        key={item.label}
+                        href={resolveHref(item.href, userId) as any}
+                        className="block px-2 py-2 text-gray-700 hover:bg-green-50 hover:text-green-600 rounded-lg text-sm transition-colors"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        {getUserMenuLabel(item.href)}
+                      </Link>
+                    )
                   ))}
                 </>
               )}

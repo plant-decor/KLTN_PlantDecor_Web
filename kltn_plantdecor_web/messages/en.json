@@ -183,6 +183,7 @@
     "result": {
       "foundPlants": "Found {count} plants",
       "foundMaterials": "Found {count} materials",
+      "itemsPerPage": "Items per page",
       "pageOf": "Page {current}/{total}",
       "noPlants": "No plants match your filters",
       "clearFilters": "Clear Filters",

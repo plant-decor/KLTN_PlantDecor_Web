@@ -18,6 +18,7 @@ import {
 import ImageUpload from '@/components/store-management/ImageUpload';
 import type { ImageUploadData } from '@/types/store-management.types';
 import type { CreatePlantInstanceInput, SystemPlantSearchItem } from '@/types/manager-store-catalog.types';
+import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils/formatUtil';
 
 export interface PlantInstanceCreateSubmitValue {
   form: CreatePlantInstanceInput;
@@ -41,6 +42,11 @@ const DEFAULT_FORM: CreatePlantInstanceInput = {
   healthStatus: '',
   age: 0,
   description: '',
+};
+
+const parseNumericValue = (value: string): number => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
 };
 
 export default function PlantInstanceCreateDialog({
@@ -69,10 +75,10 @@ export default function PlantInstanceCreateDialog({
   }, [open, plants]);
 
   const handleNumberChange = <K extends keyof CreatePlantInstanceInput>(key: K, value: string) => {
-    const parsedValue = Number(value);
+    const parsedValue = parseNumericValue(value);
     setForm((prev) => ({
       ...prev,
-      [key]: Number.isFinite(parsedValue) ? parsedValue : 0,
+      [key]: parsedValue,
     }));
   };
 
@@ -127,9 +133,12 @@ export default function PlantInstanceCreateDialog({
               <TextField
                 fullWidth
                 label="Specific Price"
-                type="number"
-                value={form.specificPrice}
-                onChange={(event) => handleNumberChange('specificPrice', event.target.value)}
+                type="text"
+                value={formatCurrencyInput(form.specificPrice, 'vi')}
+                onChange={(event) =>
+                  setForm((prev) => ({ ...prev, specificPrice: parseCurrencyInput(event.target.value) }))
+                }
+                inputProps={{ inputMode: 'numeric' }}
                 required
               />
             </Grid>

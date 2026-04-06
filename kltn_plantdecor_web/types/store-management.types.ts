@@ -125,38 +125,131 @@ export interface PlantFormData extends PlantUpsertRequest {
 
 // Plant Combo Types
 export interface PlantCombo {
-  plantComboId: number;
+  id: number;
   comboCode: string;
   comboName: string;
-  comboType: string;
+  comboType: number;
+  comboTypeName?: string;
   description: string;
   suitableSpace: string;
-  suitableRooms: string;
+  suitableRooms: string[];
   fengShuiElement: number | null;
   fengShuiPurpose: string;
+  petSafe?: boolean;
+  childSafe?: boolean;
   themeName: string;
   themeDescription: string;
-  originalPrice: number;
   comboPrice: number;
-  discountPercent: number;
-  minPlants: number;
-  maxPlants: number;
-  tags: string;
-  season: string;
+  season: number;
+  seasonName?: string;
   viewCount: number;
+  purchaseCount?: number;
   isActive: boolean;
+  primaryImageUrl?: string | null;
+  totalItems?: number;
   createdAt?: string;
   updatedAt?: string;
+  comboItems?: PlantComboItem[];
+  tagsNavigation?: PlantComboTag[];
   images?: PlantComboImage[];
 }
 
-export interface PlantComboImage {
+export interface PlantComboItem {
   id?: number;
   plantComboId?: number;
-  url: string;
-  preview?: string;
-  isThumbnail: boolean;
+  plantId: number;
+  plantName?: string;
+  quantity: number;
+  notes?: string | null;
+}
+
+export interface PlantComboTag {
+  id: number;
+  tagName: string;
+  tagType?: number | null;
+  tagTypeName?: string | null;
+}
+
+export interface PlantComboImage {
+  id: number;
+  imageUrl: string;
+  isPrimary?: boolean;
   createdAt?: string;
+}
+
+export interface PlantComboListPayload {
+  items: PlantCombo[];
+  totalCount: number;
+  pageNumber: number;
+  pageSize: number;
+  totalPages: number;
+  hasPrevious: boolean;
+  hasNext: boolean;
+}
+
+export interface PlantComboCreateRequest {
+  comboCode: string;
+  comboName: string;
+  comboType: number;
+  description: string;
+  suitableSpace: string;
+  suitableRooms: string[];
+  fengShuiElement: number;
+  fengShuiPurpose: string;
+  themeName: string;
+  themeDescription: string;
+  comboPrice: number;
+  season: number;
+  isActive: boolean;
+  comboItems: Array<{
+    plantId: number;
+    quantity: number;
+    notes?: string;
+  }>;
+}
+
+export interface PlantComboUpdateRequest {
+  comboName: string;
+  comboType: number;
+  description: string;
+  suitableSpace: string;
+  suitableRooms: string[];
+  fengShuiElement: number;
+  fengShuiPurpose: string;
+  themeName: string;
+  themeDescription: string;
+  comboPrice: number;
+  season: number;
+  isActive: boolean;
+}
+
+export interface PlantComboAssignTagsRequest {
+  plantComboId: number;
+  tagIds: number[];
+}
+
+export interface PlantComboItemUpsertRequest {
+  plantId: number;
+  quantity: number;
+  notes?: string;
+}
+
+export interface PlantComboFormData {
+  comboCode: string;
+  comboName: string;
+  comboType: number;
+  description: string;
+  suitableSpace: string;
+  suitableRooms: string[];
+  fengShuiElement: number;
+  fengShuiPurpose: string;
+  themeName: string;
+  themeDescription: string;
+  comboPrice: number;
+  season: number;
+  isActive: boolean;
+  tagIds: number[];
+  comboItems: PlantComboItem[];
 }
 
 // Plant Instance Types

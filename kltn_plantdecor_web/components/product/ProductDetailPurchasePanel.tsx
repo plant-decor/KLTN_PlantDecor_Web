@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import type { Plant } from '@/data/sampledata';
 import type { NurseryResponse } from '@/types/nursery.types';
 import NurseryList from './NuseriesList';
@@ -17,6 +17,7 @@ import {
 interface ProductDetailPurchasePanelProps {
   plant: Plant;
   nurseries: NurseryResponse[];
+  initialSelectedInstanceId?: number | null;
 }
 
 const getNurseryStock = (nursery: NurseryResponse): number =>
@@ -31,8 +32,11 @@ const getNurseryStock = (nursery: NurseryResponse): number =>
 export default function ProductDetailPurchasePanel({
   plant,
   nurseries,
+  initialSelectedInstanceId,
 }: ProductDetailPurchasePanelProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const locale = useLocale();
   const t = useTranslations('productDetail');
   const { user } = useAuthStore();
@@ -46,6 +50,26 @@ export default function ProductDetailPurchasePanel({
 
   const isPlantInstanceFlow = plant.availableInstances > 0;
 
+  const updateInstanceInUrl = useCallback((instanceId: number | null) => {
+    const params = new URLSearchParams(searchParams?.toString());
+    const currentInstanceId = params.get('instanceId');
+    const nextInstanceId = instanceId && instanceId > 0 ? String(instanceId) : null;
+
+    if (currentInstanceId === nextInstanceId) {
+      return;
+    }
+
+    if (instanceId && instanceId > 0) {
+      params.set('instanceId', String(instanceId));
+    } else {
+      params.delete('instanceId');
+    }
+
+    const nextQuery = params.toString();
+    const nextUrl = nextQuery ? `${pathname}?${nextQuery}` : pathname;
+    router.replace(nextUrl, { scroll: false });
+  }, [pathname, router, searchParams]);
+
   const selectedNursery = useMemo(
     () =>
       nurseries.find((nursery) => nursery.nurseryId === selectedNurseryId) ??
@@ -58,6 +82,7 @@ export default function ProductDetailPurchasePanel({
     if (!isPlantInstanceFlow || !selectedNursery?.nurseryId) {
       setInstanceItems([]);
       setSelectedInstanceId(null);
+      updateInstanceInUrl(null);
       return;
     }
 
@@ -84,12 +109,22 @@ export default function ProductDetailPurchasePanel({
 
         const payloadItems = response.payload?.items ?? [];
         setInstanceItems(payloadItems);
-        setSelectedInstanceId(payloadItems[0]?.plantInstanceId ?? null);
+
+        const validInitialInstanceId =
+          initialSelectedInstanceId &&
+          payloadItems.some((item) => item.plantInstanceId === initialSelectedInstanceId)
+            ? initialSelectedInstanceId
+            : null;
+        const nextSelectedInstanceId = validInitialInstanceId ?? payloadItems[0]?.plantInstanceId ?? null;
+
+        setSelectedInstanceId(nextSelectedInstanceId);
+        updateInstanceInUrl(nextSelectedInstanceId);
       } catch (error) {
         if (!isMounted) return;
         console.error('Load plant instances error:', error);
         setInstanceItems([]);
         setSelectedInstanceId(null);
+        updateInstanceInUrl(null);
       } finally {
         if (!isMounted) return;
         setIsLoadingInstances(false);
@@ -101,10 +136,21 @@ export default function ProductDetailPurchasePanel({
     return () => {
       isMounted = false;
     };
-  }, [isPlantInstanceFlow, plant.id, selectedNursery?.nurseryId]);
+  }, [
+    initialSelectedInstanceId,
+    isPlantInstanceFlow,
+    plant.id,
+    selectedNursery?.nurseryId,
+    updateInstanceInUrl,
+  ]);
 
   const handleSelectNursery = (nursery: NurseryResponse) => {
     setSelectedNurseryId(nursery.nurseryId);
+  };
+
+  const handleSelectInstance = (instanceId: number) => {
+    setSelectedInstanceId(instanceId);
+    updateInstanceInUrl(instanceId);
   };
 
   const maxQuantity = useMemo(
@@ -166,7 +212,7 @@ export default function ProductDetailPurchasePanel({
                 <button
                   key={instance.plantInstanceId}
                   type="button"
-                  onClick={() => setSelectedInstanceId(instance.plantInstanceId)}
+                  onClick={() => handleSelectInstance(instance.plantInstanceId)}
                   className={`w-full rounded-lg border p-3 text-left transition-colors ${
                     selectedInstanceId === instance.plantInstanceId
                       ? 'border-green-600 bg-green-50'

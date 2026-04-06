@@ -23,10 +23,10 @@ import {
   Search as SearchIcon,
   SendRounded as SendRoundedIcon,
 } from "@mui/icons-material";
-import { useAutoScrollToBottom } from "@/hooks/useAutoScrollToBottom";
-import { useSupportChat } from "@/hooks/useSupportChat";
-import { useSupportChatInput } from "@/hooks/useSupportChatInput";
-import { useCustomerSupportConversations } from "@/hooks/useCustomerSupportConversations";
+import { useAutoScrollToBottom } from "@/hooks/chat/useAutoScrollToBottom";
+import { useSupportChat } from "@/hooks/chat/useSupportChat";
+import { useSupportChatInput } from "@/hooks/chat/useSupportChatInput";
+import { useCustomerSupportConversations } from "@/hooks/chat/useCustomerSupportConversations";
 import { useAuthStore } from "@/lib/store/authStore";
 import type { SupportConversationMessage } from "@/types/chat.types";
 import {

@@ -1,21 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { getConversationMessages } from "@/lib/api/chatService";
 import {
   chatHubService,
   type MessageReceivedPayload,
 } from "@/lib/signalr/chatHubService";
 import { mapRealtimeMessageToConversationMessage } from "@/lib/mappers/chat.mapper";
-import type {
-  GetConversationMessagesParams,
-  SupportConversationMessage,
-} from "@/types/chat.types";
-
-const DEFAULT_MESSAGE_PARAMS: GetConversationMessagesParams = {
-  pageNumber: 1,
-  pageSize: 50,
-};
+import { useConversationMessages } from "@/hooks/chat/useConversationMessages";
 
 type UseSupportChatOptions = {
   conversationId?: number | null;
@@ -26,12 +17,20 @@ type UseSupportChatOptions = {
 export function useSupportChat(options: UseSupportChatOptions) {
   const { conversationId, enabled = true, pageSize = 50 } = options;
 
-  const [messages, setMessages] = useState<SupportConversationMessage[]>([]);
-  const [isInitialLoading, setIsInitialLoading] = useState(false);
+  const {
+    messages,
+    isLoading: isInitialLoading,
+    error: messagesError,
+    loadMessages,
+    appendMessage,
+  } = useConversationMessages({ pageSize });
+
   const [isSending, setIsSending] = useState(false);
   const [isHubReady, setIsHubReady] = useState(false);
   const [isOtherUserTyping, setIsOtherUserTyping] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [hubError, setHubError] = useState<string | null>(null);
+
+  const error = messagesError ?? hubError;
 
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const joinedConversationRef = useRef<number | null>(null);
@@ -40,30 +39,10 @@ export function useSupportChat(options: UseSupportChatOptions) {
     setIsOtherUserTyping(false);
   }, []);
 
-  const loadMessages = useCallback(async () => {
+  const fetchMessages = useCallback(async () => {
     if (!conversationId || !enabled) return;
-
-    try {
-      setIsInitialLoading(true);
-      setError(null);
-
-      const response = await getConversationMessages(
-        conversationId,
-        {
-          ...DEFAULT_MESSAGE_PARAMS,
-          pageSize,
-        },
-        false,
-      );
-
-      setMessages(response.data?.messages ?? []);
-    } catch (err) {
-      console.error("Load messages failed:", err);
-      setError("Không thể tải lịch sử tin nhắn");
-    } finally {
-      setIsInitialLoading(false);
-    }
-  }, [conversationId, enabled, pageSize]);
+    await loadMessages(conversationId);
+  }, [conversationId, enabled, loadMessages]);
 
   const sendMessage = useCallback(
     async (content: string) => {
@@ -72,11 +51,11 @@ export function useSupportChat(options: UseSupportChatOptions) {
 
       try {
         setIsSending(true);
-        setError(null);
+        setHubError(null);
         await chatHubService.sendMessage(conversationId, content);
       } catch (err) {
         console.error("Send message failed:", err);
-        setError("Không thể gửi tin nhắn");
+        setHubError("Không thể gửi tin nhắn");
         throw err;
       } finally {
         setIsSending(false);
@@ -126,9 +105,9 @@ export function useSupportChat(options: UseSupportChatOptions) {
 
     const setup = async () => {
       try {
-        setError(null);
+        setHubError(null);
 
-        await loadMessages();
+        await fetchMessages();
         await chatHubService.connect();
         await chatHubService.joinConversation(conversationId);
 
@@ -139,7 +118,7 @@ export function useSupportChat(options: UseSupportChatOptions) {
       } catch (err) {
         console.error("Chat setup failed:", err);
         if (!isMounted) return;
-        setError("Không thể kết nối chat realtime");
+        setHubError("Không thể kết nối chat realtime");
         setIsHubReady(false);
       }
     };
@@ -149,7 +128,7 @@ export function useSupportChat(options: UseSupportChatOptions) {
     return () => {
       isMounted = false;
     };
-  }, [conversationId, enabled, loadMessages]);
+  }, [conversationId, enabled, fetchMessages]);
 
   useEffect(() => {
     if (!conversationId || !enabled) return;
@@ -160,12 +139,7 @@ export function useSupportChat(options: UseSupportChatOptions) {
         if (payload.conversationId !== conversationId) return;
 
         const mapped = mapRealtimeMessageToConversationMessage(payload);
-
-        setMessages((prev) => {
-          const exists = prev.some((msg) => msg.id === mapped.id);
-          if (exists) return prev;
-          return [...prev, mapped];
-        });
+        appendMessage(mapped);
       },
     );
 
@@ -202,7 +176,7 @@ export function useSupportChat(options: UseSupportChatOptions) {
       offReconnected();
       offClosed();
     };
-  }, [conversationId, enabled, resetTypingIndicator]);
+  }, [conversationId, enabled, resetTypingIndicator, appendMessage]);
 
   useEffect(() => {
     return () => {
@@ -235,7 +209,7 @@ export function useSupportChat(options: UseSupportChatOptions) {
     isHubReady,
     isOtherUserTyping,
     error,
-    reloadMessages: loadMessages,
+    reloadMessages: fetchMessages,
     sendMessage,
     sendTyping,
     sendStopTyping,

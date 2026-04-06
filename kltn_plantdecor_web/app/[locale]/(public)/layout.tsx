@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react';
-import MainLayout from '@/components/layout/MainLayout';
-import SupportChatWidget from '@/components/chat/SupportChatWidget';
+import type { ReactNode } from "react";
+import MainLayout from "@/components/layout/MainLayout";
+import SupportChatWidget from "@/components/chat/CustomerSupportChatWidget";
 
 interface PublicLayoutProps {
   children: ReactNode;

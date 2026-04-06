@@ -23,23 +23,27 @@ export interface NotificationMessage {
 }
 
 export interface ChatMessage {
-  id: string;
-  senderId: string;
+  id: string | number;
+  senderId: string | number;
   senderName: string;
   senderAvatar?: string;
-  recipientId?: string;
+  recipientId?: string | number;
+  conversationId?: number;
   roomId?: string;
-  message: string;
-  timestamp: Date;
+  content: string;
+  message?: string;
+  sendAt?: string | Date;
+  timestamp?: Date;
   isRead: boolean;
   attachments?: string[];
   messageType?: 'text' | 'image' | 'file';
 }
 
 export interface TypingIndicator {
-  userId: string;
-  userName: string;
-  roomId: string;
+  userId: string | number;
+  userName?: string;
+  conversationId: number;
+  roomId?: string;
   isTyping: boolean;
 }
 
@@ -61,9 +65,9 @@ export interface SignalRContextValue {
 
   // Chat methods
   sendChatMessage: (message: ChatMessage) => Promise<void>;
-  joinChatRoom: (roomId: string) => Promise<void>;
-  leaveChatRoom: (roomId: string) => Promise<void>;
-  sendTypingIndicator: (roomId: string, isTyping: boolean) => Promise<void>;
+  joinChatRoom: (conversationId: number) => Promise<void>;
+  leaveChatRoom: (conversationId: number) => Promise<void>;
+  sendTypingIndicator: (conversationId: number, isTyping: boolean) => Promise<void>;
 
   // Notification methods
   markNotificationAsRead: (notificationId: string) => Promise<void>;

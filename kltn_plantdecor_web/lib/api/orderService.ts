@@ -1,5 +1,6 @@
-import { get, post } from '@/lib/api/apiService';
+import { get, patch, post } from '@/lib/api/apiService';
 import type {
+  ContinuePaymentResponse,
   CreateOrderResponse,
   InvoiceByOrderResponse,
   MyOrderDetailResponse,
@@ -88,4 +89,28 @@ export async function retryPayment(paymentId: number): Promise<string> {
     false
   );
   return response.payload.paymentUrl;
+}
+
+export async function continuePaymentByInvoice(invoiceId: number): Promise<string> {
+  const response = await post<ContinuePaymentResponse>(
+    `${PAYMENT_ENDPOINT}/invoice/${invoiceId}/continue`,
+    {},
+    false,
+    false
+  );
+  return response.payload.paymentUrl;
+}
+
+export async function cancelOrder(orderId: number): Promise<Order> {
+  const response = await patch<MyOrderDetailResponse & ApiResponseFallback<Order>>(
+    `${ORDER_ENDPOINT}/${orderId}/cancel`,
+    {},
+    false,
+    false
+  );
+  const payload = getPayloadFromResponse(response);
+  if (!payload) {
+    throw new Error('Cannot cancel order');
+  }
+  return payload;
 }

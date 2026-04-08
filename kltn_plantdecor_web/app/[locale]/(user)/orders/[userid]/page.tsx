@@ -6,7 +6,13 @@ import { useTranslations } from 'next-intl';
 import OrderDetailModal from '@/components/order-history/OrderDetailModal';
 import OrderHistoryList from '@/components/order-history/OrderHistoryList';
 import { STATUS_TABS } from '@/components/order-history/orderHistoryUtils';
-import { getMyOrderById, getMyOrders, retryPayment } from '@/lib/api/orderService';
+import {
+  cancelOrder,
+  continuePaymentByInvoice,
+  getInvoicesByOrderId,
+  getMyOrderById,
+  getMyOrders,
+} from '@/lib/api/orderService';
 import type { Order } from '@/types/order.types';
 
 export default function OrdersPage() {
@@ -17,8 +23,10 @@ export default function OrdersPage() {
   const [error, setError] = useState('');
   const requestSequenceRef = useRef(0);
 
-  const [retryLoadingPaymentId, setRetryLoadingPaymentId] = useState<number | null>(null);
+  const [retryLoadingOrderId, setRetryLoadingOrderId] = useState<number | null>(null);
   const [retryError, setRetryError] = useState('');
+  const [cancelLoadingOrderId, setCancelLoadingOrderId] = useState<number | null>(null);
+  const [cancelError, setCancelError] = useState('');
 
   const [detailOrder, setDetailOrder] = useState<Order | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -84,23 +92,75 @@ export default function OrdersPage() {
     }
   }, []);
 
-  const handleRetryPayment = useCallback(async (paymentId: number) => {
+  const handleRetryPayment = useCallback(async (orderId: number) => {
     try {
-      setRetryLoadingPaymentId(paymentId);
+      setRetryLoadingOrderId(orderId);
       setRetryError('');
-      const paymentUrl = await retryPayment(paymentId);
+
+      const invoices = await getInvoicesByOrderId(orderId);
+      const pendingInvoices = invoices.filter((invoice) => invoice.statusName === 'Pending');
+
+      if (pendingInvoices.length === 0) {
+        throw new Error(tOrderHistory('retryPaymentFailed'));
+      }
+
+      const latestPendingInvoice = pendingInvoices
+        .slice()
+        .sort((a, b) => new Date(b.issuedDate).getTime() - new Date(a.issuedDate).getTime())[0];
+
+      if (!latestPendingInvoice) {
+        throw new Error(tOrderHistory('retryPaymentFailed'));
+      }
+
+      const paymentUrl = await continuePaymentByInvoice(latestPendingInvoice.id);
       window.location.assign(paymentUrl);
     } catch (err) {
       const message = err instanceof Error ? err.message : tOrderHistory('retryPaymentFailed');
       setRetryError(message);
     } finally {
-      setRetryLoadingPaymentId(null);
+      setRetryLoadingOrderId(null);
     }
   }, [tOrderHistory]);
+
+  const handleCancelOrder = useCallback(async (orderId: number) => {
+    const confirmed = window.confirm('Are you sure you want to cancel this order?');
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setCancelLoadingOrderId(orderId);
+      setCancelError('');
+
+      const cancelledOrder = await cancelOrder(orderId);
+
+      setOrders((prevOrders) => {
+        const updatedOrders = prevOrders.map((order) =>
+          order.id === cancelledOrder.id ? cancelledOrder : order
+        );
+
+        if (selectedStatus === 'All') {
+          return updatedOrders;
+        }
+
+        return updatedOrders.filter((order) => order.statusName === selectedStatus);
+      });
+
+      setDetailOrder((prevDetail) =>
+        prevDetail && prevDetail.id === cancelledOrder.id ? cancelledOrder : prevDetail
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to cancel order. Please try again.';
+      setCancelError(message);
+    } finally {
+      setCancelLoadingOrderId(null);
+    }
+  }, [selectedStatus]);
 
   const closeDetailModal = useCallback(() => {
     setDetailOpen(false);
     setRetryError('');
+    setCancelError('');
   }, []);
 
   return (
@@ -138,13 +198,20 @@ export default function OrdersPage() {
           {retryError}
         </Alert>
       ) : null}
+      {cancelError ? (
+        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setCancelError('')}>
+          {cancelError}
+        </Alert>
+      ) : null}
 
       <OrderHistoryList
         orders={orders}
         loading={loading}
-        retryLoadingPaymentId={retryLoadingPaymentId}
+        retryLoadingOrderId={retryLoadingOrderId}
+        cancelLoadingOrderId={cancelLoadingOrderId}
         onViewDetail={handleViewDetail}
         onRetryPayment={handleRetryPayment}
+        onCancelOrder={handleCancelOrder}
       />
 
       <OrderDetailModal
@@ -152,8 +219,10 @@ export default function OrdersPage() {
         order={detailOrder}
         loading={detailLoading}
         error={detailError}
-        retryLoadingPaymentId={retryLoadingPaymentId}
+        retryLoadingOrderId={retryLoadingOrderId}
+        cancelLoadingOrderId={cancelLoadingOrderId}
         onRetryPayment={handleRetryPayment}
+        onCancelOrder={handleCancelOrder}
         onClose={closeDetailModal}
       />
     </Box>

@@ -11,6 +11,7 @@ interface PlantStoreFilterTexts {
   category: string;
   placementType: string;
   careLevelType: string;
+  season: string;
   all: string;
   size: string;
   minPrice: string;
@@ -42,6 +43,7 @@ interface PlantStoreFiltersProps {
   selectedSizes: Set<number>;
   placementTypeOptions: PlantEnumValue[];
   careLevelTypeOptions: PlantEnumValue[];
+  seasonOptions: PlantEnumValue[];
   fengShuiElementOptions: PlantEnumValue[];
   nurseriesPayload: ShopNurserySearchPayload;
   texts: PlantStoreFilterTexts;
@@ -57,6 +59,7 @@ export default function PlantStoreFilters({
   selectedSizes,
   placementTypeOptions,
   careLevelTypeOptions,
+  seasonOptions,
   fengShuiElementOptions,
   nurseriesPayload,
   texts,
@@ -164,6 +167,27 @@ export default function PlantStoreFilters({
         >
           <option value="">{texts.all}</option>
           {careLevelTypeOptions.map((option) => (
+            <option key={option.value} value={String(option.value)}>
+              {option.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label htmlFor="season" className="font-semibold text-gray-900 mb-2 block">
+          {texts.season}
+        </label>
+        <select
+          id="season"
+          name="season"
+          defaultValue={
+            requestBody.comboSeason !== undefined ? String(requestBody.comboSeason) : ''
+          }
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+        >
+          <option value="">{texts.all}</option>
+          {seasonOptions.map((option) => (
             <option key={option.value} value={String(option.value)}>
               {option.name}
             </option>

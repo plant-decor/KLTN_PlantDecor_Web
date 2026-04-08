@@ -128,6 +128,10 @@ export default async function PlantStorePage({ params, searchParams }: PageProps
 
   const placementTypeOptions = getUnifiedEnumValues(filterEnums, 'PlacementType');
   const careLevelTypeOptions = getUnifiedEnumValues(filterEnums, 'CareLevelType');
+  const seasonOptions =
+    getUnifiedEnumValues(filterEnums, 'SeasonType').length > 0
+      ? getUnifiedEnumValues(filterEnums, 'SeasonType')
+      : getUnifiedEnumValues(filterEnums, 'Season');
   const sizeOptions = getUnifiedEnumValues(filterEnums, 'PlantSize');
   const fengShuiElementOptions = getUnifiedEnumValues(filterEnums, 'FengShuiElement');
 
@@ -171,6 +175,7 @@ export default async function PlantStorePage({ params, searchParams }: PageProps
     category: tFilter('category'),
     placementType: t('filters.placementType'),
     careLevelType: t('filters.careLevelType'),
+    season: t('filters.season'),
     all: t('filters.all'),
     size: tFilter('size'),
     minPrice: t('filters.minPrice'),
@@ -212,6 +217,7 @@ export default async function PlantStorePage({ params, searchParams }: PageProps
               selectedSizes={selectedSizes}
               placementTypeOptions={placementTypeOptions}
               careLevelTypeOptions={careLevelTypeOptions}
+              seasonOptions={seasonOptions}
               fengShuiElementOptions={fengShuiElementOptions}
               nurseriesPayload={nurseriesPayload}
               texts={filterTexts}

@@ -190,6 +190,9 @@ export const buildUnifiedShopRequestBody = (
   const includePlants = parseBooleanOrUndefined(toSingle(query.includePlants));
   const includeMaterials = parseBooleanOrUndefined(toSingle(query.includeMaterials));
   const includeCombos = parseBooleanOrUndefined(toSingle(query.includeCombos));
+  const season =
+    parseIntOrUndefined(toSingle(query.season)) ??
+    parseIntOrUndefined(toSingle(query.comboSeason));
 
   return {
     pagination: { pageNumber: page, pageSize },
@@ -204,7 +207,7 @@ export const buildUnifiedShopRequestBody = (
     tagIds: uniqueTagIds.length > 0 ? uniqueTagIds : undefined,
     petSafe: parseBooleanOrUndefined(toSingle(query.petSafe)),
     childSafe: parseBooleanOrUndefined(toSingle(query.childSafe)),
-    comboSeason: parseIntOrUndefined(toSingle(query.comboSeason)),
+    comboSeason: season,
     comboType: parseIntOrUndefined(toSingle(query.comboType)),
     placementType: parseIntOrUndefined(toSingle(query.placementType)),
     careLevelType: parseIntOrUndefined(toSingle(query.careLevelType)),

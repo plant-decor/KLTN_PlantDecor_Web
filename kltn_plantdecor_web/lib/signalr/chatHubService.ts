@@ -35,7 +35,7 @@ class ChatHubService {
   private joinedConversationIds = new Set<number>();
   private listeners: ListenerStore = {};
 
-  private readonly hubUrl = `${(process.env.NEXT_PUBLIC_SIGNALR_BASE_URL ?? "https://localhost:7180/api").replace("/api", "")}/hubs/chat`;
+  private readonly hubUrl = `${process.env.NEXT_PUBLIC_SIGNALR_BASE_URL}/hubs/chat`;
 
   private emit<K extends EventKey>(event: K, payload: ChatEventMap[K]) {
     const listeners = this.listeners[event] as

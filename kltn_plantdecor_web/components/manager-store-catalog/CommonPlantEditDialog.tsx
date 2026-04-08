@@ -13,6 +13,15 @@ import {
 } from '@mui/material';
 import type { CommonPlantInventoryItem } from '@/types/manager-store-catalog.types';
 
+const parseNonNegativeInteger = (value: string): number => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return 0;
+  }
+
+  return Math.max(0, Math.trunc(parsed));
+};
+
 export interface UpdateFormValue {
   quantity: number;
   reservedQuantity: number;
@@ -63,7 +72,7 @@ export default function CommonPlantEditDialog({
             label="Quantity"
             value={form.quantity}
             onChange={(event) =>
-              onFormChange({ ...form, quantity: Number(event.target.value) })
+              onFormChange({ ...form, quantity: parseNonNegativeInteger(event.target.value) })
             }
             inputProps={{ min: 0 }}
             disabled={submitting}
@@ -75,7 +84,7 @@ export default function CommonPlantEditDialog({
             label="Reserved Quantity"
             value={form.reservedQuantity}
             onChange={(event) =>
-              onFormChange({ ...form, reservedQuantity: Number(event.target.value) })
+              onFormChange({ ...form, reservedQuantity: parseNonNegativeInteger(event.target.value) })
             }
             inputProps={{ min: 0 }}
             disabled={submitting}
@@ -102,7 +111,7 @@ export default function CommonPlantEditDialog({
           disabled={!canSubmit}
           sx={{ backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)' }}
         >
-          Save
+          Lưu
         </Button>
       </DialogActions>
     </Dialog>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { Box, IconButton, Tooltip } from '@mui/material';
 import { ZoomIn as ZoomInIcon } from '@mui/icons-material';
@@ -24,12 +24,26 @@ export default function ClickableImageViewer({
   showZoomHint = true,
 }: ClickableImageViewerProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(initialImageIndex);
+  const safeInitialIndex = useMemo(() => {
+    if (images.length === 0) return 0;
+    return Math.min(Math.max(initialImageIndex, 0), images.length - 1);
+  }, [images.length, initialImageIndex]);
+
+  const [currentIndex, setCurrentIndex] = useState(safeInitialIndex);
+
+  useEffect(() => {
+    setCurrentIndex(safeInitialIndex);
+  }, [safeInitialIndex]);
 
   const handleImageClick = useCallback(() => {
-    setCurrentIndex(initialImageIndex);
     setIsModalOpen(true);
-  }, [initialImageIndex]);
+  }, []);
+
+  const handleThumbnailClick = useCallback((index: number) => {
+    setCurrentIndex(index);
+  }, []);
+
+  const currentImage = images[currentIndex] ?? images[0] ?? '';
 
   return (
     <>
@@ -53,10 +67,10 @@ export default function ClickableImageViewer({
       >
         <div style={{ position: 'relative', width: '100%', aspectRatio: '1/1' }}>
           <Image
-            src={images[initialImageIndex]}
+            src={currentImage}
             alt={alt}
             className={className + ' object-contain'}
-            priority={initialImageIndex === 0}
+            priority={currentIndex === 0}
             layout="fill"
             style={{
               transition: 'transform 0.3s ease-in-out',
@@ -69,7 +83,10 @@ export default function ClickableImageViewer({
           <Tooltip title={`View all images (${images.length})`} arrow>
             <IconButton
               className="zoom-hint"
-              onClick={handleImageClick}
+              onClick={(event) => {
+                event.stopPropagation();
+                handleImageClick();
+              }}
               sx={{
                 position: 'absolute',
                 bottom: 8,
@@ -107,15 +124,55 @@ export default function ClickableImageViewer({
               zIndex: 4,
             }}
           >
-            1/{images.length}
+            {currentIndex + 1}/{images.length}
           </Box>
         )}
       </Box>
 
+      {images.length > 1 && (
+        <Box
+          sx={{
+            mt: 2,
+            display: 'flex',
+            gap: 1,
+            overflowX: 'auto',
+            pb: 0.5,
+          }}
+        >
+          {images.map((image, index) => (
+            <Box
+              key={`${image}-${index}`}
+              component="button"
+              type="button"
+              onClick={() => handleThumbnailClick(index)}
+              sx={{
+                position: 'relative',
+                width: 72,
+                height: 72,
+                flex: '0 0 auto',
+                borderRadius: 1,
+                overflow: 'hidden',
+                border: currentIndex === index ? '2px solid #16a34a' : '1px solid #d1d5db',
+                opacity: currentIndex === index ? 1 : 0.75,
+                cursor: 'pointer',
+                backgroundColor: '#f3f4f6',
+              }}
+            >
+              <Image
+                src={image}
+                alt={`${alt} ${index + 1}`}
+                layout="fill"
+                className="object-cover"
+              />
+            </Box>
+          ))}
+        </Box>
+      )}
+
       {/* Fullscreen Modal */}
       <FullscreenImageModal
         images={images}
-        initialIndex={initialImageIndex}
+        initialIndex={currentIndex}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         alt={alt}

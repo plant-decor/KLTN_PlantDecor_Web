@@ -19,6 +19,15 @@ import {
 import type { AvailableImportCommonPlantItem } from '@/types/manager-store-catalog.types';
 import { formatCurrency } from '@/lib/utils/formatUtil';
 
+const parseNonNegativeInteger = (value: string): number => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return 0;
+  }
+
+  return Math.max(0, Math.trunc(parsed));
+};
+
 export interface ImportFormValue {
   plantId: number;
   quantity: number;
@@ -100,7 +109,7 @@ export default function CommonPlantImportDialog({
               label="Quantity"
               value={form.quantity}
               onChange={(event) =>
-                onFormChange({ ...form, quantity: Number(event.target.value) })
+                onFormChange({ ...form, quantity: parseNonNegativeInteger(event.target.value) })
               }
               inputProps={{ min: 1 }}
               disabled={submitting}

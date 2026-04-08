@@ -18,6 +18,7 @@ import {
 import { Check, Close } from '@mui/icons-material';
 import type { PlantDetail, PlantEnumPayload } from '@/types/store-management.types';
 import { getFengShuiColors, getFengShuiElementLabel } from '@/lib/utils/fengShui';
+import { formatCurrency } from '@/lib/utils/formatUtil';
 
 interface PlantViewDialogProps {
   open: boolean;
@@ -133,7 +134,7 @@ export default function PlantViewDialog({ open, plant, enums, onClose }: PlantVi
               <Grid size={{ xs: 12, sm: 4 }}>
                 <Typography variant="body2" color="text.secondary">Base price</Typography>
                 <Typography variant="body1" fontWeight="600">
-                  {plant.basePrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
+                  {formatCurrency(plant.basePrice, 'vi')}
                 </Typography>
               </Grid>
               <Grid size={{ xs: 12, sm: 4 }}>

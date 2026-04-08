@@ -15,6 +15,7 @@ import {
   Typography,
 } from '@mui/material';
 import type { MaterialDetail } from '@/types/store-management.types';
+import { formatCurrency } from '@/lib/utils/formatUtil';
 
 interface MaterialViewDialogProps {
   open: boolean;
@@ -135,10 +136,7 @@ export default function MaterialViewDialog({ open, material, onClose }: Material
                   Base price
                 </Typography>
                 <Typography variant="body1" fontWeight="600">
-                  {material.basePrice.toLocaleString('vi-VN', {
-                    style: 'currency',
-                    currency: 'VND',
-                  })}
+                  {formatCurrency(material.basePrice, 'vi')}
                 </Typography>
               </Grid>
               <Grid size={{ xs: 12, sm: 4 }}>

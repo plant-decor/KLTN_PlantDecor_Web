@@ -17,6 +17,7 @@ import {
 import { useForm, Controller } from 'react-hook-form';
 import ImageUpload from './ImageUpload';
 import type { PlantInstance, ImageUploadData } from '@/types/store-management.types';
+import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils/formatUtil';
 
 interface PlantInstanceFormDialogProps {
   open: boolean;
@@ -231,10 +232,12 @@ export default function PlantInstanceFormDialog({
               render={({ field }) => (
                 <TextField
                   {...field}
+                  value={formatCurrencyInput(field.value ?? 0, 'vi')}
                   label="Giá cụ thể"
                   fullWidth
-                  type="number"
-                  onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                  type="text"
+                  inputProps={{ inputMode: 'numeric' }}
+                  onChange={(e) => field.onChange(parseCurrencyInput(e.target.value))}
                 />
               )}
             />

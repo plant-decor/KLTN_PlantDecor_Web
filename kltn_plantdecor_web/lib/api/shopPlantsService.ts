@@ -89,6 +89,35 @@ export interface NurseryPlantInstanceSearchPayload {
   hasNext: boolean;
 }
 
+export interface ShopPlantInstanceImage {
+  id?: number;
+  imageUrl?: string;
+  url?: string;
+  preview?: string;
+  isPrimary?: boolean;
+  isThumbnail?: boolean;
+}
+
+export interface ShopPlantInstanceDetail {
+  id: number;
+  plantId: number;
+  plantName: string;
+  currentNurseryId?: number;
+  nurseryName?: string;
+  sku: string | null;
+  specificPrice: number;
+  height: number;
+  trunkDiameter?: number;
+  healthStatus: string;
+  age?: number;
+  description?: string;
+  status: number;
+  statusName: string;
+  createdAt: string;
+  updatedAt?: string;
+  images: ShopPlantInstanceImage[];
+}
+
 export interface PlantEnumValue {
   value: number;
   name: string;
@@ -175,4 +204,28 @@ export const searchShopNurseries = async (
   }
 
   return apiClient.post('/shop/nurseries/search', data, loading);
+};
+
+export const getPlantComboNurseries = async (
+  comboId: number,
+  isServer: boolean,
+  loading = true
+): Promise<ResponseModel<ShopNurseryListItem[]>> => {
+  if (isServer) {
+    return apiServer.get(`/shop/plant-combos/${comboId}/nurseries`);
+  }
+
+  return apiClient.get(`/shop/plant-combos/${comboId}/nurseries`, undefined, loading);
+};
+
+export const getShopPlantInstanceById = async (
+  instanceId: number,
+  isServer: boolean,
+  loading = true
+): Promise<ResponseModel<ShopPlantInstanceDetail>> => {
+  if (isServer) {
+    return apiServer.get(`/shop/plant-instances/${instanceId}`);
+  }
+
+  return apiClient.get(`/shop/plant-instances/${instanceId}`, undefined, loading);
 };

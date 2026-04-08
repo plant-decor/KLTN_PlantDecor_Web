@@ -15,7 +15,6 @@ export const STATUS_TABS: Array<{ value: OrderStatusFilter; label: string }> = [
   { value: 'Pending', label: 'Pending' },
   { value: 'DepositPaid', label: 'DepositPaid' },
   { value: 'Paid', label: 'Paid' },
-  { value: 'Assigned', label: 'Assigned' },
   { value: 'Shipping', label: 'Shipping' },
   { value: 'Delivered', label: 'Delivered' },
   { value: 'RemainingPaymentPending', label: 'RemainingPaymentPending' },

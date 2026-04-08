@@ -130,3 +130,4 @@ export interface PaymentCreatePayload {
 }
 
 export type PaymentCreateResponse = ApiResponseWithPayload<PaymentCreatePayload>;
+export type ContinuePaymentResponse = ApiResponseWithPayload<PaymentCreatePayload>;

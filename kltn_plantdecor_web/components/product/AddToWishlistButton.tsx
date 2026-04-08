@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type MouseEvent } from 'react';
+import { useEffect, useState, type MouseEvent } from 'react';
 import { Button } from '@mui/material';
 import { FavoriteBorder as FavoriteBorderIcon, Favorite as FavoriteIcon } from '@mui/icons-material';
 import { useLocale, useTranslations } from 'next-intl';
@@ -20,6 +20,7 @@ interface AddToWishlistButtonProps {
   onClick?: (event: MouseEvent<HTMLButtonElement>) => void;
   label?: string;
   onChange?: (isWishlisted: boolean) => void;
+  initialWishlisted?: boolean;
 }
 
 export default function AddToWishlistButton({
@@ -30,13 +31,18 @@ export default function AddToWishlistButton({
   onClick,
   label,
   onChange,
+  initialWishlisted = false,
 }: AddToWishlistButtonProps) {
   const tWishlist = useTranslations('wishlist');
   const locale = useLocale();
   const router = useRouter();
   const { user } = useAuthStore();
-  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [isWishlisted, setIsWishlisted] = useState(initialWishlisted);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    setIsWishlisted(initialWishlisted);
+  }, [initialWishlisted]);
 
   const handleToggleWishlist = async (event: MouseEvent<HTMLButtonElement>) => {
     onClick?.(event);

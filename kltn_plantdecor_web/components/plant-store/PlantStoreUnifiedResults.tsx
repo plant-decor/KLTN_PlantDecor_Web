@@ -1,0 +1,277 @@
+'use client';
+
+import { Link, useRouter } from '@/i18n/navigation';
+import ProductCard from '@/components/product/ProductCard';
+import MaterialCard from '@/components/product/MaterialCard';
+import ComboCard from '@/components/product/ComboCard';
+import {
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Pagination,
+  PaginationItem,
+  Select,
+} from '@mui/material';
+import type { SelectChangeEvent } from '@mui/material/Select';
+import type {
+  ShopUnifiedSearchItem,
+  ShopUnifiedPagedItems,
+  ShopUnifiedPlantItem,
+  ShopUnifiedMaterialItem,
+} from '@/lib/api/shopUnifiedService';
+import type { ShopPlantListItem } from '@/lib/api/shopPlantsService';
+import type { ShopMaterialListItem } from '@/lib/api/shopMaterialsService';
+import { PAGE_SIZE_OPTIONS, type PlantStorePageQuery } from '@/lib/utils/plant-store/constants';
+import { buildPaginationHref } from '@/lib/utils/plant-store/url';
+import { cloneQuery } from '@/lib/utils/plant-store/query';
+import type { Category, Tag } from '@/data/storeCatalogData';
+
+interface SortOption {
+  value: string;
+  label: string;
+}
+
+interface PlantStoreUnifiedResultsProps {
+  locale: string;
+  query: PlantStorePageQuery;
+  payload: ShopUnifiedPagedItems;
+  pageSize: number;
+  selectedSort: string;
+  sortOptions: SortOption[];
+  foundText: string;
+  pageOfText: string;
+  previousLabel: string;
+  nextLabel: string;
+  noProductsLabel: string;
+  itemsPerPageLabel: string;
+  sortLabel: string;
+  initialWishlistState?: Record<string, boolean>;
+}
+
+const buildWishlistKey = (itemType: 'Plant' | 'Material' | 'PlantCombo', itemId: number): string =>
+  `${itemType}:${itemId}`;
+
+const toProductCategory = (name: string, index: number): Category => ({
+  id: index + 1,
+  parentCategoryId: null,
+  name,
+  isActive: true,
+  categoryType: 0,
+  categoryTypeName: 'General',
+  createdAt: '',
+  updatedAt: '',
+  description: '',
+});
+
+const toProductTag = (name: string, index: number): Tag => ({
+  id: index + 1,
+  tagName: name,
+  tagType: 0,
+  tagTypeName: 'General',
+});
+
+const toProductCardPlant = (plant: ShopUnifiedPlantItem): ShopPlantListItem => ({
+  id: plant.id,
+  name: plant.name,
+  basePrice: plant.basePrice,
+  size: plant.sizeName ?? '',
+  careLevel: plant.careLevelTypeName ?? '',
+  isActive: plant.isActive,
+  primaryImageUrl: plant.primaryImageUrl,
+  totalInstances: plant.totalInstances,
+  availableInstances: plant.availableInstances,
+  availableCommonQuantity: plant.availableCommonQuantity,
+  totalAvailableStock: plant.totalAvailableStock,
+  categoryNames: (plant.categoryNames ?? []).map((name, index) => toProductCategory(name, index)),
+  tagNames: (plant.tagNames ?? []).map((name, index) => toProductTag(name, index)),
+});
+
+const toMaterialCardMaterial = (material: ShopUnifiedMaterialItem): ShopMaterialListItem => ({
+  id: material.materialId ?? material.id,
+  materialCode: material.materialCode ?? '',
+  name: material.materialName,
+  basePrice: material.basePrice ?? 0,
+  unit: material.unit ?? '',
+  brand: material.nurseryName ?? '',
+  isActive: material.isActive ?? true,
+  primaryImageUrl: material.primaryImageUrl ?? null,
+  categoryNames: [],
+  tagNames: [],
+});
+
+export default function PlantStoreUnifiedResults({
+  locale,
+  query,
+  payload,
+  pageSize,
+  selectedSort,
+  sortOptions,
+  foundText,
+  pageOfText,
+  previousLabel,
+  nextLabel,
+  noProductsLabel,
+  itemsPerPageLabel,
+  sortLabel,
+  initialWishlistState = {},
+}: PlantStoreUnifiedResultsProps) {
+  const router = useRouter();
+  const currentPage = payload.pageNumber || 1;
+  const totalPages = Math.max(1, payload.totalPages || 1);
+
+  const handlePageSizeChange = (event: SelectChangeEvent<string>) => {
+    const nextPageSize = Number(event.target.value);
+    if (!Number.isFinite(nextPageSize) || nextPageSize <= 0) return;
+
+    const params = cloneQuery(query);
+    params.set('pageSize', String(nextPageSize));
+    params.set('page', '1');
+    router.replace(`/plant-store?${params.toString()}`, { locale, scroll: false });
+  };
+
+  const handleSortChange = (event: SelectChangeEvent<string>) => {
+    const nextSort = event.target.value;
+    const params = cloneQuery(query);
+
+    if (!nextSort || nextSort === ':') {
+      params.delete('sort');
+      params.delete('sortBy');
+      params.delete('sortDirection');
+      params.set('sortBy', 'CreatedAt');
+      params.set('sortDirection', 'Desc');
+    } else {
+      const [sortBy = '', sortDirection = ''] = nextSort.split(':');
+      params.set('sort', nextSort);
+      params.set('sortBy', sortBy);
+      params.set('sortDirection', sortDirection);
+    }
+
+    params.set('page', '1');
+    router.replace(`/plant-store?${params.toString()}`, { locale, scroll: false });
+  };
+
+  return (
+    <div className="md:col-span-4">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 text-sm text-gray-600">
+        <p>{foundText}</p>
+        <div className="flex items-center gap-3">
+          <p>{pageOfText}</p>
+          <FormControl size="small" sx={{ minWidth: 220 }}>
+            <InputLabel id="unified-sort-label">{sortLabel}</InputLabel>
+            <Select
+              labelId="unified-sort-label"
+              id="unified-sort"
+              value={selectedSort}
+              label={sortLabel}
+              onChange={handleSortChange}
+            >
+              {sortOptions.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </div>
+      </div>
+
+      {payload.items.length > 0 ? (
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3">
+          {payload.items.map((item: ShopUnifiedSearchItem, index) => {
+            if (item.type === 'Plant' && item.plant) {
+              return (
+                <ProductCard
+                  key={`plant-${item.plant.id}-${index}`}
+                  plant={toProductCardPlant(item.plant)}
+                  initialWishlisted={Boolean(initialWishlistState[buildWishlistKey('Plant', item.plant.id)])}
+                />
+              );
+            }
+
+            if (item.type === 'Material' && item.material) {
+              const materialId = item.material.materialId ?? item.material.id;
+              return (
+                <MaterialCard
+                  key={`material-${item.material.id}-${index}`}
+                  material={toMaterialCardMaterial(item.material)}
+                  initialWishlisted={Boolean(initialWishlistState[buildWishlistKey('Material', materialId)])}
+                />
+              );
+            }
+
+            if (item.type === 'Combo' && item.combo) {
+              return (
+                <ComboCard
+                  key={`combo-${item.combo.id}-${index}`}
+                  combo={item.combo}
+                  initialWishlisted={Boolean(initialWishlistState[buildWishlistKey('PlantCombo', item.combo.id)])}
+                />
+              );
+            }
+
+            return null;
+          })}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-white py-12">
+          <p className="mb-4 text-lg text-gray-600">{noProductsLabel}</p>
+        </div>
+      )}
+
+      <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-medium text-gray-700">{itemsPerPageLabel}</span>
+          <FormControl size="small" sx={{ minWidth: 88 }}>
+            <InputLabel id="unified-page-size-label">{itemsPerPageLabel}</InputLabel>
+            <Select
+              labelId="unified-page-size-label"
+              id="unified-page-size"
+              value={String(pageSize)}
+              label={itemsPerPageLabel}
+              onChange={handlePageSizeChange}
+            >
+              {PAGE_SIZE_OPTIONS.map((option) => (
+                <MenuItem key={option} value={String(option)}>
+                  {option}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </div>
+        <Pagination
+          count={totalPages}
+          page={Math.min(currentPage, totalPages)}
+          shape="rounded"
+          color="primary"
+          showFirstButton
+          showLastButton
+          renderItem={(item) => {
+            if (
+              item.type === 'start-ellipsis' ||
+              item.type === 'end-ellipsis' ||
+              item.page == null
+            ) {
+              return <PaginationItem {...item} />;
+            }
+
+            return (
+              <PaginationItem
+                {...item}
+                component={Link}
+                locale={locale}
+                href={buildPaginationHref(query, 'page', item.page)}
+                aria-label={
+                  item.type === 'previous'
+                    ? previousLabel
+                    : item.type === 'next'
+                      ? nextLabel
+                      : undefined
+                }
+              />
+            );
+          }}
+        />
+      </div>
+    </div>
+  );
+}

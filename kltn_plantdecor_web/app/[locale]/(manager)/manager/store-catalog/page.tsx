@@ -21,7 +21,7 @@ import { getMyManagerNursery } from '@/lib/api/managerStoreCatalogService';
 import type { ManagerNursery } from '@/types/manager-store-catalog.types';
 import type { ResponseModel } from '@/types/api.types';
 import CommonPlantTab from '@/components/manager-store-catalog/CommonPlantTab';
-import ComingSoonTab from '@/components/manager-store-catalog/ComingSoonTab';
+import ManagerPlantComboTab from '@/components/manager-store-catalog/ManagerPlantComboTab';
 import PlantInstanceManagerTab from '@/components/manager-store-catalog/PlantInstanceManagerTab';
 import ManagerMaterialTab from '@/components/store-management/MaterialTab';
 
@@ -202,10 +202,7 @@ export default function StoreCatalogPage() {
               <PlantInstanceManagerTab nurseryId={nursery?.id ?? null} />
             </TabPanel>
             <TabPanel value={tabValue} index={2}>
-              <ComingSoonTab
-                title="PlantCombo API pending"
-                description="This tab is prepared with the same integration structure as CommonPlant."
-              />
+              <ManagerPlantComboTab />
             </TabPanel>
             <TabPanel value={tabValue} index={3}>
               <ManagerMaterialTab mode="manager" />

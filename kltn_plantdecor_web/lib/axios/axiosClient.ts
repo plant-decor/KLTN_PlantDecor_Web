@@ -124,6 +124,21 @@ const shouldToastSuccess = (config: AuthAwareRequestConfig | undefined): boolean
   return method !== "GET" && method !== "HEAD" && method !== "OPTIONS";
 };
 
+const getDefaultSuccessMessage = (): string => {
+  return "Operation completed successfully.";
+};
+
+const shouldToastError = (
+  config: AuthAwareRequestConfig | undefined,
+  statusCode: number | undefined
+): boolean => {
+  return config?.showToast !== false && config?.showErrorToast !== false && statusCode !== 401;
+};
+
+const getDefaultErrorMessage = (): string => {
+  return "Request failed. Please try again.";
+};
+
 const isRefreshEndpoint = (url?: string): boolean => {
   return !!url?.includes("/Authentication/refreshToken");
 };
@@ -242,8 +257,8 @@ axiosClient.interceptors.response.use(
     if (isLoadingFlag) setLoading(false);
 
     const requestConfig = response.config as AuthAwareRequestConfig | undefined;
-    const message = extractMessage(response.data);
-    if (message && shouldToastSuccess(requestConfig)) {
+    if (shouldToastSuccess(requestConfig)) {
+      const message = extractMessage(response.data) || getDefaultSuccessMessage();
       toast.success(message);
     }
 
@@ -255,12 +270,8 @@ axiosClient.interceptors.response.use(
 
     const originalRequest = error?.config as AuthAwareRequestConfig | undefined;
     const statusCode = error?.response?.status as number | undefined;
-    const errorMessage = extractMessage(error?.response?.data);
-    const shouldShowErrorToast =
-      originalRequest?.showToast !== false &&
-      originalRequest?.showErrorToast !== false &&
-      statusCode !== 401;
-    if (errorMessage && shouldShowErrorToast) {
+    if (shouldToastError(originalRequest, statusCode)) {
+      const errorMessage = extractMessage(error?.response?.data) || getDefaultErrorMessage();
       toast.error(errorMessage);
     }
 

@@ -44,7 +44,6 @@ export default function PlantComboTab({}: PlantComboTabProps) {
   const {
     combos,
     comboPlants,
-    loading,
     saving,
     detailLoading,
     plantsLoading,
@@ -154,6 +153,10 @@ export default function PlantComboTab({}: PlantComboTabProps) {
     void setPageSize(rows);
   }, [setPageSize]);
 
+  const handlePlantSearch = useCallback((keyword: string) => {
+    void fetchComboPlants(keyword);
+  }, [fetchComboPlants]);
+
   return (
     <Box>
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
@@ -189,12 +192,12 @@ export default function PlantComboTab({}: PlantComboTabProps) {
         plants={comboPlants}
         plantsLoading={plantsLoading}
         tags={tagOptions}
+        onPlantSearch={handlePlantSearch}
         onClose={() => {
           setFormOpen(false);
           setEditingData(undefined);
         }}
         onSubmit={handleFormSubmit}
-        isLoading={saving || detailLoading || loading}
       />
 
       <PlantComboViewDialog

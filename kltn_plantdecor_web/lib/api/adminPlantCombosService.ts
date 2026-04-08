@@ -146,7 +146,7 @@ export const removePlantComboItem = async (
 
 export const searchAdminPlantsForCombo = async (
   data: AdminPlantSearchRequest,
-  loading = true
+  loading = false
 ): Promise<ResponseModel<AdminPlantSearchPayload>> => {
   return apiClient.post('/system/plants/search', data, loading);
 };

@@ -19,6 +19,7 @@ export interface Tag {
   "tagName": string,
   "tagType": number,
   "tagTypeName": string,
+  "index"?: number
 }
 
 export interface PlantInstance {

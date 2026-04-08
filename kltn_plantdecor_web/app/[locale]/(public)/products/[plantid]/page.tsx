@@ -22,7 +22,7 @@ interface PageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
-const FALLBACK_IMAGE = '/img/background-login.jpg';
+const FALLBACK_IMAGE = '/img/fallbackplant.avif';
 
 const getPayload = <T,>(response: { payload?: T; data?: T } | null | undefined): T | null => {
   if (!response) return null;

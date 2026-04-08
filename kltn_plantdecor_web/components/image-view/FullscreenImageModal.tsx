@@ -172,6 +172,7 @@ export default function FullscreenImageModal({
                 src={images[activeStep]}
                 alt={`${alt} ${activeStep + 1}`}
                 layout="fill"
+                loading='eager'
                 className="object-contain"
                 style={{
                   transform: `scale(${zoom})`,

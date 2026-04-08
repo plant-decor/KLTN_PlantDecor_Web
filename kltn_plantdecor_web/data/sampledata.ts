@@ -16,7 +16,7 @@ export interface Plant {
   "availableCommonQuantity"?: number,
   "totalAvailableStock"?: number,
   "categoryNames"?: Category[],
-  "tagNames"?: Tag[]
+  "tagNames"?: Tag[] | string[]
 }
 
 export interface SampleUser {

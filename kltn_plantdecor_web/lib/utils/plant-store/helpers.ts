@@ -25,6 +25,13 @@ import {
   toSingle,
 } from '@/lib/utils/plant-store/query';
 import { resolveSharedPageSize } from '@/lib/utils/plant-store/url';
+import type {
+  ShopUnifiedPagedItems,
+  ShopUnifiedSearchPayload,
+  ShopUnifiedSearchRequest,
+  UnifiedEnumGroup,
+  ShopUnifiedConfigPayload,
+} from '@/lib/api/shopUnifiedService';
 
 export const getActiveTab = (query: PlantStorePageQuery): PlantStoreTab => {
   const tab = toSingle(query.tab)?.toLowerCase();
@@ -156,3 +163,97 @@ export const getSelectedSort = (requestBody: ShopPlantSearchRequest) =>
 
 export const getSharedPageSize = (query: PlantStorePageQuery) =>
   resolveSharedPageSize(query);
+
+export const buildUnifiedShopRequestBody = (
+  query: PlantStorePageQuery
+): ShopUnifiedSearchRequest => {
+  const page = parsePositiveInt(toSingle(query.page), 1);
+  const pageSize = resolveSharedPageSize(query);
+  const sortByDirect = toSingle(query.sortBy)?.trim();
+  const sortDirectionDirect = toSingle(query.sortDirection)?.trim();
+  const sortCombined = toSingle(query.sort)?.trim() || '';
+  const [sortByCombined, sortDirectionCombined] = sortCombined.split(':');
+  const sortBy = sortByDirect || sortByCombined || 'CreatedAt';
+  const sortDirection = sortDirectionDirect || sortDirectionCombined || 'Desc';
+
+  const categoryIds = [...parseNumberArray(query.categoryIds), ...parseNumberArray(query.categoryId)];
+  const uniqueCategoryIds = [...new Set(categoryIds)];
+
+  const tagIdsFromArray = parseNumberArray(query.tagIds);
+  const tagIdsFromCsv = parseCsvStringArray(toSingle(query.tagIdsCsv))
+    .map((item) => Number(item))
+    .filter((item) => Number.isFinite(item) && item > 0);
+  const uniqueTagIds = [...new Set([...tagIdsFromArray, ...tagIdsFromCsv])];
+
+  const sizes = parseNumberArray(query.sizes);
+
+  const includePlants = parseBooleanOrUndefined(toSingle(query.includePlants));
+  const includeMaterials = parseBooleanOrUndefined(toSingle(query.includeMaterials));
+  const includeCombos = parseBooleanOrUndefined(toSingle(query.includeCombos));
+
+  return {
+    pagination: { pageNumber: page, pageSize },
+    keyword: toSingle(query.q)?.trim() || undefined,
+    minPrice:
+      parseIntOrUndefined(toSingle(query.minPrice)) ??
+      parseIntOrUndefined(toSingle(query.minBasePrice)),
+    maxPrice:
+      parseIntOrUndefined(toSingle(query.maxPrice)) ??
+      parseIntOrUndefined(toSingle(query.maxBasePrice)),
+    categoryIds: uniqueCategoryIds.length > 0 ? uniqueCategoryIds : undefined,
+    tagIds: uniqueTagIds.length > 0 ? uniqueTagIds : undefined,
+    petSafe: parseBooleanOrUndefined(toSingle(query.petSafe)),
+    childSafe: parseBooleanOrUndefined(toSingle(query.childSafe)),
+    comboSeason: parseIntOrUndefined(toSingle(query.comboSeason)),
+    comboType: parseIntOrUndefined(toSingle(query.comboType)),
+    placementType: parseIntOrUndefined(toSingle(query.placementType)),
+    careLevelType: parseIntOrUndefined(toSingle(query.careLevelType)),
+    careLevel: toSingle(query.careLevel)?.trim() || undefined,
+    toxicity: parseBooleanOrUndefined(toSingle(query.toxicity)),
+    airPurifying: parseBooleanOrUndefined(toSingle(query.airPurifying)),
+    hasFlower: parseBooleanOrUndefined(toSingle(query.hasFlower)),
+    isUniqueInstance: parseBooleanOrUndefined(toSingle(query.isUniqueInstance)),
+    sizes: sizes.length > 0 ? sizes : undefined,
+    fengShuiElement: parseIntOrUndefined(toSingle(query.fengShuiElement)),
+    nurseryId: parseIntOrUndefined(toSingle(query.nurseryId)),
+    sortBy,
+    sortDirection,
+    includePlants: includePlants ?? true,
+    includeMaterials: includeMaterials ?? true,
+    includeCombos: includeCombos ?? true,
+  };
+};
+
+export const getDefaultUnifiedItemsPayload = (
+  pageNumber: number,
+  pageSize: number
+): ShopUnifiedPagedItems => ({
+  items: [],
+  totalCount: 0,
+  pageNumber,
+  pageSize,
+  totalPages: 1,
+  hasPrevious: false,
+  hasNext: false,
+});
+
+export const getDefaultUnifiedSearchPayload = (
+  pageNumber: number,
+  pageSize: number
+): ShopUnifiedSearchPayload => ({
+  keyword: null,
+  items: getDefaultUnifiedItemsPayload(pageNumber, pageSize),
+  plantTotalCount: 0,
+  materialTotalCount: 0,
+  comboTotalCount: 0,
+});
+
+export const getUnifiedEnumValues = (groups: UnifiedEnumGroup[], key: string) =>
+  groups.find((item) => item.groupName === key)?.values ?? [];
+
+export const getUnifiedSelectedSort = (requestBody: ShopUnifiedSearchRequest) =>
+  `${requestBody.sortBy || ''}:${requestBody.sortDirection || ''}`;
+
+export const getUnifiedConfigPayload = (
+  response: { payload?: ShopUnifiedConfigPayload; data?: ShopUnifiedConfigPayload } | null | undefined
+) => getPayload<ShopUnifiedConfigPayload>(response);

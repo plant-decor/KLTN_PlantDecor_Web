@@ -66,7 +66,7 @@ const ExpertGuide = () => {
 
         {/* Khối hình ảnh bên phải */}
         <div className="flex-1 w-full">
-          <div className="relative aspect-[16/9] lg:aspect-square xl:aspect-[16/10] bg-[#a3b899] rounded-3xl flex items-center justify-center overflow-hidden">
+          <div className="relative aspect-video lg:aspect-square xl:aspect-video bg-[#a3b899] rounded-3xl flex items-center justify-center overflow-hidden">
              {/* Thay thế 'src' bằng đường dẫn ảnh thực tế của bạn */}
             <Image 
               src="/img/imageExpertGuideLandingPage.png" 

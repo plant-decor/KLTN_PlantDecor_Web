@@ -72,6 +72,7 @@ export default function ClickableImageViewer({
             className={className + ' object-contain'}
             priority={currentIndex === 0}
             layout="fill"
+            loading='eager'
             style={{
               transition: 'transform 0.3s ease-in-out',
             }}
@@ -160,6 +161,7 @@ export default function ClickableImageViewer({
             >
               <Image
                 src={image}
+                loading='eager'
                 alt={`${alt} ${index + 1}`}
                 layout="fill"
                 className="object-cover"

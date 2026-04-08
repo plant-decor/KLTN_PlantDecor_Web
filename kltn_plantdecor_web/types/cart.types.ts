@@ -3,13 +3,15 @@ import type { Plant } from '@/data/sampledata';
 export interface CartItem {
   id: number;
   cartId: number;
-  commonPlantId: number;
+  commonPlantId: number | null;
   price: number;
   productName: string;
   quantity: number;
   imageUrl: string | null;
   subtotal: number;
   createdAt?: string;
+  nurseryId?: number | null;
+  nurseryName?: string;
   nurseryMaterialId?: number | null;
   nurseryPlantComboId?: number | null;
 }

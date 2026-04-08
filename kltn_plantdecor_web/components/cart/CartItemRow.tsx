@@ -43,6 +43,7 @@ export default function CartItemRow({
             <Image
               src={item.imageUrl || '/img/fallbackplant.avif'}
               alt={item.productName}
+              loading='eager'
               fill
               style={{ objectFit: 'cover', borderRadius: 4 }}
             />
@@ -60,6 +61,11 @@ export default function CartItemRow({
                 {item.productName}
               </Typography>
             </Link>
+            {item.nurseryName && (
+              <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.25 }}>
+                Nursery: {item.nurseryName}
+              </Typography>
+            )}
           </Box>
         </Box>
       </TableCell>

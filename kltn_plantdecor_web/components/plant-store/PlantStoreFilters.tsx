@@ -1,8 +1,8 @@
 import { Link } from '@/i18n/navigation';
 import { Select } from '@mui/material';
 import type { CategoryResponse } from '@/lib/api/categoriesService';
-import type { PlantEnumValue, ShopNurserySearchPayload, ShopPlantSearchRequest } from '@/lib/api/shopPlantsService';
-import { FENG_SHUI_ELEMENT_OPTIONS } from '@/lib/utils/fengShui';
+import type { PlantEnumValue, ShopNurserySearchPayload } from '@/lib/api/shopPlantsService';
+import type { ShopUnifiedSearchRequest } from '@/lib/api/shopUnifiedService';
 
 interface PlantStoreFilterTexts {
   title: string;
@@ -25,37 +25,24 @@ interface PlantStoreFilterTexts {
   petSafe: string;
   childSafe: string;
   uniqueInstance: string;
-  sort: string;
+  includePlants: string;
+  includeMaterials: string;
+  includeCombos: string;
   apply: string;
   reset: string;
-  sortDefault: string;
-  sortNameAsc: string;
-  sortNameDesc: string;
-  sortPriceAsc: string;
-  sortPriceDesc: string;
-  sortNewest: string;
-  sortOldest: string;
-  sortUpdatedDesc: string;
-  sortUpdatedAsc: string;
-  sortSizeAsc: string;
-  sortSizeDesc: string;
-  sortCareLevelAsc: string;
-  sortCareLevelDesc: string;
-  sortAvailableDesc: string;
-  sortAvailableAsc: string;
 }
 
 interface PlantStoreFiltersProps {
   locale: string;
   pageSize: number;
-  requestBody: ShopPlantSearchRequest;
-  selectedSort: string;
+  requestBody: ShopUnifiedSearchRequest;
   categoryOptions: CategoryResponse[];
   selectedCategories: Set<number>;
   sizeOptions: PlantEnumValue[];
   selectedSizes: Set<number>;
   placementTypeOptions: PlantEnumValue[];
   careLevelTypeOptions: PlantEnumValue[];
+  fengShuiElementOptions: PlantEnumValue[];
   nurseriesPayload: ShopNurserySearchPayload;
   texts: PlantStoreFilterTexts;
 }
@@ -64,13 +51,13 @@ export default function PlantStoreFilters({
   locale,
   pageSize,
   requestBody,
-  selectedSort,
   categoryOptions,
   selectedCategories,
   sizeOptions,
   selectedSizes,
   placementTypeOptions,
   careLevelTypeOptions,
+  fengShuiElementOptions,
   nurseriesPayload,
   texts,
 }: PlantStoreFiltersProps) {
@@ -89,6 +76,39 @@ export default function PlantStoreFilters({
           placeholder={texts.searchByNamePlaceholder}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
         />
+      </div>
+
+      <div className="space-y-2">
+        <label className="flex items-center text-sm text-gray-700">
+          <input
+            type="checkbox"
+            name="includePlants"
+            value="true"
+            defaultChecked={requestBody.includePlants !== false}
+            className="mr-2"
+          />
+          {texts.includePlants}
+        </label>
+        <label className="flex items-center text-sm text-gray-700">
+          <input
+            type="checkbox"
+            name="includeMaterials"
+            value="true"
+            defaultChecked={requestBody.includeMaterials !== false}
+            className="mr-2"
+          />
+          {texts.includeMaterials}
+        </label>
+        <label className="flex items-center text-sm text-gray-700">
+          <input
+            type="checkbox"
+            name="includeCombos"
+            value="true"
+            defaultChecked={requestBody.includeCombos !== false}
+            className="mr-2"
+          />
+          {texts.includeCombos}
+        </label>
       </div>
 
       <div>
@@ -176,9 +196,9 @@ export default function PlantStoreFilters({
           </label>
           <input
             id="minBasePrice"
-            name="minBasePrice"
+            name="minPrice"
             type="number"
-            defaultValue={requestBody.minBasePrice ?? ''}
+            defaultValue={requestBody.minPrice ?? ''}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
           />
         </div>
@@ -188,9 +208,9 @@ export default function PlantStoreFilters({
           </label>
           <input
             id="maxBasePrice"
-            name="maxBasePrice"
+            name="maxPrice"
             type="number"
-            defaultValue={requestBody.maxBasePrice ?? ''}
+            defaultValue={requestBody.maxPrice ?? ''}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
           />
         </div>
@@ -210,9 +230,9 @@ export default function PlantStoreFilters({
           className="w-full border border-gray-300 rounded-lg text-sm"
         >
           <option value="">{texts.none}</option>
-          {FENG_SHUI_ELEMENT_OPTIONS.map((option) => (
+          {fengShuiElementOptions.map((option) => (
             <option key={option.value} value={String(option.value)}>
-              {option.label}
+              {option.name}
             </option>
           ))}
         </Select>
@@ -302,50 +322,22 @@ export default function PlantStoreFilters({
         </label>
       </div>
 
-      <div>
-        <label htmlFor="sort" className="font-semibold text-gray-900 mb-2 block">
-          {texts.sort}
-        </label>
-        <select
-          id="sort"
-          name="sort"
-          defaultValue={selectedSort}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-        >
-          <option value=":">{texts.sortDefault}</option>
-          <option value="name:asc">{texts.sortNameAsc}</option>
-          <option value="name:desc">{texts.sortNameDesc}</option>
-          <option value="basePrice:asc">{texts.sortPriceAsc}</option>
-          <option value="basePrice:desc">{texts.sortPriceDesc}</option>
-          <option value="createdAt:desc">{texts.sortNewest}</option>
-          <option value="createdAt:asc">{texts.sortOldest}</option>
-          <option value="updatedAt:desc">{texts.sortUpdatedDesc}</option>
-          <option value="updatedAt:asc">{texts.sortUpdatedAsc}</option>
-          <option value="size:asc">{texts.sortSizeAsc}</option>
-          <option value="size:desc">{texts.sortSizeDesc}</option>
-          <option value="careLevel:asc">{texts.sortCareLevelAsc}</option>
-          <option value="careLevel:desc">{texts.sortCareLevelDesc}</option>
-          <option value="availableInstances:desc">{texts.sortAvailableDesc}</option>
-          <option value="availableInstances:asc">{texts.sortAvailableAsc}</option>
-        </select>
-      </div>
-
-      <input type="hidden" name="tab" value="plants" />
       <input type="hidden" name="page" value="1" />
-      <input type="hidden" name="mPage" value="1" />
       <input type="hidden" name="pageSize" value={String(pageSize)} />
+      <input type="hidden" name="sortBy" value="CreatedAt" />
+      <input type="hidden" name="sortDirection" value="Desc" />
 
-      <div className="flex gap-2">
+      <div className="flex gap-1">
         <button
           type="submit"
-          className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium"
+          className="flex-1 bg-green-600 text-white! px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium"
         >
           {texts.apply}
         </button>
         <Link
-          href={`/plant-store?tab=plants&pageSize=${pageSize}`}
+          href={`/plant-store?pageSize=${pageSize}&includePlants=true&includeMaterials=true&includeCombos=true`}
           locale={locale}
-          className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors text-sm flex items-center"
+          className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors font-semibold flex items-center"
         >
           {texts.reset}
         </Link>

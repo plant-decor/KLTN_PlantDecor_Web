@@ -1,38 +1,36 @@
 'use client';
 
 import Image from 'next/image';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState, type MouseEvent } from 'react';
-import { Button, Drawer } from '@mui/material';
+import { useMemo, useState, useEffect, type MouseEvent } from 'react';
+import { Button, Chip, Drawer } from '@mui/material';
 import { FavoriteBorder as FavoriteBorderIcon, Favorite as FavoriteIcon } from '@mui/icons-material';
 import { useLocale, useTranslations } from 'next-intl';
-import { useAuthStore } from '@/lib/store/authStore';
-import { addMaterialToWishlist, removeItemFromWishlist } from '@/lib/api/cartWishlistService';
-import {
-  getMaterialNurseries,
-  type MaterialNursery,
-  type ShopMaterialListItem,
-} from '@/lib/api/shopMaterialsService';
+import type { ShopUnifiedComboItem } from '@/lib/api/shopUnifiedService';
 import { formatCurrency } from '@/lib/utils/formatUtil';
+import { useAuthStore } from '@/lib/store/authStore';
+import { getPlantComboNurseries, type ShopNurseryListItem } from '@/lib/api/shopPlantsService';
 import AddToCartButton from '@/components/cart/AddToCartButton';
+import { addComboToWishlist, removeItemFromWishlist } from '@/lib/api/cartWishlistService';
 
-interface MaterialCardProps {
-  material: ShopMaterialListItem;
+interface ComboCardProps {
+  combo: ShopUnifiedComboItem;
   initialWishlisted?: boolean;
 }
 
-export default function MaterialCard({ material, initialWishlisted = false }: MaterialCardProps) {
+export default function ComboCard({ combo, initialWishlisted = false }: ComboCardProps) {
   const router = useRouter();
   const locale = useLocale();
-  const { user } = useAuthStore();
   const tProducts = useTranslations('products');
   const tWishlist = useTranslations('wishlist');
   const tCommon = useTranslations('common');
+  const { user } = useAuthStore();
+  const availableQuantity = (combo.nurseries ?? []).reduce((sum, item) => sum + (item.quantity ?? 0), 0);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [nurseries, setNurseries] = useState<MaterialNursery[]>([]);
-  const [selectedNurseryMaterialId, setSelectedNurseryMaterialId] = useState<number | null>(null);
   const [isLoadingNurseries, setIsLoadingNurseries] = useState(false);
+  const [nurseries, setNurseries] = useState<ShopNurseryListItem[]>([]);
+  const [selectedNurseryComboId, setSelectedNurseryComboId] = useState<number | null>(null);
   const [isWishlisted, setIsWishlisted] = useState(initialWishlisted);
   const [isWishlistLoading, setIsWishlistLoading] = useState(false);
 
@@ -47,17 +45,22 @@ export default function MaterialCard({ material, initialWishlisted = false }: Ma
     const loadNurseries = async () => {
       setIsLoadingNurseries(true);
       try {
-        const response = await getMaterialNurseries(material.id, false, false);
+        const response = await getPlantComboNurseries(combo.id, false, false);
         if (!mounted) return;
 
         const payload = response.payload ?? response.data ?? [];
         setNurseries(payload);
-        setSelectedNurseryMaterialId(payload[0]?.nurseryMaterialId ?? null);
+
+        const firstComboId =
+          payload[0]?.nurseryPlantComboId ??
+          payload[0]?.id ??
+          null;
+        setSelectedNurseryComboId(firstComboId);
       } catch (error) {
-        console.error('Fetch material nurseries error:', error);
         if (!mounted) return;
+        console.error('Fetch combo nurseries error:', error);
         setNurseries([]);
-        setSelectedNurseryMaterialId(null);
+        setSelectedNurseryComboId(null);
       } finally {
         if (mounted) {
           setIsLoadingNurseries(false);
@@ -70,16 +73,20 @@ export default function MaterialCard({ material, initialWishlisted = false }: Ma
     return () => {
       mounted = false;
     };
-  }, [isDrawerOpen, material.id]);
+  }, [combo.id, isDrawerOpen]);
 
   const selectedNursery = useMemo(
-    () => nurseries.find((item) => item.nurseryMaterialId === selectedNurseryMaterialId) ?? null,
-    [nurseries, selectedNurseryMaterialId]
+    () =>
+      nurseries.find(
+        (nursery) => (nursery.nurseryPlantComboId ?? nursery.id) === selectedNurseryComboId
+      ) ?? null,
+    [nurseries, selectedNurseryComboId]
   );
 
   const handleOpenDrawer = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     event.stopPropagation();
+
     if (!user?.id) {
       router.push(`/${locale}/login`);
       return;
@@ -90,7 +97,7 @@ export default function MaterialCard({ material, initialWishlisted = false }: Ma
 
   const handleCloseDrawer = () => {
     setIsDrawerOpen(false);
-    setSelectedNurseryMaterialId(null);
+    setSelectedNurseryComboId(null);
   };
 
   const handleToggleWishlist = async (event: MouseEvent<HTMLButtonElement>) => {
@@ -106,49 +113,26 @@ export default function MaterialCard({ material, initialWishlisted = false }: Ma
       setIsWishlistLoading(true);
       const nextState = !isWishlisted;
       if (nextState) {
-        await addMaterialToWishlist(material.id);
+        await addComboToWishlist(combo.id);
       } else {
-        await removeItemFromWishlist('Material', material.id);
+        await removeItemFromWishlist('PlantCombo', combo.id);
       }
       setIsWishlisted(nextState);
     } catch (error) {
-      console.error('Toggle material wishlist error:', error);
+      console.error('Toggle combo wishlist error:', error);
     } finally {
       setIsWishlistLoading(false);
     }
   };
 
-  const isActionDisabled = isWishlistLoading;
-  const primaryActionButtonSx = {
-    textTransform: 'none',
-    whiteSpace: 'nowrap',
-    minHeight: 44,
-    px: 1.5,
-    fontSize: '0.95rem',
-    lineHeight: 1.2,
-    bgcolor: 'var(--primary)',
-    '&:hover': { bgcolor: '#45a049' },
-  };
-  const materialDescription = (
-    <>
-      <span>
-        {tProducts('material.brand')}: {material.brand || tCommon('noData')}
-      </span>
-      <br />
-      <span>
-        {tProducts('material.unit')}: {material.unit || tCommon('noData')}
-      </span>
-    </>
-  );
-
   return (
     <>
       <article className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow min-h-115 h-full flex flex-col">
-        <Link href={`/${locale}/materials/${material.id}`} className="block basis-[50%] shrink-0">
+        <Link href={`/combo/${combo.id}`} className="block basis-[50%] shrink-0">
           <div className="relative w-full h-full">
             <Image
-              src={material.primaryImageUrl || '/img/fallbackplant.avif'}
-              alt={material.name}
+              src={combo.imageUrl || '/img/fallbackplant.avif'}
+              alt={combo.name}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               className="object-cover"
@@ -158,16 +142,53 @@ export default function MaterialCard({ material, initialWishlisted = false }: Ma
         </Link>
 
         <div className="basis-[25%] min-h-0 p-4 sm:p-5 overflow-hidden">
-          <Link href={`/${locale}/materials/${material.id}`} className="block">
-            <h3 className="font-semibold text-gray-900 line-clamp-2">{material.name}</h3>
-            <p className="text-sm text-gray-600 mt-2 line-clamp-3">{materialDescription}</p>
-          </Link>
+          <div className="flex items-start justify-between gap-2">
+            <Link href={`/combo/${combo.id}`} className="block min-w-0">
+              <h3 className="font-semibold text-gray-900 line-clamp-2">{combo.name}</h3>
+            </Link>
+            {combo.comboTypeName ? (
+              <Chip
+                size="small"
+                label={combo.comboTypeName}
+                sx={{
+                  bgcolor: 'color-mix(in srgb, var(--primary) 14%, white)',
+                  color: 'var(--foreground)',
+                }}
+              />
+            ) : null}
+          </div>
+
+          <p className="text-sm text-gray-600 mt-2 line-clamp-3">
+            {combo.description || tCommon('noData')}
+          </p>
         </div>
 
         <div className="basis-[20%] min-h-0 sm:p-5 pt-0 flex flex-col justify-between">
-          <p className="text-green-600 font-bold text-lg">{formatCurrency(material.basePrice, locale)}</p>
+          <div className='flex justify-between items-center'>
+            <p className="text-green-600 font-bold text-lg">{formatCurrency(combo.price, locale)}</p>
+            <p className="text-sm text-gray-600">{tProducts('inStock')}: {availableQuantity}</p>
+          </div>
 
           <div className="grid grid-cols-2 gap-2">
+            {/* <div className="sm:flex-1">
+              <Button
+                component={Link}
+                href={`/combo/${combo.id}`}
+                variant="outlined"
+                size="medium"
+                fullWidth
+                sx={{
+                  textTransform: 'none',
+                  whiteSpace: 'nowrap',
+                  minHeight: 44,
+                  px: 1.5,
+                  fontSize: '0.95rem',
+                  lineHeight: 1.2,
+                }}
+              >
+                {tProducts('productDetail')}
+              </Button>
+            </div> */}
             <div>
               <Button
                 onClick={handleToggleWishlist}
@@ -176,7 +197,7 @@ export default function MaterialCard({ material, initialWishlisted = false }: Ma
                 fullWidth
                 startIcon={isWishlisted ? <FavoriteIcon /> : <FavoriteBorderIcon />}
                 color={isWishlisted ? 'error' : 'inherit'}
-                disabled={isActionDisabled}
+                disabled={isWishlistLoading}
                 sx={{
                   textTransform: 'none',
                   whiteSpace: 'nowrap',
@@ -195,8 +216,20 @@ export default function MaterialCard({ material, initialWishlisted = false }: Ma
                 variant="contained"
                 size="medium"
                 fullWidth
-                disabled={isActionDisabled}
-                sx={primaryActionButtonSx}
+                sx={{
+                  textTransform: 'none',
+                  whiteSpace: 'nowrap',
+                  minHeight: 44,
+                  px: 1.5,
+                  fontSize: '0.95rem',
+                  lineHeight: 1.2,
+                  bgcolor: 'var(--primary)',
+                  color: 'var(--primary-foreground)',
+                  '&:hover': {
+                    bgcolor: 'var(--primary)',
+                    filter: 'brightness(0.95)',
+                  },
+                }}
               >
                 {tProducts('addToCartCompact')}
               </Button>
@@ -208,21 +241,23 @@ export default function MaterialCard({ material, initialWishlisted = false }: Ma
       <Drawer anchor="right" open={isDrawerOpen} onClose={handleCloseDrawer}>
         <div className="w-96 max-w-[92vw] p-4 space-y-4">
           <h3 className="text-lg font-semibold text-gray-900">{tProducts('nurseryDrawer.selectNursery')}</h3>
-          <p className="text-sm text-gray-600">{material.name}</p>
+          <p className="text-sm text-gray-600">{combo.name}</p>
 
           {isLoadingNurseries ? (
             <p className="text-sm text-gray-500">{tProducts('nurseryDrawer.loadingNurseries')}</p>
           ) : nurseries.length === 0 ? (
-            <p className="text-sm text-gray-500">{tProducts('nurseryDrawer.noMaterialNursery')}</p>
+            <p className="text-sm text-gray-500">{tProducts('nurseryDrawer.noNurseries')}</p>
           ) : (
             <div className="space-y-2 max-h-80 overflow-auto pr-1">
               {nurseries.map((nursery) => {
-                const isSelected = selectedNurseryMaterialId === nursery.nurseryMaterialId;
+                const nurseryComboId = nursery.nurseryPlantComboId ?? nursery.id;
+                const isSelected = selectedNurseryComboId === nurseryComboId;
+
                 return (
                   <button
-                    key={nursery.nurseryMaterialId}
+                    key={`${nursery.id}-${nurseryComboId}`}
                     type="button"
-                    onClick={() => setSelectedNurseryMaterialId(nursery.nurseryMaterialId)}
+                    onClick={() => setSelectedNurseryComboId(nurseryComboId)}
                     className={`w-full text-left rounded-lg border p-3 transition-colors ${
                       isSelected
                         ? 'border-green-600 bg-green-50'
@@ -240,8 +275,8 @@ export default function MaterialCard({ material, initialWishlisted = false }: Ma
 
           <AddToCartButton
             item={{
-              id: material.id,
-              name: material.name,
+              id: combo.id,
+              name: combo.name,
             }}
             maxQuantity={99}
             assumeInStock
@@ -250,7 +285,9 @@ export default function MaterialCard({ material, initialWishlisted = false }: Ma
             cartItemTarget={
               selectedNursery
                 ? {
-                    nurseryMaterialId: selectedNursery.nurseryMaterialId,
+                    nurseryPlantComboId:
+                      selectedNursery.nurseryPlantComboId ??
+                      selectedNursery.id,
                   }
                 : undefined
             }
@@ -263,6 +300,7 @@ export default function MaterialCard({ material, initialWishlisted = false }: Ma
           </div>
         </div>
       </Drawer>
+      
     </>
   );
 }

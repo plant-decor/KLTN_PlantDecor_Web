@@ -16,6 +16,7 @@
     "viewAll": "Xem tất cả",
     "learnMore": "Tìm hiểu thêm",
     "noData": "Không có dữ liệu",
+    "noTags": "Không có thẻ nào",
     "action": "Hành động",
     "view": "Xem",
     "menu": "Menu"
@@ -161,6 +162,9 @@
       "petSafe": "An toàn cho thú cưng",
       "childSafe": "An toàn cho trẻ em",
       "uniqueInstance": "Cá thể độc bản",
+      "includePlants": "Hiển thị cây",
+      "includeMaterials": "Hiển thị vật tư",
+      "includeCombos": "Hiển thị combo",
       "sort": "Sắp xếp",
       "apply": "Áp dụng"
     },
@@ -182,10 +186,12 @@
       "availableAsc": "Sẵn có tăng dần"
     },
     "result": {
+      "foundProducts": "Tìm thấy {count} sản phẩm",
       "foundPlants": "Tìm thấy {count} cây",
       "foundMaterials": "Tìm thấy {count} vật tư",
       "itemsPerPage": "Số mục mỗi trang",
       "pageOf": "Trang {current}/{total}",
+      "noProducts": "Không tìm thấy sản phẩm phù hợp",
       "noPlants": "Không có cây phù hợp bộ lọc",
       "clearFilters": "Xóa bộ lọc",
       "noMaterials": "Không tìm thấy vật tư"
@@ -506,7 +512,22 @@
     "addToCart": "Thêm vào giỏ",
     "addToWishlist": "Thêm vào yêu thích",
     "addToWishlistCompact": "Yêu thích",
-    "subtitle": "Bạn có {count} sản phẩm trong wishlist"
+    "subtitle": "Bạn có {count} sản phẩm trong wishlist",
+    "noItemsOnPage": "Không có sản phẩm ở trang {page}.",
+    "typePlant": "Loại: Cây",
+    "typePlantInstance": "Loại: Cây cụ thể",
+    "typePlantCombo": "Loại: Combo cây",
+    "typeMaterial": "Loại: Vật tư",
+    "nursery": "Nhà vườn",
+    "quantity": "Số lượng",
+    "createdAt": "Thêm lúc",
+    "additionalInfo": "Thông tin thêm",
+    "proceedToCheckout": "Tiến hành thanh toán",
+    "selectNursery": "Chọn nhà vườn",
+    "loadingNurseries": "Đang tải danh sách nhà vườn...",
+    "noNurseries": "Không có nhà vườn khả dụng.",
+    "confirmAddToCart": "Thêm vào giỏ",
+    "pageIndicator": "Trang {current} / {total}"
   },
   "productDetail": {
     "home": "Trang chủ",

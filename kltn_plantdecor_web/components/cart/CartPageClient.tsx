@@ -15,7 +15,9 @@ import {
   updateCartItemQuantity,
   type CartApiItem,
 } from '@/lib/api/cartWishlistService';
+import { searchShopNurseries } from '@/lib/api/shopPlantsService';
 import { notifyCartUpdated } from '@/lib/utils/cartEvents';
+import { useTranslations } from 'next-intl';
 
 interface CartPageClientProps {
   userid: string;
@@ -41,12 +43,56 @@ const toCartItem = (item: CartApiItem): CartItem => ({
   id: item.id,
   cartId: item.cartId,
   commonPlantId: item.commonPlantId,
+  nurseryId: item.nurseryId,
   quantity: item.quantity,
   productName: item.productName,
   price: item.price,
   imageUrl: item.imageUrl,
-  subtotal: item.price * item.quantity,
+  subtotal: item.subTotal ?? item.subtotal ?? item.price * item.quantity,
 });
+
+const NURSERY_PAGE_SIZE = 100;
+
+const fetchNurseryNameMap = async (nurseryIds: number[]): Promise<Record<number, string>> => {
+  const uniqueNurseryIds = [...new Set(nurseryIds.filter((id) => Number.isFinite(id) && id > 0))];
+
+  if (uniqueNurseryIds.length === 0) {
+    return {};
+  }
+
+  const idSet = new Set(uniqueNurseryIds);
+  const nurseryNameMap: Record<number, string> = {};
+  let pageNumber = 1;
+  let hasNext = true;
+
+  while (hasNext) {
+    const response = await searchShopNurseries(
+      {
+        pagination: {
+          pageNumber,
+          pageSize: NURSERY_PAGE_SIZE,
+        },
+      },
+      false,
+      false
+    );
+
+    const payload = response.payload ?? response.data;
+    const nurseryItems = payload?.items ?? [];
+
+    nurseryItems.forEach((nursery) => {
+      if (idSet.has(nursery.id) && nursery.name) {
+        nurseryNameMap[nursery.id] = nursery.name;
+      }
+    });
+
+    const hasMissingNursery = uniqueNurseryIds.some((id) => !nurseryNameMap[id]);
+    hasNext = Boolean(payload?.hasNext) && hasMissingNursery;
+    pageNumber += 1;
+  }
+
+  return nurseryNameMap;
+};
 
 export default function CartPageClient({ userid }: CartPageClientProps) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -56,7 +102,7 @@ export default function CartPageClient({ userid }: CartPageClientProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
   const [deleteItemId, setDeleteItemId] = useState<number | null>(null);
-
+  const tCart = useTranslations('cart');
   const loadCart = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -64,7 +110,19 @@ export default function CartPageClient({ userid }: CartPageClientProps) {
       const items = await fetchCartItems();
       console.log('Fetched cart items:', items);
       if (items.payload) {
-        setCartItems(items.payload.items.map(toCartItem));
+        const mappedCartItems = items.payload.items.map(toCartItem);
+        const nurseryNameMap = await fetchNurseryNameMap(
+          mappedCartItems
+            .map((item) => item.nurseryId)
+            .filter((nurseryId): nurseryId is number => typeof nurseryId === 'number')
+        );
+
+        setCartItems(
+          mappedCartItems.map((item) => ({
+            ...item,
+            nurseryName: item.nurseryId ? nurseryNameMap[item.nurseryId] : undefined,
+          }))
+        );
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load cart';
@@ -177,7 +235,7 @@ export default function CartPageClient({ userid }: CartPageClientProps) {
           mb: 4,
         }}
       >
-        Shopping Cart
+        {tCart('title')}
       </Typography>
 
       <Grid container spacing={3}>

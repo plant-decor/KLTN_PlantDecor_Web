@@ -14,6 +14,7 @@ import type {
   PlantInstanceListQuery,
   PlantSummaryItem,
   ManagerNursery,
+  UpdateMyManagerNurseryRequest,
   ManagerPlantComboListPayload,
   ManagerPlantComboOperationPayload,
   ManagerPlantComboOperationRequest,
@@ -42,6 +43,13 @@ export const getMyManagerNursery = async (
   loading = true
 ): Promise<ResponseModel<ManagerNursery>> => {
   return apiClient.get('/manager/Nurseries/my-nursery', undefined, loading);
+};
+
+export const updateMyManagerNursery = async (
+  request: UpdateMyManagerNurseryRequest,
+  loading = true
+): Promise<ResponseModel<ManagerNursery>> => {
+  return apiClient.patch('/admin/my-nursery', request, loading);
 };
 
 export const getManagerCommonPlants = async (

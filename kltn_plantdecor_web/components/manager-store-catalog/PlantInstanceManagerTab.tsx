@@ -270,11 +270,10 @@ export default function PlantInstanceManagerTab({ nurseryId }: PlantInstanceMana
     setSubmitting(true);
     try {
       await updateManagerPlantInstanceStatus(instanceId, { status }, true);
-      toast.success('Plant instance status updated successfully');
       await fetchPlantInstances(pagination.pageNumber, pagination.pageSize, selectedStatusFilter);
       await fetchPlantSummary();
-    } catch (submitError) {
-      toast.error(getErrorMessage(submitError, 'Failed to update status'));
+    } catch {
+      // Error toast is handled globally by axios interceptor.
     } finally {
       setSubmitting(false);
     }
@@ -294,13 +293,12 @@ export default function PlantInstanceManagerTab({ nurseryId }: PlantInstanceMana
         },
         true
       );
-      toast.success('Batch status update successful');
       setSelectedIds([]);
       setBatchStatus('');
       await fetchPlantInstances(pagination.pageNumber, pagination.pageSize, selectedStatusFilter);
       await fetchPlantSummary();
-    } catch (submitError) {
-      toast.error(getErrorMessage(submitError, 'Batch status update failed'));
+    } catch {
+      // Error toast is handled globally by axios interceptor.
     } finally {
       setSubmitting(false);
     }
@@ -354,17 +352,15 @@ export default function PlantInstanceManagerTab({ nurseryId }: PlantInstanceMana
         }
       }
 
-      if (!hasUploadError) {
-        toast.success('Plant instance created successfully');
-      } else {
+      if (hasUploadError) {
         toast.warning('Plant instance created with partial image upload errors');
       }
 
       setCreateOpen(false);
       await fetchPlantInstances(1, pagination.pageSize, selectedStatusFilter);
       await fetchPlantSummary();
-    } catch (submitError) {
-      toast.error(getErrorMessage(submitError, 'Failed to create plant instance'));
+    } catch {
+      // Error toast is handled globally by axios interceptor.
     } finally {
       setSubmitting(false);
     }

@@ -66,8 +66,7 @@ export default function StoreManagementPageClient({
   };
 
   return (
-    <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', py: 4 }}>
-      <Container maxWidth="xl">
+    <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', p: 4 }}>
         {/* Header */}
         <Stack spacing={2} sx={{ mb: 4 }}>
           <Typography variant="h4" fontWeight="700" color="primary">
@@ -141,7 +140,6 @@ export default function StoreManagementPageClient({
             </TabPanel>
           </Box>
         </Paper>
-      </Container>
     </Box>
   );
 }

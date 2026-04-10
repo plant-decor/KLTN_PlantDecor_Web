@@ -85,7 +85,7 @@ export default function ProductDetailClient({ plant }: ProductDetailClientProps)
             : 'bg-green-600 hover:bg-green-700 active:scale-95'
         }`}
       >
-        {isLoading ? 'Đang xử lý...' : plant.stock === 0 ? 'Hết hàng' : '➕ Thêm vào Cây của tôi'}
+        {isLoading ? 'Đang xử lý...' : plant.stock === 0 ? 'Hết hàng' : ' + Thêm vào Cây của tôi'}
       </button> */}
 
       {/* Feedback Message */}
@@ -101,7 +101,7 @@ export default function ProductDetailClient({ plant }: ProductDetailClientProps)
 
       {/* Info Text */}
       <p className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
-        ℹ️ Các cây bạn thêm sẽ được lưu trong phần "Cây của tôi" để bạn quản lý và chăm sóc chi tiết.
+        Các cây bạn thêm sẽ được lưu trong phần "Cây của tôi" để bạn quản lý và chăm sóc chi tiết.
       </p>
     </div>
   );

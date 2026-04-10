@@ -737,7 +737,7 @@ function AdminMaterialMode() {
           sx={{ ...hoverLiftStyle }}
           className="bg-primary!"
         >
-          Add material
+          TẠO VẬT TƯ MỚI
         </Button>
       </Stack>
 

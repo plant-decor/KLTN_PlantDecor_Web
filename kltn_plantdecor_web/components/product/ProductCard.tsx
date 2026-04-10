@@ -37,6 +37,8 @@ interface ProductCardProps {
   wishlistItemId?: number;
   onRemoveFromWishlist?: (itemType: WishlistItemType, itemId: number) => void;
   initialWishlisted?: boolean;
+  showNewBadge?: boolean;
+  newBadgeLabel?: string;
 }
 
 type PendingAction = 'cart' | 'wishlist-add' | 'wishlist-remove' | null;
@@ -50,6 +52,8 @@ export default function ProductCard({
   wishlistItemId,
   onRemoveFromWishlist,
   initialWishlisted = false,
+  showNewBadge = false,
+  newBadgeLabel,
 }: ProductCardProps) {
   const primaryActionButtonSx = {
     textTransform: 'none',
@@ -392,6 +396,11 @@ export default function ProductCard({
             className="object-cover"
             loading='eager'
           />
+          {showNewBadge ? (
+            <span className="absolute right-3 top-3 rounded-full bg-green-600 px-3 py-1 text-xs font-semibold text-white shadow">
+              {newBadgeLabel ?? tProducts('new')}
+            </span>
+          ) : null}
         </div>
         <div className="basis-[25%] min-h-0 space-y-1 sm:p-5 flex flex-col overflow-hidden">
           <h3 className="font-semibold text-gray-900">{plant.name}</h3>

@@ -29,7 +29,6 @@ import AutorenewIcon from '@mui/icons-material/Autorenew';
 import EditIcon from '@mui/icons-material/Edit';
 import ToggleOnIcon from '@mui/icons-material/ToggleOn';
 import ToggleOffIcon from '@mui/icons-material/ToggleOff';
-import { toast } from 'react-toastify';
 import {
   createManagerCommonPlant,
   getAvailableImportCommonPlants,
@@ -172,8 +171,7 @@ export default function CommonPlantTab({ nurseryId }: CommonPlantTabProps) {
       const nextItems = payload?.items ?? [];
       setAvailablePlants(nextItems);
       return nextItems;
-    } catch (fetchError) {
-      toast.error(getErrorMessage(fetchError, 'Failed to load available import plants'));
+    } catch {
       setAvailablePlants([]);
       return [] as AvailableImportCommonPlantItem[];
     } finally {
@@ -199,12 +197,11 @@ export default function CommonPlantTab({ nurseryId }: CommonPlantTabProps) {
     setSubmitting(true);
     try {
       await createManagerCommonPlant(nurseryId, importForm, true);
-      toast.success('Common plant imported successfully');
       setImportOpen(false);
       setImportForm(DEFAULT_IMPORT_FORM);
       await fetchCommonPlants(1, pagination.pageSize);
-    } catch (submitError) {
-      toast.error(getErrorMessage(submitError, 'Import failed'));
+    } catch {
+      // Error toast is handled globally by axios interceptor.
     } finally {
       setSubmitting(false);
     }
@@ -228,13 +225,12 @@ export default function CommonPlantTab({ nurseryId }: CommonPlantTabProps) {
     setSubmitting(true);
     try {
       await updateManagerCommonPlant(nurseryId, editingItem.id, editForm, true);
-      toast.success('Common plant updated successfully');
       setEditOpen(false);
       setEditingItem(null);
       setEditForm(DEFAULT_EDIT_FORM);
       await fetchCommonPlants();
-    } catch (submitError) {
-      toast.error(getErrorMessage(submitError, 'Update failed'));
+    } catch {
+      // Error toast is handled globally by axios interceptor.
     } finally {
       setSubmitting(false);
     }
@@ -253,12 +249,11 @@ export default function CommonPlantTab({ nurseryId }: CommonPlantTabProps) {
     setSubmitting(true);
     try {
       await toggleManagerCommonPlantActive(nurseryId, toggleItem.id, true);
-      toast.success(toggleItem.isActive ? 'Common plant deactivated' : 'Common plant activated');
       setToggleOpen(false);
       setToggleItem(null);
       await fetchCommonPlants();
-    } catch (submitError) {
-      toast.error(getErrorMessage(submitError, 'Toggle status failed'));
+    } catch {
+      // Error toast is handled globally by axios interceptor.
     } finally {
       setSubmitting(false);
     }

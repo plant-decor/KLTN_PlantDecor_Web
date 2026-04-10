@@ -14,6 +14,9 @@ import type {
   PlantInstanceListQuery,
   PlantSummaryItem,
   ManagerNursery,
+  ManagerPlantComboListPayload,
+  ManagerPlantComboOperationPayload,
+  ManagerPlantComboOperationRequest,
   PaginatedPayload,
   PaginationQuery,
   SystemPlantSearchPayload,
@@ -136,6 +139,8 @@ export const uploadManagerPlantInstanceThumbnail = async (
   formData.append('file', file);
 
   return apiClient.post(`/manager/plant-instances/${instanceId}/thumbnail`, formData, loading, {
+    showToast: false,
+    showErrorToast: false,
     headers: {
       'Content-Type': 'multipart/form-data',
     },
@@ -151,6 +156,8 @@ export const uploadManagerPlantInstanceImages = async (
   files.forEach((file) => formData.append('files', file));
 
   return apiClient.post(`/manager/plant-instances/${instanceId}/images`, formData, loading, {
+    showToast: false,
+    showErrorToast: false,
     headers: {
       'Content-Type': 'multipart/form-data',
     },
@@ -182,5 +189,28 @@ export const searchSystemPlants = async (
   request: SystemPlantSearchRequest,
   loading = true
 ): Promise<ResponseModel<SystemPlantSearchPayload>> => {
-  return apiClient.post('/system/plants/search', request, loading);
+  return apiClient.post('/system/plants/search', request, loading, { showToast: false });
+};
+
+export const getManagerPlantCombos = async (
+  query?: PaginationQuery,
+  loading = true
+): Promise<ResponseModel<ManagerPlantComboListPayload>> => {
+  return apiClient.get('/manager/plant-combos', buildPaginationParams(query), loading);
+};
+
+export const assembleManagerPlantCombo = async (
+  comboId: number,
+  request: ManagerPlantComboOperationRequest,
+  loading = true,
+): Promise<ResponseModel<ManagerPlantComboOperationPayload>> => {
+  return apiClient.post(`/manager/plant-combos/${comboId}/assemble`, request, loading );
+};
+
+export const decomposeManagerPlantCombo = async (
+  comboId: number,
+  request: ManagerPlantComboOperationRequest,
+  loading = true
+): Promise<ResponseModel<ManagerPlantComboOperationPayload>> => {
+  return apiClient.post(`/manager/plant-combos/${comboId}/decompose`, request, loading);
 };

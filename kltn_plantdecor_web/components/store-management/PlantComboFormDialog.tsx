@@ -39,6 +39,7 @@ import type {
 } from '@/types/store-management.types';
 import { FENG_SHUI_ELEMENT_OPTIONS } from '@/lib/utils/fengShui';
 import { formatCurrency, formatCurrencyInput, parseCurrencyInput } from '@/lib/utils/formatUtil';
+import Image from 'next/image';
 
 interface OptionItem {
   id: number;
@@ -141,7 +142,7 @@ export default function PlantComboFormDialog({
   const [selectedPlantMap, setSelectedPlantMap] = useState<Record<number, string>>({});
   const lastSearchedKeywordRef = useRef<string | null>(null);
   const searchRootRef = useRef<HTMLDivElement | null>(null);
-
+  const fallbackImage = '/img/fallbackplant.avif'
   const plantOptions = useMemo(() => {
     return plants.map((item) => ({ id: item.id, name: item.name }));
   }, [plants]);
@@ -597,27 +598,27 @@ export default function PlantComboFormDialog({
             <ClickAwayListener onClickAway={() => setSearchOpen(false)}>
               <Box ref={searchRootRef} sx={{ position: 'relative', mb: 2, backgroundColor: '#f5f5f5' }}>
                 <TextField
-              placeholder={tCommon('searchPlaceholder')}
-              variant="standard"
-              fullWidth
-              value={keyword}
-              onFocus={() => {
-                if (hasKeyword) {
-                  setSearchOpen(true);
-                }
-              }}
-              onChange={(event) => {
-                setKeyword(event.target.value);
-              }}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon fontSize="small" sx={{ color: 'var(--foreground)' }} />
-                    </InputAdornment>
-                  ),
-                },
-              }}
+                  placeholder={tCommon('searchPlaceholder')}
+                  variant="standard"
+                  fullWidth
+                  value={keyword}
+                  onFocus={() => {
+                    if (hasKeyword) {
+                      setSearchOpen(true);
+                    }
+                  }}
+                  onChange={(event) => {
+                    setKeyword(event.target.value);
+                  }}
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchIcon fontSize="small" sx={{ color: 'var(--foreground)' }} />
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
                   sx={{ mb: 0 }}
                 />
 
@@ -651,32 +652,69 @@ export default function PlantComboFormDialog({
                             },
                           }}
                         >
-                          <ListItemText
-                            primary={
-                              <Box className="flex items-center gap-2">
-                                <Chip
-                                  size="small"
-                                  label="Plant"
-                                  sx={{
-                                    height: 22,
-                                    fontSize: '0.7rem',
-                                    bgcolor: 'color-mix(in srgb, var(--primary) 18%, white)',
-                                    color: 'var(--foreground)',
-                                  }}
-                                />
-                                <Typography variant="body2" sx={{ color: 'var(--foreground)', fontWeight: 500 }}>
-                                  {plant.name}
-                                </Typography>
-                              </Box>
-                            }
-                            secondary={
-                              Number.isFinite(plant.basePrice) ? (
-                                <Typography component="span" variant="caption" sx={{ color: 'var(--foreground)' }}>
+                          <Box
+                            sx={{
+                              width: '10%',
+                              minWidth: 0,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+
+                            }}
+                          >
+                            <Image
+                              src={plant.primaryImageUrl ?? fallbackImage}
+                              alt={plant.name}
+                              width={40}
+                              height={40}
+                              style={{ borderRadius: 4, objectFit: 'cover' }}
+                            />
+                            <Chip
+                              size="small"
+                              label="Plant"
+                              sx={{
+                                height: 22,
+                                fontSize: '0.7rem',
+                                bgcolor: 'color-mix(in srgb, var(--primary) 18%, white)',
+                                color: 'var(--foreground)',
+                              }}
+                            />
+                          </Box>
+                          <Box sx={{ width: '90%', minWidth: 0, display: 'flex', alignItems: 'center' }}>
+                            <ListItemText
+                              primary={
+                                <Box className="flex items-center gap-2">
+                                  <Typography
+                                    variant="body2"
+                                    sx={{
+                                      color: 'var(--foreground)',
+                                      fontWeight: 500,
+                                      fontSize: '14px',
+                                      display: '-webkit-box',
+                                      WebkitLineClamp: 2,
+                                      WebkitBoxOrient: 'vertical',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      whiteSpace: 'normal',
+                                    }}
+                                  >                                  {plant.name}
+                                  </Typography>
+                                </Box>
+                              }
+                              secondary={
+                                plant.basePrice ? (
+                                  <Typography
+                                    component="span"
+                                    variant="caption"
+                                    sx={{ color: 'var(--foreground)', fontSize: '12px', fontWeight: 700 }}
+                                  >                                    
                                   {formatCurrency(plant.basePrice, locale)}
-                                </Typography>
-                              ) : null
-                            }
-                          />
+                                  </Typography>
+                                ) : null
+                              }
+                            />
+                          </Box>
                         </ListItemButton>
                       ))}
 

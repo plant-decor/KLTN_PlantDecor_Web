@@ -17,7 +17,6 @@ interface ComboDetailPageProps {
 }
 
 const FALLBACK_IMAGE = '/img/fallbackplant.avif';
-
 const getPayload = <T,>(response: { payload?: T; data?: T } | null | undefined): T | null => {
   if (!response) return null;
   return response.payload ?? response.data ?? null;
@@ -47,6 +46,7 @@ export default async function ComboDetailPage({ params }: ComboDetailPageProps) 
   const { locale, comboId } = await params;
   const tCommon = await getTranslations({ locale, namespace: 'common' });
   const tProducts = await getTranslations({ locale, namespace: 'products' });
+  const tCombo = await getTranslations({ locale, namespace: 'combo' });
   const numericComboId = Number(comboId);
 
   if (!Number.isFinite(numericComboId) || numericComboId <= 0) {
@@ -121,7 +121,7 @@ export default async function ComboDetailPage({ params }: ComboDetailPageProps) 
             </div>
 
             {comboDescription ? (
-              <div>
+            <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Description</h3>
                 <p className="text-gray-600 leading-relaxed">{comboDescription}</p>
               </div>
@@ -150,7 +150,7 @@ export default async function ComboDetailPage({ params }: ComboDetailPageProps) 
 
             {themeDescription ? (
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Theme description</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">{tCombo("description")}</h3>
                 <p className="text-gray-600 leading-relaxed">{themeDescription}</p>
               </div>
             ) : null}

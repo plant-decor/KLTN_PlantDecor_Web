@@ -121,95 +121,98 @@ export default function StoreCatalogPage() {
 
   return (
     <Box sx={{ py: 3, minHeight: '100%' }}>
-      <Container maxWidth="xl">
-        <Stack spacing={2} sx={{ mb: 3 }}>
-          <Typography variant="h4" fontWeight={700}>
-            Manager Store Catalog
-          </Typography>
-          {loadingNursery ? (
-            <Stack direction="row" spacing={1} alignItems="center">
-              <CircularProgress size={18} />
-              <Typography variant="body2" color="text.secondary">
-                Loading nursery information...
-              </Typography>
-            </Stack>
-          ) : nurserySummary ? (
-            <Paper
-              elevation={0}
-              sx={{ border: '1px solid var(--card-border)', borderRadius: 2, p: 2, backgroundColor: 'var(--primary)' }}
-            >
-              <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} justifyContent="space-between">
-                <Box>
-                  <Typography variant="h6" fontWeight={700}>
-                    {nurserySummary.name}
-                  </Typography>
-                  <Typography variant="body2" fontWeight={600}>
-                    Manager: {nurserySummary.manager}
-                  </Typography>
-                  <Typography variant="body2" fontWeight={600}>
-                    {nurserySummary.address}
-                  </Typography>
-                </Box>
-                <Stack direction="row" spacing={1} flexWrap="wrap" alignItems="center" fontWeight={650}>
-                  <Chip label={`Plants: ${nurserySummary.totalPlants}`} sx={{ bgcolor: '#ecfff3' }} />
-                  <Chip label={`Materials: ${nurserySummary.totalMaterials}`} sx={{ bgcolor: '#ecf7ff' }} />
-                  <Chip
-                    label={nurserySummary.isActive ? 'Nursery Active' : 'Nursery Inactive'}
-                    color={nurserySummary.isActive ? 'success' : 'default'}
-                    variant="outlined"
-                    sx={{bgcolor: "#ecfff3"}}
-                  />
-                </Stack>
-              </Stack>
-            </Paper>
-          ) : null}
-
-          {nurseryError && <Alert severity="error">{nurseryError}</Alert>}
-        </Stack>
-
-        <Paper elevation={0} sx={{ border: '1px solid var(--card-border)', borderRadius: 2 }}>
-          <Tabs
-            value={tabValue}
-            onChange={(_, value) => setTabValue(value)}
-            variant="scrollable"
-            scrollButtons="auto"
-            sx={{
-              borderBottom: '1px solid var(--card-border)',
-              '& .MuiTab-root': {
-                textTransform: 'none',
-                fontWeight: 600,
-                minHeight: 56,
-              },
-              '& .Mui-selected': {
-                color: 'var(--primary) !important',
-              },
-              '& .MuiTabs-indicator': {
-                backgroundColor: 'var(--primary)',
-              },
-            }}
+      <Stack spacing={2} sx={{ mb: 4 }}>
+        <Typography variant="h4" fontWeight="700" color="primary">
+          Quản Lý Hàng Hóa
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          Quản lý dữ liệu chính của cây, combo, mẫu cây và vật tư tiêu hao
+        </Typography>
+      </Stack>
+      <Stack spacing={2} sx={{ mb: 3 }}>
+        {loadingNursery ? (
+          <Stack direction="row" spacing={1} alignItems="center">
+            <CircularProgress size={18} />
+            <Typography variant="body2" color="text.secondary">
+              Loading nursery information...
+            </Typography>
+          </Stack>
+        ) : nurserySummary ? (
+          <Paper
+            elevation={0}
+            sx={{ border: '1px solid var(--card-border)', borderRadius: 2, p: 2, backgroundColor: 'var(--primary)' }}
           >
-            <Tab icon={<ParkOutlinedIcon />} iconPosition="start" label="CommonPlant" />
-            <Tab icon={<SpaOutlinedIcon />} iconPosition="start" label="PlantInstance" />
-            <Tab icon={<WidgetsOutlinedIcon />} iconPosition="start" label="PlantCombo" />
-            <Tab icon={<Inventory2OutlinedIcon />} iconPosition="start" label="Material" />
-          </Tabs>
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} justifyContent="space-between">
+              <Box>
+                <Typography variant="h6" fontWeight={700}>
+                  {nurserySummary.name}
+                </Typography>
+                <Typography variant="body2" fontWeight={600}>
+                  Manager: {nurserySummary.manager}
+                </Typography>
+                <Typography variant="body2" fontWeight={600}>
+                  {nurserySummary.address}
+                </Typography>
+              </Box>
+              <Stack direction="row" spacing={1} flexWrap="wrap" alignItems="center" fontWeight={650}>
+                <Chip label={`Plants: ${nurserySummary.totalPlants}`} sx={{ bgcolor: '#ecfff3' }} />
+                <Chip label={`Materials: ${nurserySummary.totalMaterials}`} sx={{ bgcolor: '#ecf7ff' }} />
+                <Chip
+                  label={nurserySummary.isActive ? 'Nursery Active' : 'Nursery Inactive'}
+                  color={nurserySummary.isActive ? 'success' : 'default'}
+                  variant="outlined"
+                  sx={{ bgcolor: "#ecfff3" }}
+                />
+              </Stack>
+            </Stack>
+          </Paper>
+        ) : null}
 
-          <Box sx={{ p: 2 }}>
-            <TabPanel value={tabValue} index={0}>
-              <CommonPlantTab nurseryId={nursery?.id ?? null} />
-            </TabPanel>
-            <TabPanel value={tabValue} index={1}>
-              <PlantInstanceManagerTab nurseryId={nursery?.id ?? null} />
-            </TabPanel>
-            <TabPanel value={tabValue} index={2}>
-              <ManagerPlantComboTab />
-            </TabPanel>
-            <TabPanel value={tabValue} index={3}>
-              <ManagerMaterialTab mode="manager" />
-            </TabPanel>
-          </Box>
-        </Paper>
-      </Container>
+        {nurseryError && <Alert severity="error">{nurseryError}</Alert>}
+      </Stack>
+
+      <Paper elevation={0} sx={{ border: '1px solid var(--card-border)', borderRadius: 2 }}>
+        <Tabs
+          value={tabValue}
+          onChange={(_, value) => setTabValue(value)}
+          variant="scrollable"
+          scrollButtons="auto"
+          sx={{
+            borderBottom: '1px solid var(--card-border)',
+            '& .MuiTab-root': {
+              textTransform: 'none',
+              fontWeight: 600,
+              minHeight: 56,
+            },
+            '& .Mui-selected': {
+              color: 'var(--primary) !important',
+            },
+            '& .MuiTabs-indicator': {
+              backgroundColor: 'var(--primary)',
+            },
+          }}
+        >
+          <Tab icon={<ParkOutlinedIcon />} iconPosition="start" label="CommonPlant" />
+          <Tab icon={<SpaOutlinedIcon />} iconPosition="start" label="PlantInstance" />
+          <Tab icon={<WidgetsOutlinedIcon />} iconPosition="start" label="PlantCombo" />
+          <Tab icon={<Inventory2OutlinedIcon />} iconPosition="start" label="Material" />
+        </Tabs>
+
+        <Box sx={{ p: 2 }}>
+          <TabPanel value={tabValue} index={0}>
+            <CommonPlantTab nurseryId={nursery?.id ?? null} />
+          </TabPanel>
+          <TabPanel value={tabValue} index={1}>
+            <PlantInstanceManagerTab nurseryId={nursery?.id ?? null} />
+          </TabPanel>
+          <TabPanel value={tabValue} index={2}>
+            <ManagerPlantComboTab />
+          </TabPanel>
+          <TabPanel value={tabValue} index={3}>
+            <ManagerMaterialTab mode="manager" />
+          </TabPanel>
+        </Box>
+      </Paper>
     </Box>
   );
 }

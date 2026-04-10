@@ -6,8 +6,7 @@ import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import CartBadge from '@/components/cart/CartBadge';
 import LanguageSwitcher from './LanguageSwitcher';
-import { InputAdornment, TextField } from '@mui/material';
-import { Search as SearchIcon } from '@mui/icons-material';
+import HeaderUnifiedSearch from './HeaderUnifiedSearch';
 import { getCategoryTree, type CategoryResponse } from '@/lib/api/categoriesService';
 import {
   Home as HomeIcon,
@@ -90,7 +89,6 @@ export default function Navigation({ initialStoreCategories = [] }: NavigationPr
   const { user, clearAll } = useAuthStore();
   const tNav = useTranslations('nav');
   const tAuth = useTranslations('auth');
-  const tCommon = useTranslations('common');
   const tUserMenu = useTranslations('headerUserMenu');
 
   const getUserMenuLabel = (href: string) => {
@@ -287,9 +285,6 @@ export default function Navigation({ initialStoreCategories = [] }: NavigationPr
                   {isStoreHoverOpen && (
                     <div className="absolute left-0 top-full z-50 w-96 pt-2">
                       <div className="rounded-xl border border-gray-100 bg-white p-3 shadow-xl">
-                        <div className="mb-2 border-b border-gray-100 pb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                          Categories
-                        </div>
                         {filteredStoreCategories.length > 0 ? (
                           renderStoreCategoryTree(filteredStoreCategories)
                         ) : (
@@ -325,19 +320,7 @@ export default function Navigation({ initialStoreCategories = [] }: NavigationPr
         {isMenuOpen && (
           <div className="md:hidden pb-4 space-y-1 border-t border-gray-100">
             <div className="pt-3 px-2">
-              <TextField
-                variant="outlined"
-                size="small"
-                fullWidth
-                placeholder={tCommon('searchPlaceholder')}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon className="text-gray-400" fontSize="small" />
-                    </InputAdornment>
-                  ),
-                }}
-              />
+              <HeaderUnifiedSearch width="100%" onNavigate={() => setIsMenuOpen(false)} />
             </div>
 
             <div className="pt-2">

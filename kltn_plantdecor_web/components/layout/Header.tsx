@@ -10,11 +10,11 @@ import LanguageSwitcher from './LanguageSwitcher';
 import { Link } from '@/i18n/navigation';
 import { GUEST_ACTIONS, USER_MENU_ITEMS } from '@/lib/constants/header';
 import { logoutAction } from '@/app/actions/loginAction';
-import { InputAdornment, TextField } from '@mui/material';
-import { Search as SearchIcon, ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
+import { ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
 import { useTranslations } from 'next-intl';
 import type { CategoryResponse } from '@/lib/api/categoriesService';
 import Image from 'next/image';
+import HeaderUnifiedSearch from './HeaderUnifiedSearch';
 
 const USER_MENU_LABEL_KEYS: Record<string, string> = {
   '/profile/[userid]': 'profile',
@@ -56,7 +56,6 @@ export default function Header({ initialStoreCategories = [] }: HeaderProps) {
   const avatarLabel = user?.name ? user.name.charAt(0).toUpperCase() : 'U';
   const [hasAvatarImageError, setHasAvatarImageError] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const t = useTranslations('common');
   const tAuth = useTranslations('auth');
   const tUserMenu = useTranslations('headerUserMenu');
 
@@ -106,21 +105,7 @@ export default function Header({ initialStoreCategories = [] }: HeaderProps) {
             {/* Right side: Search + Language + Cart + User */}
             <div className="flex items-center gap-2 lg:gap-4">
               {/* Search Bar — narrower on tablet, wider on desktop */}
-              <TextField
-                id="search"
-                variant="standard"
-                placeholder={t('searchPlaceholder')}
-                sx={{ m: 1, width: { md: '18ch', lg: '28ch' } }}
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchIcon className="text-gray-500" />
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-              />
+              <HeaderUnifiedSearch />
 
               {/* Language Switcher */}
               <LanguageSwitcher />

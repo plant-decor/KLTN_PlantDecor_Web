@@ -38,8 +38,10 @@ interface OrderDetailModalProps {
   order: Order | null;
   loading: boolean;
   error: string;
-  retryLoadingPaymentId: number | null;
-  onRetryPayment: (paymentId: number) => Promise<void>;
+  retryLoadingOrderId: number | null;
+  cancelLoadingOrderId: number | null;
+  onRetryPayment: (orderId: number) => Promise<void>;
+  onCancelOrder: (orderId: number) => Promise<void>;
   onClose: () => void;
 }
 
@@ -48,13 +50,17 @@ export default function OrderDetailModal({
   order,
   loading,
   error,
-  retryLoadingPaymentId,
+  retryLoadingOrderId,
+  cancelLoadingOrderId,
   onRetryPayment,
+  onCancelOrder,
   onClose,
 }: OrderDetailModalProps) {
   const tOrderHistory = useTranslations('orderHistory');
   const statusInfo = order ? getStatusInfo(order.statusName) : null;
-  const retryPaymentId = order?.statusName === 'Pending' ? order.id : null;
+  const retryOrderId = order?.statusName === 'Pending' ? order.id : null;
+  const canCancelOrder = order?.statusName === 'Pending' || order?.statusName === 'DepositPaid';
+  const isCancelling = !!order && cancelLoadingOrderId === order.id;
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -254,15 +260,15 @@ export default function OrderDetailModal({
                     <Typography variant="body1" fontWeight="bold" sx={{ mt: 1 }}>
                       {formatCurrency(invoice.totalAmount)}
                     </Typography>
-                    {invoice.statusName === 'Pending' && retryPaymentId !== null ? (
+                    {invoice.statusName === 'Pending' && retryOrderId !== null ? (
                       <Button
                         variant="contained"
                         size="small"
                         sx={{ mt: 1.5 }}
-                        onClick={() => void onRetryPayment(retryPaymentId)}
-                        disabled={retryLoadingPaymentId === retryPaymentId}
+                        onClick={() => void onRetryPayment(retryOrderId)}
+                        disabled={retryLoadingOrderId === retryOrderId || isCancelling}
                       >
-                        {retryLoadingPaymentId === retryPaymentId
+                        {retryLoadingOrderId === retryOrderId
                           ? tOrderHistory('retryingPayment')
                           : tOrderHistory('retryPayment')}
                       </Button>
@@ -276,6 +282,16 @@ export default function OrderDetailModal({
       </DialogContent>
 
       <DialogActions>
+        {order && canCancelOrder ? (
+          <Button
+            variant="outlined"
+            color="error"
+            onClick={() => void onCancelOrder(order.id)}
+            disabled={isCancelling || retryLoadingOrderId === order.id}
+          >
+            {isCancelling ? 'Cancelling...' : 'Cancel order'}
+          </Button>
+        ) : null}
         <Button onClick={onClose} variant="outlined">
           Close
         </Button>
@@ -283,3 +299,4 @@ export default function OrderDetailModal({
     </Dialog>
   );
 }
+

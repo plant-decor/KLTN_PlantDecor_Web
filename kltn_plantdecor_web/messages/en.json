@@ -18,7 +18,8 @@
     "noData": "No data available",
     "action": "Action",
     "view": "View",
-    "menu": "Menu"
+    "menu": "Menu",
+    "noTags": "No tags"
   },
   "auth": {
     "login": "Login",
@@ -147,6 +148,7 @@
       "searchByNamePlaceholder": "Search by name...",
       "placementType": "Placement type",
       "careLevelType": "Care level type",
+      "season": "Season",
       "all": "All",
       "minPrice": "Min price",
       "maxPrice": "Max price",
@@ -160,6 +162,9 @@
       "petSafe": "Pet safe",
       "childSafe": "Child safe",
       "uniqueInstance": "Unique instance",
+      "includePlants": "Include plants",
+      "includeMaterials": "Include materials",
+      "includeCombos": "Include combos",
       "sort": "Sort",
       "apply": "Apply"
     },
@@ -181,10 +186,12 @@
       "availableAsc": "Available asc"
     },
     "result": {
+      "foundProducts": "Found {count} products",
       "foundPlants": "Found {count} plants",
       "foundMaterials": "Found {count} materials",
       "itemsPerPage": "Items per page",
       "pageOf": "Page {current}/{total}",
+      "noProducts": "No products found",
       "noPlants": "No plants match your filters",
       "clearFilters": "Clear Filters",
       "noMaterials": "No materials found"
@@ -505,7 +512,22 @@
     "addToCart": "Add to cart",
     "addToWishlist": "Add to wishlist",
     "addToWishlistCompact": "Wishlist",
-    "subtitle": "You have {count} items in your wishlist"
+    "subtitle": "You have {count} items in your wishlist",
+    "noItemsOnPage": "No items on page {page}.",
+    "typePlant": "Type: Plant",
+    "typePlantInstance": "Type: Plant Instance",
+    "typePlantCombo": "Type: Plant Combo",
+    "typeMaterial": "Type: Material",
+    "nursery": "Nursery",
+    "quantity": "Quantity",
+    "createdAt": "Added at",
+    "additionalInfo": "Details",
+    "proceedToCheckout": "Proceed to checkout",
+    "selectNursery": "Select nursery",
+    "loadingNurseries": "Loading nurseries...",
+    "noNurseries": "No nurseries available.",
+    "confirmAddToCart": "Add to cart",
+    "pageIndicator": "Page {current} / {total}"
   },
   "productDetail": {
     "home": "Home",

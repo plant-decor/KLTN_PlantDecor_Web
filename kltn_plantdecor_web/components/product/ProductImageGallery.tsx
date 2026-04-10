@@ -50,6 +50,7 @@ export default function ProductImageGallery({
         <Image
           src={images[0]}
           alt={plantName}
+          loading='eager'
           fill
           className="object-cover"
           style={{
@@ -153,6 +154,7 @@ export default function ProductImageGallery({
                 src={img}
                 alt={`${plantName} ${idx + 1}`}
                 fill
+                loading='eager'
                 className="object-cover"
                 style={{
                   transition: 'transform 0.3s ease-in-out',

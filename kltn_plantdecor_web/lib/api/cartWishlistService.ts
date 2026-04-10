@@ -17,16 +17,19 @@ export interface CartApiItemResponse {
 
 export interface CartApiItem {
   cartId: number;
-  commonPlantId: number;
-  createAt: string;
-  updateAt: string;
+  commonPlantId: number | null;
+  createdAt?: string;
+  createAt?: string;
+  updateAt?: string;
   id: number;
-  nurseryMaterialId: number;
-  nurseryPlantComboId: number;
+  nurseryId?: number | null;
+  nurseryMaterialId: number | null;
+  nurseryPlantComboId: number | null;
   price: number;
   productName: string;
   quantity: number;
   subtotal: number;
+  subTotal?: number;
   imageUrl: string | null;
 }
 
@@ -38,19 +41,21 @@ export interface AddCartItemRequest {
 }
 
 export type WishlistItemType =
-  | 'CommonPlant'
+  | 'Plant'
   | 'PlantInstance'
-  | 'NurseryPlantCombo'
-  | 'NurseryMaterial';
+  | 'PlantCombo'
+  | 'Material';
 
 export interface WishlistListItem {
   id: number;
   itemType: WishlistItemType;
   itemId: number;
+  plantId?: number;
+  nurseryName?: string;
   itemName: string;
   itemImageUrl: string | null;
   price: number;
-  quantity: number;
+  quantity: number | null;
   additionalInfo: string;
   createdAt: string;
 }
@@ -120,27 +125,38 @@ const unwrapResponse = (response: unknown): unknown => {
 
 const parseWishlistItemType = (value: unknown): WishlistItemType => {
   const raw = toStringSafe(value);
-  if (raw === 'PlantInstance') return 'PlantInstance';
-  if (raw === 'NurseryPlantCombo') return 'NurseryPlantCombo';
-  if (raw === 'NurseryMaterial') return 'NurseryMaterial';
-  return 'CommonPlant';
+  if (raw === 'PlantInstance' || raw === '1') return 'PlantInstance';
+  if (raw === 'PlantCombo' || raw === 'NurseryPlantCombo' || raw === '2') return 'PlantCombo';
+  if (raw === 'Material' || raw === 'NurseryMaterial' || raw === '3') return 'Material';
+  return 'Plant';
 };
 
 const normalizeWishlistItem = (item: UnknownRecord): WishlistListItem => {
   const id = toNumber(item.id);
-  const itemId = toNumber(item.itemId ?? item.commonPlantId ?? item.id);
+  const itemId = toNumber(
+    item.itemId ?? item.commonPlantId ?? item.plantInstanceId ?? item.materialId ?? item.comboId ?? item.id
+  );
   const itemType = parseWishlistItemType(item.itemType);
   const itemName = toStringSafe(item.itemName ?? item.name, `Item #${itemId || id}`);
   const itemImageUrl = toStringSafe(item.itemImageUrl ?? item.imageUrl, DEFAULT_IMAGE);
+  const rawQuantity = item.quantity;
+  const quantity =
+    typeof rawQuantity === 'number' || typeof rawQuantity === 'string'
+      ? Math.max(0, toNumber(rawQuantity))
+      : null;
+  const plantId = toNumber(item.plantId);
+  const nurseryName = toStringSafe(item.nurseryName);
 
   return {
     id,
     itemType,
     itemId,
+    ...(plantId > 0 ? { plantId } : {}),
+    ...(nurseryName ? { nurseryName } : {}),
     itemName,
     itemImageUrl,
     price: toNumber(item.price),
-    quantity: Math.max(0, toNumber(item.quantity)),
+    quantity,
     additionalInfo: toStringSafe(item.additionalInfo),
     createdAt: toStringSafe(item.createdAt),
   };
@@ -232,7 +248,9 @@ export const clearCartItems = async (): Promise<void> => {
 };
 
 export const fetchWishlistItems = async (
-  params: FetchWishlistParams = {}
+  params: FetchWishlistParams = {},
+  isServer = false,
+  loading = false
 ): Promise<WishlistPagedPayload> => {
   const query: Record<string, number> = {
     PageNumber: Math.max(1, params.pageNumber ?? 1),
@@ -250,8 +268,8 @@ export const fetchWishlistItems = async (
   const response = await get<unknown>(
     '/Wishlist',
     query,
-    false,
-    false
+    isServer,
+    loading
   );
 
   return normalizeWishlistPayload(response);
@@ -265,7 +283,19 @@ export const addItemToWishlist = async (
 };
 
 export const addPlantToWishlist = async (plantId: number): Promise<void> => {
-  await addItemToWishlist('CommonPlant', plantId);
+  await addItemToWishlist('Plant', plantId);
+};
+
+export const addMaterialToWishlist = async (materialId: number): Promise<void> => {
+  await addItemToWishlist('Material', materialId);
+};
+
+export const addComboToWishlist = async (comboId: number): Promise<void> => {
+  await addItemToWishlist('PlantCombo', comboId);
+};
+
+export const addPlantInstanceToWishlist = async (plantInstanceId: number): Promise<void> => {
+  await addItemToWishlist('PlantInstance', plantInstanceId);
 };
 
 export const removeItemFromWishlist = async (
@@ -276,18 +306,20 @@ export const removeItemFromWishlist = async (
 };
 
 export const removePlantFromWishlist = async (plantId: number): Promise<void> => {
-  await removeItemFromWishlist('CommonPlant', plantId);
+  await removeItemFromWishlist('Plant', plantId);
 };
 
 export const checkWishlistItem = async (
   itemType: WishlistItemType,
-  itemId: number
+  itemId: number,
+  isServer = false,
+  loading = false
 ): Promise<boolean> => {
   const response = await get<unknown>(
     `/Wishlist/${itemType}/${itemId}/check`,
     undefined,
-    false,
-    false
+    isServer,
+    loading
   );
   const unwrapped = unwrapResponse(response);
 
@@ -308,5 +340,100 @@ export const checkWishlistItem = async (
 };
 
 export const checkWishlistPlantInStock = async (plantId: number): Promise<boolean> => {
-  return checkWishlistItem('CommonPlant', plantId);
+  return checkWishlistItem('Plant', plantId);
+};
+
+interface WishlistNurseryCandidate {
+  nurseryId?: number | null;
+}
+
+interface WishlistPlantInstanceCandidate {
+  plantInstanceId?: number | null;
+}
+
+const extractNurseryIds = (response: unknown): number[] => {
+  const unwrapped = unwrapResponse(response);
+  const items = Array.isArray(unwrapped)
+    ? unwrapped
+    : isRecord(unwrapped) && Array.isArray(unwrapped.items)
+      ? unwrapped.items
+      : [];
+
+  return items
+    .filter(isRecord)
+    .map((item) => toNumber((item as WishlistNurseryCandidate).nurseryId))
+    .filter((value) => value > 0);
+};
+
+const extractPlantInstanceIds = (response: unknown): number[] => {
+  const unwrapped = unwrapResponse(response);
+  const payload = isRecord(unwrapped) ? unwrapped : {};
+  const items = Array.isArray(payload.items) ? payload.items : [];
+
+  return items
+    .filter(isRecord)
+    .map((item) => toNumber((item as WishlistPlantInstanceCandidate).plantInstanceId))
+    .filter((value) => value > 0);
+};
+
+export const checkWishlistPlantInstanceByPlantId = async (
+  plantId: number,
+  isServer = false,
+  loading = false
+): Promise<boolean> => {
+  if (!Number.isFinite(plantId) || plantId <= 0) {
+    return false;
+  }
+
+  try {
+    const nurseryResponse = await get<unknown>(
+      `/plants/${plantId}/nurseries`,
+      undefined,
+      isServer,
+      loading
+    );
+    const nurseryIds = extractNurseryIds(nurseryResponse);
+
+    if (nurseryIds.length === 0) {
+      return false;
+    }
+
+    const instanceSearches = await Promise.allSettled(
+      nurseryIds.map((nurseryId) =>
+        post<unknown>(
+          `/shop/nurseries/${nurseryId}/plant-instances/search`,
+          {
+            pagination: {
+              pageNumber: 1,
+              pageSize: 100,
+            },
+            nurseryId,
+            plantId,
+          },
+          isServer,
+          loading
+        )
+      )
+    );
+
+    const instanceIds = instanceSearches.flatMap((result) =>
+      result.status === 'fulfilled' ? extractPlantInstanceIds(result.value) : []
+    );
+    const uniqueInstanceIds = Array.from(new Set(instanceIds));
+
+    if (uniqueInstanceIds.length === 0) {
+      return false;
+    }
+
+    const checks = await Promise.allSettled(
+      uniqueInstanceIds.map((instanceId) =>
+        checkWishlistItem('PlantInstance', instanceId, isServer, loading)
+      )
+    );
+
+    return checks.some((result) => result.status === 'fulfilled' && result.value);
+  } catch (error) {
+    console.error('Check wishlist plant-instance by plant error:', error);
+    return false;
+  }
 };

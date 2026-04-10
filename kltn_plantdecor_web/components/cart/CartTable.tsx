@@ -14,6 +14,7 @@ import {
 } from '@mui/material';
 import type { CartItem } from '@/types/cart.types';
 import CartItemRow from './CartItemRow';
+import { useTranslations } from 'next-intl';
 
 interface CartTableProps {
   items: CartItem[];
@@ -30,7 +31,7 @@ export default function CartTable({
   onRemove,
   onClearCart,
 }: CartTableProps) {
-  
+  const tCart = useTranslations('cart');
   return (
     <>
       <TableContainer component={Paper} sx={{ boxShadow: 1 }}>
@@ -83,7 +84,7 @@ export default function CartTable({
           }}
           onClick={onClearCart}
         >
-          Clear Cart
+          {tCart('clearCart')}
         </Button>
       </Box>
     </>

@@ -20,17 +20,21 @@ import { formatCurrency, formatDate, getStatusInfo } from './orderHistoryUtils';
 interface OrderHistoryListProps {
   orders: Order[];
   loading: boolean;
-  retryLoadingPaymentId: number | null;
+  retryLoadingOrderId: number | null;
+  cancelLoadingOrderId: number | null;
   onViewDetail: (orderId: number) => void;
-  onRetryPayment: (paymentId: number) => Promise<void>;
+  onRetryPayment: (orderId: number) => Promise<void>;
+  onCancelOrder: (orderId: number) => Promise<void>;
 }
 
 export default function OrderHistoryList({
   orders,
   loading,
-  retryLoadingPaymentId,
+  retryLoadingOrderId,
+  cancelLoadingOrderId,
   onViewDetail,
   onRetryPayment,
+  onCancelOrder,
 }: OrderHistoryListProps) {
   const tOrderHistory = useTranslations('orderHistory');
 
@@ -63,8 +67,10 @@ export default function OrderHistoryList({
         const statusInfo = getStatusInfo(order.statusName);
         const displayItems = order.items.slice(0, 2);
         const remainingItems = order.items.length - displayItems.length;
-        const retryPaymentId = order.statusName === 'Pending' ? order.id : null;
-        const isRetrying = retryPaymentId !== null && retryLoadingPaymentId === retryPaymentId;
+        const retryOrderId = order.statusName === 'Pending' ? order.id : null;
+        const isRetrying = retryOrderId !== null && retryLoadingOrderId === retryOrderId;
+        const canCancelOrder = order.statusName === 'Pending' || order.statusName === 'DepositPaid';
+        const isCancelling = canCancelOrder && cancelLoadingOrderId === order.id;
 
         return (
           <Card key={order.id} sx={{ boxShadow: 2, '&:hover': { boxShadow: 4 } }}>
@@ -139,8 +145,8 @@ export default function OrderHistoryList({
               <Box
                 sx={{
                   display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
+                  alignItems: 'end',
+                  justifyContent:'space-between',
                   flexWrap: 'wrap',
                   gap: 2,
                 }}
@@ -153,6 +159,7 @@ export default function OrderHistoryList({
                     {formatCurrency(order.totalAmount)}
                   </Typography>
                 </Box>
+                <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
                 <Button
                   variant="outlined"
                   size="small"
@@ -161,16 +168,28 @@ export default function OrderHistoryList({
                 >
                   {tOrderHistory('viewDetail')}
                 </Button>
-                {retryPaymentId !== null ? (
+                {retryOrderId !== null ? (
                   <Button
                     variant="contained"
                     size="small"
-                    onClick={() => void onRetryPayment(retryPaymentId)}
-                    disabled={isRetrying}
+                    onClick={() => void onRetryPayment(retryOrderId)}
+                    disabled={isRetrying || isCancelling}
                   >
                     {isRetrying ? tOrderHistory('retryingPayment') : tOrderHistory('retryPayment')}
                   </Button>
                 ) : null}
+                {canCancelOrder ? (
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    size="small"
+                    onClick={() => void onCancelOrder(order.id)}
+                    disabled={isCancelling || isRetrying}
+                  >
+                    {isCancelling ? 'Cancelling...' : 'Cancel order'}
+                  </Button>
+                ) : null}
+                </Box>
               </Box>
             </CardContent>
           </Card>
@@ -179,3 +198,4 @@ export default function OrderHistoryList({
     </Box>
   );
 }
+

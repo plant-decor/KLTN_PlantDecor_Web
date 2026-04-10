@@ -43,7 +43,8 @@ export interface ShopPlantListItem {
   availableCommonQuantity: number;
   totalAvailableStock: number;
   categoryNames: Category[];
-  tagNames: Tag[];
+  description?: string;
+  tagNames: Tag[] | string[];
 }
 
 export interface ShopPlantSearchPayload {

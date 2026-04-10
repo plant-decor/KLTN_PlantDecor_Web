@@ -103,3 +103,26 @@ export interface CustomerProfile {
   receiveNotifications?: boolean;
   profileCompleteness?: number;
 }
+
+export type UserGender = 'Unknown' | 'Male' | 'Female' | 'Other';
+
+export interface UserProfile extends CustomerProfile {
+  nurseryId?: number;
+  nurseryName?: string;
+  fullName?: string;
+  birthYear?: number;
+  gender?: UserGender | number | string;
+  latitude?: number;
+  longitude?: number;
+}
+
+export interface UpdateUserProfileRequest {
+  userName: string;
+  fullName: string;
+  address: string;
+  birthYear: number;
+  gender: UserGender;
+  latitude: number;
+  longitude: number;
+  receiveNotifications: boolean;
+}

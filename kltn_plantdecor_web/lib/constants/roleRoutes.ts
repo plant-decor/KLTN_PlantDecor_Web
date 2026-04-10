@@ -2,6 +2,7 @@ export const ROLE_TO_ROUTES: Record<string, string[]> = {
   Admin: [
     "admin",
     "manager",
+    "nursery-profile",
     "staff",
     "caretaker",
     "shipper",
@@ -15,6 +16,7 @@ export const ROLE_TO_ROUTES: Record<string, string[]> = {
   ],
   Manager: [
     "manager",
+    "nursery-profile",
     "staff",
     "caretaker",
     "shipper",
@@ -73,6 +75,7 @@ export const ROLE_TO_ROUTES: Record<string, string[]> = {
 export const ROUTE_TO_ROLES: Record<string, string[]> = {
   admin: ["Admin"],
   manager: ["Admin", "Manager"],
+  "nursery-profile": ["Admin", "Manager"],
   staff: ["Admin", "Manager", "Staff"],
   caretaker: ["Admin", "Manager", "Caretaker"],
   shipper: ["Admin", "Manager", "Shipper"],

@@ -1,4 +1,4 @@
-import type { UserRole } from '@/lib/constants/header';
+﻿import type { UserRole } from '@/lib/constants/header';
 
 export interface SidebarItem {
   label: string;
@@ -48,6 +48,7 @@ export const SIDEBAR_ITEMS_BY_ROLE: Record<UserRole, SidebarItem[]> = {
     { label: 'Số liệu cửa hàng', href: '/manager/store-metrics', icon: 'metrics' },
     { label: 'Danh mục cửa hàng', href: '/manager/store-catalog', icon: 'catalog' },
     { label: 'Người dùng cửa hàng', href: '/manager/store-users', icon: 'users' },
+    { label: 'Thông tin vựa', href: '/manager/nursery-profile', icon: 'inventory' },
     { label: 'Đơn hàng bán', href: '/manager/sales-orders', icon: 'orders' },
     { label: 'Đơn dịch vụ', href: '/manager/service-orders', icon: 'services' },
     { label: 'Thanh toán cửa hàng', href: '/manager/store-payment', icon: 'payment' },

@@ -103,6 +103,7 @@
     "storeCatalog": "Store Catalog",
     "categoriesTags": "Categories & Tags",
     "storeUsers": "Store Users",
+    "nurseryProfile": "Nursery Profile",
     "salesOrders": "Sales Orders",
     "serviceOrders": "Service Orders",
     "storePayment": "Store Payment",
@@ -505,7 +506,46 @@
     "changePasswordSuccess": "Password changed successfully",
     "changePasswordError": "Error changing password"
   },
-  "wishlist": {
+  "managerNurseryProfile": {
+    "title": "Nursery Information",
+    "subtitle": "Manage your manager profile and nursery information in one place.",
+    "loadingProfile": "Loading manager profile...",
+    "loadingNursery": "Loading nursery information...",
+    "saving": "Saving...",
+    "managerSection": {
+      "title": "Manager Profile",
+      "changeAvatar": "Change Avatar",
+      "uploadingAvatar": "Uploading...",
+      "role": "Role",
+      "nurseryName": "Nursery",
+      "userName": "Username",
+      "birthYear": "Birth Year",
+      "gender": "Gender",
+      "latitude": "Latitude",
+      "longitude": "Longitude",
+      "receiveNotifications": "Receive notifications",
+      "genderOptions": {
+        "Unknown": "Unknown",
+        "Male": "Male",
+        "Female": "Female",
+        "Other": "Other"
+      }
+    },
+    "nurserySection": {
+      "title": "Nursery Profile",
+      "id": "Nursery ID",
+      "managerName": "Manager Name",
+      "createdAt": "Created At",
+      "totalPlants": "Total Plants",
+      "totalMaterials": "Total Materials",
+      "name": "Nursery Name",
+      "phone": "Phone",
+      "area": "Area (m²)",
+      "latitude": "Latitude",
+      "longitude": "Longitude",
+      "isActive": "Active"
+    }
+  },  "wishlist": {
     "title": "Wishlist",
     "empty": "No items in wishlist",
     "removeItem": "Remove from wishlist",
@@ -611,10 +651,10 @@
       "large": "Large"
     },
     "instanceStatus": {
-      "healthy": "✓ Healthy",
-      "thriving": "✨ Thriving",
-      "needsAttention": "⚠️ Needs attention",
-      "critical": "🔴 Critical"
+      "healthy": "Healthy",
+      "thriving": "Thriving",
+      "needsAttention": "Needs attention",
+      "critical": "Critical"
     }
   },
   "language": {

@@ -103,6 +103,7 @@
     "storeMetrics": "Số liệu cửa hàng",
     "storeCatalog": "Danh mục cửa hàng",
     "categoriesTags": "Danh mục & Thẻ",
+    "nurseryProfile": "Hồ sơ nhà vườn",
     "storeUsers": "Người dùng cửa hàng",
     "salesOrders": "Đơn hàng bán",
     "serviceOrders": "Đơn dịch vụ",
@@ -505,6 +506,46 @@
     "changePasswordFailed": "Đổi mật khẩu thất bại",
     "changePasswordSuccess": "Mật khẩu đã được thay đổi thành công",
     "changePasswordError": "Lỗi khi đổi mật khẩu"
+  },
+  "managerNurseryProfile": {
+    "title": "Hồ sơ nhà vườn",
+    "subtitle": "Quản lý thông tin nhà vườn của bạn",
+    "loadingProfile": "Đang tải hồ sơ quản lý...",
+    "loadingNursery": "Đang tải thông tin nhà vườn...",
+    "saving": "Đang lưu...",
+    "managerSection": {
+      "title": "Thông tin quản lý",
+      "changeAvatar": "Thay đổi ảnh đại diện",
+      "uploadingAvatar": "Đang tải ảnh đại diện...",
+      "role": "Vai trò",
+      "nurseryName": "Tên nhà vườn",
+      "userName": "Username",
+      "birthYear": "Năm sinh",
+      "gender": "Giới tính",
+      "latitude": "Vĩ độ",
+      "longitude": "Kinh độ",
+      "receiveNotifications": "Nhận thông báo",
+      "genderOptions": {
+        "Unknown": "Không xác định",
+        "Male": "Nam",
+        "Female": "Nữ",
+        "Other": "Khác"
+      }
+    },
+    "nurserySection": {
+      "title": "Hồ sơ nhà vườn",
+      "id": "ID nhà vườn",
+      "managerName": "Tên quản lý",
+      "createdAt": "Ngày tạo",
+      "totalPlants": "Tổng số cây",
+      "totalMaterials": "Tổng số vật tư",
+      "name": "Tên nhà vườn",
+      "phone": "Số điện thoại",
+      "area": "Diện tích (m²)",
+      "latitude": "Vĩ độ",
+      "longitude": "Kinh độ",
+      "isActive": "Hoạt động"
+    }
   },
   "wishlist": {
     "title": "Danh sách yêu thích",

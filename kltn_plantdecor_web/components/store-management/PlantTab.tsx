@@ -222,7 +222,7 @@ export default function PlantTab({}: PlantTabProps) {
           Plant list ({pagination.totalCount})
         </Typography>
         <Button variant="contained" startIcon={<Add />} onClick={handleCreate} sx={{ ...hoverLiftStyle }} className="bg-primary!">
-          Add plant
+          TẠO CÂY MỚI
         </Button>
       </Stack>
 

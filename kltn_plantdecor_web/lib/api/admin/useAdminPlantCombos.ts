@@ -49,7 +49,6 @@ interface SavePlantComboParams {
 interface UseAdminPlantCombosReturn {
   combos: PlantCombo[];
   comboPlants: Plant[];
-  loading: boolean;
   saving: boolean;
   detailLoading: boolean;
   plantsLoading: boolean;
@@ -58,7 +57,7 @@ interface UseAdminPlantCombosReturn {
   filters: ListFilters;
   fetchCombos: (params?: { pageNumber?: number; pageSize?: number }) => Promise<void>;
   fetchComboById: (id: number) => Promise<PlantCombo | null>;
-  fetchComboPlants: () => Promise<void>;
+  fetchComboPlants: (keyword?: string) => Promise<void>;
   savePlantCombo: (params: SavePlantComboParams) => Promise<boolean>;
   toggleComboActive: (id: number) => Promise<boolean>;
   setKeyword: (keyword: string) => void;
@@ -161,6 +160,7 @@ export const useAdminPlantCombos = (): UseAdminPlantCombosReturn => {
     pageNumber: defaultPagination.pageNumber,
     pageSize: defaultPagination.pageSize,
   });
+  const plantSearchRequestRef = useRef(0);
 
   const fetchCombos = useCallback(async (params?: { pageNumber?: number; pageSize?: number }) => {
     setLoading(true);
@@ -215,18 +215,19 @@ export const useAdminPlantCombos = (): UseAdminPlantCombosReturn => {
     }
   }, []);
 
-  const fetchComboPlants = useCallback(async () => {
-    setPlantsLoading(true);
+  const fetchComboPlants = useCallback(async (keyword = '') => {
+    const requestId = ++plantSearchRequestRef.current;
     setError(null);
 
     try {
+      const normalizedKeyword = keyword.trim();
       const response = await searchAdminPlantsForCombo(
         {
           pagination: {
             pageNumber: 1,
             pageSize: 1000,
           },
-          keyword: '',
+          keyword: normalizedKeyword,
           isActive: true,
           isUniqueInstance: false,
           sortBy: 'name',
@@ -235,11 +236,13 @@ export const useAdminPlantCombos = (): UseAdminPlantCombosReturn => {
         true
       );
       const payload = getResponsePayload(response);
-      setComboPlants(payload?.items ?? []);
+      if (requestId === plantSearchRequestRef.current) {
+        setComboPlants(payload?.items ?? []);
+      }
     } catch (err) {
-      setError(normalizeError(err));
-    } finally {
-      setPlantsLoading(false);
+      if (requestId === plantSearchRequestRef.current) {
+        setError(normalizeError(err));
+      }
     }
   }, []);
 
@@ -385,7 +388,6 @@ export const useAdminPlantCombos = (): UseAdminPlantCombosReturn => {
   return {
     combos,
     comboPlants,
-    loading,
     saving,
     detailLoading,
     plantsLoading,

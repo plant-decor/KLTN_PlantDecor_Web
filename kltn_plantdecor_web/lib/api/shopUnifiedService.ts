@@ -94,6 +94,7 @@ export interface ShopUnifiedComboItem {
 }
 
 export interface ShopUnifiedSearchItem {
+  imageUrl: string | null;
   type: UnifiedItemType;
   plant: ShopUnifiedPlantItem | null;
   material: ShopUnifiedMaterialItem | null;
@@ -140,6 +141,7 @@ export const searchShopUnified = async (
   loading = true
 ): Promise<ResponseModel<ShopUnifiedSearchPayload>> => {
   if (isServer) {
+    console.log('Server-side searchShopUnified with data:', data);
     return apiServer.post('/shop/search', data);
   }
 

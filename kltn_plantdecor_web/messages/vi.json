@@ -162,7 +162,7 @@
       "hasFlower": "Có hoa",
       "petSafe": "An toàn cho thú cưng",
       "childSafe": "An toàn cho trẻ em",
-      "uniqueInstance": "Cá thể độc bản",
+      "uniqueInstance": "Cây đặc biệt",
       "includePlants": "Hiển thị cây",
       "includeMaterials": "Hiển thị vật tư",
       "includeCombos": "Hiển thị combo",
@@ -530,6 +530,9 @@
     "confirmAddToCart": "Thêm vào giỏ",
     "pageIndicator": "Trang {current} / {total}"
   },
+  "combo":{
+    "description":"Mô tả"
+  },
   "productDetail": {
     "home": "Trang chủ",
     "store": "Cửa hàng",
@@ -557,7 +560,7 @@
     "origin": "Nguồn gốc",
     "placement": "Vị trí",
     "growthRate": "Tốc độ phát triển",
-    "uniqueInstance": "Cá thể độc bản",
+    "uniqueInstance": "Cây đặc biệt",
     "categories": "Danh mục",
     "tags": "Thẻ",
     "categoryFallback": "Danh mục {index}",
@@ -645,7 +648,7 @@
   },
   "expertGuide": {
     "title": "Cẩm nang chăm sóc từ chuyên gia",
-    "subtitle": "Học cách giúp những \"người bạn xanh\" của bạn luôn rạng rỡ với những bí quyết đơn giản từ đội ngũ GreenSmart.",
+    "subtitle": "Học cách giúp những \"người bạn xanh\" của bạn luôn rạng rỡ với những bí quyết đơn giản từ đội ngũ PlantDecor.",
     "watering": {
       "title": "Tưới nước đúng cách",
       "desc": "Bí quyết đo độ ẩm đất"

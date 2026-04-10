@@ -16,15 +16,11 @@ import type { SelectChangeEvent } from '@mui/material/Select';
 import type {
   ShopUnifiedSearchItem,
   ShopUnifiedPagedItems,
-  ShopUnifiedPlantItem,
-  ShopUnifiedMaterialItem,
 } from '@/lib/api/shopUnifiedService';
-import type { ShopPlantListItem } from '@/lib/api/shopPlantsService';
-import type { ShopMaterialListItem } from '@/lib/api/shopMaterialsService';
 import { PAGE_SIZE_OPTIONS, type PlantStorePageQuery } from '@/lib/utils/plant-store/constants';
 import { buildPaginationHref } from '@/lib/utils/plant-store/url';
 import { cloneQuery } from '@/lib/utils/plant-store/query';
-import type { Category, Tag } from '@/data/storeCatalogData';
+import { toMaterialCardMaterial, toProductCardPlant } from '@/lib/utils/shop-unified-card-mappers';
 
 interface SortOption {
   value: string;
@@ -50,54 +46,6 @@ interface PlantStoreUnifiedResultsProps {
 
 const buildWishlistKey = (itemType: 'Plant' | 'Material' | 'PlantCombo', itemId: number): string =>
   `${itemType}:${itemId}`;
-
-const toProductCategory = (name: string, index: number): Category => ({
-  id: index + 1,
-  parentCategoryId: null,
-  name,
-  isActive: true,
-  categoryType: 0,
-  categoryTypeName: 'General',
-  createdAt: '',
-  updatedAt: '',
-  description: '',
-});
-
-const toProductTag = (name: string, index: number): Tag => ({
-  id: index + 1,
-  tagName: name,
-  tagType: 0,
-  tagTypeName: 'General',
-});
-
-const toProductCardPlant = (plant: ShopUnifiedPlantItem): ShopPlantListItem => ({
-  id: plant.id,
-  name: plant.name,
-  basePrice: plant.basePrice,
-  size: plant.sizeName ?? '',
-  careLevel: plant.careLevelTypeName ?? '',
-  isActive: plant.isActive,
-  primaryImageUrl: plant.primaryImageUrl,
-  totalInstances: plant.totalInstances,
-  availableInstances: plant.availableInstances,
-  availableCommonQuantity: plant.availableCommonQuantity,
-  totalAvailableStock: plant.totalAvailableStock,
-  categoryNames: (plant.categoryNames ?? []).map((name, index) => toProductCategory(name, index)),
-  tagNames: (plant.tagNames ?? []).map((name, index) => toProductTag(name, index)),
-});
-
-const toMaterialCardMaterial = (material: ShopUnifiedMaterialItem): ShopMaterialListItem => ({
-  id: material.materialId ?? material.id,
-  materialCode: material.materialCode ?? '',
-  name: material.materialName,
-  basePrice: material.basePrice ?? 0,
-  unit: material.unit ?? '',
-  brand: material.nurseryName ?? '',
-  isActive: material.isActive ?? true,
-  primaryImageUrl: material.primaryImageUrl ?? null,
-  categoryNames: [],
-  tagNames: [],
-});
 
 export default function PlantStoreUnifiedResults({
   locale,

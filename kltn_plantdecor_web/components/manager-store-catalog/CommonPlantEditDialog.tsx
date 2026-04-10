@@ -74,7 +74,7 @@ export default function CommonPlantEditDialog({
             onChange={(event) =>
               onFormChange({ ...form, quantity: parseNonNegativeInteger(event.target.value) })
             }
-            inputProps={{ min: 0 }}
+            slotProps={{ htmlInput: { min: 0 } }}
             disabled={submitting}
             fullWidth
           />
@@ -86,7 +86,7 @@ export default function CommonPlantEditDialog({
             onChange={(event) =>
               onFormChange({ ...form, reservedQuantity: parseNonNegativeInteger(event.target.value) })
             }
-            inputProps={{ min: 0 }}
+            slotProps={{ htmlInput: { min: 0 } }}
             disabled={submitting}
             fullWidth
           />
@@ -109,7 +109,7 @@ export default function CommonPlantEditDialog({
           variant="contained"
           onClick={() => void onSubmit()}
           disabled={!canSubmit}
-          sx={{ backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)' }}
+          sx={{ backgroundColor: 'var(--primary!)', color: 'var(--primary-foreground)' }}
         >
           Lưu
         </Button>

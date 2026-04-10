@@ -20,9 +20,16 @@ import AddToCartButton from '@/components/cart/AddToCartButton';
 interface MaterialCardProps {
   material: ShopMaterialListItem;
   initialWishlisted?: boolean;
+  showNewBadge?: boolean;
+  newBadgeLabel?: string;
 }
 
-export default function MaterialCard({ material, initialWishlisted = false }: MaterialCardProps) {
+export default function MaterialCard({
+  material,
+  initialWishlisted = false,
+  showNewBadge = false,
+  newBadgeLabel,
+}: MaterialCardProps) {
   const router = useRouter();
   const locale = useLocale();
   const { user } = useAuthStore();
@@ -154,6 +161,11 @@ export default function MaterialCard({ material, initialWishlisted = false }: Ma
               className="object-cover"
               loading="eager"
             />
+            {showNewBadge ? (
+              <span className="absolute right-3 top-3 rounded-full bg-green-600 px-3 py-1 text-xs font-semibold text-white shadow">
+                {newBadgeLabel ?? tProducts('new')}
+              </span>
+            ) : null}
           </div>
         </Link>
 

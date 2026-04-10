@@ -5,16 +5,16 @@ import type { User } from '@/types/auth.types';
 /**
  * Zustand Store cho Authentication
  *
- * ✅ KIẾN TRÚC MỚI - Lưu Token trong Zustand Store
+ * KIẾN TRÚC MỚI - Lưu Token trong Zustand Store
  * - accessToken: Lưu trong memory (không persist) → Bảo mật cao nhất
  * - refreshToken: Persist vào localStorage → Tự động refresh sau F5
  * - User info: Persist vào localStorage → Giữ trạng thái đăng nhập
  *
- * 🔐 BẢO MẬT:
+ * BẢO MẬT:
  * - accessToken không persist → Token ngắn hạn, bảo mật cao
  * - refreshToken persist → Cho phép silent refresh sau reload trang
  *
- * ⚡ HIỆU NĂNG:
+ * HIỆU NĂNG:
  * - Zustand store nhanh hơn localStorage (không I/O disk)
  * - Không cần JSON.parse/stringify mỗi lần đọc/ghi
  */

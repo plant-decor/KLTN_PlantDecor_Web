@@ -212,3 +212,36 @@ export interface SystemPlantSearchItem {
 }
 
 export interface SystemPlantSearchPayload extends PaginatedPayload<SystemPlantSearchItem> {}
+
+export interface ManagerPlantComboInventoryItem {
+  id: number;
+  comboCode: string;
+  comboName: string;
+  comboType: number;
+  comboTypeName: string;
+  price: number;
+  quantity: number;
+  isActive: boolean;
+  updatedAt: string;
+}
+
+export interface ManagerPlantComboStockChange {
+  plantId: number;
+  plantName: string;
+  quantityChange: number;
+  beforeQuantity: number;
+  afterQuantity: number;
+}
+
+export interface ManagerPlantComboOperationRequest {
+  quantity: number;
+}
+
+export interface ManagerPlantComboOperationPayload {
+  comboId: number;
+  quantity: number;
+  plantStockChanges: ManagerPlantComboStockChange[];
+}
+
+export interface ManagerPlantComboListPayload
+  extends PaginatedPayload<ManagerPlantComboInventoryItem> {}

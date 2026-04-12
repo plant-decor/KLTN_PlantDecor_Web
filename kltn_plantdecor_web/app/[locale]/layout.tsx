@@ -11,9 +11,43 @@ import { SessionInvalidatedModal } from "@/components/auth/SessionInvalidatedMod
 import type { Metadata } from "next";
 import { getCurrentUser } from "@/lib/auth/getCurrentUser";
 
+const DEFAULT_OG_IMAGE = "/img/landingPageImage(1).jpg";
+
 export const metadata: Metadata = {
-  title: "Plant Decor",
-  description: "Elevate your living space with AI-powered plant care.",
+  title: {
+    default: "PlantDecor – Thiết kế không gian xanh & Cây cảnh thông minh với AI",
+    template: "%s | PlantDecor",
+  },
+  description:
+    "Nền tảng tích hợp thương mại điện tử, tư vấn thiết kế nội thất xanh bằng AI và dịch vụ chăm sóc cây chuyên nghiệp.",
+  keywords: [
+    "cây cảnh nội thất",
+    "thiết kế không gian xanh AI",
+    "tư vấn phong thủy cây cảnh",
+    "chăm sóc cây tại nhà",
+    "PlantDecor",
+    "mua cây online",
+  ],
+  openGraph: {
+    type: "website",
+    siteName: "PlantDecor",
+    title: "PlantDecor – Thiết kế không gian xanh & Cây cảnh thông minh với AI",
+    description:
+      "Nền tảng tích hợp thương mại điện tử, tư vấn thiết kế nội thất xanh bằng AI và dịch vụ chăm sóc cây chuyên nghiệp.",
+    images: [
+      {
+        url: DEFAULT_OG_IMAGE,
+        alt: "PlantDecor - Thiết kế không gian xanh",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "PlantDecor – Thiết kế không gian xanh & Cây cảnh thông minh với AI",
+    description:
+      "Nền tảng tích hợp thương mại điện tử, tư vấn thiết kế nội thất xanh bằng AI và dịch vụ chăm sóc cây chuyên nghiệp.",
+    images: [DEFAULT_OG_IMAGE],
+  },
 };
 
 interface LocaleLayoutProps {

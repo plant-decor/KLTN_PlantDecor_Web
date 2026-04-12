@@ -24,6 +24,7 @@ import { useSupportChatInput } from "@/hooks/chat/useSupportChatInput";
 import { useLatestActiveConversation } from "@/hooks/chat/useCustomerActiveConversations";
 import { startSupportConversation } from "@/lib/api/chatService";
 import { useAuthStore } from "@/lib/store/authStore";
+import { OPEN_SUPPORT_CHAT_EVENT } from "@/lib/constants/chat";
 import type { SupportConversationMessage } from "@/types/chat.types";
 
 type ChatMessageView = {
@@ -168,6 +169,18 @@ export default function SupportChatWidget() {
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    const handleOpenSupportChat = () => {
+      setIsOpen(true);
+    };
+
+    window.addEventListener(OPEN_SUPPORT_CHAT_EVENT, handleOpenSupportChat);
+
+    return () => {
+      window.removeEventListener(OPEN_SUPPORT_CHAT_EVENT, handleOpenSupportChat);
+    };
+  }, []);
+
   return (
     <Box
       ref={widgetRef}
@@ -207,7 +220,7 @@ export default function SupportChatWidget() {
               sx={{ minWidth: 0 }}
             >
               <Image
-                src="/logo/logo.png"
+                src="/logo/logo-square.png"
                 alt="Plant Decor"
                 width={40}
                 height={40}

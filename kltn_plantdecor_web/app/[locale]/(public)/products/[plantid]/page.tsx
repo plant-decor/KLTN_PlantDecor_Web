@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
+import type { Metadata } from 'next';
 import { getPlantById, type PlantDetailResponse } from '@/lib/api/plantsService';
 import {
   getShopPlantInstanceById,
@@ -23,6 +24,9 @@ interface PageProps {
 }
 
 const FALLBACK_IMAGE = '/img/fallbackplant.avif';
+const DEFAULT_OG_IMAGE = '/img/landingPageImage(1).jpg';
+const SITE_NAME = 'PlantDecor';
+const PRICE_CURRENCY = 'VND';
 
 const getPayload = <T,>(response: { payload?: T; data?: T } | null | undefined): T | null => {
   if (!response) return null;
@@ -47,6 +51,8 @@ const parsePositiveInt = (value: string | undefined): number | null => {
 
   return Math.floor(parsed);
 };
+
+const serializeJsonLd = (data: unknown): string => JSON.stringify(data).replace(/</g, '\\u003c');
 
 const toImageUrls = (images: PlantDetailResponse['images']): string[] => {
   if (!images || !Array.isArray(images)) {
@@ -110,6 +116,79 @@ const getTotalAvailableStock = (plant: PlantDetailResponse): number => {
     toNumber(plant.availableMaterialQuantity)
   );
 };
+
+const buildProductTitle = (plant: PlantDetailResponse, locale: string): string => {
+  if (locale === 'en') {
+    return `${plant.name} - ${plant.size || 'Unknown size'} - Care ${plant.careLevel || 'Unknown'} | ${SITE_NAME}`;
+  }
+
+  return `${plant.name} - ${plant.size || 'Kích thước chưa rõ'} - Chăm sóc ${plant.careLevel || 'chưa rõ'} | ${SITE_NAME}`;
+};
+
+const buildProductDescription = (plant: PlantDetailResponse, locale: string): string => {
+  if (plant.description?.trim()) return plant.description.trim();
+
+  if (locale === 'en') {
+    return `Discover ${plant.name} at ${SITE_NAME} with AI-powered green space consultation and professional plant care.`;
+  }
+
+  return `Khám phá ${plant.name} tại ${SITE_NAME} cùng tư vấn không gian xanh bằng AI và dịch vụ chăm sóc cây chuyên nghiệp.`;
+};
+
+export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
+  const [{ plantid, locale }, query] = await Promise.all([params, searchParams]);
+  const plantId = Number(plantid);
+
+  if (!Number.isFinite(plantId) || plantId <= 0) {
+    return {
+      title: locale === 'en' ? `Product Not Found | ${SITE_NAME}` : `Không tìm thấy sản phẩm | ${SITE_NAME}`,
+    };
+  }
+
+  const selectedInstanceId = parsePositiveInt(toSingle(query.instanceId));
+  const response = await getPlantById(plantId, true, false).catch(() => null);
+  const plant = getPayload<PlantDetailResponse>(response);
+
+  if (!plant) {
+    return {
+      title: locale === 'en' ? `Product Not Found | ${SITE_NAME}` : `Không tìm thấy sản phẩm | ${SITE_NAME}`,
+    };
+  }
+
+  let selectedInstanceDetail: ShopPlantInstanceDetail | null = null;
+  if (selectedInstanceId && plant.totalInstances > 0) {
+    const selectedInstanceResponse = await getShopPlantInstanceById(selectedInstanceId, true, false).catch(() => null);
+    const payload = getPayload<ShopPlantInstanceDetail>(selectedInstanceResponse);
+    if (payload && payload.plantId === plant.id) {
+      selectedInstanceDetail = payload;
+    }
+  }
+
+  const plantImages = toImageUrls(plant.images);
+  const instanceImages = toInstanceImageUrls(selectedInstanceDetail?.images);
+  const displayImages =
+    instanceImages.length > 0 ? instanceImages : plantImages.length > 0 ? plantImages : [FALLBACK_IMAGE];
+  const ogImage = displayImages[0] || DEFAULT_OG_IMAGE;
+  const title = buildProductTitle(plant, locale);
+  const description = buildProductDescription(plant, locale);
+
+  return {
+    title,
+    description,
+    openGraph: {
+      type: 'website',
+      title,
+      description,
+      images: [{ url: ogImage, alt: plant.name }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [ogImage],
+    },
+  };
+}
 
 const mapPlantDetailToSamplePlant = (plant: PlantDetailResponse, imageUrl: string): Plant => {
   const totalAvailableStock = getTotalAvailableStock(plant);
@@ -191,9 +270,28 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
   const mainImage = displayImages[0] || FALLBACK_IMAGE;
   const plantForActions = mapPlantDetailToSamplePlant(plant, mainImage);
   const isNurseryAvailable = await getNurseryCommonOrInstance(plant);
+  const totalAvailableStock = getTotalAvailableStock(plant);
+  const productJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: plant.name,
+    description: buildProductDescription(plant, locale),
+    image: displayImages,
+    offers: {
+      '@type': 'Offer',
+      price: plant.basePrice,
+      priceCurrency: PRICE_CURRENCY,
+      availability:
+        totalAvailableStock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+    },
+  };
 
   return (
     <div className="py-4 bg-gray-50">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(productJsonLd) }}
+      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <nav className="mb-8 flex items-center text-sm text-gray-500">
           <Link href={`/${locale}`} className="hover:text-green-600">{t('home')}</Link>

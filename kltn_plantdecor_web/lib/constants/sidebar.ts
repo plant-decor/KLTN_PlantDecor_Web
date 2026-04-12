@@ -1,4 +1,4 @@
-﻿import type { UserRole } from '@/lib/constants/header';
+import type { UserRole } from '@/lib/constants/header';
 
 export interface SidebarItem {
   label: string;

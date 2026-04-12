@@ -98,7 +98,12 @@ export default function Header({ initialStoreCategories = [] }: HeaderProps) {
             {/* Logo */}
             <div className="shrink-0">
               <Link href="/">
-                <h1 className="text-xl lg:text-2xl font-bold text-green-600">🌿 Plant Decor</h1>
+                <Image src="/logo/logo-landscape.png" 
+                  alt="Plant Decor Logo"
+                  width={60}
+                  height={80}
+                  className="w-full scale-x-200 h-auto object-contain"
+                />
               </Link>
             </div>
 

@@ -52,11 +52,11 @@ export default function ForgotPasswordForm({
       {/* Form Container */}
       <div className="lg:w-[35%] w-full h-full relative flex flex-col justify-center items-center px-8 animate-fade-in-up">
         <Image
-          src="/logo/logo.png"
+          src="/logo/logo-landscape.png"
           alt="Logo"
           width={160}
           height={160}
-          className="absolute top-8 right-8 w-32 h-32 object-contain"
+          className="absolute scale-x-200 top-8 right-18 w-32 h-32 object-contain"
         />
 
         <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-6">

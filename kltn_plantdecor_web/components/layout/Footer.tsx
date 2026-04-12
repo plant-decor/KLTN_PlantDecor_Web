@@ -10,6 +10,7 @@ import {
   Email as EmailIcon,
 } from '@mui/icons-material';
 import { useTranslations } from 'next-intl';
+import Image from 'next/image';
 
 export default function Footer() {
   const t = useTranslations('footer');
@@ -21,8 +22,13 @@ export default function Footer() {
           {/* Company Info */}
           <div className="col-span-1 lg:col-span-1">
             <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-green-800 rounded-full flex items-center justify-center">
-                <span className="text-black font-bold text-sm">P</span>
+              <div className="w-8 h-8 bg-transparent rounded-full flex items-center justify-center">
+                <Image src="/logo/logo-square.png" 
+                  alt="Plant Decor Logo"
+                  width={20}
+                  height={20}
+                  className="w-full rounded-full scale-150 h-auto object-fit"
+                />
               </div>
               <span className="text-xl font-bold">Plant Decor</span>
             </div>

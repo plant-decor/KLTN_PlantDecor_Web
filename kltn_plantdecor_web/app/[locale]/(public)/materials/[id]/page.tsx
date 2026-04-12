@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import ClickableImageViewer from '@/components/image-view/ClickableImageViewer';
 import MaterialPurchasePanel from '@/components/product/MaterialPurchasePanel';
 import {
@@ -15,11 +16,76 @@ interface PageProps {
 }
 
 const FALLBACK_IMAGE = '/img/fallbackplant.avif';
+const DEFAULT_OG_IMAGE = '/img/landingPageImage(1).jpg';
+const SITE_NAME = 'PlantDecor';
+const PRICE_CURRENCY = 'VND';
 
 const getPayload = <T,>(response: { payload?: T; data?: T } | null | undefined): T | null => {
   if (!response) return null;
   return response.payload ?? response.data ?? null;
 };
+
+const serializeJsonLd = (data: unknown): string => JSON.stringify(data).replace(/</g, '\\u003c');
+
+const buildMaterialTitle = (name: string, locale: string): string => {
+  if (locale === 'en') {
+    return `${name} - Plant Care Supply | ${SITE_NAME}`;
+  }
+
+  return `${name} - Phụ kiện chăm sóc cây cảnh | ${SITE_NAME}`;
+};
+
+const buildMaterialDescription = (material: MaterialDetailResponse, locale: string): string => {
+  if (material.description?.trim()) return material.description.trim();
+
+  if (locale === 'en') {
+    return `Explore ${material.name} at ${SITE_NAME} for indoor plant care and green living solutions.`;
+  }
+
+  return `Khám phá ${material.name} tại ${SITE_NAME} cho nhu cầu chăm sóc cây nội thất và không gian sống xanh.`;
+};
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { locale, id } = await params;
+  const materialId = Number(id);
+
+  if (!Number.isFinite(materialId) || materialId <= 0) {
+    return {
+      title: locale === 'en' ? `Material Not Found | ${SITE_NAME}` : `Không tìm thấy vật tư | ${SITE_NAME}`,
+    };
+  }
+
+  const materialRes = await getMaterialById(materialId, true, false).catch(() => null);
+  const material = getPayload<MaterialDetailResponse>(materialRes);
+
+  if (!material) {
+    return {
+      title: locale === 'en' ? `Material Not Found | ${SITE_NAME}` : `Không tìm thấy vật tư | ${SITE_NAME}`,
+    };
+  }
+
+  const imageUrls = material.images?.map((img) => img.imageUrl).filter(Boolean) ?? [];
+  const ogImage = imageUrls[0] || FALLBACK_IMAGE || DEFAULT_OG_IMAGE;
+  const title = buildMaterialTitle(material.name, locale);
+  const description = buildMaterialDescription(material, locale);
+
+  return {
+    title,
+    description,
+    openGraph: {
+      type: 'website',
+      title,
+      description,
+      images: [{ url: ogImage, alt: material.name }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [ogImage],
+    },
+  };
+}
 
 export default async function MaterialDetailPage({ params }: PageProps) {
   const { locale, id } = await params;
@@ -46,9 +112,26 @@ export default async function MaterialDetailPage({ params }: PageProps) {
 
   const imageUrls = material.images?.map((img) => img.imageUrl).filter(Boolean) ?? [];
   const displayImages = imageUrls.length > 0 ? imageUrls : [FALLBACK_IMAGE];
+  const materialJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: material.name,
+    description: buildMaterialDescription(material, locale),
+    image: displayImages,
+    sku: material.materialCode,
+    offers: {
+      '@type': 'Offer',
+      price: material.basePrice,
+      priceCurrency: PRICE_CURRENCY,
+    },
+  };
 
   return (
     <div className="py-4 bg-gray-50">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(materialJsonLd) }}
+      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <nav className="mb-8 flex items-center text-sm text-gray-500">
           <Link href={`/${locale}`} className="hover:text-green-600">

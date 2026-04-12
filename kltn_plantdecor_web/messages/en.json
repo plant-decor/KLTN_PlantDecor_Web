@@ -211,7 +211,7 @@
     "title": "Plants",
     "subtitle": "Explore a diverse collection of ornamental plants",
     "addToCart": "Add to cart",
-    "createOrder": "Buy now", 
+    "createOrder": "Buy now",
     "addToCartCompact": "Add cart",
     "buyNow": "Buy now",
     "outOfStock": "Out of stock",
@@ -544,8 +544,15 @@
       "latitude": "Latitude",
       "longitude": "Longitude",
       "isActive": "Active"
+    },
+    "errors": {
+      "fetchProfile": "Failed to load manager profile",
+      "fetchNursery": "Failed to load nursery information",
+      "updateProfile": "Failed to update manager profile",
+      "updateNursery": "Failed to update nursery information"
     }
-  },  "wishlist": {
+  },
+  "wishlist": {
     "title": "Wishlist",
     "empty": "No items in wishlist",
     "removeItem": "Remove from wishlist",
@@ -733,5 +740,109 @@
     "backHome": "Back to home",
     "title": "Payment Result",
     "message": "Thank you for using PlantDecor. Please check your order status in your account."
+  },
+  "aboutPage": {
+    "metadata": {
+      "title": "About PlantDecor - A Vision for Smart Green Living Spaces",
+      "description": "Discover how PlantDecor uses AI to help you choose the best plants for your living and working environment."
+    },
+    "hero": {
+      "title": "Where Technology Meets Nature",
+      "subtitle": "PlantDecor combines AI and human expertise to turn homes and offices into healthier, greener ecosystems.",
+      "primaryCta": "Try AI design now",
+      "secondaryCta": "Contact our team",
+      "imageAlt": "A digital room transformed into a green oasis with AI"
+    },
+    "mission": {
+      "title": "Our Mission",
+      "problem": "Rapid urbanization has reduced access to nature in daily life, especially in modern apartments and offices.",
+      "solution": "PlantDecor brings nature back through an end-to-end approach: AI-driven recommendations, suitable plant selection, and professional care services."
+    },
+    "ai": {
+      "title": "How PlantDecor AI Works",
+      "subtitle": "Three simple steps to build your personalized green space.",
+      "steps": {
+        "upload": {
+          "title": "Step 1: Upload",
+          "description": "Take and upload a photo of your space."
+        },
+        "analyze": {
+          "title": "Step 2: Analyze",
+          "description": "AI evaluates lighting, humidity, and environmental context."
+        },
+        "transform": {
+          "title": "Step 3: Transform",
+          "description": "Receive a 3D layout proposal with the most suitable plants."
+        }
+      }
+    },
+    "human": {
+      "title": "More Than a Bot: A Professional Service Network",
+      "subtitle": "AI speeds up planning, while experts ensure real-world success.",
+      "caretakers": {
+        "title": "Plant Caretakers",
+        "description": "Our caretakers monitor plant health, provide scheduled maintenance, and handle onsite issues for homes and offices."
+      },
+      "consultants": {
+        "title": "Green Space Consultants",
+        "description": "Consultants work with you to refine layouts based on aesthetics, budget, and operational constraints."
+      }
+    }
+  },
+  "contactPage": {
+    "metadata": {
+      "title": "Contact PlantDecor - Design Consultation & Plant Care Support",
+      "description": "Connect with our experts or AI assistant for support with orders and green space care services."
+    },
+    "hero": {
+      "title": "Contact PlantDecor",
+      "description": "Choose the right support channel to get faster help for consulting, plant care, and order-related requests."
+    },
+    "channels": {
+      "ai": {
+        "title": "AI Assistant",
+        "description": "Get instant plant advice and quick guidance via ChatSession.",
+        "cta": "Open ChatSession"
+      },
+      "care": {
+        "title": "Care Service",
+        "description": "Book plant care services and resolve ongoing green-space maintenance needs.",
+        "cta": "View care services"
+      },
+      "sales": {
+        "title": "Sales & Orders",
+        "description": "Get support for planning, quotations, and pre/post-purchase order questions.",
+        "cta": "Explore store"
+      }
+    },
+    "nurseries": {
+      "title": "Active Nursery Locations",
+      "empty": "No active nursery is available at the moment.",
+      "fetchError": "Unable to load nursery locations right now. Please try again later."
+    },
+    "form": {
+      "title": "Send a Support Request",
+      "fields": {
+        "name": "Name",
+        "email": "Email",
+        "subject": "Subject",
+        "message": "Message"
+      },
+      "subjectOptions": {
+        "general": "General Inquiry",
+        "service": "Service Request",
+        "order": "Order Issue"
+      },
+      "submit": "Submit request",
+      "placeholderSuccess": "Your request has been captured as a temporary placeholder. We will connect it to the supporter flow in the next phase.",
+      "errors": {
+        "required": "This field is required.",
+        "invalidEmail": "Invalid email format."
+      }
+    },
+    "map": {
+      "title": "Office/Nursery Map",
+      "placeholder": "Google Maps integration will be added in a future release (Coming soon)."
+    }
   }
 }

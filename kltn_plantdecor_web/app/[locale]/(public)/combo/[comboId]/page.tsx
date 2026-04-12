@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
+import type { Metadata } from 'next';
 import { getPlantComboNurseries } from '@/lib/api/shopPlantsService';
 import {
   getShopComboById,
@@ -17,10 +18,16 @@ interface ComboDetailPageProps {
 }
 
 const FALLBACK_IMAGE = '/img/fallbackplant.avif';
+const DEFAULT_OG_IMAGE = '/img/landingPageImage(1).jpg';
+const SITE_NAME = 'PlantDecor';
+const PRICE_CURRENCY = 'VND';
+
 const getPayload = <T,>(response: { payload?: T; data?: T } | null | undefined): T | null => {
   if (!response) return null;
   return response.payload ?? response.data ?? null;
 };
+
+const serializeJsonLd = (data: unknown): string => JSON.stringify(data).replace(/</g, '\\u003c');
 
 const getFallbackCombo = async (comboId: number): Promise<ShopUnifiedComboItem | null> => {
   const response = await searchShopUnified(
@@ -41,6 +48,76 @@ const getFallbackCombo = async (comboId: number): Promise<ShopUnifiedComboItem |
 
   return payload.items.items.find((item) => item.type === 'Combo' && item.combo?.id === comboId)?.combo ?? null;
 };
+
+const buildComboTitle = (comboName: string, suitableSpace: string, locale: string): string => {
+  if (locale === 'en') {
+    return `Combo ${comboName} - Green Solution for ${suitableSpace || 'Your Space'} | ${SITE_NAME}`;
+  }
+
+  return `Combo ${comboName} - Giải pháp xanh cho ${suitableSpace || 'không gian của bạn'} | ${SITE_NAME}`;
+};
+
+const buildComboDescription = (
+  comboDescription: string,
+  comboName: string,
+  locale: string
+): string => {
+  if (comboDescription.trim()) return comboDescription.trim();
+
+  if (locale === 'en') {
+    return `Discover combo ${comboName} at ${SITE_NAME} for AI-powered green space design and plant care.`;
+  }
+
+  return `Khám phá combo ${comboName} tại ${SITE_NAME} cho thiết kế không gian xanh bằng AI và chăm sóc cây chuyên nghiệp.`;
+};
+
+export async function generateMetadata({ params }: ComboDetailPageProps): Promise<Metadata> {
+  const { locale, comboId } = await params;
+  const numericComboId = Number(comboId);
+
+  if (!Number.isFinite(numericComboId) || numericComboId <= 0) {
+    return {
+      title: locale === 'en' ? `Combo Not Found | ${SITE_NAME}` : `Không tìm thấy combo | ${SITE_NAME}`,
+    };
+  }
+
+  const [comboResponse, fallbackCombo] = await Promise.all([
+    getShopComboById(numericComboId, true, false).catch(() => null),
+    getFallbackCombo(numericComboId),
+  ]);
+
+  const combo = getPayload<PlantCombo>(comboResponse);
+  const comboName = combo?.comboName || fallbackCombo?.name || `Combo #${comboId}`;
+  const comboDescription = combo?.description || fallbackCombo?.description || '';
+  const suitableSpace = combo?.suitableSpace || '';
+  const title = buildComboTitle(comboName, suitableSpace, locale);
+  const description = buildComboDescription(comboDescription, comboName, locale);
+
+  const imageUrls = [
+    combo?.primaryImageUrl,
+    ...(combo?.images?.map((image) => image.imageUrl) ?? []),
+    fallbackCombo?.imageUrl,
+  ].filter((url): url is string => Boolean(url));
+
+  const ogImage = imageUrls[0] || FALLBACK_IMAGE || DEFAULT_OG_IMAGE;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      type: 'website',
+      title,
+      description,
+      images: [{ url: ogImage, alt: comboName }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [ogImage],
+    },
+  };
+}
 
 export default async function ComboDetailPage({ params }: ComboDetailPageProps) {
   const { locale, comboId } = await params;
@@ -84,13 +161,44 @@ export default async function ComboDetailPage({ params }: ComboDetailPageProps) 
   (fallbackCombo?.nurseries ?? []).forEach((item) => {
     quantityByNurseryId[item.nurseryId] = Math.max(0, Math.floor(item.quantity || 0));
   });
+  const knownQuantities = Object.values(quantityByNurseryId);
+  const hasKnownStockSignal = knownQuantities.length > 0;
+  const totalKnownStock = knownQuantities.reduce((sum, quantity) => sum + quantity, 0);
 
   if (!combo && !fallbackCombo && nurseries.length === 0) {
     notFound();
   }
 
+  const comboJsonLdBase = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: comboName,
+    description: buildComboDescription(comboDescription, comboName, locale),
+    image: displayImages,
+    offers: {
+      '@type': 'Offer',
+      price: comboPrice,
+      priceCurrency: PRICE_CURRENCY,
+    },
+  };
+
+  const comboJsonLd = hasKnownStockSignal
+    ? {
+        ...comboJsonLdBase,
+        offers: {
+          ...comboJsonLdBase.offers,
+          availability:
+            totalKnownStock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+        },
+      }
+    : comboJsonLdBase;
+
   return (
     <div className="py-4 bg-gray-50">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(comboJsonLd) }}
+      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <nav className="mb-8 flex items-center text-sm text-gray-500">
           <Link href={`/${locale}`} className="hover:text-green-600">{tCommon('menu')}</Link>

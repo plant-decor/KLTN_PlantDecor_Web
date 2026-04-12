@@ -1,4 +1,3 @@
-'use client';
 
 import ManagerNurseryProfilePage from '@/components/manager/ManagerNurseryProfilePage';
 

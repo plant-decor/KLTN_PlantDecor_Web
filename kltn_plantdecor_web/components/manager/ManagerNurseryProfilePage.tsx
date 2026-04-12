@@ -227,7 +227,6 @@ export default function ManagerNurseryProfilePage() {
 
       if (!payload) {
         setUserProfile(null);
-        setProfileError(t('errors.profileLoadEmpty'));
         return;
       }
 

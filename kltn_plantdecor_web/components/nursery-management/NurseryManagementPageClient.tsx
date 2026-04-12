@@ -19,6 +19,7 @@ import NurseryTable from './NurseryTable';
 import NurseryFormDialog from './NurseryFormDialog';
 import { useAdminNurseries } from '@/lib/api/admin/useAdminNurseries';
 import type { AdminNursery, AdminNurseryFormData } from '@/types/admin-nursery.types';
+import ManagementHeader from '../layout/ManagementHeader';
 
 export default function NurseryManagementPageClient() {
   const [formOpen, setFormOpen] = useState(false);
@@ -112,31 +113,19 @@ export default function NurseryManagementPageClient() {
 
   return (
     <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', p: 4 }}>
-      <Stack spacing={2} sx={{ mb: 4 }}>
-                <Typography variant="h4" fontWeight="700" color="primary">
-                  Quản Lý Vựa Cây
-                </Typography>
-                <Typography variant="body1" color="text.secondary">
-                  Quản lý dữ liệu vựa cây, bao gồm tạo mới, chỉnh sửa và thay đổi trạng thái hoạt động của vựa.
-                </Typography>
-              </Stack>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
-        <Typography variant="h6" fontWeight="600">
-          Danh sách vựa ({pagination.totalCount})
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          onClick={handleCreate}
-          sx={{ ...hoverLiftStyle }}
-          className="bg-primary!"
-        >
-          TẠO VỰA MỚI
-        </Button>
-      </Stack>
+      {/* Header */}
+      <ManagementHeader
+        title="Quản Lý Vựa Cây"
+        description="Quản lý dữ liệu vựa cây, bao gồm tạo mới, chỉnh sửa và thay đổi trạng thái hoạt động của vựa."
+        entityLabel="vựa"
+        count={pagination.totalCount}
+        actionLabel="Tạo vựa mới"
+        onAction={handleCreate}
+      />
 
       {error && (
         <Alert severity="error" onClose={clearError} sx={{ mb: 2 }}>
+          {error}
           {error}
         </Alert>
       )}

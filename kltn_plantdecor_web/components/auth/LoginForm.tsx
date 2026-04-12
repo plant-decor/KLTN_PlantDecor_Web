@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { EmailOutlined, LockOutline, LockOpen } from '@mui/icons-material';
 import Image from 'next/image';
 import GoogleLoginButton from './GoogleLoginButton';
+import Link from 'next/link';
 
 interface LoginFormProps {
   onForgotPassword: () => void;
@@ -52,13 +53,15 @@ export default function LoginForm({
 
       {/* Form Container */}
       <div className="lg:w-[35%] w-full h-full relative flex flex-col justify-center items-center space-y-4 lg:space-y-5">
-        <Image
-          src="/logo/logo-landscape.png"
-          alt="Logo"
-          width={160}
-          height={160}
-          className="absolute scale-x-200 top-8 right-18 w-32 h-32 object-contain"
-        />
+        <Link href="/">
+          <Image
+            src="/logo/logo-landscape.png"
+            alt="Logo"
+            width={160}
+            height={160}
+            className="absolute scale-x-200 top-8 right-18 w-32 h-32 object-contain"
+          />
+        </Link>
 
         <div className="w-full h-full flex flex-col justify-center items-center px-8">
           <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-6">
@@ -75,11 +78,10 @@ export default function LoginForm({
             {/* Email Field */}
             <div className="relative">
               <span
-                className={`absolute left-2 top-2 text-gray-500 transition-all pointer-events-none ${
-                  email || isEmailFocused
+                className={`absolute left-2 top-2 text-gray-500 transition-all pointer-events-none ${email || isEmailFocused
                     ? "text-xs -translate-y-7 bg-white px-2 text-blue-500"
                     : "text-base"
-                }`}
+                  }`}
               >
                 {t('email')}
               </span>
@@ -105,11 +107,10 @@ export default function LoginForm({
             {/* Password Field */}
             <div className="relative">
               <span
-                className={`absolute left-2 top-2 text-gray-500 transition-all pointer-events-none ${
-                  password || isPasswordFocused
+                className={`absolute left-2 top-2 text-gray-500 transition-all pointer-events-none ${password || isPasswordFocused
                     ? "text-xs -translate-y-7 bg-white px-2 text-blue-500"
                     : "text-base"
-                }`}
+                  }`}
               >
                 {t('password')}
               </span>
@@ -155,23 +156,23 @@ export default function LoginForm({
               type="submit"
               disabled={isLoading}
               className="w-full h-12 bg-linear-to-r from-green-500 to-green-600 text-white font-semibold rounded-lg cursor-pointer transition-all hover:scale-105 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-              >
+            >
               {isLoading ? t('loggingIn') : t('loginButton')}
             </button>
-              </form>
-              <div className="w-full max-w-sm flex space-y-2 pt-2 flex-col justify-center items-center">
-              {/* Google Login Button */}
+          </form>
+          <div className="w-full max-w-sm flex space-y-2 pt-2 flex-col justify-center items-center">
+            {/* Google Login Button */}
             <GoogleLoginButton />
-            
+
             {/* Sign Up Button */}
             <button
               type="button"
               onClick={onSignUp}
               className="w-full h-12 bg-linear-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-lg cursor-pointer transition-all hover:scale-105 focus:outline-none"
-              >
+            >
               {t('signUp')}
             </button>
-              </div>
+          </div>
         </div>
       </div>
     </>

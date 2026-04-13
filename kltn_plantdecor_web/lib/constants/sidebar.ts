@@ -53,7 +53,7 @@ export const SIDEBAR_ITEMS_BY_ROLE: Record<UserRole, SidebarItem[]> = {
     { label: 'Thông tin vựa', href: '/manager/nursery-profile', icon: 'inventory' },
     { label: 'Quản lý dịch vụ chăm sóc', href: '/manager/care-service-management', icon: 'services' },
     { label: 'Đơn hàng bán', href: '/manager/sales-orders', icon: 'orders' },
-    // { label: 'Đơn dịch vụ', href: '/manager/service-orders', icon: 'services' },
+    { label: 'Đơn dịch vụ', href: '/manager/service-orders', icon: 'requests' },
     { label: 'Thanh toán cửa hàng', href: '/manager/store-payment', icon: 'payment' },
   ],
   staff: [

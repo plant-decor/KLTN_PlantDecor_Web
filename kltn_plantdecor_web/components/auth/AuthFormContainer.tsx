@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'react-toastify';
 import { useAuthStore } from '@/lib/store/authStore';
@@ -30,6 +30,23 @@ export default function AuthFormContainer() {
   const pathname = usePathname();
   const { setUser } = useAuthStore();
   const { setLoading } = useLoadingStore();
+
+  useEffect(() => {
+    const formParam = searchParams.get('form');
+
+    if (formParam === 'signup') {
+      setCurrentForm('signup');
+      setError('');
+      setMessage('');
+      return;
+    }
+
+    if (formParam === 'forgot') {
+      setCurrentForm('forgot');
+      setError('');
+      setMessage('');
+    }
+  }, [searchParams]);
 
   const beginSubmit = () => {
     setIsSubmitting(true);

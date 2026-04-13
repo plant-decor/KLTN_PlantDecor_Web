@@ -3,11 +3,15 @@
 import * as apiClient from "@/lib/api/apiService.client";
 import type { ResponseModel } from "@/types/api.types";
 import type {
+  AssignServiceRegistrationCaretakerRequest,
   CareServicePackage,
   CareServiceSpecialization,
   CreateServiceRegistrationRequest,
   CreatedServiceRegistration,
+  EligibleCaretaker,
   EnumOption,
+  ManagerServiceRegistration,
+  ManagerServiceRegistrationsQuery,
   MyServiceRegistration,
   NearbyNursery,
   NearbyNurseryQuery,
@@ -276,6 +280,8 @@ const normalizeServiceRegistration = (item: unknown): MyServiceRegistration | nu
     : {};
   const prefferedShift = isRecord(item.prefferedShift) ? item.prefferedShift : null;
   const customer = isRecord(item.customer) ? item.customer : null;
+  const mainCaretaker = isRecord(item.mainCaretaker) ? item.mainCaretaker : null;
+  const currentCaretaker = isRecord(item.currentCaretaker) ? item.currentCaretaker : null;
   const progresses = Array.isArray(item.progresses) ? item.progresses : [];
   const rating = isRecord(item.rating) ? item.rating : null;
 
@@ -326,8 +332,24 @@ const normalizeServiceRegistration = (item: unknown): MyServiceRegistration | nu
           avatar: toNullableText(customer.avatar),
         }
       : null,
-    mainCaretaker: item.mainCaretaker ?? null,
-    currentCaretaker: item.currentCaretaker ?? null,
+    mainCaretaker: mainCaretaker
+      ? {
+          id: toNumber(mainCaretaker.id),
+          fullName: toText(mainCaretaker.fullName),
+          email: toText(mainCaretaker.email),
+          phone: toText(mainCaretaker.phone),
+          avatar: toNullableText(mainCaretaker.avatar),
+        }
+      : null,
+    currentCaretaker: currentCaretaker
+      ? {
+          id: toNumber(currentCaretaker.id),
+          fullName: toText(currentCaretaker.fullName),
+          email: toText(currentCaretaker.email),
+          phone: toText(currentCaretaker.phone),
+          avatar: toNullableText(currentCaretaker.avatar),
+        }
+      : null,
     progresses: progresses
       .map((progress) => {
         if (!isRecord(progress)) {
@@ -352,6 +374,50 @@ const normalizeServiceRegistration = (item: unknown): MyServiceRegistration | nu
   };
 };
 
+const normalizeEligibleCaretaker = (item: unknown): EligibleCaretaker | null => {
+  if (!isRecord(item)) {
+    return null;
+  }
+
+  const id = toNumber(item.id, Number.NaN);
+  if (!Number.isFinite(id)) {
+    return null;
+  }
+
+  const specializations = Array.isArray(item.specializations)
+    ? item.specializations
+        .map((specialization) => {
+          if (!isRecord(specialization)) {
+            return null;
+          }
+
+          const specializationId = toNumber(specialization.id, Number.NaN);
+          if (!Number.isFinite(specializationId)) {
+            return null;
+          }
+
+          return {
+            id: specializationId,
+            name: toText(specialization.name),
+            description: toText(specialization.description),
+          };
+        })
+        .filter((specialization): specialization is EligibleCaretaker["specializations"][number] =>
+          Boolean(specialization)
+        )
+    : [];
+
+  return {
+    id,
+    username: toText(item.username),
+    email: toText(item.email),
+    phoneNumber: toText(item.phoneNumber),
+    avatarUrl: toNullableText(item.avatarUrl),
+    status: toNumber(item.status),
+    specializations,
+  };
+};
+
 const buildPaginationParams = (query?: ServiceRegistrationsQuery) => {
   if (!query) {
     return undefined;
@@ -360,6 +426,20 @@ const buildPaginationParams = (query?: ServiceRegistrationsQuery) => {
   return {
     ...(typeof query.pageNumber === "number" ? { PageNumber: query.pageNumber } : {}),
     ...(typeof query.pageSize === "number" ? { PageSize: query.pageSize } : {}),
+  };
+};
+
+const buildManagerRegistrationParams = (query?: ManagerServiceRegistrationsQuery) => {
+  if (!query) {
+    return undefined;
+  }
+
+  return {
+    ...(typeof query.pageNumber === "number" ? { PageNumber: query.pageNumber } : {}),
+    ...(typeof query.pageSize === "number" ? { PageSize: query.pageSize } : {}),
+    ...(typeof query.skip === "number" ? { Skip: query.skip } : {}),
+    ...(typeof query.take === "number" ? { Take: query.take } : {}),
+    ...(typeof query.status === "number" ? { status: query.status } : {}),
   };
 };
 
@@ -623,6 +703,168 @@ export const cancelServiceRegistration = async (
   const normalized = normalizeServiceRegistration(unwrapPayloadData(response));
   if (!normalized) {
     throw new Error("Không thể hủy yêu cầu dịch vụ");
+  }
+
+  return normalized;
+};
+
+export const getManagerNurseryServiceRegistrations = async (
+  query?: ManagerServiceRegistrationsQuery,
+  loading = true
+): Promise<PaginatedApiResponse<ManagerServiceRegistration>> => {
+  const response = await apiClient.get<WrappedResponse<unknown>>(
+    "service-registrations/nursery",
+    buildManagerRegistrationParams(query),
+    loading,
+    QUERY_CONFIG
+  );
+
+  const payload = unwrapPayloadData(response);
+  if (!isRecord(payload) || !Array.isArray(payload.items)) {
+    return {
+      items: [],
+      totalCount: 0,
+      pageNumber: query?.pageNumber ?? 1,
+      pageSize: query?.pageSize ?? 10,
+      totalPages: 0,
+      hasPrevious: false,
+      hasNext: false,
+    };
+  }
+
+  return {
+    items: payload.items
+      .map((item) => normalizeServiceRegistration(item))
+      .filter((item): item is ManagerServiceRegistration => Boolean(item)),
+    totalCount: toNumber(payload.totalCount),
+    pageNumber: toNumber(payload.pageNumber, query?.pageNumber ?? 1),
+    pageSize: toNumber(payload.pageSize, query?.pageSize ?? 10),
+    totalPages: toNumber(payload.totalPages),
+    hasPrevious: toBoolean(payload.hasPrevious),
+    hasNext: toBoolean(payload.hasNext),
+  };
+};
+
+export const getManagerNurseryServiceRegistrationDetail = async (
+  id: number,
+  loading = true
+): Promise<ManagerServiceRegistration> => {
+  const response = await apiClient.get<WrappedResponse<unknown>>(
+    `service-registrations/nursery/${id}`,
+    undefined,
+    loading,
+    QUERY_CONFIG
+  );
+
+  const normalized = normalizeServiceRegistration(unwrapPayloadData(response));
+  if (!normalized) {
+    throw new Error("Không thể tải chi tiết đơn dịch vụ");
+  }
+
+  return normalized;
+};
+
+export const approveManagerServiceRegistration = async (
+  id: number,
+  loading = true
+): Promise<ManagerServiceRegistration> => {
+  const response = await apiClient.post<WrappedResponse<unknown>>(
+    `service-registrations/${id}/approve`,
+    undefined,
+    loading,
+    MUTATION_CONFIG
+  );
+
+  const normalized = normalizeServiceRegistration(unwrapPayloadData(response));
+  if (!normalized) {
+    throw new Error("Không thể phê duyệt đơn dịch vụ");
+  }
+
+  return normalized;
+};
+
+export const rejectManagerServiceRegistration = async (
+  id: number,
+  rejectReason: string,
+  loading = true
+): Promise<ManagerServiceRegistration> => {
+  const trimmedReason = rejectReason.trim();
+  const endpoint = `service-registrations/${id}/reject?rejectReason=${encodeURIComponent(trimmedReason)}`;
+
+  const response = await apiClient.post<WrappedResponse<unknown>>(
+    endpoint,
+    undefined,
+    loading,
+    MUTATION_CONFIG
+  );
+
+  const normalized = normalizeServiceRegistration(unwrapPayloadData(response));
+  if (!normalized) {
+    throw new Error("Không thể từ chối đơn dịch vụ");
+  }
+
+  return normalized;
+};
+
+export const managerCancelServiceRegistration = async (
+  id: number,
+  cancelReason: string,
+  loading = true
+): Promise<ManagerServiceRegistration> => {
+  const trimmedReason = cancelReason.trim();
+  const endpoint = `service-registrations/${id}/manager-cancel?cancelReason=${encodeURIComponent(trimmedReason)}`;
+
+  const response = await apiClient.post<WrappedResponse<unknown>>(
+    endpoint,
+    undefined,
+    loading,
+    MUTATION_CONFIG
+  );
+
+  const normalized = normalizeServiceRegistration(unwrapPayloadData(response));
+  if (!normalized) {
+    throw new Error("Không thể hủy đơn dịch vụ");
+  }
+
+  return normalized;
+};
+
+export const getEligibleCaretakersForServiceRegistration = async (
+  id: number,
+  loading = true
+): Promise<EligibleCaretaker[]> => {
+  const response = await apiClient.get<WrappedResponse<unknown>>(
+    `service-registrations/${id}/eligible-caretakers`,
+    undefined,
+    loading,
+    QUERY_CONFIG
+  );
+
+  const payload = unwrapPayloadData(response);
+  if (!Array.isArray(payload)) {
+    return [];
+  }
+
+  return payload
+    .map((item) => normalizeEligibleCaretaker(item))
+    .filter((item): item is EligibleCaretaker => Boolean(item));
+};
+
+export const assignCaretakerToManagerServiceRegistration = async (
+  id: number,
+  data: AssignServiceRegistrationCaretakerRequest,
+  loading = true
+): Promise<ManagerServiceRegistration> => {
+  const response = await apiClient.put<WrappedResponse<unknown>>(
+    `service-registrations/${id}/assign-caretaker`,
+    data,
+    loading,
+    MUTATION_CONFIG
+  );
+
+  const normalized = normalizeServiceRegistration(unwrapPayloadData(response));
+  if (!normalized) {
+    throw new Error("Không thể giao caretaker cho đơn dịch vụ");
   }
 
   return normalized;

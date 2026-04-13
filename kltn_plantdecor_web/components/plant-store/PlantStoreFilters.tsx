@@ -47,6 +47,7 @@ interface PlantStoreFiltersProps {
   fengShuiElementOptions: PlantEnumValue[];
   nurseriesPayload: ShopNurserySearchPayload;
   texts: PlantStoreFilterTexts;
+  mobileMode?: boolean;
 }
 
 export default function PlantStoreFilters({
@@ -63,9 +64,13 @@ export default function PlantStoreFilters({
   fengShuiElementOptions,
   nurseriesPayload,
   texts,
+  mobileMode = false,
 }: PlantStoreFiltersProps) {
   return (
-    <form method="get" className="bg-white rounded-lg shadow-md p-6 sticky top-4 space-y-6">
+    <form
+      method="get"
+      className={`bg-white rounded-lg shadow-md p-6 space-y-6 ${mobileMode ? '' : 'sticky top-4'}`}
+    >
       <h2 className="text-xl font-bold text-gray-900">{texts.title}</h2>
 
       <div>

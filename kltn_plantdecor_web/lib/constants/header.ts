@@ -61,7 +61,7 @@ export const NAV_ITEMS_BY_ROLE: Record<UserRole, HeaderNavItem[]> = {
 
 export const GUEST_ACTIONS = {
   login: { label: 'Đăng nhập', href: '/login' },
-  register: { label: 'Đăng ký', href: '/register' },
+  register: { label: 'Đăng ký', href: '/login?form=signup' },
 };
 
 export const USER_ACTIONS = {

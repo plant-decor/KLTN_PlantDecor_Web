@@ -333,12 +333,19 @@
     "confirmAndCreate": "Confirm & Create Order",
     "viewProgress": "View Progress",
     "status": "Status",
+    "pendingApproval": "Pending Approval",
+    "awaitPayment": "Await Payment",
+    "active": "Active",
     "pendingConfirmation": "Pending Confirmation",
     "confirmed": "Confirmed",
     "rejected": "Rejected",
     "inProgress": "In Progress",
     "completed": "Completed",
     "cancelled": "Cancelled",
+    "payNow": "Pay Now",
+    "creatingPayment": "Creating payment...",
+    "paymentFailed": "Unable to create payment. Please try again.",
+    "paymentOrderMissing": "This service registration does not have an orderId for payment.",
     "assignCaretaker": "Assign Caretaker",
     "estimatedDuration": "Estimated Duration",
     "minEstimatedDuration": "minutes",
@@ -433,8 +440,13 @@
     "providerNursery": "Service provider nursery",
     "selectProviderNursery": "Select service provider nursery",
     "selectScheduleDays": "Select preferred weekdays",
+    "serviceDatePast": "Service date cannot be in the past",
     "oneTimeScheduleHint": "One-time package can only select one weekday.",
-    "periodicScheduleHint": "Periodic package requires exactly {count} weekdays and excludes Sunday."
+    "periodicScheduleHint": "Periodic package requires exactly {count} weekdays and excludes Sunday.",
+    "shift": "Shift",
+    "scheduleDays": "Scheduled weekdays",
+    "orderId": "Order ID",
+    "packageDescription": "Package description"
   },
   "about": {
     "title": "About Us",
@@ -476,6 +488,7 @@
     "noOrdersFound": "No orders found",
     "orderType": {
       "uniquePlant": "Unique plant",
+      "buyNow": "Buy now",
       "product": "Product"
     },
     "orderedAt": "Ordered at",

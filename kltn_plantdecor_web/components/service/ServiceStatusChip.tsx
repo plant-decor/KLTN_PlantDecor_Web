@@ -5,12 +5,25 @@ import { ServiceRegistrationStatus } from '@/types/service.types';
 import { useTranslations } from 'next-intl';
 
 interface ServiceStatusChipProps {
-  status: ServiceRegistrationStatus;
+  status: ServiceRegistrationStatus | number;
   size?: 'small' | 'medium';
   variant?: 'outlined' | 'filled';
 }
 
-export const getStatusColor = (status: ServiceRegistrationStatus) => {
+export const getStatusColor = (status: ServiceRegistrationStatus | number) => {
+  if (typeof status === 'number') {
+    const colors: Record<number, any> = {
+      1: 'warning',
+      2: 'info',
+      3: 'primary',
+      4: 'success',
+      5: 'default',
+      6: 'error',
+    };
+
+    return colors[status] || 'default';
+  }
+
   const colors: Record<ServiceRegistrationStatus, any> = {
     [ServiceRegistrationStatus.PENDING_CONFIRMATION]: 'warning',
     [ServiceRegistrationStatus.CONFIRMED]: 'info',
@@ -22,7 +35,20 @@ export const getStatusColor = (status: ServiceRegistrationStatus) => {
   return colors[status] || 'default';
 };
 
-export const getStatusLabel = (status: ServiceRegistrationStatus, t: any) => {
+export const getStatusLabel = (status: ServiceRegistrationStatus | number, t: any) => {
+  if (typeof status === 'number') {
+    const labels: Record<number, string> = {
+      1: t('pendingApproval'),
+      2: t('awaitPayment'),
+      3: t('active'),
+      4: t('completed'),
+      5: t('cancelled'),
+      6: t('rejected'),
+    };
+
+    return labels[status] || String(status);
+  }
+
   const labels: Record<ServiceRegistrationStatus, string> = {
     [ServiceRegistrationStatus.PENDING_CONFIRMATION]: t('pendingConfirmation'),
     [ServiceRegistrationStatus.CONFIRMED]: t('confirmed'),
@@ -40,7 +66,7 @@ export default function ServiceStatusChip({
   variant = 'outlined' 
 }: ServiceStatusChipProps) {
   const t = useTranslations('services');
-  
+
   return (
     <Chip
       label={getStatusLabel(status, t)}

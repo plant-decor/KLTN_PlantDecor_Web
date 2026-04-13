@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Box,
@@ -54,6 +54,13 @@ export interface ServiceBookingData {
 const SERVICE_TYPE_ONETIME = 1;
 const DAY_OF_WEEK_SUNDAY = 0;
 
+const getLocalDateInputValue = (date: Date = new Date()) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function ServiceBookingDialog({ open, onClose, onSubmit }: ServiceBookingDialogProps) {
   const t = useTranslations('services');
   const tCommon = useTranslations('common');
@@ -67,6 +74,7 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit }: Servic
   const [loadingPackages, setLoadingPackages] = useState(false);
   const [loadingNearby, setLoadingNearby] = useState(false);
   const [usingCurrentLocation, setUsingCurrentLocation] = useState(false);
+  const lastAutoSearchKeyRef = useRef('');
 
   const [formData, setFormData] = useState<ServiceBookingData>({
     nurseryCareServiceId: 0,
@@ -175,21 +183,26 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit }: Servic
     }
   };
 
-  const handleSearchNearbyNurseries = async () => {
-    if (!selectedPackageId) {
+  const handleSearchNearbyNurseries = async (options?: { packageId?: number; latitude?: number; longitude?: number }) => {
+    const packageId = options?.packageId ?? selectedPackageId;
+    const latitude = options?.latitude ?? formData.latitude;
+    const longitude = options?.longitude ?? formData.longitude;
+
+    if (!packageId) {
         toast.error(t('packageRequiredBeforeSearch'));
       return;
     }
 
     try {
       setLoadingNearby(true);
-      const radiusKm = hasLatLng ? 10 : 9999999;
+      const hasSearchLocation = typeof latitude === 'number' && typeof longitude === 'number';
+      const radiusKm = hasSearchLocation ? 10 : 9999999;
       const nurseries = await getNearbyNurseries(
         {
-          packageId: selectedPackageId,
+          packageId,
           radiusKm,
-          lat: formData.latitude,
-          lng: formData.longitude,
+          lat: latitude,
+          lng: longitude,
         },
         false
       );
@@ -207,6 +220,24 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit }: Servic
     }
   };
 
+  useEffect(() => {
+    if (!open || !selectedPackageId || !hasLatLng) {
+      return;
+    }
+
+    const searchKey = `${selectedPackageId}-${formData.latitude}-${formData.longitude}`;
+    if (lastAutoSearchKeyRef.current === searchKey) {
+      return;
+    }
+
+    lastAutoSearchKeyRef.current = searchKey;
+    void handleSearchNearbyNurseries({
+      packageId: selectedPackageId,
+      latitude: formData.latitude,
+      longitude: formData.longitude,
+    });
+  }, [formData.latitude, formData.longitude, hasLatLng, open, selectedPackageId]);
+
   const handleUseCurrentLocation = () => {
     if (!navigator.geolocation) {
       toast.error(t('locationUnsupported'));
@@ -216,13 +247,23 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit }: Servic
     setUsingCurrentLocation(true);
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        const latitude = position.coords.latitude;
+        const longitude = position.coords.longitude;
+
         setFormData((prev) => ({
           ...prev,
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
+          latitude,
+          longitude,
         }));
         setUsingCurrentLocation(false);
         toast.success(t('locationUpdated'));
+        if (selectedPackageId) {
+          void handleSearchNearbyNurseries({
+            packageId: selectedPackageId,
+            latitude,
+            longitude,
+          });
+        }
       },
       () => {
         setUsingCurrentLocation(false);
@@ -253,6 +294,7 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit }: Servic
 
   const validate = (): boolean => {
     const newErrors: Partial<Record<keyof ServiceBookingData, string>> = {};
+    const today = getLocalDateInputValue();
 
     if (!formData.nurseryCareServiceId) {
         newErrors.nurseryCareServiceId = t('providerRequired');
@@ -267,6 +309,8 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit }: Servic
     }
     if (!formData.serviceDate) {
         newErrors.serviceDate = t('serviceDateRequired');
+    } else if (formData.serviceDate < today) {
+      newErrors.serviceDate = t('serviceDatePast');
     }
     if (formData.scheduleDaysOfWeek.length === 0) {
         newErrors.scheduleDaysOfWeek = t('scheduleRequired');
@@ -312,6 +356,7 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit }: Servic
     setSelectedPackageId(0);
     setNearbyNurseries([]);
     setErrors({});
+    lastAutoSearchKeyRef.current = '';
     onClose();
   };
 
@@ -372,20 +417,13 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit }: Servic
               </Alert>
             )}
 
-            <Stack direction={{ xs: 'column', md: 'row' }} spacing={1}>
-              <Button variant="outlined" onClick={handleUseCurrentLocation} disabled={usingCurrentLocation} sx={{ ...hoverLiftStyle }}>
-                {usingCurrentLocation ? t('gettingLocation') : t('useCurrentLocation')}
-              </Button>
-              <Button
-                variant="contained"
-                onClick={() => void handleSearchNearbyNurseries()}
-                disabled={!selectedPackageId || loadingNearby}
-                sx={{ ...hoverLiftStyle }}
-                className="bg-primary!"
-              >
-                {loadingNearby ? t('searchingNurseries') : t('searchMatchingNurseries')}
-              </Button>
-            </Stack>
+            <Button variant="outlined" onClick={handleUseCurrentLocation} disabled={usingCurrentLocation} sx={{ ...hoverLiftStyle }}>
+              {usingCurrentLocation ? t('gettingLocation') : t('useCurrentLocation')}
+            </Button>
+
+            {selectedPackageId && loadingNearby ? (
+              <Alert severity="info">{t('searchingNurseries')}</Alert>
+            ) : null}
 
             {hasLatLng ? (
               <Alert severity="success">{t('radiusWithLocation')}</Alert>
@@ -454,7 +492,7 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit }: Servic
               error={!!errors.serviceDate}
               helperText={errors.serviceDate}
               InputLabelProps={{ shrink: true }}
-              inputProps={{ min: new Date().toISOString().split('T')[0] }}
+              inputProps={{ min: getLocalDateInputValue() }}
             />
 
             <FormControl component="fieldset" error={!!errors.scheduleDaysOfWeek}>
@@ -503,7 +541,7 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit }: Servic
         )}
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
-        <Button onClick={handleClose} color="inherit" className="bg-error! font-semibold!" sx={{ ...hoverLiftStyle }}>
+        <Button onClick={handleClose} color="inherit" className="bg-error! font-semibold! text-white!" sx={{ ...hoverLiftStyle }}>
           {tCommon('cancel')}
         </Button>
         <Button onClick={handleSubmit} variant="contained" className="bg-primary! font-semibold!" sx={{ ...hoverLiftStyle }}>

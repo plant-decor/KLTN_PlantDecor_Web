@@ -39,6 +39,7 @@ export default function ProductDetailPurchasePanel({
   const searchParams = useSearchParams();
   const locale = useLocale();
   const t = useTranslations('productDetail');
+  const tProducts = useTranslations('products');
   const { user } = useAuthStore();
 
   const [selectedNurseryId, setSelectedNurseryId] = useState<number | null>(
@@ -188,6 +189,30 @@ export default function ProductDetailPurchasePanel({
     router.push(`/${locale}/checkout/${user.id}/0?${query.toString()}`);
   };
 
+  const handleProceedCommonPlantCheckout = () => {
+    if (!user?.id) {
+      router.push(`/${locale}/login`);
+      return;
+    }
+
+    const commonPlantId = selectedNursery?.commonPlantId ?? null;
+    if (!commonPlantId || commonPlantId <= 0) {
+      return;
+    }
+
+    const query = new URLSearchParams({
+      orderType: '3',
+      paymentStrategy: '1',
+      buyNowItemId: String(commonPlantId),
+      buyNowItemType: '1',
+      buyNowQuantity: '1',
+      buyNowItemName: plant.name ?? '',
+      buyNowItemPrice: String(plant.basePrice ?? 0),
+    });
+
+    router.push(`/${locale}/checkout/${user.id}/0?${query.toString()}`);
+  };
+
   return (
     <div className="space-y-3">
       {nurseries.length > 0 ? (
@@ -244,28 +269,47 @@ export default function ProductDetailPurchasePanel({
                 : 'cursor-not-allowed bg-gray-300 text-gray-500'
             }`}
           >
-            {t('purchasePanel.proceedToShipping')}
+            {tProducts('buyNow')}
           </button>
         </div>
       ) : (
-        <AddToCartButton
-          plant={plant}
-          maxQuantity={maxQuantity}
-          assumeInStock
-          disabled={!selectedNursery}
-          cartItemTarget={
-            selectedNursery
-              ? {
-                  commonPlantId: selectedNursery.commonPlantId ?? null,
-                  nurseryPlantComboId: selectedNursery.nurseryPlantComboId ?? null,
-                  nurseryMaterialId: selectedNursery.nurseryMaterialId ?? null,
-                }
-              : undefined
-          }
-        />
+        <div className="space-y-3">
+          <AddToCartButton
+            plant={plant}
+            maxQuantity={maxQuantity}
+            assumeInStock
+            disabled={!selectedNursery}
+            cartItemTarget={
+              selectedNursery
+                ? {
+                    commonPlantId: selectedNursery.commonPlantId ?? null,
+                    nurseryPlantComboId: selectedNursery.nurseryPlantComboId ?? null,
+                    nurseryMaterialId: selectedNursery.nurseryMaterialId ?? null,
+                  }
+                : undefined
+            }
+          />
+
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={handleProceedCommonPlantCheckout}
+              disabled={!selectedNursery?.commonPlantId}
+              className={`rounded-lg px-6 py-3 font-semibold transition-colors ${
+                selectedNursery?.commonPlantId
+                  ? 'bg-green-600 text-white hover:bg-green-700'
+                  : 'cursor-not-allowed bg-gray-300 text-gray-500'
+              }`}
+            >
+              {tProducts('buyNow')}
+            </button>
+
+            <AddToWishlistButton plant={plant} fullWidth variant="outlined" />
+          </div>
+        </div>
       )}
 
-      <AddToWishlistButton plant={plant} fullWidth variant="outlined" />
+      {isPlantInstanceFlow && <AddToWishlistButton plant={plant} fullWidth variant="outlined" />}
     </div>
   );
 }

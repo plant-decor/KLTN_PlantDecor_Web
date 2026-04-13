@@ -30,6 +30,9 @@ export interface CheckoutData {
   paymentStrategy?: number;
   orderType?: number;
   plantInstanceId?: number | null;
+  buyNowItemId?: number | null;
+  buyNowItemType?: number | null;
+  buyNowQuantity?: number | null;
   paymentMethod?: string;
   subtotal: number;
   // shippingFee: number;

@@ -153,7 +153,7 @@ export default function ComboCard({
           </div>
         </Link>
 
-        <div className="basis-[25%] min-h-0 p-4 sm:p-5 overflow-hidden">
+        <div className="basis-[25%] min-h-0 p-2 sm:p-2 md:p-4 lg:p-5 overflow-hidden">
           <div className="flex items-start justify-between gap-2">
             <Link href={`/combo/${combo.id}`} className="block min-w-0">
               <h3 className="font-semibold text-gray-900 line-clamp-2">{combo.name}</h3>
@@ -175,7 +175,7 @@ export default function ComboCard({
           </p>
         </div>
 
-        <div className="basis-[20%] min-h-0 sm:p-5 pt-0 flex flex-col justify-between">
+        <div className="basis-[20%] min-h-0 p-2 sm:p-2 md:p-4 lg:p-5 pt-0 flex flex-col justify-between">
           <div className='flex justify-between items-center'>
             <p className="text-green-600 font-bold text-lg">{formatCurrency(combo.price, locale)}</p>
             <p className="text-sm text-gray-600">{tProducts('inStock')}: {availableQuantity}</p>

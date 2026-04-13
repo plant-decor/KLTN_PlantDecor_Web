@@ -23,16 +23,48 @@ export type OrderStatusName =
 
 export type OrderStatusFilter = 'All' | OrderStatusName;
 
-export interface OrderCreateRequest {
+export type BuyNowItemType = 1 | 2 | 3;
+
+interface OrderCreateBaseRequest {
   address: string;
   phone: string;
   customerName: string;
   note: string;
   paymentStrategy: number;
   orderType: number;
-  cartItemIds: number[];
-  plantInstanceId: number;
 }
+
+export interface CartOrderCreateRequest extends OrderCreateBaseRequest {
+  orderType: 1;
+  cartItemIds: number[];
+  plantInstanceId?: never;
+  buyNowItemId?: never;
+  buyNowItemType?: never;
+  buyNowQuantity?: never;
+}
+
+export interface PlantInstanceOrderCreateRequest extends OrderCreateBaseRequest {
+  orderType: 2;
+  plantInstanceId: number;
+  cartItemIds?: never;
+  buyNowItemId?: never;
+  buyNowItemType?: never;
+  buyNowQuantity?: never;
+}
+
+export interface BuyNowOrderCreateRequest extends OrderCreateBaseRequest {
+  orderType: 3;
+  buyNowItemId: number;
+  buyNowItemType: BuyNowItemType;
+  buyNowQuantity: number;
+  cartItemIds?: never;
+  plantInstanceId?: never;
+}
+
+export type OrderCreateRequest =
+  | CartOrderCreateRequest
+  | PlantInstanceOrderCreateRequest
+  | BuyNowOrderCreateRequest;
 
 export interface OrderInvoiceDetail {
   id: number;

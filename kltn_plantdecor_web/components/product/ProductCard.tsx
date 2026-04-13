@@ -402,7 +402,7 @@ export default function ProductCard({
             </span>
           ) : null}
         </div>
-        <div className="basis-[25%] min-h-0 space-y-1 sm:p-5 flex flex-col overflow-hidden">
+        <div className="basis-[25%] min-h-0 space-y-1 p-2 sm:p-2 md:p-4 lg:p-5 flex flex-col overflow-hidden">
           <h3 className="font-semibold text-gray-900">{plant.name}</h3>
             <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{color: 'gray', fontSize: '8px', fontWeight:"300"}}>
             {normalizedTagNames.length > 0 ?
@@ -416,7 +416,7 @@ export default function ProductCard({
             )}
         </div>
 
-        <div className="basis-[20%] min-h-0 sm:p-5 pt-0 flex flex-col justify-between">
+        <div className="basis-[20%] min-h-0 p-2 sm:p-2 md:p-4 lg:p-5 pt-0 flex flex-col justify-between">
           <div>
             {plant.basePrice ? (
               <div className="flex flex-col">

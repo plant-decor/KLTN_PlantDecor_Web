@@ -92,17 +92,17 @@ export default function Header({ initialStoreCategories = [] }: HeaderProps) {
   return (
     <>
       {/* Top Header Section — tablet & desktop only */}
-      <header className="hidden md:block bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <header className="hidden md:block relative z-40 bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ">
           <div className="flex justify-between items-center h-14">
             {/* Logo */}
             <div className="shrink-0">
-              <Link href="/">
+              <Link href="/" className="border-none! block w-32 lg:w-44 h-10 lg:h-12 overflow-hidden">
                 <Image src="/logo/logo-landscape.png" 
                   alt="Plant Decor Logo"
-                  width={60}
-                  height={80}
-                  className="w-full scale-x-200 h-auto object-contain"
+                  width={176}
+                  height={48}
+                  className="w-full h-full object-cover object-center scale-[1.25] lg:scale-[1.35] border-none!"
                 />
               </Link>
             </div>
@@ -163,7 +163,7 @@ export default function Header({ initialStoreCategories = [] }: HeaderProps) {
                       <ExpandMoreIcon sx={{ fontSize: 16 }} />
                     </button>
                     {isUserMenuOpen && (
-                      <div className="absolute right-0 mt-2 w-48 rounded-lg border border-gray-100 bg-white py-2 shadow-lg z-50">
+                      <div className="absolute right-0 mt-2 w-48 rounded-lg border border-gray-100 bg-white py-2 shadow-lg z-99999">
                         {USER_MENU_ITEMS.map((item) =>
                           item.href === '/logout' ? (
                             <button

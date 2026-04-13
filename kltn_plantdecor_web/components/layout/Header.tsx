@@ -92,17 +92,17 @@ export default function Header({ initialStoreCategories = [] }: HeaderProps) {
   return (
     <>
       {/* Top Header Section — tablet & desktop only */}
-      <header className="hidden md:block bg-white border-b border-gray-200">
+      <header className="hidden md:block bg-white border-b border-gray-200 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-14">
             {/* Logo */}
-            <div className="shrink-0">
-              <Link href="/">
+            <div className="shrink-0 border-none!">
+              <Link href="/" className='border-none!'>
                 <Image src="/logo/logo-landscape.png" 
                   alt="Plant Decor Logo"
-                  width={60}
+                  width={130}
                   height={80}
-                  className="w-full scale-x-200 h-auto object-contain"
+                  className="w-full h-auto object-contain border-none!"
                 />
               </Link>
             </div>

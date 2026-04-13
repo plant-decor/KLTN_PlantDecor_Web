@@ -169,14 +169,14 @@ export default function MaterialCard({
           </div>
         </Link>
 
-        <div className="basis-[25%] min-h-0 p-4 sm:p-5 overflow-hidden">
+        <div className="basis-[25%] min-h-0 p-2 sm:p-2 md:p-4 lg:p-5 overflow-hidden ">
           <Link href={`/${locale}/materials/${material.id}`} className="block">
             <h3 className="font-semibold text-gray-900 line-clamp-2">{material.name}</h3>
             <p className="text-sm text-gray-600 mt-2 line-clamp-3">{materialDescription}</p>
           </Link>
         </div>
 
-        <div className="basis-[20%] min-h-0 sm:p-5 pt-0 flex flex-col justify-between">
+        <div className="basis-[20%] min-h-0 p-2 sm:p-2 md:p-4 lg:p-5 pt-0 flex flex-col justify-between">
           <p className="text-green-600 font-bold text-lg">{formatCurrency(material.basePrice, locale)}</p>
 
           <div className="grid grid-cols-2 gap-2">

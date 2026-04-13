@@ -91,7 +91,7 @@ export default function SpecializationModal({
               required
             />
 
-            <Box className="flex items-center justify-between rounded-xl border border-[color:var(--card-border)] px-4 py-3">
+            <Box className="flex items-center justify-between rounded-xl border border-(--card-border) px-4 py-3">
               <Box>
                 <Typography variant="subtitle2" fontWeight={700}>
                   Trạng thái hoạt động
@@ -108,7 +108,7 @@ export default function SpecializationModal({
             </Box>
 
             {isView && detail && (
-              <Box className="rounded-xl border border-[color:var(--card-border)] bg-[color:var(--surface)] px-4 py-3">
+              <Box className="rounded-xl border border-(--card-border) bg-(--surface) px-4 py-3">
                 <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
                   Thông tin đã lưu
                 </Typography>

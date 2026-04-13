@@ -477,6 +477,7 @@
     "noOrdersFound": "Không tìm thấy đơn hàng",
     "orderType": {
       "uniquePlant": "Cây độc bản",
+      "buyNow": "Mua ngay",
       "product": "Sản phẩm"
     },
     "orderedAt": "Đặt lúc",

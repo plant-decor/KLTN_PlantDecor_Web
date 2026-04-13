@@ -476,6 +476,7 @@
     "noOrdersFound": "No orders found",
     "orderType": {
       "uniquePlant": "Unique plant",
+      "buyNow": "Buy now",
       "product": "Product"
     },
     "orderedAt": "Ordered at",

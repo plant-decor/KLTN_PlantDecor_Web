@@ -91,11 +91,14 @@ export const closeSupportConversation = async (
  */
 export const getLatestActiveConversation = async (
   loading = true,
+  showToast = false,
+  showErrorToast = false,
 ): Promise<GetLatestActiveConversationResponse> => {
   return apiClient.get(
     "/support-conversations/latest-active",
     undefined,
     loading,
+    {showToast, showErrorToast},
   );
 };
 

@@ -3,6 +3,7 @@ import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import './globals.css';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import 'react-toastify/dist/ReactToastify.css';
+import { Metadata } from 'next';
 
 const inter = Inter({
   variable: '--font-inter',
@@ -16,6 +17,13 @@ const inter = Inter({
  * suppressHydrationWarning prevents hydration mismatch when the
  * locale layout sets attributes (e.g. lang) at runtime.
  */
+export const metadata: Metadata = {
+  title: 'Plant Decor',
+  description: 'Khám phá thế giới cây cảnh với công nghệ AI...',
+  icons: {
+    icon: '/favicon.ico',
+    },
+};
 export default function RootLayout({
   children,
 }: Readonly<{

@@ -22,6 +22,8 @@ import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 import { useAdminPlants } from '@/lib/api/admin/useAdminPlants';
 import { useAdminCategories } from '@/lib/api/admin/useAdminCategories';
 import { useAdminTags } from '@/lib/api/admin/useAdminTags';
+import { getAdminPlantGuideByPlantId } from '@/lib/api/adminPlantGuidesService';
+import type { PlantGuideFormData } from '@/types/admin-plant-guide.types';
 
 interface PlantTabProps {
   initialPlants?: Plant[];
@@ -78,6 +80,7 @@ export default function PlantTab({}: PlantTabProps) {
   const [viewOpen, setViewOpen] = useState(false);
   const [toggleOpen, setToggleOpen] = useState(false);
   const [editingData, setEditingData] = useState<PlantDetail | undefined>();
+  const [editingPlantGuide, setEditingPlantGuide] = useState<PlantGuideFormData | undefined>();
   const [viewingData, setViewingData] = useState<PlantDetail | undefined>();
   const [toggleTarget, setToggleTarget] = useState<Plant | null>(null);
 
@@ -138,6 +141,7 @@ export default function PlantTab({}: PlantTabProps) {
 
   const handleCreate = useCallback(() => {
     setEditingData(undefined);
+    setEditingPlantGuide(undefined);
     setFormOpen(true);
   }, []);
 
@@ -148,7 +152,20 @@ export default function PlantTab({}: PlantTabProps) {
       return;
     }
 
+    const guideResponse = await getAdminPlantGuideByPlantId(plant.id, true);
+    const guide = guideResponse.payload ?? guideResponse.data ?? null;
+
     setEditingData(detail);
+    setEditingPlantGuide(guide ? {
+      lightRequirement: guide.lightRequirementName || '',
+      watering: guide.watering || '',
+      fertilizing: guide.fertilizing || '',
+      pruning: guide.pruning || '',
+      temperature: guide.temperature || '',
+      humidity: guide.humidity || '',
+      soil: guide.soil || '',
+      careNotes: guide.careNotes || '',
+    } : undefined);
     setFormOpen(true);
   }, [fetchPlantById]);
 
@@ -209,6 +226,7 @@ export default function PlantTab({}: PlantTabProps) {
       toast.success(editingData ? 'Plant updated successfully' : 'Plant created successfully');
       setFormOpen(false);
       setEditingData(undefined);
+      setEditingPlantGuide(undefined);
       return;
     }
 
@@ -250,6 +268,7 @@ export default function PlantTab({}: PlantTabProps) {
       <PlantFormDialog
         open={formOpen}
         editingData={editingData}
+        plantGuideData={editingPlantGuide}
         categories={categoryOptions}
         tags={tagOptions}
         enums={enums}
@@ -258,6 +277,7 @@ export default function PlantTab({}: PlantTabProps) {
         onClose={() => {
           setFormOpen(false);
           setEditingData(undefined);
+          setEditingPlantGuide(undefined);
         }}
         onSubmit={handleFormSubmit}
         isLoading={saving || detailLoading}

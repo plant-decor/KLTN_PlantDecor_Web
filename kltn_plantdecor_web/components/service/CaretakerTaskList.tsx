@@ -25,7 +25,20 @@ interface CaretakerTaskListProps {
   onSelectTask: (task: ServiceRegistration) => void;
 }
 
-const getStatusColor = (status: string) => {
+const getStatusColor = (status: string | number) => {
+  if (typeof status === 'number') {
+    const numericColors: Record<number, "default" | "primary" | "secondary" | "error" | "warning" | "info" | "success"> = {
+      1: 'warning',
+      2: 'info',
+      3: 'primary',
+      4: 'success',
+      5: 'default',
+      6: 'error',
+    };
+
+    return numericColors[status] || 'default';
+  }
+
   const colors: Record<string, "default" | "primary" | "secondary" | "error" | "warning" | "info" | "success"> = {
     [ServiceRegistrationStatus.CONFIRMED]: "info",
     [ServiceRegistrationStatus.IN_PROGRESS]: "warning",
@@ -34,7 +47,20 @@ const getStatusColor = (status: string) => {
   return colors[status] || "default";
 };
 
-const getStatusLabel = (status: string) => {
+const getStatusLabel = (status: string | number) => {
+  if (typeof status === 'number') {
+    const numericLabels: Record<number, string> = {
+      1: 'Chờ duyệt',
+      2: 'Chờ thanh toán',
+      3: 'Đang hoạt động',
+      4: 'Hoàn thành',
+      5: 'Đã hủy',
+      6: 'Đã từ chối',
+    };
+
+    return numericLabels[status] || String(status);
+  }
+
   const labels: Record<string, string> = {
     [ServiceRegistrationStatus.CONFIRMED]: "Sắp Thực Hiện",
     [ServiceRegistrationStatus.IN_PROGRESS]: "Đang Thực Hiện",
@@ -69,7 +95,7 @@ export const CaretakerTaskList: React.FC<CaretakerTaskListProps> = ({
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Typography variant="h4" sx={{ fontWeight: "bold", mb: 4 }}>
-        📅 Lịch Trình Hôm Nay ({tasks.length} công việc)
+        Lịch Trình Hôm Nay ({tasks.length} công việc)
       </Typography>
 
       <Grid container spacing={2}>

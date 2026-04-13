@@ -268,6 +268,7 @@ export default async function ComboDetailPage({ params }: ComboDetailPageProps) 
               <ComboDetailPurchasePanel
                 comboId={numericComboId}
                 comboName={comboName}
+                comboPrice={comboPrice}
                 nurseries={nurseries}
                 quantityByNurseryId={quantityByNurseryId}
               />

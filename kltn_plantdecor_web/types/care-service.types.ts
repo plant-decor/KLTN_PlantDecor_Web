@@ -103,7 +103,24 @@ export interface ServiceRegistrationShift {
   endTime: string;
 }
 
+export enum ServiceRegistrationStatusEnum {
+  PendingApproval = 1,
+  AwaitPayment = 2,
+  Active = 3,
+  Completed = 4,
+  Cancelled = 5,
+  Rejected = 6,
+}
+
 export interface ServiceRegistrationCustomer {
+  id: number;
+  fullName: string;
+  email: string;
+  phone: string;
+  avatar: string | null;
+}
+
+export interface ServiceRegistrationActor {
   id: number;
   fullName: string;
   email: string;
@@ -148,11 +165,13 @@ export interface MyServiceRegistration {
   };
   prefferedShift: ServiceRegistrationShift | null;
   customer: ServiceRegistrationCustomer | null;
-  mainCaretaker: unknown | null;
-  currentCaretaker: unknown | null;
+  mainCaretaker: ServiceRegistrationActor | null;
+  currentCaretaker: ServiceRegistrationActor | null;
   progresses: ServiceRegistrationProgress[];
   rating: ServiceRegistrationRating | null;
 }
+
+export type ManagerServiceRegistration = MyServiceRegistration;
 
 export interface PaginatedApiResponse<T> {
   items: T[];
@@ -167,4 +186,30 @@ export interface PaginatedApiResponse<T> {
 export interface ServiceRegistrationsQuery {
   pageNumber?: number;
   pageSize?: number;
+}
+
+export interface ManagerServiceRegistrationsQuery extends ServiceRegistrationsQuery {
+  skip?: number;
+  take?: number;
+  status?: ServiceRegistrationStatusEnum;
+}
+
+export interface AssignServiceRegistrationCaretakerRequest {
+  caretakerId: number;
+}
+
+export interface EligibleCaretakerSpecialization {
+  id: number;
+  name: string;
+  description: string;
+}
+
+export interface EligibleCaretaker {
+  id: number;
+  username: string;
+  email: string;
+  phoneNumber: string;
+  avatarUrl: string | null;
+  status: number;
+  specializations: EligibleCaretakerSpecialization[];
 }

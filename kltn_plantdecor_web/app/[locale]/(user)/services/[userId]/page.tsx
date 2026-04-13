@@ -18,6 +18,8 @@ import ServiceDetailsDialog from '@/components/service/ServiceDetailsDialog';
 import ServiceBookingDialog, { ServiceBookingData } from '@/components/service/ServiceBookingDialog';
 import EmptyState from '@/components/service/EmptyState';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
+import { toast } from 'react-toastify';
+import { createServiceRegistration } from '@/lib/api/careServiceService';
 
 interface PageProps {
   params: Promise<{ userid: string }>;
@@ -25,51 +27,10 @@ interface PageProps {
 
 export default function UserServicePage({ params }: PageProps) {
   const t = useTranslations('services');
-  const tCommon = useTranslations('common');
-  const [requests, setRequests] = useState<ServiceRegistration[]>([
-    {
-      id: 1,
-      customerId: 1,
-      servicePackageId: 1,
-      address: '123 Green Street, Ho Chi Minh City',
-      phone: '+84 123 456 789',
-      serviceDate: '2025-03-10',
-      note: 'My plant needs urgent care',
-      status: ServiceRegistrationStatus.PENDING_CONFIRMATION,
-      createdAt: '2025-03-05T10:00:00Z',
-      updatedAt: '2025-03-05T10:00:00Z',
-    },
-    {
-      id: 2,
-      customerId: 1,
-      servicePackageId: 2,
-      address: '456 Flower Avenue, Ho Chi Minh City',
-      phone: '+84 123 456 789',
-      serviceDate: '2025-03-15',
-      note: 'Design consultation for small balcony',
-      status: ServiceRegistrationStatus.CONFIRMED,
-      createdAt: '2025-02-28T14:30:00Z',
-      updatedAt: '2025-03-01T09:00:00Z',
-      mainCaretakerId: 1,
-      estimatedDuration: 120,
-    },
-    {
-      id: 3,
-      customerId: 1,
-      servicePackageId: 1,
-      address: '789 Plant Lane, Ho Chi Minh City',
-      phone: '+84 123 456 789',
-      serviceDate: '2025-02-20',
-      note: 'Regular monthly care service',
-      status: ServiceRegistrationStatus.COMPLETED,
-      createdAt: '2025-02-15T11:00:00Z',
-      updatedAt: '2025-02-20T16:00:00Z',
-      mainCaretakerId: 2,
-      estimatedDuration: 90,
-    },
-  ]);
+  void params;
+  const [requests, setRequests] = useState<ServiceRegistration[]>([]);
 
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedRequest, setSelectedRequest] = useState<ServiceRegistration | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -94,23 +55,70 @@ export default function UserServicePage({ params }: PageProps) {
     setBookingOpen(false);
   };
 
-  const handleSubmitBooking = (data: ServiceBookingData) => {
-    // Create new service request
-    const newRequest: ServiceRegistration = {
-      id: requests.length + 1,
-      customerId: 1,
-      servicePackageId: data.servicePackageId,
-      address: data.address,
-      phone: data.phone,
-      serviceDate: data.serviceDate,
-      note: data.note,
-      status: ServiceRegistrationStatus.PENDING_CONFIRMATION,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+  const mapStatusName = (statusName: string): ServiceRegistrationStatus => {
+    const normalized = statusName.toLowerCase();
 
-    setRequests([newRequest, ...requests]);
-    setSuccessMessage(t('requestSubmitted'));
+    if (normalized.includes('pending')) {
+      return ServiceRegistrationStatus.PENDING_CONFIRMATION;
+    }
+    if (normalized.includes('confirm')) {
+      return ServiceRegistrationStatus.CONFIRMED;
+    }
+    if (normalized.includes('reject')) {
+      return ServiceRegistrationStatus.REJECTED;
+    }
+    if (normalized.includes('progress')) {
+      return ServiceRegistrationStatus.IN_PROGRESS;
+    }
+    if (normalized.includes('complete')) {
+      return ServiceRegistrationStatus.COMPLETED;
+    }
+    if (normalized.includes('cancel')) {
+      return ServiceRegistrationStatus.CANCELLED;
+    }
+
+    return ServiceRegistrationStatus.PENDING_CONFIRMATION;
+  };
+
+  const handleSubmitBooking = async (data: ServiceBookingData) => {
+    try {
+      const created = await createServiceRegistration(
+        {
+          nurseryCareServiceId: data.nurseryCareServiceId,
+          serviceDate: data.serviceDate,
+          scheduleDaysOfWeek: data.scheduleDaysOfWeek,
+          preferredShiftId: 1,
+          address: data.address,
+          phone: data.phone,
+          note: data.note,
+          latitude: data.latitude,
+          longitude: data.longitude,
+        },
+        false
+      );
+
+      const newRequest: ServiceRegistration = {
+        id: created.id,
+        customerId: 0,
+        servicePackageId: created.nurseryCareService.careServicePackage.id,
+        address: created.address,
+        phone: created.phone,
+        serviceDate: created.serviceDate,
+        note: created.note,
+        status: mapStatusName(created.statusName),
+        createdAt: created.createdAt,
+        updatedAt: created.createdAt,
+      };
+
+      setRequests((prev) => [newRequest, ...prev]);
+      setSuccessMessage(t('requestSubmitted'));
+      toast.success(t('requestSubmitted'));
+      setBookingOpen(false);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : t('errorFetching');
+      toast.error(message);
+      setError(message);
+    }
   };
 
   const handleCloseSnackbar = () => {

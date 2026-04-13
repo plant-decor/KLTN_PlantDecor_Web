@@ -29,6 +29,7 @@ import {
   getDayOfWeekEnums,
   getNearbyNurseries,
   getPublicCareServicePackages,
+  getSystemEnumValues,
 } from '@/lib/api/careServiceService';
 import type { CareServicePackage, NearbyNursery } from '@/types/care-service.types';
 
@@ -51,12 +52,14 @@ export interface ServiceBookingData {
 }
 
 const SERVICE_TYPE_ONETIME = 1;
+const DAY_OF_WEEK_SUNDAY = 0;
 
 export default function ServiceBookingDialog({ open, onClose, onSubmit }: ServiceBookingDialogProps) {
   const t = useTranslations('services');
   const tCommon = useTranslations('common');
 
   const [packages, setPackages] = useState<CareServicePackage[]>([]);
+  const [serviceTypeEnums, setServiceTypeEnums] = useState<Array<{ value: number; name: string }>>([]);
   const [dayOfWeeks, setDayOfWeeks] = useState<Array<{ value: number; name: string }>>([]);
   const [nearbyNurseries, setNearbyNurseries] = useState<NearbyNursery[]>([]);
   const [selectedPackageId, setSelectedPackageId] = useState(0);
@@ -83,6 +86,26 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit }: Servic
     () => packages.find((pkg) => pkg.id === selectedPackageId) ?? null,
     [packages, selectedPackageId]
   );
+
+  const serviceTypeOneTimeValue = useMemo(() => {
+    const matched = serviceTypeEnums.find((item) => item.name.toLowerCase() === 'onetime');
+    return matched?.value ?? SERVICE_TYPE_ONETIME;
+  }, [serviceTypeEnums]);
+
+  const serviceTypePeriodicValue = useMemo(() => {
+    const matched = serviceTypeEnums.find((item) => item.name.toLowerCase() === 'periodic');
+    return matched?.value ?? 2;
+  }, [serviceTypeEnums]);
+
+  const isPeriodicPackage = selectedPackage?.serviceType === serviceTypePeriodicValue;
+
+  const allowedDayOfWeeks = useMemo(() => {
+    if (!isPeriodicPackage) {
+      return dayOfWeeks;
+    }
+
+    return dayOfWeeks.filter((day) => day.value !== DAY_OF_WEEK_SUNDAY);
+  }, [dayOfWeeks, isPeriodicPackage]);
 
   const serviceOptions = useMemo(() => {
     if (!selectedPackageId) {
@@ -112,12 +135,14 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit }: Servic
     const loadData = async () => {
       try {
         setLoadingPackages(true);
-        const [packageData, dayOfWeekData] = await Promise.all([
+        const [packageData, dayOfWeekData, serviceTypeData] = await Promise.all([
           getPublicCareServicePackages(false),
           getDayOfWeekEnums(false),
+          getSystemEnumValues('CareServiceType', false),
         ]);
         setPackages(packageData.filter((item) => item.isActive));
         setDayOfWeeks(dayOfWeekData);
+        setServiceTypeEnums(serviceTypeData);
       } catch (error) {
         const message = error instanceof Error ? error.message : t('loadPackagesFailed');
         toast.error(message);
@@ -128,6 +153,20 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit }: Servic
 
     void loadData();
   }, [open, t]);
+
+  useEffect(() => {
+    if (!selectedPackage || selectedPackage.serviceType !== serviceTypePeriodicValue) {
+      return;
+    }
+
+    const filteredDays = formData.scheduleDaysOfWeek.filter((day) => day !== DAY_OF_WEEK_SUNDAY);
+    if (filteredDays.length !== formData.scheduleDaysOfWeek.length) {
+      setFormData((prev) => ({ ...prev, scheduleDaysOfWeek: filteredDays }));
+      if (errors.scheduleDaysOfWeek) {
+        setErrors((prev) => ({ ...prev, scheduleDaysOfWeek: '' }));
+      }
+    }
+  }, [errors.scheduleDaysOfWeek, formData.scheduleDaysOfWeek, selectedPackage, serviceTypePeriodicValue]);
 
   const handleChange = (field: keyof ServiceBookingData, value: ServiceBookingData[keyof ServiceBookingData]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -193,8 +232,12 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit }: Servic
   };
 
   const handleSelectDay = (dayValue: number, checked: boolean) => {
+    if (isPeriodicPackage && dayValue === DAY_OF_WEEK_SUNDAY) {
+      return;
+    }
+
     if (checked) {
-      if (selectedPackage?.serviceType === SERVICE_TYPE_ONETIME) {
+      if (selectedPackage?.serviceType === serviceTypeOneTimeValue) {
         handleChange('scheduleDaysOfWeek', [dayValue]);
         return;
       }
@@ -228,8 +271,17 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit }: Servic
     if (formData.scheduleDaysOfWeek.length === 0) {
         newErrors.scheduleDaysOfWeek = t('scheduleRequired');
     }
-    if (selectedPackage?.serviceType === SERVICE_TYPE_ONETIME && formData.scheduleDaysOfWeek.length !== 1) {
+    if (selectedPackage?.serviceType === serviceTypeOneTimeValue && formData.scheduleDaysOfWeek.length !== 1) {
         newErrors.scheduleDaysOfWeek = t('oneTimeScheduleRule');
+    }
+    if (selectedPackage?.serviceType === serviceTypePeriodicValue) {
+      if (selectedPackage.visitPerWeek > 6) {
+        newErrors.scheduleDaysOfWeek = t('periodicVisitPerWeekInvalid');
+      } else if (formData.scheduleDaysOfWeek.includes(DAY_OF_WEEK_SUNDAY)) {
+        newErrors.scheduleDaysOfWeek = t('periodicSundayNotAllowed');
+      } else if (formData.scheduleDaysOfWeek.length !== selectedPackage.visitPerWeek) {
+        newErrors.scheduleDaysOfWeek = t('periodicScheduleRule', { count: selectedPackage.visitPerWeek });
+      }
     }
 
     setErrors(newErrors);
@@ -408,7 +460,7 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit }: Servic
             <FormControl component="fieldset" error={!!errors.scheduleDaysOfWeek}>
               <FormLabel component="legend">{t('selectScheduleDays')}</FormLabel>
               <FormGroup row>
-                {dayOfWeeks.map((day) => (
+                {allowedDayOfWeeks.map((day) => (
                   <FormControlLabel
                     key={day.value}
                     control={
@@ -426,9 +478,14 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit }: Servic
                   {errors.scheduleDaysOfWeek}
                 </Typography>
               )}
-              {selectedPackage?.serviceType === SERVICE_TYPE_ONETIME && (
+              {selectedPackage?.serviceType === serviceTypeOneTimeValue && (
                 <Typography variant="caption" color="text.secondary">
                   {t('oneTimeScheduleHint')}
+                </Typography>
+              )}
+              {isPeriodicPackage && (
+                <Typography variant="caption" color="text.secondary">
+                  {t('periodicScheduleHint', { count: selectedPackage?.visitPerWeek ?? 0 })}
                 </Typography>
               )}
             </FormControl>

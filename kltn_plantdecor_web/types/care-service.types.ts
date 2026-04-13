@@ -95,3 +95,76 @@ export interface CreatedServiceRegistration {
     careServicePackage: Pick<CareServicePackage, "id" | "name" | "description" | "visitPerWeek" | "durationDays" | "serviceType" | "unitPrice">;
   };
 }
+
+export interface ServiceRegistrationShift {
+  id: number;
+  shiftName: string;
+  startTime: string;
+  endTime: string;
+}
+
+export interface ServiceRegistrationCustomer {
+  id: number;
+  fullName: string;
+  email: string;
+  phone: string;
+  avatar: string | null;
+}
+
+export interface ServiceRegistrationProgress {
+  id: number;
+  action: string;
+  description: string;
+  createdAt: string;
+}
+
+export interface ServiceRegistrationRating {
+  id: number;
+  score: number;
+  comment?: string;
+}
+
+export interface MyServiceRegistration {
+  id: number;
+  status: number;
+  statusName: string;
+  serviceDate: string;
+  totalSessions: number;
+  address: string;
+  phone: string;
+  note: string;
+  latitude: number;
+  longitude: number;
+  scheduleDaysOfWeek: number[];
+  cancelReason: string | null;
+  createdAt: string;
+  approvedAt: string | null;
+  orderId: number | null;
+  nurseryCareService: {
+    id: number;
+    nurseryId: number;
+    nurseryName: string;
+    careServicePackage: Pick<CareServicePackage, "id" | "name" | "description" | "visitPerWeek" | "durationDays" | "serviceType" | "unitPrice">;
+  };
+  prefferedShift: ServiceRegistrationShift | null;
+  customer: ServiceRegistrationCustomer | null;
+  mainCaretaker: unknown | null;
+  currentCaretaker: unknown | null;
+  progresses: ServiceRegistrationProgress[];
+  rating: ServiceRegistrationRating | null;
+}
+
+export interface PaginatedApiResponse<T> {
+  items: T[];
+  totalCount: number;
+  pageNumber: number;
+  pageSize: number;
+  totalPages: number;
+  hasPrevious: boolean;
+  hasNext: boolean;
+}
+
+export interface ServiceRegistrationsQuery {
+  pageNumber?: number;
+  pageSize?: number;
+}

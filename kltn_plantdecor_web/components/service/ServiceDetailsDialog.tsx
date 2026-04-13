@@ -7,9 +7,9 @@ import {
   DialogActions,
   Button,
   Box,
+  CircularProgress,
   Typography,
   TextField,
-  Grid,
 } from '@mui/material';
 import { useTranslations } from 'next-intl';
 import { ServiceRegistration } from '@/types/service.types';
@@ -19,24 +19,35 @@ interface ServiceDetailsDialogProps {
   open: boolean;
   onClose: () => void;
   service: ServiceRegistration | null;
+  loading?: boolean;
+  onCancel?: () => void;
 }
 
 export default function ServiceDetailsDialog({
   open,
   onClose,
   service,
+  loading = false,
+  onCancel,
 }: ServiceDetailsDialogProps) {
   const t = useTranslations('services');
   const tCommon = useTranslations('common');
 
-  if (!service) return null;
-
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ fontWeight: 'bold' }}>
-        {t('serviceRequest')} #{service.id}
+        {service ? `${t('serviceRequest')} #${service.id}` : t('serviceRequest')}
       </DialogTitle>
       <DialogContent sx={{ pt: 3 }}>
+        {loading ? (
+          <Box sx={{ py: 4, display: 'flex', justifyContent: 'center' }}>
+            <CircularProgress size={24} />
+          </Box>
+        ) : !service ? (
+          <Typography variant="body2" color="text.secondary">
+            {t('errorFetching')}
+          </Typography>
+        ) : (
         <Box sx={{ space: 2 }}>
           <Box sx={{ mb: 2 }}>
             <Typography variant="subtitle2" color="text.secondary" gutterBottom>
@@ -122,14 +133,20 @@ export default function ServiceDetailsDialog({
           {service.cancelReason && (
             <Box sx={{ mb: 2 }}>
               <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                Cancellation Reason
+                {t('cancelReason')}
               </Typography>
               <Typography variant="body2">{service.cancelReason}</Typography>
             </Box>
           )}
         </Box>
+        )}
       </DialogContent>
       <DialogActions>
+        {onCancel && service?.status !== 'CANCELLED' ? (
+          <Button color="error" onClick={onCancel}>
+            {t('cancel')}
+          </Button>
+        ) : null}
         <Button onClick={onClose}>{tCommon('close')}</Button>
       </DialogActions>
     </Dialog>

@@ -8,9 +8,12 @@ import type {
   CreateServiceRegistrationRequest,
   CreatedServiceRegistration,
   EnumOption,
+  MyServiceRegistration,
   NearbyNursery,
   NearbyNurseryQuery,
   NurseryCareService,
+  PaginatedApiResponse,
+  ServiceRegistrationsQuery,
 } from "@/types/care-service.types";
 
 const QUERY_CONFIG = {
@@ -40,6 +43,23 @@ const toText = (value: unknown, fallback = ""): string => {
 
 const toBoolean = (value: unknown, fallback = false): boolean => {
   return typeof value === "boolean" ? value : fallback;
+};
+
+const toNullableNumber = (value: unknown): number | null => {
+  if (value == null) {
+    return null;
+  }
+
+  const parsed = toNumber(value, Number.NaN);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const toNullableText = (value: unknown): string | null => {
+  if (value == null) {
+    return null;
+  }
+
+  return toText(value);
 };
 
 const unwrapPayloadData = <T>(response: WrappedResponse<T>): T => {
@@ -218,6 +238,131 @@ const normalizeEnumOptions = (raw: unknown): EnumOption[] => {
     .filter((item): item is EnumOption => Boolean(item));
 };
 
+const parseScheduleDaysOfWeek = (value: unknown): number[] => {
+  const normalize = (items: unknown[]): number[] =>
+    items
+      .map((item) => toNumber(item, Number.NaN))
+      .filter((item) => Number.isFinite(item));
+
+  if (Array.isArray(value)) {
+    return normalize(value);
+  }
+
+  if (typeof value !== "string" || !value.trim()) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return Array.isArray(parsed) ? normalize(parsed) : [];
+  } catch {
+    return [];
+  }
+};
+
+const normalizeServiceRegistration = (item: unknown): MyServiceRegistration | null => {
+  if (!isRecord(item)) {
+    return null;
+  }
+
+  const id = toNumber(item.id, Number.NaN);
+  if (!Number.isFinite(id)) {
+    return null;
+  }
+
+  const nurseryCareService = isRecord(item.nurseryCareService) ? item.nurseryCareService : {};
+  const careServicePackage = isRecord(nurseryCareService.careServicePackage)
+    ? nurseryCareService.careServicePackage
+    : {};
+  const prefferedShift = isRecord(item.prefferedShift) ? item.prefferedShift : null;
+  const customer = isRecord(item.customer) ? item.customer : null;
+  const progresses = Array.isArray(item.progresses) ? item.progresses : [];
+  const rating = isRecord(item.rating) ? item.rating : null;
+
+  return {
+    id,
+    status: toNumber(item.status),
+    statusName: toText(item.statusName),
+    serviceDate: toText(item.serviceDate),
+    totalSessions: toNumber(item.totalSessions),
+    address: toText(item.address),
+    phone: toText(item.phone),
+    note: toText(item.note),
+    latitude: toNumber(item.latitude),
+    longitude: toNumber(item.longitude),
+    scheduleDaysOfWeek: parseScheduleDaysOfWeek(item.scheduleDaysOfWeek),
+    cancelReason: toNullableText(item.cancelReason),
+    createdAt: toText(item.createdAt),
+    approvedAt: toNullableText(item.approvedAt),
+    orderId: toNullableNumber(item.orderId),
+    nurseryCareService: {
+      id: toNumber(nurseryCareService.id),
+      nurseryId: toNumber(nurseryCareService.nurseryId),
+      nurseryName: toText(nurseryCareService.nurseryName),
+      careServicePackage: {
+        id: toNumber(careServicePackage.id),
+        name: toText(careServicePackage.name),
+        description: toText(careServicePackage.description),
+        visitPerWeek: toNumber(careServicePackage.visitPerWeek),
+        durationDays: toNumber(careServicePackage.durationDays),
+        serviceType: toNumber(careServicePackage.serviceType),
+        unitPrice: toNumber(careServicePackage.unitPrice),
+      },
+    },
+    prefferedShift: prefferedShift
+      ? {
+          id: toNumber(prefferedShift.id),
+          shiftName: toText(prefferedShift.shiftName),
+          startTime: toText(prefferedShift.startTime),
+          endTime: toText(prefferedShift.endTime),
+        }
+      : null,
+    customer: customer
+      ? {
+          id: toNumber(customer.id),
+          fullName: toText(customer.fullName),
+          email: toText(customer.email),
+          phone: toText(customer.phone),
+          avatar: toNullableText(customer.avatar),
+        }
+      : null,
+    mainCaretaker: item.mainCaretaker ?? null,
+    currentCaretaker: item.currentCaretaker ?? null,
+    progresses: progresses
+      .map((progress) => {
+        if (!isRecord(progress)) {
+          return null;
+        }
+
+        return {
+          id: toNumber(progress.id),
+          action: toText(progress.action),
+          description: toText(progress.description),
+          createdAt: toText(progress.createdAt),
+        };
+      })
+      .filter((progress): progress is MyServiceRegistration["progresses"][number] => Boolean(progress)),
+    rating: rating
+      ? {
+          id: toNumber(rating.id),
+          score: toNumber(rating.score),
+          comment: toText(rating.comment) || undefined,
+        }
+      : null,
+  };
+};
+
+const buildPaginationParams = (query?: ServiceRegistrationsQuery) => {
+  if (!query) {
+    return undefined;
+  }
+
+  return {
+    ...(typeof query.pageNumber === "number" ? { PageNumber: query.pageNumber } : {}),
+    ...(typeof query.pageSize === "number" ? { PageSize: query.pageSize } : {}),
+  };
+};
+
 export const getManagerNurseryCareServices = async (loading = true): Promise<NurseryCareService[]> => {
   const response = await apiClient.get<WrappedResponse<unknown>>(
     "nursery-care-services/my",
@@ -391,4 +536,94 @@ export const getDayOfWeekEnums = async (loading = true): Promise<EnumOption[]> =
   );
 
   return normalizeEnumOptions(response);
+};
+
+export const getSystemEnumValues = async (enumName: string, loading = true): Promise<EnumOption[]> => {
+  const response = await apiClient.get<WrappedResponse<unknown>>(
+    `system/enums/${encodeURIComponent(enumName)}`,
+    undefined,
+    loading,
+    QUERY_CONFIG
+  );
+
+  return normalizeEnumOptions(response);
+};
+
+export const getMyServiceRegistrations = async (
+  query?: ServiceRegistrationsQuery,
+  loading = true
+): Promise<PaginatedApiResponse<MyServiceRegistration>> => {
+  const response = await apiClient.get<WrappedResponse<unknown>>(
+    "service-registrations/my",
+    buildPaginationParams(query),
+    loading,
+    QUERY_CONFIG
+  );
+
+  const payload = unwrapPayloadData(response);
+  if (!isRecord(payload) || !Array.isArray(payload.items)) {
+    return {
+      items: [],
+      totalCount: 0,
+      pageNumber: query?.pageNumber ?? 1,
+      pageSize: query?.pageSize ?? 10,
+      totalPages: 0,
+      hasPrevious: false,
+      hasNext: false,
+    };
+  }
+
+  return {
+    items: payload.items
+      .map((item) => normalizeServiceRegistration(item))
+      .filter((item): item is MyServiceRegistration => Boolean(item)),
+    totalCount: toNumber(payload.totalCount),
+    pageNumber: toNumber(payload.pageNumber, query?.pageNumber ?? 1),
+    pageSize: toNumber(payload.pageSize, query?.pageSize ?? 10),
+    totalPages: toNumber(payload.totalPages),
+    hasPrevious: toBoolean(payload.hasPrevious),
+    hasNext: toBoolean(payload.hasNext),
+  };
+};
+
+export const getServiceRegistrationDetail = async (
+  id: number,
+  loading = true
+): Promise<MyServiceRegistration> => {
+  const response = await apiClient.get<WrappedResponse<unknown>>(
+    `service-registrations/${id}`,
+    undefined,
+    loading,
+    QUERY_CONFIG
+  );
+
+  const normalized = normalizeServiceRegistration(unwrapPayloadData(response));
+  if (!normalized) {
+    throw new Error("Không thể tải chi tiết yêu cầu dịch vụ");
+  }
+
+  return normalized;
+};
+
+export const cancelServiceRegistration = async (
+  id: number,
+  cancelReason: string,
+  loading = true
+): Promise<MyServiceRegistration> => {
+  const trimmedReason = cancelReason.trim();
+  const endpoint = `service-registrations/${id}/cancel?cancelReason=${encodeURIComponent(trimmedReason)}`;
+
+  const response = await apiClient.post<WrappedResponse<unknown>>(
+    endpoint,
+    undefined,
+    loading,
+    MUTATION_CONFIG
+  );
+
+  const normalized = normalizeServiceRegistration(unwrapPayloadData(response));
+  if (!normalized) {
+    throw new Error("Không thể hủy yêu cầu dịch vụ");
+  }
+
+  return normalized;
 };

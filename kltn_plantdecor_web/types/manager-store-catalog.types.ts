@@ -24,6 +24,16 @@ export interface ManagerNursery {
   totalMaterials: number;
 }
 
+export interface UpdateMyManagerNurseryRequest {
+  name: string;
+  address: string;
+  area: number | null;
+  latitude: number | null;
+  longitude: number | null;
+  phone: string;
+  isActive: boolean;
+}
+
 export interface AvailableImportCommonPlantItem {
   id: number;
   name: string;
@@ -211,4 +221,36 @@ export interface SystemPlantSearchItem {
   primaryImageUrl: string | null;
 }
 
-export interface SystemPlantSearchPayload extends PaginatedPayload<SystemPlantSearchItem> {}
+export type SystemPlantSearchPayload = PaginatedPayload<SystemPlantSearchItem>;
+
+export interface ManagerPlantComboInventoryItem {
+  id: number;
+  comboCode: string;
+  comboName: string;
+  comboType: number;
+  comboTypeName: string;
+  price: number;
+  quantity: number;
+  isActive: boolean;
+  updatedAt: string;
+}
+
+export interface ManagerPlantComboStockChange {
+  plantId: number;
+  plantName: string;
+  quantityChange: number;
+  beforeQuantity: number;
+  afterQuantity: number;
+}
+
+export interface ManagerPlantComboOperationRequest {
+  quantity: number;
+}
+
+export interface ManagerPlantComboOperationPayload {
+  comboId: number;
+  quantity: number;
+  plantStockChanges: ManagerPlantComboStockChange[];
+}
+
+export type ManagerPlantComboListPayload = PaginatedPayload<ManagerPlantComboInventoryItem>;

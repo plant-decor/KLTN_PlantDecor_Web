@@ -16,6 +16,7 @@ import PlantComboTab from './PlantComboTab';
 import PlantInstanceTab from './PlantInstanceTab';
 import MaterialTab from './MaterialTab';
 import type { Plant, PlantCombo, PlantInstance, Material } from '@/types/store-management.types';
+import ManagementHeader from '../layout/ManagementHeader';
 
 interface StoreManagementPageClientProps {
   initialPlants?: Plant[];
@@ -66,17 +67,16 @@ export default function StoreManagementPageClient({
   };
 
   return (
-    <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', py: 4 }}>
-      <Container maxWidth="xl">
+    <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', p: 4 }}>
         {/* Header */}
-        <Stack spacing={2} sx={{ mb: 4 }}>
-          <Typography variant="h4" fontWeight="700" color="primary">
-            Quản Lý Cửa Hàng
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Quản lý dữ liệu chính của cây, combo, mẫu cây và vật tư tiêu hao
-          </Typography>
-        </Stack>
+        <ManagementHeader
+          title="Quản Lý Cửa Hàng"
+          description="Quản lý dữ liệu chính của cây, combo, mẫu cây và vật tư tiêu hao."
+          entityLabel="gói"
+                // count={packages.length}
+                actionLabel="Tạo gói mới"
+                // onAction={openCreateModal}
+              />
 
         {/* Tabs */}
         <Paper sx={{ borderRadius: 2, overflow: 'hidden' }}>
@@ -141,7 +141,6 @@ export default function StoreManagementPageClient({
             </TabPanel>
           </Box>
         </Paper>
-      </Container>
     </Box>
   );
 }

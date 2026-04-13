@@ -17,9 +17,16 @@ import { addComboToWishlist, removeItemFromWishlist } from '@/lib/api/cartWishli
 interface ComboCardProps {
   combo: ShopUnifiedComboItem;
   initialWishlisted?: boolean;
+  showNewBadge?: boolean;
+  newBadgeLabel?: string;
 }
 
-export default function ComboCard({ combo, initialWishlisted = false }: ComboCardProps) {
+export default function ComboCard({
+  combo,
+  initialWishlisted = false,
+  showNewBadge = false,
+  newBadgeLabel,
+}: ComboCardProps) {
   const router = useRouter();
   const locale = useLocale();
   const tProducts = useTranslations('products');
@@ -138,6 +145,11 @@ export default function ComboCard({ combo, initialWishlisted = false }: ComboCar
               className="object-cover"
               loading="eager"
             />
+            {showNewBadge ? (
+              <span className="absolute right-3 top-3 rounded-full bg-green-600 px-3 py-1 text-xs font-semibold text-white shadow">
+                {newBadgeLabel ?? tProducts('new')}
+              </span>
+            ) : null}
           </div>
         </Link>
 

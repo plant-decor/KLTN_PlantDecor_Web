@@ -68,9 +68,9 @@
     "recaptchaComplete": "Vui lòng xác thực reCAPTCHA trước khi đăng nhập.",
     "exceededAttempts": "Bạn đã vượt quá số lần đăng nhập cho phép. Vui lòng hoàn tất reCAPTCHA.",
     "sessionInvalidated": {
-        "title": "Phiên làm việc hết hạn",
-        "description": "Phiên đăng nhập của bạn đã hết hiệu lực hoặc đã bị đăng xuất từ thiết bị khác. Vui lòng đăng nhập lại để bảo mật thông tin.",
-        "button": "Đăng nhập ngay"
+      "title": "Phiên làm việc hết hạn",
+      "description": "Phiên đăng nhập của bạn đã hết hiệu lực hoặc đã bị đăng xuất từ thiết bị khác. Vui lòng đăng nhập lại để bảo mật thông tin.",
+      "button": "Đăng nhập ngay"
     }
   },
   "nav": {
@@ -103,6 +103,7 @@
     "storeMetrics": "Số liệu cửa hàng",
     "storeCatalog": "Danh mục cửa hàng",
     "categoriesTags": "Danh mục & Thẻ",
+    "nurseryProfile": "Hồ sơ nhà vườn",
     "storeUsers": "Người dùng cửa hàng",
     "salesOrders": "Đơn hàng bán",
     "serviceOrders": "Đơn dịch vụ",
@@ -162,7 +163,7 @@
       "hasFlower": "Có hoa",
       "petSafe": "An toàn cho thú cưng",
       "childSafe": "An toàn cho trẻ em",
-      "uniqueInstance": "Cá thể độc bản",
+      "uniqueInstance": "Cây đặc biệt",
       "includePlants": "Hiển thị cây",
       "includeMaterials": "Hiển thị vật tư",
       "includeCombos": "Hiển thị combo",
@@ -506,6 +507,52 @@
     "changePasswordSuccess": "Mật khẩu đã được thay đổi thành công",
     "changePasswordError": "Lỗi khi đổi mật khẩu"
   },
+  "managerNurseryProfile": {
+    "title": "Hồ sơ nhà vườn",
+    "subtitle": "Quản lý thông tin nhà vườn của bạn",
+    "loadingProfile": "Đang tải hồ sơ quản lý...",
+    "loadingNursery": "Đang tải thông tin nhà vườn...",
+    "saving": "Đang lưu...",
+    "managerSection": {
+      "title": "Thông tin quản lý",
+      "changeAvatar": "Thay đổi ảnh đại diện",
+      "uploadingAvatar": "Đang tải ảnh đại diện...",
+      "role": "Vai trò",
+      "nurseryName": "Tên nhà vườn",
+      "userName": "Username",
+      "birthYear": "Năm sinh",
+      "gender": "Giới tính",
+      "latitude": "Vĩ độ",
+      "longitude": "Kinh độ",
+      "receiveNotifications": "Nhận thông báo",
+      "genderOptions": {
+        "Unknown": "Không xác định",
+        "Male": "Nam",
+        "Female": "Nữ",
+        "Other": "Khác"
+      }
+    },
+    "nurserySection": {
+      "title": "Hồ sơ nhà vườn",
+      "id": "ID nhà vườn",
+      "managerName": "Tên quản lý",
+      "createdAt": "Ngày tạo",
+      "totalPlants": "Tổng số cây",
+      "totalMaterials": "Tổng số vật tư",
+      "name": "Tên nhà vườn",
+      "phone": "Số điện thoại",
+      "area": "Diện tích (m²)",
+      "latitude": "Vĩ độ",
+      "longitude": "Kinh độ",
+      "isActive": "Hoạt động"
+    },
+    "errors": {
+      "fetchProfile": "Không thể tải hồ sơ quản lý",
+      "fetchNursery": "Không thể tải thông tin nhà vườn",
+      "updateProfile": "Không thể cập nhật hồ sơ quản lý",
+      "updateNursery": "Không thể cập nhật thông tin nhà vườn"
+    }
+  },
   "wishlist": {
     "title": "Danh sách yêu thích",
     "empty": "Chưa có sản phẩm yêu thích",
@@ -529,6 +576,9 @@
     "noNurseries": "Không có nhà vườn khả dụng.",
     "confirmAddToCart": "Thêm vào giỏ",
     "pageIndicator": "Trang {current} / {total}"
+  },
+  "combo": {
+    "description": "Mô tả"
   },
   "productDetail": {
     "home": "Trang chủ",
@@ -557,7 +607,7 @@
     "origin": "Nguồn gốc",
     "placement": "Vị trí",
     "growthRate": "Tốc độ phát triển",
-    "uniqueInstance": "Cá thể độc bản",
+    "uniqueInstance": "Cây đặc biệt",
     "categories": "Danh mục",
     "tags": "Thẻ",
     "categoryFallback": "Danh mục {index}",
@@ -612,10 +662,10 @@
       "large": "Lớn"
     },
     "instanceStatus": {
-      "healthy": "✓ Khỏe",
-      "thriving": "✨ Phát triển tốt",
-      "needsAttention": "⚠️ Cần chăm sóc",
-      "critical": "🔴 Tình trạng nghiêm trọng"
+      "healthy": "Khỏe",
+      "thriving": "Phát triển tốt",
+      "needsAttention": "Cần chăm sóc",
+      "critical": "Tình trạng nghiêm trọng"
     }
   },
   "language": {
@@ -645,7 +695,7 @@
   },
   "expertGuide": {
     "title": "Cẩm nang chăm sóc từ chuyên gia",
-    "subtitle": "Học cách giúp những \"người bạn xanh\" của bạn luôn rạng rỡ với những bí quyết đơn giản từ đội ngũ GreenSmart.",
+    "subtitle": "Học cách giúp những \"người bạn xanh\" của bạn luôn rạng rỡ với những bí quyết đơn giản từ đội ngũ PlantDecor.",
     "watering": {
       "title": "Tưới nước đúng cách",
       "desc": "Bí quyết đo độ ẩm đất"
@@ -694,5 +744,109 @@
     "backHome": "Quay lại trang chủ",
     "title": "Kết quả thanh toán",
     "message": "Cảm ơn bạn đã sử dụng dịch vụ của PlantDecor. Vui lòng kiểm tra trạng thái đơn hàng trong tài khoản của bạn."
+  },
+  "aboutPage": {
+    "metadata": {
+      "title": "Về PlantDecor – Tầm nhìn về Không gian sống Xanh thông minh",
+      "description": "Tìm hiểu cách PlantDecor sử dụng AI để giúp bạn chọn cây cảnh phù hợp nhất với môi trường sống và làm việc."
+    },
+    "hero": {
+      "title": "Nơi Công Nghệ Gặp Gỡ Thiên Nhiên",
+      "subtitle": "PlantDecor kết hợp AI và chuyên môn thực tế để biến không gian sống, làm việc thành một hệ sinh thái xanh, thẩm mỹ và bền vững.",
+      "primaryCta": "Trải nghiệm AI ngay",
+      "secondaryCta": "Liên hệ đội ngũ",
+      "imageAlt": "Không gian nội thất được chuyển đổi thành ốc đảo xanh bằng AI"
+    },
+    "mission": {
+      "title": "Sứ Mệnh Của Chúng Tôi",
+      "problem": "Đô thị hóa nhanh khiến con người xa dần mảng xanh, đặc biệt trong văn phòng và căn hộ hiện đại.",
+      "solution": "PlantDecor đưa thiên nhiên trở lại bằng giải pháp toàn diện: từ AI đề xuất bố trí, chọn cây phù hợp đến dịch vụ chăm sóc chuyên nghiệp tại chỗ."
+    },
+    "ai": {
+      "title": "AI Của PlantDecor Hoạt Động Thế Nào",
+      "subtitle": "3 bước đơn giản để tạo không gian xanh phù hợp riêng cho bạn.",
+      "steps": {
+        "upload": {
+          "title": "Bước 1: Tải ảnh",
+          "description": "Chụp và tải ảnh không gian bạn muốn cải tạo."
+        },
+        "analyze": {
+          "title": "Bước 2: Phân Tích",
+          "description": "AI phân tích ánh sáng, độ ẩm và bối cảnh sử dụng."
+        },
+        "transform": {
+          "title": "Bước 3: Chuyển Đổi",
+          "description": "Nhận gợi ý bố cục 3D cùng danh sách cây phù hợp nhất."
+        }
+      }
+    },
+    "human": {
+      "title": "Không Chỉ Là Bot, Mà Là Mạng Lưới Chuyên Gia",
+      "subtitle": "AI đưa ra đề xuất nhanh, con người đảm bảo chất lượng triển khai thực tế.",
+      "caretakers": {
+        "title": "Đội Ngũ Chăm Sóc Cây",
+        "description": "Plant Caretakers theo dõi tình trạng cây, đưa lịch chăm định kỳ và xử lý các vấn đề phát sinh tại nhà hoặc văn phòng."
+      },
+      "consultants": {
+        "title": "Tư Vấn Viên Không Gian Xanh",
+        "description": "Consultants đồng hành cùng bạn để tinh chỉnh thiết kế theo thẩm mỹ, ngân sách và nhu cầu vận hành thực tế."
+      }
+    }
+  },
+  "contactPage": {
+    "metadata": {
+      "title": "Liên hệ PlantDecor – Tư vấn Thiết kế & Chăm sóc Cây cảnh",
+      "description": "Kết nối với đội ngũ chuyên gia hoặc trợ lý AI của chúng tôi để được hỗ trợ về đơn hàng và dịch vụ chăm sóc không gian xanh."
+    },
+    "hero": {
+      "title": "Liên Hệ PlantDecor",
+      "description": "Chọn đúng kênh hỗ trợ để nhận phản hồi nhanh nhất cho nhu cầu tư vấn, chăm sóc cây và xử lý đơn hàng."
+    },
+    "channels": {
+      "ai": {
+        "title": "Trợ lý AI",
+        "description": "Nhận gợi ý chăm cây và phản hồi tức thì qua ChatSession.",
+        "cta": "Mở ChatSession"
+      },
+      "care": {
+        "title": "Dịch Vụ Chăm Sóc",
+        "description": "Đặt lịch dịch vụ chăm sóc cây và xử lý các vấn đề vận hành không gian xanh.",
+        "cta": "Xem dịch vụ chăm sóc"
+      },
+      "sales": {
+        "title": "Kinh Doanh & Đơn Hàng",
+        "description": "Tư vấn giải pháp bố trí, báo giá và hỗ trợ trước/sau mua hàng.",
+        "cta": "Khám phá cửa hàng"
+      }
+    },
+    "nurseries": {
+      "title": "Vị Trí Vườn Ươm Đang Hoạt Động",
+      "empty": "Hiện chưa có vườn ươm hoạt động để hiển thị.",
+      "fetchError": "Không thể tải danh sách vườn ươm lúc này. Vui lòng thử lại sau."
+    },
+    "form": {
+      "title": "Gửi Yêu Cầu Hỗ Trợ",
+      "fields": {
+        "name": "Họ và tên",
+        "email": "Email",
+        "subject": "Chủ đề",
+        "message": "Nội dung"
+      },
+      "subjectOptions": {
+        "general": "Tư vấn chung",
+        "service": "Yêu cầu dịch vụ",
+        "order": "Vấn đề đơn hàng"
+      },
+      "submit": "Gửi yêu cầu",
+      "placeholderSuccess": "Yêu cầu đã được ghi nhận. Chúng tôi sẽ liên hệ với bạn trong thời gian sớm nhất.",
+      "errors": {
+        "required": "Vui lòng điền trường này.",
+        "invalidEmail": "Email không hợp lệ."
+      }
+    },
+    "map": {
+      "title": "Bản Đồ Văn Phòng/Vườn Ươm",
+      "placeholder": "Bản đồ Google Maps sẽ được cập nhật trong phiên bản tiếp theo."
+    }
   }
 }

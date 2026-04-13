@@ -10,6 +10,7 @@ import {
   ClickAwayListener,
   InputAdornment,
   List,
+  ListItem,
   ListItemButton,
   ListItemText,
   Paper,
@@ -23,6 +24,7 @@ import {
   type ShopUnifiedSearchRequest,
 } from '@/lib/api/shopUnifiedService';
 import { formatCurrency } from '@/lib/utils/formatUtil';
+import Image from 'next/image';
 
 const SEARCH_DEBOUNCE_MS = 300;
 const MAX_VISIBLE_ITEMS = 5;
@@ -105,7 +107,7 @@ export default function HeaderUnifiedSearch({ width, onNavigate }: HeaderUnified
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<ShopUnifiedSearchItem[]>([]);
   const rootRef = useRef<HTMLDivElement | null>(null);
-
+  const fallbackImage = '/img/fallbackplant.avif';
   const hasKeyword = keyword.trim().length > 0;
 
   useEffect(() => {
@@ -208,7 +210,7 @@ export default function HeaderUnifiedSearch({ width, onNavigate }: HeaderUnified
 
         {open && (hasKeyword || loading) && (
           <Paper
-            elevation={8}
+            elevation={4}
             sx={{
               position: 'absolute',
               top: 'calc(100% + 8px)',
@@ -217,7 +219,7 @@ export default function HeaderUnifiedSearch({ width, onNavigate }: HeaderUnified
               zIndex: 1300,
               borderRadius: '12px',
               border: '1px solid var(--card-border)',
-              bgcolor: 'var(--card)',
+              bgcolor: 'var(--background)',
               maxHeight: `calc(${MAX_VISIBLE_ITEMS} * 64px)`,
               overflowY: 'auto',
             }}
@@ -232,40 +234,78 @@ export default function HeaderUnifiedSearch({ width, onNavigate }: HeaderUnified
                     key={`${item.type}-${label}-${index}`}
                     onClick={() => handleClickSuggestion(item)}
                     sx={{
-                      alignItems: 'flex-start',
+                      px: 0.5,
+                      py: 0.75,
+                      alignItems: 'stretch',
+                      gap: 0.25,
                       borderBottom:
                         index === items.length - 1 ? 'none' : '1px solid var(--card-border)',
                       '&:hover': {
-                        bgcolor: 'color-mix(in srgb, var(--primary) 10%, white)',
+                        bgcolor: 'color-mix(in srgb, var(--primary) 50%, white)',
                       },
                     }}
                   >
-                    <ListItemText
-                      primary={
-                        <Box className="flex items-center gap-2">
-                          <Chip
-                            size="small"
-                            label={item.type}
+                    <Box
+                      sx={{
+                        width: '30%',
+                        minWidth: 0,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+
+                      }}
+                    >
+                      <Image
+                        src={item.imageUrl ?? fallbackImage}
+                        alt={label}
+                        width={40}
+                        height={40}
+                        style={{ borderRadius: 4, objectFit: 'cover' }}
+                      />
+                      <Chip
+                        size="small"
+                        label={item.type}
+                        sx={{
+                          height: 20,
+                          maxWidth: '100%',
+                          fontSize: '0.7rem',
+                          bgcolor: 'color-mix(in srgb, var(--primary) 18%, white)',
+                          color: 'var(--foreground)',
+                        }}
+                      />
+                    </Box>
+                    <Box sx={{ width: '70%', minWidth: 0, display: 'flex', alignItems: 'center' }}>
+                      <ListItemText
+                        primary={
+                          <Typography
+                            variant="body2"
                             sx={{
-                              height: 22,
-                              fontSize: '0.7rem',
-                              bgcolor: 'color-mix(in srgb, var(--primary) 18%, white)',
                               color: 'var(--foreground)',
+                              fontWeight: 500,
+                              fontSize: '14px',
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'normal',
                             }}
-                          />
-                          <Typography variant="body2" sx={{ color: 'var(--foreground)', fontWeight: 500 }}>
+                          >
                             {label}
                           </Typography>
-                        </Box>
-                      }
-                      secondary={
-                        price !== null ? (
-                          <Typography component="span" variant="caption" sx={{ color: 'var(--foreground)' }}>
-                            {formatCurrency(price, locale)}
+                        }
+                        secondary={
+                          <Typography
+                            component="span"
+                            variant="caption"
+                            sx={{ color: 'var(--foreground)', fontSize: '12px', fontWeight: 700 }}
+                          >
+                            {price !== null ? formatCurrency(price, locale) : ''}
                           </Typography>
-                        ) : null
-                      }
-                    />
+                        }
+                      />
+                    </Box>
                   </ListItemButton>
                 );
               })}

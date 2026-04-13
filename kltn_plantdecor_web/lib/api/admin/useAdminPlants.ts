@@ -1,15 +1,6 @@
 "use client";
 
 import { useCallback, useMemo, useRef, useState } from 'react';
-import type {
-  Plant,
-  PlantDetail,
-  PlantEnumGroup,
-  PlantEnumPayload,
-  PlantFormData,
-  PlantUpsertRequest,
-  ImageUploadData,
-} from '@/types/store-management.types';
 import {
   assignPlantCategories,
   assignPlantTags,
@@ -25,6 +16,22 @@ import {
   uploadAdminPlantThumbnail,
   type AdminPlantSearchRequest,
 } from '@/lib/api/adminPlantsService';
+import {
+  createAdminPlantGuide,
+  fetchLightRequirementOptions,
+  getAdminPlantGuideByPlantId,
+  updateAdminPlantGuide,
+} from '@/lib/api/adminPlantGuidesService';
+import type {
+  Plant,
+  PlantDetail,
+  PlantEnumGroup,
+  PlantEnumPayload,
+  PlantFormData,
+  PlantUpsertRequest,
+  ImageUploadData,
+} from '@/types/store-management.types';
+import type { PlantGuideFormData } from '@/types/admin-plant-guide.types';
 
 interface PaginationState {
   totalCount: number;
@@ -77,6 +84,7 @@ const EMPTY_ENUMS: PlantEnumPayload = {
   placementTypes: [],
   sizes: [],
   careLevelTypes: [],
+  lightRequirements: [],
 };
 
 const defaultFilters: PlantFilters = {
@@ -100,7 +108,7 @@ const getResponsePayload = <T,>(response: { data?: T; payload?: T }): T | undefi
 
 const normalizeError = (err: unknown): string => {
   if (!err || typeof err !== 'object') {
-    return 'An error occurred';
+    return 'Đã xảy ra lỗi không xác định';
   }
 
   const candidate = err as {
@@ -108,7 +116,7 @@ const normalizeError = (err: unknown): string => {
     message?: string;
   };
 
-  return candidate.response?.data?.message || candidate.message || 'An error occurred';
+  return candidate.response?.data?.message || candidate.message || 'Đã xảy ra lỗi không xác định';
 };
 
 const toUpsertPayload = (data: PlantFormData): PlantUpsertRequest => {
@@ -166,8 +174,29 @@ const normalizeEnums = (groups: PlantEnumGroup[]): PlantEnumPayload => {
     placementTypes: byName.get('PlacementType')?.values ?? [],
     sizes: byName.get('PlantSize')?.values ?? [],
     careLevelTypes: byName.get('CareLevelType')?.values ?? [],
+    lightRequirements: [],
   };
 };
+
+const hasPlantGuideValues = (guide?: PlantGuideFormData): boolean => {
+  if (!guide) {
+    return false;
+  }
+
+  return Object.values(guide).some((value) => value.trim().length > 0);
+};
+
+const toPlantGuidePayload = (guide: PlantGuideFormData, plantId: number) => ({
+  plantId,
+  lightRequirement: guide.lightRequirement.trim(),
+  watering: guide.watering.trim(),
+  fertilizing: guide.fertilizing.trim(),
+  pruning: guide.pruning.trim(),
+  temperature: guide.temperature.trim(),
+  humidity: guide.humidity.trim(),
+  soil: guide.soil.trim(),
+  careNotes: guide.careNotes.trim(),
+});
 
 export const useAdminPlants = (): UseAdminPlantsReturn => {
   const [plants, setPlants] = useState<Plant[]>([]);
@@ -314,6 +343,31 @@ export const useAdminPlants = (): UseAdminPlantsReturn => {
           await uploadAdminPlantThumbnail(plantId, selectedThumbnail.file, true);
         }
 
+        if (hasPlantGuideValues(formData.plantGuide)) {
+          const guidePayload = toPlantGuidePayload(
+            formData.plantGuide ?? {
+              lightRequirement: '',
+              watering: '',
+              fertilizing: '',
+              pruning: '',
+              temperature: '',
+              humidity: '',
+              soil: '',
+              careNotes: '',
+            },
+            plantId
+          );
+
+          const existingGuideResponse = await getAdminPlantGuideByPlantId(plantId, true).catch(() => null);
+          const existingGuide = existingGuideResponse ? getResponsePayload(existingGuideResponse) : null;
+
+          if (existingGuide?.id) {
+            await updateAdminPlantGuide(existingGuide.id, guidePayload, true);
+          } else {
+            await createAdminPlantGuide(guidePayload, true);
+          }
+        }
+
         await syncCategories(plantId, currentCategoryIds, formData.categoryIds);
         await syncTags(plantId, currentTagIds, formData.tagIds);
 
@@ -378,9 +432,16 @@ export const useAdminPlants = (): UseAdminPlantsReturn => {
     setEnumError(null);
 
     try {
-      const response = await getPlantEnums(true);
-      const payload = getResponsePayload(response) ?? [];
-      setEnums(normalizeEnums(payload));
+      const [plantEnumResponse, lightRequirementOptions] = await Promise.all([
+        getPlantEnums(true),
+        fetchLightRequirementOptions(true),
+      ]);
+
+      const payload = getResponsePayload(plantEnumResponse) ?? [];
+      setEnums({
+        ...normalizeEnums(payload),
+        lightRequirements: lightRequirementOptions,
+      });
     } catch (err) {
       setEnumError(normalizeError(err));
     } finally {

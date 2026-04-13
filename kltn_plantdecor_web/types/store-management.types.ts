@@ -1,3 +1,5 @@
+import type { PlantGuideFormData } from '@/types/admin-plant-guide.types';
+
 // Plant (Admin) Types
 export interface PlantEnumValue {
   value: number;
@@ -13,6 +15,7 @@ export interface PlantEnumPayload {
   placementTypes: PlantEnumValue[];
   sizes: PlantEnumValue[];
   careLevelTypes: PlantEnumValue[];
+  lightRequirements: PlantEnumValue[];
 }
 
 export interface Plant {
@@ -121,6 +124,7 @@ export interface PlantUpsertRequest {
 export interface PlantFormData extends PlantUpsertRequest {
   categoryIds: number[];
   tagIds: number[];
+  plantGuide?: PlantGuideFormData;
 }
 
 // Plant Combo Types

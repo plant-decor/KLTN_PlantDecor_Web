@@ -17,7 +17,7 @@ import {
  * Initializes auth store once when the app boots on the client.
  */
 export function AuthProvider({ children, initialUser }: { children: React.ReactNode; initialUser: User | null }) {
-  const { setUser, clearAll } = useAuthStore();
+  const { setUser, setAuthBootstrapCompleted } = useAuthStore();
   const initializedRef = useRef(false);
 
   useEffect(() => {
@@ -25,6 +25,7 @@ export function AuthProvider({ children, initialUser }: { children: React.ReactN
       return;
     }
     initializedRef.current = true;
+    setAuthBootstrapCompleted(false);
 
     let active = true;
 
@@ -49,14 +50,13 @@ export function AuthProvider({ children, initialUser }: { children: React.ReactN
             if (refreshed.refreshToken) {
               setClientRefreshToken(refreshed.refreshToken);
             }
-          } else {
-            clearAll();
           }
         }
       } catch (error) {
         console.error('Failed to initialize auth:', error);
+      } finally {
         if (active) {
-          clearAll();
+          setAuthBootstrapCompleted(true);
         }
       }
     };
@@ -67,7 +67,7 @@ export function AuthProvider({ children, initialUser }: { children: React.ReactN
       active = false;
       clearTimeout(timer);
     };
-  }, [clearAll, initialUser, setUser]);
+  }, [initialUser, setAuthBootstrapCompleted, setUser]);
 
   return <>{children}</>;
 }

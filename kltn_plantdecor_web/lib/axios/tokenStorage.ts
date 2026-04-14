@@ -31,7 +31,6 @@ export const getClientAccessToken = (): string | null => {
  */
 export const setClientAccessToken = (token: string): void => {
   useAuthStore.getState().setAccessToken(token);
-  document.cookie = `accessToken=${token}; path=/; secure; samesite=strict`;
 };
 
 /**

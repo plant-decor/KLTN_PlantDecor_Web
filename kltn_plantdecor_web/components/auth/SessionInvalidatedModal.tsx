@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { 
@@ -22,13 +22,84 @@ import {
   resetSessionInvalidatedFlag,
 } from '@/lib/utils/authSessionEvents';
 
-const HEARTBEAT_INTERVAL_MS = 15000;
+const HEARTBEAT_INTERVAL_MS = 90000;
+const INITIAL_HEARTBEAT_DELAY_MS = 5000;
+const HEARTBEAT_MAX_INTERVAL_MS = 300000;
+const HEARTBEAT_LOCK_KEY = 'auth:heartbeat:leader';
+const HEARTBEAT_LOCK_TTL_MS = 120000;
+
+type HeartbeatLock = {
+  ownerId: string;
+  expiresAt: number;
+};
+
+const safeParseHeartbeatLock = (raw: string | null): HeartbeatLock | null => {
+  if (!raw) return null;
+
+  try {
+    const parsed = JSON.parse(raw) as HeartbeatLock;
+    if (
+      typeof parsed.ownerId === 'string' &&
+      parsed.ownerId.trim() &&
+      typeof parsed.expiresAt === 'number' &&
+      Number.isFinite(parsed.expiresAt)
+    ) {
+      return parsed;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+};
 
 export function SessionInvalidatedModal() {
   const router = useRouter();
   const t = useTranslations('auth.sessionInvalidated');
-  const { isAuthenticated, clearAll } = useAuthStore();
+  const { isAuthenticated, isAuthBootstrapCompleted, clearAll } = useAuthStore();
   const [open, setOpen] = useState(false);
+  const tabIdRef = useRef<string>('');
+  const heartbeatTimerRef = useRef<number | null>(null);
+  const currentIntervalRef = useRef<number>(HEARTBEAT_INTERVAL_MS);
+
+  if (!tabIdRef.current && typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    tabIdRef.current = crypto.randomUUID();
+  }
+
+  if (!tabIdRef.current) {
+    tabIdRef.current = `tab-${Math.random().toString(36).slice(2)}`;
+  }
+
+  const clearHeartbeatTimer = useCallback(() => {
+    if (heartbeatTimerRef.current !== null) {
+      window.clearTimeout(heartbeatTimerRef.current);
+      heartbeatTimerRef.current = null;
+    }
+  }, []);
+
+  const tryAcquireHeartbeatLeader = useCallback((): boolean => {
+    const now = Date.now();
+    const existingLock = safeParseHeartbeatLock(localStorage.getItem(HEARTBEAT_LOCK_KEY));
+    const currentTabId = tabIdRef.current;
+
+    if (existingLock && existingLock.expiresAt > now && existingLock.ownerId !== currentTabId) {
+      return false;
+    }
+
+    const renewedLock: HeartbeatLock = {
+      ownerId: currentTabId,
+      expiresAt: now + HEARTBEAT_LOCK_TTL_MS,
+    };
+
+    localStorage.setItem(HEARTBEAT_LOCK_KEY, JSON.stringify(renewedLock));
+    return true;
+  }, []);
+
+  const releaseHeartbeatLeader = useCallback(() => {
+    const existingLock = safeParseHeartbeatLock(localStorage.getItem(HEARTBEAT_LOCK_KEY));
+    if (existingLock?.ownerId === tabIdRef.current) {
+      localStorage.removeItem(HEARTBEAT_LOCK_KEY);
+    }
+  }, []);
 
   const onSessionInvalidated = useCallback(async () => {
     // Clear Zustand store (user + tokens)
@@ -63,22 +134,75 @@ export function SessionInvalidatedModal() {
   }, []);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || !isAuthBootstrapCompleted) return;
+
+    currentIntervalRef.current = HEARTBEAT_INTERVAL_MS;
+    let cancelled = false;
+
     const checkSession = async () => {
+      if (cancelled || document.visibilityState !== 'visible') {
+        return;
+      }
+
+      if (!tryAcquireHeartbeatLeader()) {
+        return;
+      }
+
       try {
         const result = await validateSessionAction();
         if (!result.authenticated) {
           dispatchSessionInvalidated('revoked');
+          return;
         }
+
+        currentIntervalRef.current = HEARTBEAT_INTERVAL_MS;
       } catch (error) {
         const status = (error as { response?: { status?: number } }).response?.status;
-        if (status === 401) dispatchSessionInvalidated('revoked');
+        if (status === 401) {
+          dispatchSessionInvalidated('revoked');
+          return;
+        }
+
+        currentIntervalRef.current = Math.min(
+          HEARTBEAT_MAX_INTERVAL_MS,
+          currentIntervalRef.current * 2
+        );
+      } finally {
+        if (!cancelled) {
+          clearHeartbeatTimer();
+          heartbeatTimerRef.current = window.setTimeout(runHeartbeat, currentIntervalRef.current);
+        }
       }
     };
-    checkSession();
-    const intervalId = window.setInterval(checkSession, HEARTBEAT_INTERVAL_MS);
-    return () => window.clearInterval(intervalId);
-  }, [isAuthenticated]);
+
+    const runHeartbeat = () => {
+      void checkSession();
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        currentIntervalRef.current = HEARTBEAT_INTERVAL_MS;
+        clearHeartbeatTimer();
+        heartbeatTimerRef.current = window.setTimeout(runHeartbeat, 0);
+      }
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    heartbeatTimerRef.current = window.setTimeout(runHeartbeat, INITIAL_HEARTBEAT_DELAY_MS);
+
+    return () => {
+      cancelled = true;
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      clearHeartbeatTimer();
+      releaseHeartbeatLeader();
+    };
+  }, [
+    clearHeartbeatTimer,
+    isAuthenticated,
+    isAuthBootstrapCompleted,
+    releaseHeartbeatLeader,
+    tryAcquireHeartbeatLeader,
+  ]);
 
   const handleReLogin = useCallback(async () => {
     setOpen(false);

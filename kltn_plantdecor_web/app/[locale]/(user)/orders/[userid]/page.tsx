@@ -1,7 +1,19 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Box, Card, Tab, Tabs, Typography } from '@mui/material';
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Tab,
+  Tabs,
+  Typography,
+} from '@mui/material';
 import { useTranslations } from 'next-intl';
 import OrderDetailModal from '@/components/order-history/OrderDetailModal';
 import OrderHistoryList from '@/components/order-history/OrderHistoryList';
@@ -27,6 +39,7 @@ export default function OrdersPage() {
   const [retryError, setRetryError] = useState('');
   const [cancelLoadingOrderId, setCancelLoadingOrderId] = useState<number | null>(null);
   const [cancelError, setCancelError] = useState('');
+  const [cancelConfirmOrderId, setCancelConfirmOrderId] = useState<number | null>(null);
 
   const [detailOrder, setDetailOrder] = useState<Order | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -122,17 +135,16 @@ export default function OrdersPage() {
     }
   }, [tOrderHistory]);
 
-  const handleCancelOrder = useCallback(async (orderId: number) => {
-    const confirmed = window.confirm('Are you sure you want to cancel this order?');
-    if (!confirmed) {
+  const confirmCancelOrder = useCallback(async () => {
+    if (cancelConfirmOrderId === null) {
       return;
     }
 
     try {
-      setCancelLoadingOrderId(orderId);
+      setCancelLoadingOrderId(cancelConfirmOrderId);
       setCancelError('');
 
-      const cancelledOrder = await cancelOrder(orderId);
+      const cancelledOrder = await cancelOrder(cancelConfirmOrderId);
 
       setOrders((prevOrders) => {
         const updatedOrders = prevOrders.map((order) =>
@@ -150,18 +162,36 @@ export default function OrdersPage() {
         prevDetail && prevDetail.id === cancelledOrder.id ? cancelledOrder : prevDetail
       );
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to cancel order. Please try again.';
+      const message = err instanceof Error ? err.message : tOrderHistory('cancelOrderFailed');
       setCancelError(message);
     } finally {
       setCancelLoadingOrderId(null);
+      setCancelConfirmOrderId(null);
     }
-  }, [selectedStatus]);
+  }, [cancelConfirmOrderId, selectedStatus, tOrderHistory]);
+
+  const handleCancelOrder = useCallback((orderId: number) => {
+    if (cancelLoadingOrderId !== null) {
+      return Promise.resolve();
+    }
+
+    setCancelConfirmOrderId(orderId);
+    return Promise.resolve();
+  }, [cancelLoadingOrderId]);
 
   const closeDetailModal = useCallback(() => {
     setDetailOpen(false);
     setRetryError('');
     setCancelError('');
   }, []);
+
+  const closeCancelConfirmModal = useCallback(() => {
+    if (cancelLoadingOrderId !== null) {
+      return;
+    }
+
+    setCancelConfirmOrderId(null);
+  }, [cancelLoadingOrderId]);
 
   return (
     <Box sx={{ py: 4, px: { xs: 2, md: 4 }, maxWidth: 1400, mx: 'auto' }}>
@@ -225,6 +255,30 @@ export default function OrdersPage() {
         onCancelOrder={handleCancelOrder}
         onClose={closeDetailModal}
       />
+
+      <Dialog open={cancelConfirmOrderId !== null} onClose={closeCancelConfirmModal} maxWidth="xs" fullWidth>
+        <DialogTitle>{tOrderHistory('cancelConfirmTitle')}</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            {tOrderHistory('cancelConfirmMessage')}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeCancelConfirmModal} disabled={cancelLoadingOrderId !== null}>
+            {tOrderHistory('keepOrder')}
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={() => void confirmCancelOrder()}
+            disabled={cancelLoadingOrderId !== null}
+          >
+            {cancelLoadingOrderId !== null
+              ? tOrderHistory('cancelling')
+              : tOrderHistory('confirmCancel')}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

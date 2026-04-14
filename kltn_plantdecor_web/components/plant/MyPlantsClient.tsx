@@ -15,15 +15,16 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
+import { useLocale, useTranslations } from 'next-intl';
 import type { MyPlantItemWithGuide } from '@/types/my-plant.types';
 
 interface MyPlantsClientProps {
   plants: MyPlantItemWithGuide[];
 }
 
-const formatDate = (value?: string | null) => {
+const formatDate = (value: string | null | undefined, locale: string, fallback: string) => {
   if (!value) {
-    return 'Chưa cập nhật';
+    return fallback;
   }
 
   const date = new Date(value);
@@ -31,12 +32,12 @@ const formatDate = (value?: string | null) => {
     return value;
   }
 
-  return date.toLocaleDateString('vi-VN');
+  return date.toLocaleDateString(locale);
 };
 
-const formatNumber = (value?: number | null, suffix = '') => {
+const formatNumber = (value: number | null | undefined, fallback: string, suffix = '') => {
   if (value === null || value === undefined || Number.isNaN(value)) {
-    return 'Chưa cập nhật';
+    return fallback;
   }
 
   return `${value}${suffix}`;
@@ -45,37 +46,59 @@ const formatNumber = (value?: number | null, suffix = '') => {
 const getHealthChipStyles = (value?: string | null) => {
   const normalized = (value ?? '').toLowerCase();
 
-  if (normalized.includes('rất khỏe') || normalized.includes('rất khoẻ')) {
+  if (
+    normalized.includes('very healthy') ||
+    normalized.includes('rất khỏe') ||
+    normalized.includes('rất khoẻ')
+  ) {
     return { bgcolor: 'success.light', color: 'success.dark' };
   }
 
-  if (normalized.includes('khỏe') || normalized.includes('khoẻ')) {
+  if (normalized.includes('healthy') || normalized.includes('khỏe') || normalized.includes('khoẻ')) {
     return { bgcolor: 'success.light', color: 'success.dark' };
   }
 
-  if (normalized.includes('cần') || normalized.includes('yếu')) {
+  if (
+    normalized.includes('need') ||
+    normalized.includes('attention') ||
+    normalized.includes('weak') ||
+    normalized.includes('cần') ||
+    normalized.includes('yếu')
+  ) {
     return { bgcolor: 'warning.light', color: 'warning.dark' };
   }
 
   return { bgcolor: 'grey.200', color: 'text.primary' };
 };
 
-const GuideField = ({ label, value }: { label: string; value?: string | number | null }) => (
+const GuideField = ({
+  label,
+  value,
+  fallback,
+}: {
+  label: string;
+  value?: string | number | null;
+  fallback: string;
+}) => (
   <Box>
     <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
       {label}
     </Typography>
     <Typography variant="body2" fontWeight={600}>
-      {value === null || value === undefined || value === '' ? 'Chưa cập nhật' : String(value)}
+      {value === null || value === undefined || value === '' ? fallback : String(value)}
     </Typography>
   </Box>
 );
 
 export default function MyPlantsClient({ plants }: MyPlantsClientProps) {
+  const t = useTranslations('myPlantClient');
+  const locale = useLocale();
+
   return (
     <Stack spacing={3}>
       {plants.map((plant) => {
         const healthStyles = getHealthChipStyles(plant.healthStatus);
+        const notUpdated = t('common.notUpdated');
 
         return (
           <Card key={plant.id} elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 4 }}>
@@ -112,41 +135,69 @@ export default function MyPlantsClient({ plants }: MyPlantsClientProps) {
                   <Stack spacing={2}>
                     <Box>
                       <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mb: 1.5 }}>
-                        <Chip label={`Mã cây #${plant.id}`} size="small" variant="outlined" />
-                        <Chip label={plant.healthStatus || 'Chưa cập nhật'} size="small" sx={healthStyles} />
+                        <Chip label={t('plantCode', { id: plant.id })} size="small" variant="outlined" />
+                        <Chip label={plant.healthStatus || notUpdated} size="small" sx={healthStyles} />
                       </Stack>
                       <Typography variant="h5" fontWeight={800} gutterBottom>
                         {plant.plantName}
                       </Typography>
                       <Typography variant="body1" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                        {plant.plantSpecificName || 'Chưa có tên khoa học'}
+                        {plant.plantSpecificName || t('common.noScientificName')}
                       </Typography>
                     </Box>
 
                     <Grid container spacing={2}>
                       <Grid size={{ xs: 6, sm: 4 }}>
-                        <GuideField label="Ngày mua" value={formatDate(plant.purchaseDate)} />
+                        <GuideField
+                          label={t('fields.purchaseDate')}
+                          value={formatDate(plant.purchaseDate, locale, notUpdated)}
+                          fallback={notUpdated}
+                        />
                       </Grid>
                       <Grid size={{ xs: 6, sm: 4 }}>
-                        <GuideField label="Vị trí" value={plant.location || 'Chưa cập nhật'} />
+                        <GuideField label={t('fields.location')} value={plant.location || notUpdated} fallback={notUpdated} />
                       </Grid>
                       <Grid size={{ xs: 6, sm: 4 }}>
-                        <GuideField label="Tuổi cây" value={formatNumber(plant.age, ' năm')} />
+                        <GuideField
+                          label={t('fields.age')}
+                          value={formatNumber(plant.age, notUpdated, t('units.year'))}
+                          fallback={notUpdated}
+                        />
                       </Grid>
                       <Grid size={{ xs: 6, sm: 4 }}>
-                        <GuideField label="Đường kính thân" value={formatNumber(plant.currentTrunkDiameter, ' cm')} />
+                        <GuideField
+                          label={t('fields.trunkDiameter')}
+                          value={formatNumber(plant.currentTrunkDiameter, notUpdated, t('units.cm'))}
+                          fallback={notUpdated}
+                        />
                       </Grid>
                       <Grid size={{ xs: 6, sm: 4 }}>
-                        <GuideField label="Chiều cao" value={formatNumber(plant.currentHeight, ' cm')} />
+                        <GuideField
+                          label={t('fields.height')}
+                          value={formatNumber(plant.currentHeight, notUpdated, t('units.cm'))}
+                          fallback={notUpdated}
+                        />
                       </Grid>
                       <Grid size={{ xs: 6, sm: 4 }}>
-                        <GuideField label="Tưới gần nhất" value={formatDate(plant.lastWateredDate)} />
+                        <GuideField
+                          label={t('fields.lastWatered')}
+                          value={formatDate(plant.lastWateredDate, locale, notUpdated)}
+                          fallback={notUpdated}
+                        />
                       </Grid>
                       <Grid size={{ xs: 6, sm: 4 }}>
-                        <GuideField label="Bón phân gần nhất" value={formatDate(plant.lastFertilizedDate)} />
+                        <GuideField
+                          label={t('fields.lastFertilized')}
+                          value={formatDate(plant.lastFertilizedDate, locale, notUpdated)}
+                          fallback={notUpdated}
+                        />
                       </Grid>
                       <Grid size={{ xs: 6, sm: 4 }}>
-                        <GuideField label="Cắt tỉa gần nhất" value={formatDate(plant.lastPrunedDate)} />
+                        <GuideField
+                          label={t('fields.lastPruned')}
+                          value={formatDate(plant.lastPrunedDate, locale, notUpdated)}
+                          fallback={notUpdated}
+                        />
                       </Grid>
                     </Grid>
                   </Stack>
@@ -160,35 +211,39 @@ export default function MyPlantsClient({ plants }: MyPlantsClientProps) {
                   <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ px: 0 }}>
                     <Stack>
                       <Typography variant="h6" fontWeight={800}>
-                        {`Hướng dẫn chăm sóc cho ${plant.plantName}`}
+                        {t('guide.title', { plantName: plant.plantName })}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Hướng dẫn chăm sóc chi tiết cho {plant.plantName}
+                        {t('guide.subtitle', { plantName: plant.plantName })}
                       </Typography>
                     </Stack>
                   </AccordionSummary>
                   <AccordionDetails sx={{ px: 0, pt: 0 }}>
                     <Grid container spacing={2.5}>
                       <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                        <GuideField label="Ánh sáng" value={plant.guide.lightRequirementName} />
+                        <GuideField
+                          label={t('guide.fields.light')}
+                          value={plant.guide.lightRequirementName}
+                          fallback={notUpdated}
+                        />
                       </Grid>
                       <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                        <GuideField label="Tưới nước" value={plant.guide.watering} />
+                        <GuideField label={t('guide.fields.watering')} value={plant.guide.watering} fallback={notUpdated} />
                       </Grid>
                       <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                        <GuideField label="Bón phân" value={plant.guide.fertilizing} />
+                        <GuideField label={t('guide.fields.fertilizing')} value={plant.guide.fertilizing} fallback={notUpdated} />
                       </Grid>
                       <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                        <GuideField label="Cắt tỉa" value={plant.guide.pruning} />
+                        <GuideField label={t('guide.fields.pruning')} value={plant.guide.pruning} fallback={notUpdated} />
                       </Grid>
                       <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                        <GuideField label="Nhiệt độ" value={plant.guide.temperature} />
+                        <GuideField label={t('guide.fields.temperature')} value={plant.guide.temperature} fallback={notUpdated} />
                       </Grid>
                       <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                        <GuideField label="Độ ẩm" value={plant.guide.humidity} />
+                        <GuideField label={t('guide.fields.humidity')} value={plant.guide.humidity} fallback={notUpdated} />
                       </Grid>
                       <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                        <GuideField label="Đất trồng" value={plant.guide.soil} />
+                        <GuideField label={t('guide.fields.soil')} value={plant.guide.soil} fallback={notUpdated} />
                       </Grid>
                       <Grid size={{ xs: 12 }}>
                         <Box
@@ -201,10 +256,10 @@ export default function MyPlantsClient({ plants }: MyPlantsClientProps) {
                           }}
                         >
                           <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-                            Ghi chú chăm sóc
+                            {t('guide.fields.careNotes')}
                           </Typography>
                           <Typography variant="body2" fontWeight={600}>
-                            {plant.guide.careNotes}
+                            {plant.guide.careNotes || notUpdated}
                           </Typography>
                         </Box>
                       </Grid>
@@ -213,7 +268,7 @@ export default function MyPlantsClient({ plants }: MyPlantsClientProps) {
                 </Accordion>
               ) : (
                 <Alert severity="info" sx={{ mt: 1 }}>
-                  Cây này chưa có plant guide. Hãy quay lại sau hoặc liên hệ hỗ trợ nếu bạn cần hướng dẫn chi tiết.
+                  {t('guide.missing')}
                 </Alert>
               )}
             </CardContent>

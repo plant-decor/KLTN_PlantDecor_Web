@@ -483,6 +483,54 @@
     "viewDetails": "View details",
     "noOrders": "You have no orders yet"
   },
+  "myPlantPage": {
+    "title": "My Plants",
+    "description": "A list of plants you purchased with detailed care guides for each one.",
+    "errors": {
+      "loadPlants": "Unable to load your plants list."
+    },
+    "empty": {
+      "title": "You do not have any plants yet",
+      "description": "Explore the store to choose suitable plants and start caring for them today.",
+      "visitStore": "Visit store"
+    }
+  },
+  "myPlantClient": {
+    "common": {
+      "notUpdated": "Not updated yet",
+      "noScientificName": "No scientific name"
+    },
+    "units": {
+      "year": " year(s)",
+      "cm": " cm"
+    },
+    "plantCode": "Plant #{id}",
+    "fields": {
+      "purchaseDate": "Purchase date",
+      "location": "Location",
+      "age": "Plant age",
+      "trunkDiameter": "Trunk diameter",
+      "height": "Height",
+      "lastWatered": "Last watered",
+      "lastFertilized": "Last fertilized",
+      "lastPruned": "Last pruned"
+    },
+    "guide": {
+      "title": "Care guide for {plantName}",
+      "subtitle": "Detailed care instructions for {plantName}",
+      "fields": {
+        "light": "Light",
+        "watering": "Watering",
+        "fertilizing": "Fertilizing",
+        "pruning": "Pruning",
+        "temperature": "Temperature",
+        "humidity": "Humidity",
+        "soil": "Soil",
+        "careNotes": "Care notes"
+      },
+      "missing": "This plant does not have a guide yet. Please check back later or contact support for detailed instructions."
+    }
+  },
   "orderHistory": {
     "title": "Order history",
     "noOrdersFound": "No orders found",
@@ -498,7 +546,14 @@
     "viewDetail": "View detail",
     "retryPayment": "Retry payment",
     "retryingPayment": "Retrying...",
-    "retryPaymentFailed": "Failed to retry payment. Please try again."
+    "retryPaymentFailed": "Failed to retry payment. Please try again.",
+    "cancelOrder": "Cancel order",
+    "cancelling": "Cancelling...",
+    "cancelOrderFailed": "Failed to cancel order. Please try again.",
+    "cancelConfirmTitle": "Cancel order",
+    "cancelConfirmMessage": "Are you sure you want to cancel this order?",
+    "keepOrder": "Keep order",
+    "confirmCancel": "Confirm cancel"
   },
   "chatWidget": {
     "title": "Plant Care Support Chat",

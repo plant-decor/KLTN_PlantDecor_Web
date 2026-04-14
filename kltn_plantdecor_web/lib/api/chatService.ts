@@ -14,6 +14,11 @@ import type {
   StartSupportConversationResponse,
 } from "@/types/chat.types";
 
+const silentConfig = {
+  showToast: false,
+  showErrorToast: false,
+} as const;
+
 /**
  * POST /api/support-conversations/start
  * Starts a new support conversation with the first message from customer.
@@ -22,7 +27,12 @@ export const startSupportConversation = async (
   data: StartSupportConversationRequest,
   loading = true,
 ): Promise<StartSupportConversationResponse> => {
-  return apiClient.post("/support-conversations/start", data, loading);
+  return apiClient.post(
+    "/support-conversations/start",
+    data,
+    loading,
+    silentConfig,
+  );
 };
 
 /**
@@ -32,7 +42,12 @@ export const startSupportConversation = async (
 export const getConversations = async (
   loading = true,
 ): Promise<GetConversationsResponse> => {
-  return apiClient.get("/support-conversations", undefined, loading);
+  return apiClient.get(
+    "/support-conversations",
+    undefined,
+    loading,
+    silentConfig,
+  );
 };
 
 /**
@@ -42,7 +57,12 @@ export const getConversations = async (
 export const getWaitingSupportConversations = async (
   loading = true,
 ): Promise<GetWaitingSupportConversationsResponse> => {
-  return apiClient.get("/support-conversations/waiting", undefined, loading);
+  return apiClient.get(
+    "/support-conversations/waiting",
+    undefined,
+    loading,
+    silentConfig,
+  );
 };
 
 /**
@@ -52,7 +72,12 @@ export const getWaitingSupportConversations = async (
 export const getMyClaimedSupportConversations = async (
   loading = true,
 ): Promise<GetClaimedSupportConversationsResponse> => {
-  return apiClient.get("/support-conversations/my-claimed", undefined, loading);
+  return apiClient.get(
+    "/support-conversations/my-claimed",
+    undefined,
+    loading,
+    silentConfig,
+  );
 };
 
 /**
@@ -67,6 +92,7 @@ export const claimSupportConversation = async (
     `/support-conversations/${conversationId}/claim`,
     undefined,
     loading,
+    silentConfig,
   );
 };
 
@@ -82,6 +108,7 @@ export const closeSupportConversation = async (
     `/support-conversations/${conversationId}/close`,
     undefined,
     loading,
+    silentConfig,
   );
 };
 
@@ -91,14 +118,12 @@ export const closeSupportConversation = async (
  */
 export const getLatestActiveConversation = async (
   loading = true,
-  showToast = false,
-  showErrorToast = false,
 ): Promise<GetLatestActiveConversationResponse> => {
   return apiClient.get(
     "/support-conversations/latest-active",
     undefined,
     loading,
-    {showToast, showErrorToast},
+    silentConfig,
   );
 };
 
@@ -116,5 +141,6 @@ export const getConversationDetails = async (
     `/support-conversations/${conversationId}`,
     params,
     loading,
+    silentConfig,
   );
 };

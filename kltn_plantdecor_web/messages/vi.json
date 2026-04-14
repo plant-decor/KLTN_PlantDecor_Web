@@ -490,7 +490,8 @@
     "orderType": {
       "uniquePlant": "Cây độc bản",
       "buyNow": "Mua ngay",
-      "product": "Sản phẩm"
+      "product": "Sản phẩm",
+      "service": "Dịch vụ"
     },
     "orderedAt": "Đặt lúc",
     "moreItems": "sản phẩm khác",

@@ -11,6 +11,7 @@ import {
   Divider,
   Typography,
 } from '@mui/material';
+import MiscellaneousServicesIcon from '@mui/icons-material/MiscellaneousServices';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { useTranslations } from 'next-intl';
@@ -37,6 +38,27 @@ export default function OrderHistoryList({
   onCancelOrder,
 }: OrderHistoryListProps) {
   const tOrderHistory = useTranslations('orderHistory');
+
+  const getOrderTypeLabel = (orderType: number) => {
+    switch (orderType) {
+      case 2:
+        return tOrderHistory('orderType.uniquePlant');
+      case 3:
+        return tOrderHistory('orderType.buyNow');
+      case 4:
+        return tOrderHistory('orderType.service');
+      default:
+        return tOrderHistory('orderType.product');
+    }
+  };
+
+  const getOrderItemIcon = (orderType: number) => {
+    if (orderType === 4) {
+      return <MiscellaneousServicesIcon />;
+    }
+
+    return <ShoppingCartIcon />;
+  };
 
   if (loading) {
     return (
@@ -90,13 +112,7 @@ export default function OrderHistoryList({
                     #{order.id}
                   </Typography>
                   <Chip
-                    label={
-                      order.orderType === 2
-                        ? tOrderHistory('orderType.uniquePlant')
-                        : order.orderType === 3
-                          ? tOrderHistory('orderType.buyNow')
-                          : tOrderHistory('orderType.product')
-                    }
+                    label={getOrderTypeLabel(order.orderType)}
                     size="small"
                     variant="outlined"
                   />
@@ -127,7 +143,7 @@ export default function OrderHistoryList({
                     }}
                   >
                     <Avatar variant="rounded" sx={{ width: 60, height: 60, bgcolor: 'grey.200' }}>
-                      <ShoppingCartIcon />
+                      {getOrderItemIcon(order.orderType)}
                     </Avatar>
                     <Box sx={{ flex: 1 }}>
                       <Typography variant="body1" fontWeight="medium">

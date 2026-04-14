@@ -489,7 +489,8 @@
     "orderType": {
       "uniquePlant": "Unique plant",
       "buyNow": "Buy now",
-      "product": "Product"
+      "product": "Product",
+      "service": "Service"
     },
     "orderedAt": "Ordered at",
     "moreItems": "more item(s)",

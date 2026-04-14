@@ -22,6 +22,7 @@ interface AuthState {
   // User info (persist)
   user: User | null;
   isAuthenticated: boolean;
+  isAuthBootstrapCompleted: boolean;
 
   // Tokens (memory only - không persist)
   accessToken: string | null;
@@ -39,6 +40,7 @@ interface AuthState {
   getRefreshToken: () => string | null;
   clearTokens: () => void;
   clearAll: () => void; // Clear both user and tokens
+  setAuthBootstrapCompleted: (completed: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -47,6 +49,7 @@ export const useAuthStore = create<AuthState>()(
       // User state (will be persisted)
       user: null,
       isAuthenticated: false,
+      isAuthBootstrapCompleted: false,
 
       // Token state (will NOT be persisted)
       accessToken: null,
@@ -101,7 +104,12 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: false,
           accessToken: null,
           refreshToken: null,
+          isAuthBootstrapCompleted: false,
         });
+      },
+
+      setAuthBootstrapCompleted: (completed: boolean) => {
+        set({ isAuthBootstrapCompleted: completed });
       },
     }),
     {

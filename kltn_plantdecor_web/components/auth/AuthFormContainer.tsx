@@ -84,8 +84,6 @@ export default function AuthFormContainer() {
       }
       if (result.refreshToken) {
         setClientRefreshToken(result.refreshToken);
-        // Set refresh token as a cookie for server-side access (not HttpOnly)
-        document.cookie = `refreshToken=${encodeURIComponent(result.refreshToken)}; Max-Age=1209600; Path=/; SameSite=Lax`;
       }
 
       // try {

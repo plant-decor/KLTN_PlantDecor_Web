@@ -10,8 +10,10 @@ export async function createAxiosServer(): Promise<AxiosInstance> {
   const { cookies } = await import("next/headers");
   const cookieStore = await cookies();
   const accessToken = cookieStore.get("accessToken")?.value;
-  const refreshToken = cookieStore.get("refreshToken")?.value;
-  const cookieHeader = refreshToken ? `refreshToken=${refreshToken}` : undefined;
+  const cookiePairs = cookieStore
+    .getAll()
+    .map((cookie) => `${cookie.name}=${cookie.value}`);
+  const cookieHeader = cookiePairs.length > 0 ? cookiePairs.join("; ") : undefined;
 
   // Create HTTPS agent that bypasses SSL certificate validation for localhost
   const httpsAgent = new https.Agent({

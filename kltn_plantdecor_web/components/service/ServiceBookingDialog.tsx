@@ -1,24 +1,37 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Box,
-  Typography,
   Alert,
+  Box,
+  Button,
+  Checkbox,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControl,
+  FormControlLabel,
+  FormGroup,
+  FormLabel,
+  InputLabel,
+  MenuItem,
+  Select,
+  Stack,
+  TextField,
+  Typography,
 } from '@mui/material';
 import { useTranslations } from 'next-intl';
-import { CareServicePackage, ServiceType, DifficultyLevel } from '@/types/service.types';
+import { toast } from 'react-toastify';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
+import {
+  getDayOfWeekEnums,
+  getNearbyNurseries,
+  getPublicCareServicePackages,
+  getSystemEnumValues,
+} from '@/lib/api/careServiceService';
+import type { CareServicePackage, NearbyNursery } from '@/types/care-service.types';
 
 interface ServiceBookingDialogProps {
   open: boolean;
@@ -27,111 +40,292 @@ interface ServiceBookingDialogProps {
 }
 
 export interface ServiceBookingData {
-  servicePackageId: number;
-  nurseryId: number;
+  nurseryCareServiceId: number;
   address: string;
   phone: string;
   serviceDate: string;
   note: string;
+  scheduleDaysOfWeek: number[];
+  preferredShiftId: number;
+  latitude?: number;
+  longitude?: number;
 }
 
-// Mock data for service packages
-const MOCK_SERVICE_PACKAGES: CareServicePackage[] = [
-  {
-    id: 1,
-    name: 'Basic Plant Care',
-    description: 'Essential plant care including watering, pruning, and fertilizing',
-    features: ['Watering', 'Pruning', 'Fertilizing', 'Pest check'],
-    serviceType: ServiceType.ONETIME,
-    durationDays: 1,
-    difficultyLevel: DifficultyLevel.EASY,
-    areaLimit: 50,
-    unitPrice: 200000,
-    isActive: true,
-    createdAt: '2025-01-01T00:00:00Z',
-    updatedAt: '2025-01-01T00:00:00Z',
-  },
-  {
-    id: 2,
-    name: 'Premium Garden Care',
-    description: 'Comprehensive garden maintenance with expert consultation',
-    features: ['Full garden maintenance', 'Soil testing', 'Disease treatment', 'Expert advice'],
-    serviceType: ServiceType.PERIODIC,
-    frequency: 'Weekly',
-    durationDays: 30,
-    difficultyLevel: DifficultyLevel.MEDIUM,
-    areaLimit: 100,
-    unitPrice: 800000,
-    isActive: true,
-    createdAt: '2025-01-01T00:00:00Z',
-    updatedAt: '2025-01-01T00:00:00Z',
-  },
-  {
-    id: 3,
-    name: 'Plant Health Diagnosis',
-    description: 'Professional diagnosis and treatment plan for sick plants',
-    features: ['Health assessment', 'Treatment plan', 'Medicine application', 'Follow-up care'],
-    serviceType: ServiceType.ONETIME,
-    durationDays: 1,
-    difficultyLevel: DifficultyLevel.HARD,
-    areaLimit: 20,
-    unitPrice: 500000,
-    isActive: true,
-    createdAt: '2025-01-01T00:00:00Z',
-    updatedAt: '2025-01-01T00:00:00Z',
-  },
-];
+const SERVICE_TYPE_ONETIME = 1;
+const DAY_OF_WEEK_SUNDAY = 0;
 
-// Mock nurseries/stores
-const MOCK_NURSERIES = [
-  { id: 1, name: 'Green Garden Nursery - District 1', address: '123 Nguyen Hue, District 1, HCM' },
-  { id: 2, name: 'Tropical Plants Center - District 3', address: '456 Le Van Sy, District 3, HCM' },
-  { id: 3, name: 'Urban Garden Store - District 7', address: '789 Nguyen Van Linh, District 7, HCM' },
-  { id: 4, name: 'Plant Paradise - Thu Duc City', address: '321 Vo Van Ngan, Thu Duc, HCM' },
-];
+const getLocalDateInputValue = (date: Date = new Date()) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 export default function ServiceBookingDialog({ open, onClose, onSubmit }: ServiceBookingDialogProps) {
   const t = useTranslations('services');
   const tCommon = useTranslations('common');
 
+  const [packages, setPackages] = useState<CareServicePackage[]>([]);
+  const [serviceTypeEnums, setServiceTypeEnums] = useState<Array<{ value: number; name: string }>>([]);
+  const [dayOfWeeks, setDayOfWeeks] = useState<Array<{ value: number; name: string }>>([]);
+  const [nearbyNurseries, setNearbyNurseries] = useState<NearbyNursery[]>([]);
+  const [selectedPackageId, setSelectedPackageId] = useState(0);
+
+  const [loadingPackages, setLoadingPackages] = useState(false);
+  const [loadingNearby, setLoadingNearby] = useState(false);
+  const [usingCurrentLocation, setUsingCurrentLocation] = useState(false);
+  const lastAutoSearchKeyRef = useRef('');
+
   const [formData, setFormData] = useState<ServiceBookingData>({
-    servicePackageId: 0,
-    nurseryId: 0,
+    nurseryCareServiceId: 0,
     address: '',
     phone: '',
     serviceDate: '',
     note: '',
+    scheduleDaysOfWeek: [],
+    preferredShiftId: 1,
+    latitude: undefined,
+    longitude: undefined,
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof ServiceBookingData, string>>>({});
 
-  const handleChange = (field: keyof ServiceBookingData, value: any) => {
+  const selectedPackage = useMemo(
+    () => packages.find((pkg) => pkg.id === selectedPackageId) ?? null,
+    [packages, selectedPackageId]
+  );
+
+  const serviceTypeOneTimeValue = useMemo(() => {
+    const matched = serviceTypeEnums.find((item) => item.name.toLowerCase() === 'onetime');
+    return matched?.value ?? SERVICE_TYPE_ONETIME;
+  }, [serviceTypeEnums]);
+
+  const serviceTypePeriodicValue = useMemo(() => {
+    const matched = serviceTypeEnums.find((item) => item.name.toLowerCase() === 'periodic');
+    return matched?.value ?? 2;
+  }, [serviceTypeEnums]);
+
+  const isPeriodicPackage = selectedPackage?.serviceType === serviceTypePeriodicValue;
+
+  const allowedDayOfWeeks = useMemo(() => {
+    if (!isPeriodicPackage) {
+      return dayOfWeeks;
+    }
+
+    return dayOfWeeks.filter((day) => day.value !== DAY_OF_WEEK_SUNDAY);
+  }, [dayOfWeeks, isPeriodicPackage]);
+
+  const serviceOptions = useMemo(() => {
+    if (!selectedPackageId) {
+      return [];
+    }
+
+    return nearbyNurseries.flatMap((nursery) =>
+      nursery.availableServices
+        .filter((service) => service.careServicePackage.id === selectedPackageId)
+        .map((service) => ({
+          nurseryName: nursery.name,
+          nurseryAddress: nursery.address,
+          distanceKm: nursery.distanceKm,
+          nurseryCareServiceId: service.id,
+          price: service.careServicePackage.unitPrice,
+        }))
+    );
+  }, [nearbyNurseries, selectedPackageId]);
+
+  const hasLatLng = typeof formData.latitude === 'number' && typeof formData.longitude === 'number';
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const loadData = async () => {
+      try {
+        setLoadingPackages(true);
+        const [packageData, dayOfWeekData, serviceTypeData] = await Promise.all([
+          getPublicCareServicePackages(false),
+          getDayOfWeekEnums(false),
+          getSystemEnumValues('CareServiceType', false),
+        ]);
+        setPackages(packageData.filter((item) => item.isActive));
+        setDayOfWeeks(dayOfWeekData);
+        setServiceTypeEnums(serviceTypeData);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : t('loadPackagesFailed');
+        toast.error(message);
+      } finally {
+        setLoadingPackages(false);
+      }
+    };
+
+    void loadData();
+  }, [open, t]);
+
+  useEffect(() => {
+    if (!selectedPackage || selectedPackage.serviceType !== serviceTypePeriodicValue) {
+      return;
+    }
+
+    const filteredDays = formData.scheduleDaysOfWeek.filter((day) => day !== DAY_OF_WEEK_SUNDAY);
+    if (filteredDays.length !== formData.scheduleDaysOfWeek.length) {
+      setFormData((prev) => ({ ...prev, scheduleDaysOfWeek: filteredDays }));
+      if (errors.scheduleDaysOfWeek) {
+        setErrors((prev) => ({ ...prev, scheduleDaysOfWeek: '' }));
+      }
+    }
+  }, [errors.scheduleDaysOfWeek, formData.scheduleDaysOfWeek, selectedPackage, serviceTypePeriodicValue]);
+
+  const handleChange = (field: keyof ServiceBookingData, value: ServiceBookingData[keyof ServiceBookingData]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: '' }));
     }
   };
 
+  const handleSearchNearbyNurseries = async (options?: { packageId?: number; latitude?: number; longitude?: number }) => {
+    const packageId = options?.packageId ?? selectedPackageId;
+    const latitude = options?.latitude ?? formData.latitude;
+    const longitude = options?.longitude ?? formData.longitude;
+
+    if (!packageId) {
+        toast.error(t('packageRequiredBeforeSearch'));
+      return;
+    }
+
+    try {
+      setLoadingNearby(true);
+      const hasSearchLocation = typeof latitude === 'number' && typeof longitude === 'number';
+      const radiusKm = hasSearchLocation ? 10 : 9999999;
+      const nurseries = await getNearbyNurseries(
+        {
+          packageId,
+          radiusKm,
+          lat: latitude,
+          lng: longitude,
+        },
+        false
+      );
+
+      setNearbyNurseries(nurseries);
+
+      if (nurseries.length === 0) {
+          toast.info(t('noMatchingNursery'));
+      }
+    } catch (error) {
+        const message = error instanceof Error ? error.message : t('searchNearbyFailed');
+      toast.error(message);
+    } finally {
+      setLoadingNearby(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!open || !selectedPackageId || !hasLatLng) {
+      return;
+    }
+
+    const searchKey = `${selectedPackageId}-${formData.latitude}-${formData.longitude}`;
+    if (lastAutoSearchKeyRef.current === searchKey) {
+      return;
+    }
+
+    lastAutoSearchKeyRef.current = searchKey;
+    void handleSearchNearbyNurseries({
+      packageId: selectedPackageId,
+      latitude: formData.latitude,
+      longitude: formData.longitude,
+    });
+  }, [formData.latitude, formData.longitude, hasLatLng, open, selectedPackageId]);
+
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error(t('locationUnsupported'));
+      return;
+    }
+
+    setUsingCurrentLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const latitude = position.coords.latitude;
+        const longitude = position.coords.longitude;
+
+        setFormData((prev) => ({
+          ...prev,
+          latitude,
+          longitude,
+        }));
+        setUsingCurrentLocation(false);
+        toast.success(t('locationUpdated'));
+        if (selectedPackageId) {
+          void handleSearchNearbyNurseries({
+            packageId: selectedPackageId,
+            latitude,
+            longitude,
+          });
+        }
+      },
+      () => {
+        setUsingCurrentLocation(false);
+        toast.warning(t('locationFailedGlobalFallback'));
+      }
+    );
+  };
+
+  const handleSelectDay = (dayValue: number, checked: boolean) => {
+    if (isPeriodicPackage && dayValue === DAY_OF_WEEK_SUNDAY) {
+      return;
+    }
+
+    if (checked) {
+      if (selectedPackage?.serviceType === serviceTypeOneTimeValue) {
+        handleChange('scheduleDaysOfWeek', [dayValue]);
+        return;
+      }
+
+      const nextValues = Array.from(new Set([...formData.scheduleDaysOfWeek, dayValue]));
+      handleChange('scheduleDaysOfWeek', nextValues);
+      return;
+    }
+
+    const nextValues = formData.scheduleDaysOfWeek.filter((day) => day !== dayValue);
+    handleChange('scheduleDaysOfWeek', nextValues);
+  };
+
   const validate = (): boolean => {
     const newErrors: Partial<Record<keyof ServiceBookingData, string>> = {};
+    const today = getLocalDateInputValue();
 
-    if (!formData.servicePackageId) {
-      newErrors.servicePackageId = 'Please select a service package';
-    }
-    if (!formData.nurseryId) {
-      newErrors.nurseryId = 'Please select a nursery';
+    if (!formData.nurseryCareServiceId) {
+        newErrors.nurseryCareServiceId = t('providerRequired');
     }
     if (!formData.address.trim()) {
-      newErrors.address = 'Address is required';
+        newErrors.address = t('addressRequired');
     }
     if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone number is required';
+        newErrors.phone = t('phoneRequired');
     } else if (!/^[0-9+\s-()]+$/.test(formData.phone)) {
-      newErrors.phone = 'Invalid phone number format';
+        newErrors.phone = t('phoneInvalid');
     }
     if (!formData.serviceDate) {
-      newErrors.serviceDate = 'Service date is required';
+        newErrors.serviceDate = t('serviceDateRequired');
+    } else if (formData.serviceDate < today) {
+      newErrors.serviceDate = t('serviceDatePast');
+    }
+    if (formData.scheduleDaysOfWeek.length === 0) {
+        newErrors.scheduleDaysOfWeek = t('scheduleRequired');
+    }
+    if (selectedPackage?.serviceType === serviceTypeOneTimeValue && formData.scheduleDaysOfWeek.length !== 1) {
+        newErrors.scheduleDaysOfWeek = t('oneTimeScheduleRule');
+    }
+    if (selectedPackage?.serviceType === serviceTypePeriodicValue) {
+      if (selectedPackage.visitPerWeek > 6) {
+        newErrors.scheduleDaysOfWeek = t('periodicVisitPerWeekInvalid');
+      } else if (formData.scheduleDaysOfWeek.includes(DAY_OF_WEEK_SUNDAY)) {
+        newErrors.scheduleDaysOfWeek = t('periodicSundayNotAllowed');
+      } else if (formData.scheduleDaysOfWeek.length !== selectedPackage.visitPerWeek) {
+        newErrors.scheduleDaysOfWeek = t('periodicScheduleRule', { count: selectedPackage.visitPerWeek });
+      }
     }
 
     setErrors(newErrors);
@@ -139,170 +333,218 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit }: Servic
   };
 
   const handleSubmit = () => {
-    if (validate()) {
-      onSubmit(formData);
-      handleClose();
+    if (!validate()) {
+      return;
     }
+
+    onSubmit(formData);
+    handleClose();
   };
 
   const handleClose = () => {
     setFormData({
-      servicePackageId: 0,
-      nurseryId: 0,
+      nurseryCareServiceId: 0,
       address: '',
       phone: '',
       serviceDate: '',
       note: '',
+      scheduleDaysOfWeek: [],
+      preferredShiftId: 1,
+      latitude: undefined,
+      longitude: undefined,
     });
+    setSelectedPackageId(0);
+    setNearbyNurseries([]);
     setErrors({});
+    lastAutoSearchKeyRef.current = '';
     onClose();
   };
 
-  const selectedPackage = MOCK_SERVICE_PACKAGES.find((pkg) => pkg.id === formData.servicePackageId);
-
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-      <DialogTitle sx={{ fontWeight: 'bold' }}>
-        {t('bookNewService')}
-      </DialogTitle>
+      <DialogTitle sx={{ fontWeight: 'bold' }}>{t('bookNewService')}</DialogTitle>
       <DialogContent sx={{ pt: 5 }}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 , pt: 2}}>
-          {/* Service Package Selection */}
-          <FormControl fullWidth error={!!errors.servicePackageId}>
-            <InputLabel>{t('selectServicePackage')}</InputLabel>
-            <Select
-              value={formData.servicePackageId}
-              onChange={(e) => handleChange('servicePackageId', e.target.value)}
-              label={t('selectServicePackage')}
-            >
-              <MenuItem value={0} disabled>
-                <em>{t('selectServicePackage')}</em>
-              </MenuItem>
-              {MOCK_SERVICE_PACKAGES.map((pkg) => (
-                <MenuItem key={pkg.id} value={pkg.id}>
-                  <Box>
-                    <Typography variant="body1" fontWeight="bold">
-                      {pkg.name}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {pkg.description} - {pkg.unitPrice.toLocaleString('vi-VN')} VND
-                    </Typography>
-                  </Box>
+        {loadingPackages ? (
+          <Box sx={{ py: 8, display: 'flex', justifyContent: 'center' }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
+            <FormControl fullWidth>
+              <InputLabel>{t('selectServicePackage')}</InputLabel>
+              <Select
+                value={selectedPackageId}
+                onChange={(e) => {
+                  setSelectedPackageId(Number(e.target.value));
+                  setNearbyNurseries([]);
+                  handleChange('nurseryCareServiceId', 0);
+                  handleChange('scheduleDaysOfWeek', []);
+                }}
+                label={t('selectServicePackage')}
+              >
+                <MenuItem value={0} disabled>
+                  <em>{t('selectServicePackage')}</em>
                 </MenuItem>
-              ))}
-            </Select>
-            {errors.servicePackageId && (
-              <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
-                {errors.servicePackageId}
-              </Typography>
+                {packages.map((pkg) => (
+                  <MenuItem key={pkg.id} value={pkg.id}>
+                    <Box>
+                      <Typography variant="body1" fontWeight="bold">
+                        {pkg.name}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'normal' }}>
+                        {pkg.description} - {pkg.unitPrice.toLocaleString('vi-VN')} VND
+                      </Typography>
+                    </Box>
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {selectedPackage && (
+              <Alert severity="info">
+                <Typography variant="body2" fontWeight="bold" gutterBottom>
+                  {selectedPackage.name}
+                </Typography>
+                <Typography variant="caption" display="block">
+                  {t('serviceTypeLabel')}: {selectedPackage.serviceType === 1 ? t('oneTime') : t('periodic')} | {t('totalSessions')}: {selectedPackage.totalSessions ?? '-'}
+                </Typography>
+                <Typography variant="caption" display="block">
+                  {t('serviceTasks')}: {selectedPackage.features}
+                </Typography>
+                <Typography variant="body2" fontWeight="bold" sx={{ mt: 1 }}>
+                  {t('price')}: {selectedPackage.unitPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
+                </Typography>
+              </Alert>
             )}
-          </FormControl>
 
-          {/* Display selected package details */}
-          {selectedPackage && (
-            <Alert severity="info">
-              <Typography variant="body2" fontWeight="bold" gutterBottom>
-                {selectedPackage.name}
-              </Typography>
-              <Typography variant="caption" display="block">
-                Type: {selectedPackage.serviceType} | Difficulty: {selectedPackage.difficultyLevel}
-              </Typography>
-              <Typography variant="caption" display="block">
-                Features: {selectedPackage.features.join(', ')}
-              </Typography>
-              <Typography variant="body2" fontWeight="bold" sx={{ mt: 1 }}>
-                Price: {selectedPackage.unitPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
-              </Typography>
-            </Alert>
-          )}
+            <Button variant="outlined" onClick={handleUseCurrentLocation} disabled={usingCurrentLocation} sx={{ ...hoverLiftStyle }}>
+              {usingCurrentLocation ? t('gettingLocation') : t('useCurrentLocation')}
+            </Button>
 
-          {/* Nursery Selection */}
-          <FormControl fullWidth error={!!errors.nurseryId}>
-            <InputLabel>{t('selectNursery')}</InputLabel>
-            <Select
-              value={formData.nurseryId}
-              onChange={(e) => handleChange('nurseryId', e.target.value)}
-              label={t('selectNursery')}
-            >
-              <MenuItem value={0} disabled>
-                <em>{t('selectNursery')}</em>
-              </MenuItem>
-              {MOCK_NURSERIES.map((nursery) => (
-                <MenuItem key={nursery.id} value={nursery.id}>
-                  <Box>
-                    <Typography variant="body2" fontWeight="bold">
-                      {nursery.name}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {nursery.address}
-                    </Typography>
-                  </Box>
+            {selectedPackageId && loadingNearby ? (
+              <Alert severity="info">{t('searchingNurseries')}</Alert>
+            ) : null}
+
+            {hasLatLng ? (
+              <Alert severity="success">{t('radiusWithLocation')}</Alert>
+            ) : (
+              <Alert severity="warning">{t('radiusWithoutLocation')}</Alert>
+            )}
+
+            <FormControl fullWidth error={!!errors.nurseryCareServiceId}>
+              <InputLabel>{t('providerNursery')}</InputLabel>
+              <Select
+                value={formData.nurseryCareServiceId}
+                onChange={(e) => handleChange('nurseryCareServiceId', Number(e.target.value))}
+                label={t('providerNursery')}
+              >
+                <MenuItem value={0} disabled>
+                  <em>{t('selectProviderNursery')}</em>
                 </MenuItem>
-              ))}
-            </Select>
-            {errors.nurseryId && (
-              <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
-                {errors.nurseryId}
-              </Typography>
-            )}
-          </FormControl>
+                {serviceOptions.map((option) => (
+                  <MenuItem key={option.nurseryCareServiceId} value={option.nurseryCareServiceId}>
+                    <Box>
+                      <Typography variant="body2" fontWeight="bold">
+                        {option.nurseryName} - {option.price.toLocaleString('vi-VN')} VND
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'normal' }}>
+                        {option.nurseryAddress} | Cách {option.distanceKm.toFixed(2)} km
+                      </Typography>
+                    </Box>
+                  </MenuItem>
+                ))}
+              </Select>
+              {errors.nurseryCareServiceId && (
+                <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
+                  {errors.nurseryCareServiceId}
+                </Typography>
+              )}
+            </FormControl>
 
-          {/* Address */}
-          <TextField
-            fullWidth
-            label={t('address')}
-            placeholder={t('enterAddress')}
-            value={formData.address}
-            onChange={(e) => handleChange('address', e.target.value)}
-            error={!!errors.address}
-            helperText={errors.address}
-            multiline
-            rows={2}
-          />
+            <TextField
+              fullWidth
+              label={t('address')}
+              placeholder={t('enterAddress')}
+              value={formData.address}
+              onChange={(e) => handleChange('address', e.target.value)}
+              error={!!errors.address}
+              helperText={errors.address}
+              multiline
+              rows={2}
+            />
 
-          {/* Phone */}
-          <TextField
-            fullWidth
-            label={t('phone')}
-            placeholder={t('enterPhone')}
-            value={formData.phone}
-            onChange={(e) => handleChange('phone', e.target.value)}
-            error={!!errors.phone}
-            helperText={errors.phone}
-          />
+            <TextField
+              fullWidth
+              label={t('phone')}
+              placeholder={t('enterPhone')}
+              value={formData.phone}
+              onChange={(e) => handleChange('phone', e.target.value)}
+              error={!!errors.phone}
+              helperText={errors.phone}
+            />
 
-          {/* Service Date */}
-          <TextField
-            fullWidth
-            label={t('serviceDate')}
-            type="date"
-            value={formData.serviceDate}
-            onChange={(e) => handleChange('serviceDate', e.target.value)}
-            error={!!errors.serviceDate}
-            helperText={errors.serviceDate}
-            InputLabelProps={{ shrink: true }}
-            inputProps={{
-              min: new Date().toISOString().split('T')[0], // Today or later
-            }}
-          />
+            <TextField
+              fullWidth
+              label={t('serviceDate')}
+              type="date"
+              value={formData.serviceDate}
+              onChange={(e) => handleChange('serviceDate', e.target.value)}
+              error={!!errors.serviceDate}
+              helperText={errors.serviceDate}
+              InputLabelProps={{ shrink: true }}
+              inputProps={{ min: getLocalDateInputValue() }}
+            />
 
-          {/* Notes */}
-          <TextField
-            fullWidth
-            label={t('notes')}
-            placeholder={t('enterNotes')}
-            value={formData.note}
-            onChange={(e) => handleChange('note', e.target.value)}
-            multiline
-            rows={3}
-          />
-        </Box>
+            <FormControl component="fieldset" error={!!errors.scheduleDaysOfWeek}>
+              <FormLabel component="legend">{t('selectScheduleDays')}</FormLabel>
+              <FormGroup row>
+                {allowedDayOfWeeks.map((day) => (
+                  <FormControlLabel
+                    key={day.value}
+                    control={
+                      <Checkbox
+                        checked={formData.scheduleDaysOfWeek.includes(day.value)}
+                        onChange={(_, checked) => handleSelectDay(day.value, checked)}
+                      />
+                    }
+                    label={day.name}
+                  />
+                ))}
+              </FormGroup>
+              {errors.scheduleDaysOfWeek && (
+                <Typography variant="caption" color="error">
+                  {errors.scheduleDaysOfWeek}
+                </Typography>
+              )}
+              {selectedPackage?.serviceType === serviceTypeOneTimeValue && (
+                <Typography variant="caption" color="text.secondary">
+                  {t('oneTimeScheduleHint')}
+                </Typography>
+              )}
+              {isPeriodicPackage && (
+                <Typography variant="caption" color="text.secondary">
+                  {t('periodicScheduleHint', { count: selectedPackage?.visitPerWeek ?? 0 })}
+                </Typography>
+              )}
+            </FormControl>
+
+            <TextField
+              fullWidth
+              label={t('notes')}
+              placeholder={t('enterNotes')}
+              value={formData.note}
+              onChange={(e) => handleChange('note', e.target.value)}
+              multiline
+              rows={3}
+            />
+          </Box>
+        )}
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
-        <Button onClick={handleClose} color="inherit" className='bg-error! font-semibold!' sx={{...hoverLiftStyle}}>
+        <Button onClick={handleClose} color="inherit" className="bg-error! font-semibold! text-white!" sx={{ ...hoverLiftStyle }}>
           {tCommon('cancel')}
         </Button>
-        <Button onClick={handleSubmit} variant="contained" className='bg-primary! font-semibold!' sx={{ ...hoverLiftStyle }}>
+        <Button onClick={handleSubmit} variant="contained" className="bg-primary! font-semibold!" sx={{ ...hoverLiftStyle }}>
           {t('submitRequest')}
         </Button>
       </DialogActions>

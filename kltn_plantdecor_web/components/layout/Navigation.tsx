@@ -30,6 +30,7 @@ import {
 } from '@/lib/constants/header';
 import { useAuthStore } from '@/lib/store/authStore';
 import { logoutAction } from '@/app/actions/loginAction';
+import Image from 'next/image';
 
 const NAV_LABEL_KEYS: Record<HeaderIconKey, string> = {
   home: 'home',
@@ -301,7 +302,13 @@ export default function Navigation({ initialStoreCategories = [] }: NavigationPr
 
         <div className="md:hidden flex items-center justify-between h-14">
           <Link href="/" className="flex items-center gap-2">
-            <span className="text-xl font-bold text-green-600">Plant Decor</span>
+            <Image
+              src="/logo/logo-landscape.png"
+              alt="Plant Decor Logo"
+              width={130}
+              height={80}
+              className="w-auto h-26 object-contain"
+            />
           </Link>
 
           <div className="flex items-center gap-3">

@@ -1,0 +1,215 @@
+export interface CareServiceSpecialization {
+  id: number;
+  name: string;
+  description?: string;
+  isActive?: boolean;
+}
+
+export interface CareServicePackage {
+  id: number;
+  name: string;
+  description: string;
+  features: string;
+  visitPerWeek: number;
+  durationDays: number;
+  totalSessions?: number;
+  serviceType: number;
+  areaLimit: number;
+  unitPrice: number;
+  isActive: boolean;
+  createdAt?: string;
+  specializations: CareServiceSpecialization[];
+}
+
+export interface NurseryCareService {
+  id: number;
+  nurseryId: number;
+  nurseryName: string;
+  isActive: boolean;
+  createdAt?: string;
+  careServicePackage: CareServicePackage;
+}
+
+export interface NearbyServiceReference {
+  id: number;
+  nurseryId: number;
+  nurseryName: string;
+  careServicePackage: Pick<
+    CareServicePackage,
+    "id" | "name" | "description" | "visitPerWeek" | "durationDays" | "serviceType" | "unitPrice"
+  >;
+}
+
+export interface NearbyNursery {
+  id: number;
+  name: string;
+  address: string;
+  phone: string;
+  latitude: number;
+  longitude: number;
+  distanceKm: number;
+  availableServices: NearbyServiceReference[];
+}
+
+export interface EnumOption {
+  value: number;
+  name: string;
+}
+
+export interface NearbyNurseryQuery {
+  packageId: number;
+  radiusKm: number;
+  lat?: number;
+  lng?: number;
+}
+
+export interface CreateServiceRegistrationRequest {
+  nurseryCareServiceId: number;
+  serviceDate: string;
+  scheduleDaysOfWeek: number[];
+  preferredShiftId: number;
+  address: string;
+  phone: string;
+  note: string;
+  latitude?: number;
+  longitude?: number;
+}
+
+export interface CreatedServiceRegistration {
+  id: number;
+  status: number;
+  statusName: string;
+  serviceDate: string;
+  totalSessions: number;
+  address: string;
+  phone: string;
+  note: string;
+  latitude: number;
+  longitude: number;
+  scheduleDaysOfWeek: string;
+  createdAt: string;
+  nurseryCareService: {
+    id: number;
+    nurseryId: number;
+    nurseryName: string;
+    careServicePackage: Pick<CareServicePackage, "id" | "name" | "description" | "visitPerWeek" | "durationDays" | "serviceType" | "unitPrice">;
+  };
+}
+
+export interface ServiceRegistrationShift {
+  id: number;
+  shiftName: string;
+  startTime: string;
+  endTime: string;
+}
+
+export enum ServiceRegistrationStatusEnum {
+  PendingApproval = 1,
+  AwaitPayment = 2,
+  Active = 3,
+  Completed = 4,
+  Cancelled = 5,
+  Rejected = 6,
+}
+
+export interface ServiceRegistrationCustomer {
+  id: number;
+  fullName: string;
+  email: string;
+  phone: string;
+  avatar: string | null;
+}
+
+export interface ServiceRegistrationActor {
+  id: number;
+  fullName: string;
+  email: string;
+  phone: string;
+  avatar: string | null;
+}
+
+export interface ServiceRegistrationProgress {
+  id: number;
+  action: string;
+  description: string;
+  createdAt: string;
+}
+
+export interface ServiceRegistrationRating {
+  id: number;
+  score: number;
+  comment?: string;
+}
+
+export interface MyServiceRegistration {
+  id: number;
+  status: number;
+  statusName: string;
+  serviceDate: string;
+  totalSessions: number;
+  address: string;
+  phone: string;
+  note: string;
+  latitude: number;
+  longitude: number;
+  scheduleDaysOfWeek: number[];
+  cancelReason: string | null;
+  createdAt: string;
+  approvedAt: string | null;
+  orderId: number | null;
+  nurseryCareService: {
+    id: number;
+    nurseryId: number;
+    nurseryName: string;
+    careServicePackage: Pick<CareServicePackage, "id" | "name" | "description" | "visitPerWeek" | "durationDays" | "serviceType" | "unitPrice">;
+  };
+  prefferedShift: ServiceRegistrationShift | null;
+  customer: ServiceRegistrationCustomer | null;
+  mainCaretaker: ServiceRegistrationActor | null;
+  currentCaretaker: ServiceRegistrationActor | null;
+  progresses: ServiceRegistrationProgress[];
+  rating: ServiceRegistrationRating | null;
+}
+
+export type ManagerServiceRegistration = MyServiceRegistration;
+
+export interface PaginatedApiResponse<T> {
+  items: T[];
+  totalCount: number;
+  pageNumber: number;
+  pageSize: number;
+  totalPages: number;
+  hasPrevious: boolean;
+  hasNext: boolean;
+}
+
+export interface ServiceRegistrationsQuery {
+  pageNumber?: number;
+  pageSize?: number;
+}
+
+export interface ManagerServiceRegistrationsQuery extends ServiceRegistrationsQuery {
+  skip?: number;
+  take?: number;
+  status?: ServiceRegistrationStatusEnum;
+}
+
+export interface AssignServiceRegistrationCaretakerRequest {
+  caretakerId: number;
+}
+
+export interface EligibleCaretakerSpecialization {
+  id: number;
+  name: string;
+  description: string;
+}
+
+export interface EligibleCaretaker {
+  id: number;
+  username: string;
+  email: string;
+  phoneNumber: string;
+  avatarUrl: string | null;
+  status: number;
+  specializations: EligibleCaretakerSpecialization[];
+}

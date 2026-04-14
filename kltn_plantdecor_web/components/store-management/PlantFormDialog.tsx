@@ -30,6 +30,7 @@ import type {
   PlantFormData,
   ImageUploadData,
 } from '@/types/store-management.types';
+import type { PlantGuideFormData } from '@/types/admin-plant-guide.types';
 import { FENG_SHUI_ELEMENT_OPTIONS } from '@/lib/utils/fengShui';
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils/formatUtil';
 
@@ -41,6 +42,7 @@ interface OptionItem {
 interface PlantFormDialogProps {
   open: boolean;
   editingData?: PlantDetail;
+  plantGuideData?: PlantGuideFormData;
   categories: OptionItem[];
   tags: OptionItem[];
   enums: PlantEnumPayload;
@@ -75,11 +77,22 @@ const defaultPlant: PlantFormData = {
   isUniqueInstance: false,
   categoryIds: [],
   tagIds: [],
+  plantGuide: {
+    lightRequirement: '',
+    watering: '',
+    fertilizing: '',
+    pruning: '',
+    temperature: '',
+    humidity: '',
+    soil: '',
+    careNotes: '',
+  },
 };
 
 export default function PlantFormDialog({
   open,
   editingData,
+  plantGuideData,
   categories,
   tags,
   enums,
@@ -126,6 +139,7 @@ export default function PlantFormDialog({
         isUniqueInstance: editingData.isUniqueInstance,
         categoryIds: editingData.categories.map((item) => item.id),
         tagIds: editingData.tags.map((item) => item.id),
+        plantGuide: plantGuideData || defaultPlant.plantGuide,
       });
 
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -143,7 +157,7 @@ export default function PlantFormDialog({
 
     reset(defaultPlant);
     setImages([]);
-  }, [editingData, open, reset]);
+  }, [editingData, open, plantGuideData, reset]);
 
   useEffect(() => {
     if (!open || editingData) {
@@ -159,14 +173,20 @@ export default function PlantFormDialog({
     if (enums.careLevelTypes[0]?.value) {
       setValue('careLevelType', enums.careLevelTypes[0].value);
     }
-  }, [editingData, enums.careLevelTypes, enums.placementTypes, enums.sizes, open, setValue]);
+    if (enums.lightRequirements[0]?.name) {
+      setValue('plantGuide.lightRequirement', enums.lightRequirements[0].name);
+    }
+  }, [editingData, enums.careLevelTypes, enums.lightRequirements, enums.placementTypes, enums.sizes, open, setValue]);
 
   const handleFormSubmit = (data: PlantFormData) => {
     onSubmit(data, images);
   };
 
   const isEnumReady =
-    enums.placementTypes.length > 0 && enums.sizes.length > 0 && enums.careLevelTypes.length > 0;
+    enums.placementTypes.length > 0 &&
+    enums.sizes.length > 0 &&
+    enums.careLevelTypes.length > 0 &&
+    enums.lightRequirements.length > 0;
   const disableSubmit = isLoading || enumLoading || Boolean(enumError) || !isEnumReady;
 
   return (
@@ -376,6 +396,92 @@ export default function PlantFormDialog({
                     },
                   }}
                   render={({ field }) => <TextField {...field} label="Pot size" fullWidth required={potIncluded} />}
+                />
+              </Grid>
+            </Grid>
+          </Box>
+
+          <Divider />
+
+          <Box>
+            <Typography variant="h6" fontWeight="600" gutterBottom>
+              Plant Guide
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Controller
+                  name="plantGuide.lightRequirement"
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field }) => (
+                    <FormControl fullWidth required>
+                      <InputLabel>Ánh sáng</InputLabel>
+                      <Select {...field} label="Ánh sáng">
+                        <MenuItem value="" disabled>
+                          Chọn ánh sáng
+                        </MenuItem>
+                        {enums.lightRequirements.map((item) => (
+                          <MenuItem key={item.value} value={item.name}>{item.name}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  )}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Controller
+                  name="plantGuide.watering"
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field }) => <TextField {...field} label="Tưới nước" fullWidth required />}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Controller
+                  name="plantGuide.fertilizing"
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field }) => <TextField {...field} label="Bón phân" fullWidth required />}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Controller
+                  name="plantGuide.pruning"
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field }) => <TextField {...field} label="Cắt tỉa" fullWidth required />}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Controller
+                  name="plantGuide.temperature"
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field }) => <TextField {...field} label="Nhiệt độ" fullWidth required />}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Controller
+                  name="plantGuide.humidity"
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field }) => <TextField {...field} label="Độ ẩm" fullWidth required />}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Controller
+                  name="plantGuide.soil"
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field }) => <TextField {...field} label="Đất trồng" fullWidth required />}
+                />
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <Controller
+                  name="plantGuide.careNotes"
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field }) => <TextField {...field} label="Ghi chú chăm sóc" fullWidth multiline minRows={4} required />}
                 />
               </Grid>
             </Grid>

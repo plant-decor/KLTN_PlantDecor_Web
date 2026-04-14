@@ -1,22 +1,25 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
+  Alert,
   Box,
-  Grid,
-  Typography,
-  Divider,
-  Stack,
-  Chip,
+  Button,
   CardMedia,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  Grid,
+  Stack,
+  Typography,
 } from '@mui/material';
 import { Check, Close } from '@mui/icons-material';
 import type { PlantDetail, PlantEnumPayload } from '@/types/store-management.types';
+import type { AdminPlantGuideDetail } from '@/types/admin-plant-guide.types';
+import { getAdminPlantGuideByPlantId } from '@/lib/api/adminPlantGuidesService';
 import { getFengShuiColors, getFengShuiElementLabel } from '@/lib/utils/fengShui';
 import { formatCurrency } from '@/lib/utils/formatUtil';
 
@@ -44,7 +47,61 @@ const formatDateTime = (value?: string) => {
   return date.toLocaleString('vi-VN');
 };
 
+const GuideField = ({ label, value }: { label: string; value?: string | number | null }) => (
+  <Box>
+    <Typography variant="body2" color="text.secondary">
+      {label}
+    </Typography>
+    <Typography variant="body1" fontWeight={600}>
+      {value === null || value === undefined || value === '' ? '-' : String(value)}
+    </Typography>
+  </Box>
+);
+
 export default function PlantViewDialog({ open, plant, enums, onClose }: PlantViewDialogProps) {
+  const [guide, setGuide] = useState<AdminPlantGuideDetail | null>(null);
+  const [guideLoading, setGuideLoading] = useState(false);
+  const [guideError, setGuideError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open || !plant) {
+      setGuide(null);
+      setGuideError(null);
+      setGuideLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadGuide = async () => {
+      setGuideLoading(true);
+      setGuideError(null);
+
+      try {
+        const response = await getAdminPlantGuideByPlantId(plant.id, false);
+        const payload = response.payload ?? response.data ?? null;
+        if (!cancelled) {
+          setGuide(payload);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setGuide(null);
+          setGuideError(error instanceof Error ? error.message : 'Không thể tải Plant Guide');
+        }
+      } finally {
+        if (!cancelled) {
+          setGuideLoading(false);
+        }
+      }
+    };
+
+    void loadGuide();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, plant]);
+
   if (!plant) return null;
   const fengShuiColors = getFengShuiColors(plant.fengShuiElement);
   const fengShuiLabel = getFengShuiElementLabel(plant.fengShuiElement);
@@ -190,6 +247,55 @@ export default function PlantViewDialog({ open, plant, enums, onClose }: PlantVi
 
           <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom>
+              Plant Guide
+            </Typography>
+            {guideLoading ? (
+              <Typography color="text.secondary">Đang tải hướng dẫn chăm sóc...</Typography>
+            ) : guideError ? (
+              <Alert severity="error">{guideError}</Alert>
+            ) : guide ? (
+              <Grid container spacing={2.5}>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <GuideField label="Ánh sáng" value={guide.lightRequirementName} />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <GuideField label="Tưới nước" value={guide.watering} />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <GuideField label="Bón phân" value={guide.fertilizing} />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <GuideField label="Cắt tỉa" value={guide.pruning} />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <GuideField label="Nhiệt độ" value={guide.temperature} />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <GuideField label="Độ ẩm" value={guide.humidity} />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <GuideField label="Đất trồng" value={guide.soil} />
+                </Grid>
+                <Grid size={{ xs: 12 }}>
+                  <Box sx={{ p: 2, borderRadius: 2, bgcolor: 'rgba(25, 118, 210, 0.06)' }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                      Ghi chú chăm sóc
+                    </Typography>
+                    <Typography variant="body1" fontWeight={600}>
+                      {guide.careNotes}
+                    </Typography>
+                  </Box>
+                </Grid>
+              </Grid>
+            ) : (
+              <Alert severity="info">Cây này chưa có Plant Guide.</Alert>
+            )}
+          </Box>
+
+          <Divider />
+
+          <Box>
+            <Typography variant="h6" fontWeight="600" gutterBottom>
               Booleans
             </Typography>
             <Grid container spacing={2}>
@@ -208,7 +314,7 @@ export default function PlantViewDialog({ open, plant, enums, onClose }: PlantVi
 
           <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom>
-              Categories 
+              Categories
             </Typography>
             <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mb: 1 }}>
               {plant.categories.length > 0 ? plant.categories.map((category) => (
@@ -216,7 +322,7 @@ export default function PlantViewDialog({ open, plant, enums, onClose }: PlantVi
               )) : <Typography variant="body2" color="text.secondary">No categories</Typography>}
             </Stack>
             <Typography variant="h6" fontWeight="600" gutterBottom>
-              Tags 
+              Tags
             </Typography>
             <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
               {plant.tags.length > 0 ? plant.tags.map((tag) => (
@@ -250,4 +356,3 @@ export default function PlantViewDialog({ open, plant, enums, onClose }: PlantVi
     </Dialog>
   );
 }
-

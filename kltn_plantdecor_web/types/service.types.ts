@@ -62,7 +62,8 @@ export interface ServiceRegistration {
   phone: string;
   serviceDate: string; // Desired service date/time
   note: string; // Customer's plant condition notes
-  status: ServiceRegistrationStatus;
+  status: number | ServiceRegistrationStatus;
+  orderId?: number | null;
   cancelReason?: string;
   mainCaretakerId?: number;
   estimatedDuration?: number; // Duration in minutes

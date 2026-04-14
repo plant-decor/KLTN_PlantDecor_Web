@@ -51,6 +51,26 @@ const toCartItem = (item: CartApiItem): CartItem => ({
   imageUrl: item.imageUrl,
 });
 
+const parsePositiveInt = (value: string | null): number => {
+  const parsed = Number(value ?? 0);
+
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return 0;
+  }
+
+  return Math.floor(parsed);
+};
+
+const parsePositiveNumber = (value: string | null): number => {
+  const parsed = Number(value ?? 0);
+
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return 0;
+  }
+
+  return parsed;
+};
+
 export default function CheckoutPageClient({
   userId,
   cartId,
@@ -74,11 +94,16 @@ export default function CheckoutPageClient({
   const [userProfile, setUserProfile] = useState<CustomerProfile | null>(null);
   const [createdOrder, setCreatedOrder] = useState<OrderCreatePayload | null>(null);
 
-  const isPlantInstanceOrder = searchParams.get('orderType') === '2';
-  const plantInstanceIdFromQuery = Number(searchParams.get('plantInstanceId') || 0);
-  const plantIdFromQuery = Number(searchParams.get('plantId') || 0);
-  const instanceNameFromQuery = searchParams.get('instanceName') || '';
-  const instancePriceFromQuery = Number(searchParams.get('instancePrice') || 0);
+  const orderTypeFromQuery = parsePositiveInt(searchParams.get('orderType')) || 1;
+  const isPlantInstanceOrder = orderTypeFromQuery === 2;
+  const isBuyNowOrder = orderTypeFromQuery === 3;
+  const plantInstanceIdFromQuery = parsePositiveInt(searchParams.get('plantInstanceId'));
+  const plantIdFromQuery = parsePositiveInt(searchParams.get('plantId'));
+  const instanceNameFromQuery = searchParams.get('instanceName') || searchParams.get('buyNowItemName') || '';
+  const instancePriceFromQuery = parsePositiveNumber(searchParams.get('instancePrice') || searchParams.get('buyNowItemPrice'));
+  const buyNowItemIdFromQuery = parsePositiveInt(searchParams.get('buyNowItemId'));
+  const buyNowItemTypeFromQuery = parsePositiveInt(searchParams.get('buyNowItemType')) || 1;
+  const buyNowQuantityFromQuery = Math.max(1, parsePositiveInt(searchParams.get('buyNowQuantity')) || 1);
   const paymentStrategyFromQuery = Number(searchParams.get('paymentStrategy') || 1);
 
   useEffect(() => {
@@ -114,6 +139,23 @@ export default function CheckoutPageClient({
               imageUrl: null,
             },
           ];
+        } else if (isBuyNowOrder && buyNowItemIdFromQuery > 0) {
+          const resolvedPrice = instancePriceFromQuery > 0 ? instancePriceFromQuery : 0;
+
+          items = [
+            {
+              id: buyNowItemIdFromQuery,
+              cartId: 0,
+              commonPlantId: buyNowItemTypeFromQuery === 1 ? buyNowItemIdFromQuery : null,
+              nurseryPlantComboId: buyNowItemTypeFromQuery === 2 ? buyNowItemIdFromQuery : null,
+              nurseryMaterialId: buyNowItemTypeFromQuery === 3 ? buyNowItemIdFromQuery : null,
+              price: resolvedPrice,
+              productName: instanceNameFromQuery || `Buy now item #${buyNowItemIdFromQuery}`,
+              quantity: buyNowQuantityFromQuery,
+              subtotal: resolvedPrice * buyNowQuantityFromQuery,
+              imageUrl: null,
+            },
+          ];
         } else {
           const cartRes = await fetchCartItems();
           const cartApiItems = cartRes.payload?.items ?? [];
@@ -145,11 +187,14 @@ export default function CheckoutPageClient({
           paymentMethod: 'credit_debit',
           paymentStrategy:
             isPlantInstanceOrder && paymentStrategyFromQuery === 2 ? 2 : 1,
-          orderType: isPlantInstanceOrder ? 2 : 1,
+          orderType: isPlantInstanceOrder ? 2 : isBuyNowOrder ? 3 : 1,
           plantInstanceId:
             isPlantInstanceOrder && plantInstanceIdFromQuery > 0
               ? plantInstanceIdFromQuery
               : null,
+          buyNowItemId: isBuyNowOrder && buyNowItemIdFromQuery > 0 ? buyNowItemIdFromQuery : null,
+          buyNowItemType: isBuyNowOrder ? buyNowItemTypeFromQuery : null,
+          buyNowQuantity: isBuyNowOrder ? buyNowQuantityFromQuery : null,
           subtotal: items.reduce((sum, item) => sum + item.subtotal, 0),
           total: items.reduce((sum, item) => sum + item.subtotal, 0),
           createdAt: new Date().toISOString(),
@@ -171,9 +216,13 @@ export default function CheckoutPageClient({
     };
   }, [
     cartId,
+    buyNowItemIdFromQuery,
+    buyNowItemTypeFromQuery,
+    buyNowQuantityFromQuery,
     instanceNameFromQuery,
     instancePriceFromQuery,
     isPlantInstanceOrder,
+    isBuyNowOrder,
     locale,
     paymentStrategyFromQuery,
     plantIdFromQuery,
@@ -234,20 +283,36 @@ export default function CheckoutPageClient({
         return;
       }
 
-      const payload: OrderCreateRequest = {
+      const basePayload = {
         address,
         phone,
         customerName: fullName,
         note: notes ?? '',
-        paymentStrategy: checkoutData.paymentStrategy ?? 1,
-        orderType: checkoutData.orderType ?? 1,
-        cartItemIds:
-          checkoutData.orderType === 2
-            ? []
-            : checkoutData.items.map((item) => item.id),
-        plantInstanceId:
-          checkoutData.orderType === 2 ? checkoutData.plantInstanceId ?? 0 : 0,
+        paymentStrategy: checkoutData.orderType === 2 ? (checkoutData.paymentStrategy ?? 1) : 1,
       };
+
+      let payload: OrderCreateRequest;
+      if (checkoutData.orderType === 2) {
+        payload = {
+          ...basePayload,
+          orderType: 2,
+          plantInstanceId: checkoutData.plantInstanceId ?? 0,
+        };
+      } else if (checkoutData.orderType === 3) {
+        payload = {
+          ...basePayload,
+          orderType: 3,
+          buyNowItemId: checkoutData.buyNowItemId ?? checkoutData.items[0]?.id ?? 0,
+          buyNowItemType: (checkoutData.buyNowItemType ?? 1) as 1 | 2 | 3,
+          buyNowQuantity: checkoutData.buyNowQuantity ?? checkoutData.items[0]?.quantity ?? 1,
+        };
+      } else {
+        payload = {
+          ...basePayload,
+          orderType: 1,
+          cartItemIds: checkoutData.items.map((item) => item.id),
+        };
+      }
 
       const created: OrderCreatePayload = await createOrder(payload);
 

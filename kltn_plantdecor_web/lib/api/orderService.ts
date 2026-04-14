@@ -81,6 +81,21 @@ export async function createPaymentUrl(invoiceId: number): Promise<string> {
   return response.payload.paymentUrl;
 }
 
+export async function createPaymentUrlByOrderId(orderId: number): Promise<string> {
+  const order = await getMyOrderById(orderId);
+
+  if (!order) {
+    throw new Error('Cannot load order details for payment');
+  }
+
+  const invoiceId = order.invoices?.[0]?.id;
+  if (!invoiceId) {
+    throw new Error('Cannot find invoice for this order');
+  }
+
+  return createPaymentUrl(invoiceId);
+}
+
 export async function retryPayment(paymentId: number): Promise<string> {
   const response = await post<PaymentCreateResponse>(
     `${PAYMENT_ENDPOINT}/${paymentId}/retry`,

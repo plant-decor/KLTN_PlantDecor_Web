@@ -90,7 +90,13 @@ export default function OrderHistoryList({
                     #{order.id}
                   </Typography>
                   <Chip
-                    label={order.orderType === 2 ? tOrderHistory('orderType.uniquePlant') : tOrderHistory('orderType.product')}
+                    label={
+                      order.orderType === 2
+                        ? tOrderHistory('orderType.uniquePlant')
+                        : order.orderType === 3
+                          ? tOrderHistory('orderType.buyNow')
+                          : tOrderHistory('orderType.product')
+                    }
                     size="small"
                     variant="outlined"
                   />

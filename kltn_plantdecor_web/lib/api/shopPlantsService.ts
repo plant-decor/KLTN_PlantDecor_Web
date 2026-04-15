@@ -175,12 +175,14 @@ export const searchShopPlants = async (
 export const searchNurseryPlantInstances = async (
   nurseryId: number,
   data: NurseryPlantInstanceSearchRequest,
-  loading = true
+  loading = true,
+  showToast = false
 ): Promise<ResponseModel<NurseryPlantInstanceSearchPayload>> => {
   return apiClient.post(
     `/shop/nurseries/${nurseryId}/plant-instances/search`,
     data,
-    loading
+    loading,
+    { showToast }
   );
 };
 
@@ -198,13 +200,14 @@ export const getPlantEnums = async (
 export const searchShopNurseries = async (
   data: ShopNurserySearchRequest,
   isServer: boolean,
-  loading = true
+  loading = true,
+  showToast=false
 ): Promise<ResponseModel<ShopNurserySearchPayload>> => {
   if (isServer) {
     return apiServer.post('/shop/nurseries/search', data);
   }
 
-  return apiClient.post('/shop/nurseries/search', data, loading);
+  return apiClient.post('/shop/nurseries/search', data, loading, {showToast});
 };
 
 export const getPlantComboNurseries = async (

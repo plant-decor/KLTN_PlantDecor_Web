@@ -89,6 +89,7 @@ export interface OrderInvoice {
 export interface OrderItem {
   id: number;
   itemName: string;
+  imageUrl?: string | null;
   quantity: number;
   price: number;
   status: number;

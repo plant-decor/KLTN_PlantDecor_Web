@@ -80,7 +80,7 @@ export default function AuthFormContainer() {
       }
       const resolvedUser = result.user;
       if (result.token) {
-        setClientAccessToken(result.token);
+        setClientAccessToken(result.token, result.expiresIn);
       }
       if (result.refreshToken) {
         setClientRefreshToken(result.refreshToken);

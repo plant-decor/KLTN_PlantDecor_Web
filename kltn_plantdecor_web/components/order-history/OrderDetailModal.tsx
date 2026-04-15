@@ -25,13 +25,39 @@ import {
   Typography,
 } from '@mui/material';
 import { useTranslations } from 'next-intl';
-import type { Order } from '@/types/order.types';
+import type { Order, OrderInvoiceDetail } from '@/types/order.types';
 import {
   formatCurrency,
   formatDate,
   getOrderSteps,
   getStatusInfo,
 } from './orderHistoryUtils';
+import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
+
+type OrderDisplayItem = {
+  id: number;
+  itemName: string;
+  quantity: number;
+  price: number;
+};
+
+function mapInvoiceDetailToDisplayItem(detail: OrderInvoiceDetail): OrderDisplayItem {
+  return {
+    id: detail.id,
+    itemName: detail.itemName,
+    quantity: detail.quantity,
+    price: detail.unitPrice,
+  };
+}
+
+function getDisplayItems(order: Order): OrderDisplayItem[] {
+  if (order.orderType !== 4) {
+    return order.items;
+  }
+
+  const invoiceWithDetails = order.invoices.find((invoice) => invoice.details.length > 0);
+  return invoiceWithDetails ? invoiceWithDetails.details.map(mapInvoiceDetailToDisplayItem) : [];
+}
 
 interface OrderDetailModalProps {
   open: boolean;
@@ -61,6 +87,7 @@ export default function OrderDetailModal({
   const retryOrderId = order?.statusName === 'Pending' ? order.id : null;
   const canCancelOrder = order?.statusName === 'Pending' || order?.statusName === 'DepositPaid';
   const isCancelling = !!order && cancelLoadingOrderId === order.id;
+  const displayItems = order ? getDisplayItems(order) : [];
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -189,14 +216,24 @@ export default function OrderDetailModal({
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {order.items.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>{item.itemName}</TableCell>
-                      <TableCell align="center">{item.quantity}</TableCell>
-                      <TableCell align="right">{formatCurrency(item.price)}</TableCell>
-                      <TableCell align="right">{formatCurrency(item.price * item.quantity)}</TableCell>
+                  {displayItems.length > 0 ? (
+                    displayItems.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell>{item.itemName}</TableCell>
+                        <TableCell align="center">{item.quantity}</TableCell>
+                        <TableCell align="right">{formatCurrency(item.price)}</TableCell>
+                        <TableCell align="right">{formatCurrency(item.price * item.quantity)}</TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={4} align="center">
+                        <Typography variant="body2" color="text.secondary">
+                          No item details available.
+                        </Typography>
+                      </TableCell>
                     </TableRow>
-                  ))}
+                  )}
                   <TableRow>
                     <TableCell colSpan={3} align="right">
                       <strong>Total</strong>
@@ -264,7 +301,7 @@ export default function OrderDetailModal({
                       <Button
                         variant="contained"
                         size="small"
-                        sx={{ mt: 1.5 }}
+                        sx={{ mt: 1.5, backgroundColor: 'var(--primary)', ...hoverLiftStyle }}
                         onClick={() => void onRetryPayment(retryOrderId)}
                         disabled={retryLoadingOrderId === retryOrderId || isCancelling}
                       >
@@ -289,7 +326,7 @@ export default function OrderDetailModal({
             onClick={() => void onCancelOrder(order.id)}
             disabled={isCancelling || retryLoadingOrderId === order.id}
           >
-            {isCancelling ? 'Cancelling...' : 'Cancel order'}
+            {isCancelling ? tOrderHistory('cancelling') : tOrderHistory('cancelOrder')}
           </Button>
         ) : null}
         <Button onClick={onClose} variant="outlined">

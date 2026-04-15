@@ -55,13 +55,37 @@ const claimNumber = (claims: Record<string, unknown> | null, key: string): numbe
   return null;
 };
 
+const claimNumberFromKeys = (
+  claims: Record<string, unknown> | null,
+  keys: string[],
+): number | null => {
+  for (const key of keys) {
+    const value = claimNumber(claims, key);
+    if (value !== null) {
+      return value;
+    }
+  }
+
+  return null;
+};
+
 export const buildUserFromToken = (token: string, fallbackUser?: User): { user: User; expiresIn: number } => {
   const claims = parseJwtPayload(token);
   const exp = claimNumber(claims, 'exp');
   const iat = claimNumber(claims, 'iat');
-  const sub = claimString(claims, ['sub']);
-  const parsedId = Number(sub);
-  const userId = Number.isFinite(parsedId) ? parsedId : 0;
+  const userId =
+    claimNumberFromKeys(claims, [
+      'sub',
+      'nameid',
+      'nameidentifier',
+      'userId',
+      'userid',
+      'id',
+      'uid',
+      'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier',
+    ]) ??
+    fallbackUser?.id ??
+    0;
 
   return {
     expiresIn: exp && iat ? Math.max(0, Math.floor(exp - iat)) : 3600,

@@ -239,9 +239,9 @@ export default function CheckoutReview({
             </Box>
 
             <Box sx={{ mt: 3, p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
-              <Typography variant="caption" sx={{ color: '#666' }}>
+              {/* <Typography variant="caption" sx={{ color: '#666' }}>
                 User ID: {userId}
-              </Typography>
+              </Typography> */}
               <Typography variant="caption" sx={{ display: 'block', color: '#666' }}>
                 Cart ID: {cartId}
               </Typography>

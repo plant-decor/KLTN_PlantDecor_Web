@@ -57,6 +57,12 @@ interface ApiMessageResponse {
   message?: string;
 }
 
+interface LogoutAllRequest {
+  accessToken: string;
+  refreshToken: string;
+  deviceId: string;
+}
+
 type ErrorWithCause = Error & {
   status?: number;
   payload?: unknown;
@@ -377,13 +383,13 @@ export async function logoutAction(): Promise<{ success: boolean }> {
   return { success: true };
 }
 
-export async function logoutAllAction(): Promise<ActionResult> {
+export async function logoutAllAction(payload: LogoutAllRequest): Promise<ActionResult> {
   try {
     const data = await callAuthenticationApi<ApiMessageResponse>(
       '/Authentication/logout-all',
       'Đăng xuất tất cả phiên thất bại.',
       {
-        auth: 'required',
+        body: payload,
       }
     );
 

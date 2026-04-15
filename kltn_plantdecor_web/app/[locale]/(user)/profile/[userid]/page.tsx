@@ -27,6 +27,8 @@ import SetPasswordModal from '@/components/profile/SetPasswordModal';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 import { useTranslations } from 'next-intl';
 import type { UserProfile, UpdateUserProfileRequest } from '@/types/auth.types';
+import { LoadingOverlay } from '@/components/LoadingOverlay';
+import ClickableImageViewer from '@/components/image-view/ClickableImageViewer';
 
 interface PageProps {
   params: Promise<{ userid: string }>;
@@ -35,6 +37,17 @@ interface PageProps {
 export default function ProfilePage({ params }: PageProps) {
   const t = useTranslations('profile');
   const tAuth = useTranslations('auth');
+
+  const normalizeGender = (gender: UserProfile['gender']): 'Unknown' | 'Male' | 'Female' | 'Other' => {
+    if (gender === 'Male' || gender === 'Female' || gender === 'Other' || gender === 'Unknown') {
+      return gender;
+    }
+
+    if (gender === 1) return 'Male';
+    if (gender === 2) return 'Female';
+    if (gender === 3) return 'Other';
+    return 'Unknown';
+  };
   
   const [profile, setProfile] = useState<Partial<UserProfile>>({});
   const [originalProfile, setOriginalProfile] = useState<Partial<UserProfile>>({});
@@ -50,7 +63,7 @@ export default function ProfilePage({ params }: PageProps) {
       setIsLoading(true);
       setError(null);
       const response = await getUserProfile(false);
-      
+      console.log('Fetched profile:', response);
       if (response?.payload) {
         const userData = response.payload;
         // Map API response to component state
@@ -62,8 +75,10 @@ export default function ProfilePage({ params }: PageProps) {
           phoneNumber: userData.phoneNumber,
           avatarUrl: userData.avatarUrl,
           address: userData.address || '',
-          gender: userData.gender || 'Unknown',
+          gender: normalizeGender(userData.gender),
           birthYear: userData.birthYear || 0,
+          latitude: userData.latitude ?? 0,
+          longitude: userData.longitude ?? 0,
           receiveNotifications: userData.receiveNotifications ?? true,
         };
         
@@ -98,12 +113,13 @@ export default function ProfilePage({ params }: PageProps) {
       // Build request matching API format
       const request: UpdateUserProfileRequest = {
         userName: profile.username || '',
+        phoneNumber: profile.phoneNumber || '',
         fullName: profile.fullName || '',
         address: profile.address || '',
         birthYear: profile.birthYear || 0,
-        gender: (profile.gender === 'Other' ? 'Unknown' : profile.gender) as any || 'Unknown',
-        latitude: 0,
-        longitude: 0,
+        gender: normalizeGender(profile.gender),
+        latitude: profile.latitude ?? 0,
+        longitude: profile.longitude ?? 0,
         receiveNotifications: profile.receiveNotifications ?? true,
       };
 
@@ -185,7 +201,7 @@ export default function ProfilePage({ params }: PageProps) {
       {/* Loading State */}
       {isLoading && (
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
-          <CircularProgress />
+          <LoadingOverlay />
         </Box>
       )}
 
@@ -197,14 +213,12 @@ export default function ProfilePage({ params }: PageProps) {
               <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, alignItems: 'center', gap: 3 }}>
                 {/* Avatar */}
                 <Box sx={{ position: 'relative' }}>
-                  <Avatar
-                    src={profile.avatarUrl}
-                    alt={profile.fullName}
-                    sx={{
-                      width: { xs: 120, md: 150 },
-                      height: { xs: 120, md: 150 },
-                      boxShadow: 3,
-                    }}
+                  <ClickableImageViewer
+                    images={profile.avatarUrl ? [profile.avatarUrl] : []}
+                    alt={profile.fullName || profile.username || 'User Avatar'}
+                    className='rounded-full aspect-square object-cover shadow-md'
+                    containerClassName='block xs:w-[120px] md:w-37.5 xs:h-[120px] md:h-37.5'
+                    showZoomHint={false}
                   />
                   <IconButton
                     component="label"
@@ -303,13 +317,13 @@ export default function ProfilePage({ params }: PageProps) {
                   disabled={isSaving}
                 />
 
-                {/* Phone Number - Read Only */}
+                {/* Phone Number */}
                 <TextField
                   label={tAuth('phone')}
                   value={profile.phoneNumber || ''}
+                  onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
                   fullWidth
-                  disabled
-                  helperText={t('phoneReadOnly') || 'Phone number is read-only'}
+                  disabled={isSaving}
                 />
 
                 {/* Email - Read Only */}
@@ -365,6 +379,34 @@ export default function ProfilePage({ params }: PageProps) {
                 placeholder={t('addressPlaceholder')}
                 disabled={isSaving}
               />
+
+              <Box
+                sx={{
+                  mt: 2,
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+                  gap: 2,
+                }}
+              >
+                <TextField
+                  label={t('latitude') || 'Latitude'}
+                  value={profile.latitude ?? 0}
+                  onChange={(e) => handleInputChange('latitude', parseFloat(e.target.value) || 0)}
+                  fullWidth
+                  type="number"
+                  inputProps={{ step: 'any' }}
+                  disabled={isSaving}
+                />
+                <TextField
+                  label={t('longitude') || 'Longitude'}
+                  value={profile.longitude ?? 0}
+                  onChange={(e) => handleInputChange('longitude', parseFloat(e.target.value) || 0)}
+                  fullWidth
+                  type="number"
+                  inputProps={{ step: 'any' }}
+                  disabled={isSaving}
+                />
+              </Box>
             </CardContent>
           </Card>
 

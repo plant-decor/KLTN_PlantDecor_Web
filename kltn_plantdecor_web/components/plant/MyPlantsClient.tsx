@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import { useLocale, useTranslations } from 'next-intl';
 import type { MyPlantItemWithGuide } from '@/types/my-plant.types';
+import ClickableImageViewer from '../image-view/ClickableImageViewer';
 
 interface MyPlantsClientProps {
   plants: MyPlantItemWithGuide[];
@@ -116,18 +117,22 @@ export default function MyPlantsClient({ plants }: MyPlantsClientProps) {
                       justifyContent: 'center',
                     }}
                   >
-                    {plant.imageUrl ? (
-                      <Box
-                        component="img"
-                        src={plant.imageUrl}
-                        alt={plant.plantName}
-                        sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-                    ) : (
-                      <Typography variant="h2" sx={{ opacity: 0.4 }}>
-                        🌱
-                      </Typography>
-                    )}
+                      {plant.primaryImageUrl ? (
+                        <ClickableImageViewer
+                          images={[plant.primaryImageUrl]}
+                          alt={`${plant.plantName}`}
+                          containerClassName="w-full"
+                          className="object-cover"
+                          showZoomHint={true}
+                        />
+                      ) :
+                        <ClickableImageViewer
+                          images={['/img/fallbackplant.avif']}
+                          alt={plant.plantName}
+                          containerClassName="w-full"
+                          className="w-full aspect-square object-cover"
+                        />
+                      }
                   </Box>
                 </Grid>
 
@@ -210,7 +215,7 @@ export default function MyPlantsClient({ plants }: MyPlantsClientProps) {
                 <Accordion disableGutters elevation={0} sx={{ bgcolor: 'transparent', '&:before': { display: 'none' } }}>
                   <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ px: 0 }}>
                     <Stack>
-                      <Typography variant="h6" fontWeight={800}>
+                      <Typography variant="h6" fontWeight={750}>
                         {t('guide.title', { plantName: plant.plantName })}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">

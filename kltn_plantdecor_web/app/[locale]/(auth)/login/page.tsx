@@ -24,9 +24,9 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
 
   if (authToken && !isForceLogout) {
     const isSafeRedirectTo = redirectTo?.startsWith('/');
-    const basePath = isSafeRedirectTo
+    const basePath: string = isSafeRedirectTo && redirectTo
       ? redirectTo
-      : getDefaultPath(userRole);
+      : getDefaultPath(userRole) || '/';
 
     if (locale === 'vi') {
       redirect(basePath);

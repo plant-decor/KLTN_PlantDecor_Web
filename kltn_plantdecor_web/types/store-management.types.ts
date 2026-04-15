@@ -387,3 +387,49 @@ export interface DialogState {
   editingId: number | null;
   editingData: unknown;
 }
+
+export interface StoreUserSpecialization {
+  id: number;
+  name: string;
+  description: string;
+}
+
+export interface StoreUserSpecializationOption {
+  id: number;
+  name: string;
+  description: string;
+  isActive: boolean;
+}
+
+export interface StoreUserItem {
+  id: number;
+  username: string;
+  email: string;
+  phoneNumber: string;
+  avatarUrl: string | null;
+  status: number;
+  specializations: StoreUserSpecialization[];
+}
+
+export interface StoreUserListPayload {
+  items: StoreUserItem[];
+  totalCount: number;
+  pageNumber: number;
+  pageSize: number;
+  totalPages: number;
+  hasPrevious: boolean;
+  hasNext: boolean;
+}
+
+export interface StoreUserListQuery {
+  pageNumber?: number;
+  pageSize?: number;
+}
+
+export interface AssignStoreUserSpecializationRequest {
+  specializationId: number;
+}
+
+export interface ReplaceStoreUserSpecializationsRequest {
+  specializationIds: number[];
+}

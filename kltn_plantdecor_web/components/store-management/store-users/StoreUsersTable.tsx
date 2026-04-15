@@ -1,0 +1,218 @@
+"use client";
+
+import {
+  Avatar,
+  Box,
+  Chip,
+  CircularProgress,
+  IconButton,
+  Menu,
+  MenuItem,
+  Paper,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TablePagination,
+  TableRow,
+  Tooltip,
+  Typography,
+} from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import { useState, type MouseEvent } from "react";
+import type { StoreUserItem, StoreUserSpecializationOption } from "@/types/store-management.types";
+
+interface StoreUsersTableProps {
+  items: StoreUserItem[];
+  specializationOptions: StoreUserSpecializationOption[];
+  pageNumber: number;
+  pageSize: number;
+  totalCount: number;
+  loading: boolean;
+  onViewDetail: (staffId: number) => void;
+  onQuickAssign: (staffId: number, specializationId: number) => void;
+  onChangePage: (_event: unknown, nextPage: number) => void;
+  onChangeRowsPerPage: (nextPageSize: number) => void;
+}
+
+const getStatusLabel = (status: number) => {
+  switch (status) {
+    case 1:
+      return "Hoạt động";
+    case 2:
+      return "Tạm khóa";
+    default:
+      return "Không xác định";
+  }
+};
+
+const getStatusColor = (status: number): "success" | "warning" | "default" => {
+  switch (status) {
+    case 1:
+      return "success";
+    case 2:
+      return "warning";
+    default:
+      return "default";
+  }
+};
+
+export default function StoreUsersTable({
+  items,
+  specializationOptions,
+  pageNumber,
+  pageSize,
+  totalCount,
+  loading,
+  onViewDetail,
+  onQuickAssign,
+  onChangePage,
+  onChangeRowsPerPage,
+}: StoreUsersTableProps) {
+  const [quickMenuAnchorEl, setQuickMenuAnchorEl] = useState<HTMLElement | null>(null);
+  const [quickMenuStaffId, setQuickMenuStaffId] = useState<number | null>(null);
+
+  const getAvailableSpecializations = (staff: StoreUserItem) => {
+    const ownedIds = new Set(staff.specializations.map((item) => item.id));
+    return specializationOptions.filter((specialization) => !ownedIds.has(specialization.id));
+  };
+
+  const openQuickMenu = (event: MouseEvent<HTMLElement>, staffId: number) => {
+    setQuickMenuAnchorEl(event.currentTarget);
+    setQuickMenuStaffId(staffId);
+  };
+
+  const closeQuickMenu = () => {
+    setQuickMenuAnchorEl(null);
+    setQuickMenuStaffId(null);
+  };
+
+  const activeStaff = items.find((staff) => staff.id === quickMenuStaffId) ?? null;
+  const activeQuickOptions = activeStaff ? getAvailableSpecializations(activeStaff) : [];
+
+  return (
+    <TableContainer
+      component={Paper}
+      elevation={0}
+      sx={{ border: "1px solid var(--card-border)", borderRadius: 2, overflow: "hidden" }}
+    >
+      <Table size="small">
+        <TableHead sx={{ backgroundColor: "var(--primary)" }}>
+          <TableRow>
+            <TableCell sx={{ color: "var(--primary-foreground)", fontWeight: 600 }}>ID</TableCell>
+            <TableCell sx={{ color: "var(--primary-foreground)", fontWeight: 600 }}>Nhân viên</TableCell>
+            <TableCell sx={{ color: "var(--primary-foreground)", fontWeight: 600 }}>Email</TableCell>
+            <TableCell sx={{ color: "var(--primary-foreground)", fontWeight: 600 }}>Số điện thoại</TableCell>
+            <TableCell sx={{ color: "var(--primary-foreground)", fontWeight: 600 }}>Trạng thái</TableCell>
+            <TableCell sx={{ color: "var(--primary-foreground)", fontWeight: 600 }}>Chuyên môn</TableCell>
+            <TableCell align="right" sx={{ color: "var(--primary-foreground)", fontWeight: 600 }}>
+              Hành động
+            </TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {loading && (
+            <TableRow>
+              <TableCell colSpan={7}>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", py: 3 }}>
+                  <CircularProgress size={26} />
+                </Box>
+              </TableCell>
+            </TableRow>
+          )}
+
+          {!loading && items.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={7} align="center" sx={{ py: 4, color: "text.secondary" }}>
+                Chưa có nhân viên caretaker nào trong vựa.
+              </TableCell>
+            </TableRow>
+          )}
+
+          {!loading &&
+            items.map((staff) => (
+              <TableRow key={staff.id} hover>
+                <TableCell>{staff.id}</TableCell>
+                <TableCell>
+                  <Stack direction="row" spacing={1.5} alignItems="center">
+                    <Avatar src={staff.avatarUrl ?? undefined}>{staff.username.charAt(0)}</Avatar>
+                    <Typography variant="body2" fontWeight={500}>
+                      {staff.username}
+                    </Typography>
+                  </Stack>
+                </TableCell>
+                <TableCell>{staff.email || "-"}</TableCell>
+                <TableCell>{staff.phoneNumber || "-"}</TableCell>
+                <TableCell>
+                  <Chip
+                    label={getStatusLabel(staff.status)}
+                    size="small"
+                    color={getStatusColor(staff.status)}
+                    variant="outlined"
+                  />
+                </TableCell>
+                <TableCell>
+                  <Typography variant="body2">{staff.specializations.length} chuyên môn</Typography>
+                </TableCell>
+                <TableCell align="right">
+                  <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                    <Tooltip title="Xem chi tiết">
+                      <IconButton color="primary" onClick={() => onViewDetail(staff.id)}>
+                        <VisibilityIcon />
+                      </IconButton>
+                    </Tooltip>
+
+                    <Tooltip title="Gán nhanh chuyên môn">
+                      <span>
+                        <IconButton
+                          color="secondary"
+                          onClick={(event) => openQuickMenu(event, staff.id)}
+                          disabled={getAvailableSpecializations(staff).length === 0}
+                        >
+                          <AddIcon />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                  </Stack>
+                </TableCell>
+              </TableRow>
+            ))}
+        </TableBody>
+      </Table>
+
+      <Menu anchorEl={quickMenuAnchorEl} open={Boolean(quickMenuAnchorEl)} onClose={closeQuickMenu}>
+        {activeQuickOptions.length > 0 ? (
+          activeQuickOptions.map((specialization) => (
+            <MenuItem
+              key={specialization.id}
+              onClick={() => {
+                if (quickMenuStaffId !== null) {
+                  onQuickAssign(quickMenuStaffId, specialization.id);
+                }
+                closeQuickMenu();
+              }}
+            >
+              {specialization.name}
+            </MenuItem>
+          ))
+        ) : (
+          <MenuItem disabled>Nhân viên đã có tất cả chuyên môn</MenuItem>
+        )}
+      </Menu>
+
+      <TablePagination
+        component="div"
+        count={totalCount}
+        page={Math.max(pageNumber - 1, 0)}
+        rowsPerPage={pageSize}
+        onPageChange={onChangePage}
+        onRowsPerPageChange={(event) => onChangeRowsPerPage(Number(event.target.value))}
+        rowsPerPageOptions={[10, 20, 50]}
+        labelRowsPerPage="Số dòng"
+      />
+    </TableContainer>
+  );
+}

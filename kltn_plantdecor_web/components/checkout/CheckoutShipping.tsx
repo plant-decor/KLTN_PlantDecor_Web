@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   TextField,
   Typography,
@@ -14,6 +15,7 @@ import {
 } from '@mui/material';
 import type { CheckoutData } from '@/types/cart.types';
 import type { CustomerProfile } from '@/types/auth.types';
+import { isValidPhoneNumber10Digits } from '@/lib/utils/phoneNumber';
 
 interface CheckoutShippingProps {
   checkoutData: CheckoutData;
@@ -26,12 +28,15 @@ export default function CheckoutShipping({
   userProfile,
   onDataChange,
 }: CheckoutShippingProps) {
+  const tAuth = useTranslations('auth');
+  const tError = useTranslations('profile');
   const [formData, setFormData] = useState({
     fullName: checkoutData.shippingInfo?.fullName ?? userProfile?.fullName ?? '',
     phone: checkoutData.shippingInfo?.phone ?? userProfile?.phoneNumber ?? '',
     address: checkoutData.shippingInfo?.address ?? userProfile?.address ?? '',
     notes: checkoutData.shippingInfo?.notes ?? '',
   });
+  const [phoneError, setPhoneError] = useState('');
 
   useEffect(() => {
     if (!userProfile) return;
@@ -55,6 +60,12 @@ export default function CheckoutShipping({
       notes: nextNotes,
     }));
 
+    if (phone && !isValidPhoneNumber10Digits(phone)) {
+      setPhoneError(tError('phoneNumberInvalid'));
+    } else {
+      setPhoneError('');
+    }
+
     if (shouldUpdateParent) {
       onDataChange({
         shippingInfo: {
@@ -75,6 +86,16 @@ export default function CheckoutShipping({
       const updated = { ...prev, [name]: value };
       return updated;
     });
+
+    if (name === 'phone') {
+      if (!value.trim()) {
+        setPhoneError(tError('phoneRequired'));
+      } else if (!isValidPhoneNumber10Digits(value)) {
+        setPhoneError(tError('phoneNumberInvalid'));
+      } else {
+        setPhoneError('');
+      }
+    }
 
     const updatedShipping = { ...formData, [name]: value };
     onDataChange({
@@ -120,6 +141,7 @@ export default function CheckoutShipping({
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
+              type='number'
               label="Phone Number"
               name="phone"
               value={formData.phone}
@@ -127,6 +149,8 @@ export default function CheckoutShipping({
               placeholder="Phone number"
               variant="outlined"
               size="small"
+              error={!!phoneError}
+              helperText={phoneError}
             />
           </Grid>
 

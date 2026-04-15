@@ -12,6 +12,7 @@ import {
   HomeOutlined,
 } from '@mui/icons-material';
 import Image from 'next/image';
+import { isValidPhoneNumber10Digits } from '@/lib/utils/phoneNumber';
 
 interface SignUpFormProps {
   isVisible: boolean;
@@ -36,6 +37,7 @@ export default function SignUpForm({
   error = '',
 }: SignUpFormProps) {
   const t = useTranslations('auth');
+  const tError = useTranslations('profile');
   const [signUpName, setSignUpName] = useState('');
   const [signUpEmail, setSignUpEmail] = useState('');
   const [signUpPassword, setSignUpPassword] = useState('');
@@ -50,9 +52,23 @@ export default function SignUpForm({
   const [isConfirmPasswordFocused, setIsConfirmPasswordFocused] = useState(false);
   const [isEmailFocused, setIsEmailFocused] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+  const [phoneError, setPhoneError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!signUpPhone.trim()) {
+      setPhoneError(tError('phoneRequired'));
+      return;
+    }
+
+    if (!isValidPhoneNumber10Digits(signUpPhone)) {
+      setPhoneError(tError('phoneNumberInvalid'));
+      return;
+    }
+
+    setPhoneError('');
+
     const formData = {
       email: signUpEmail,
       password: signUpPassword,
@@ -108,12 +124,12 @@ export default function SignUpForm({
         <Image
           src="/logo/logo-landscape.png"
           alt="Logo"
-          width={160}
-          height={160}
-          className="absolute scale-x-200 top-8 right-18 w-32 h-32 object-contain"
+          width={200}
+          height={200}
+          className="absolute top-8 right-18 w-40 h-40 object-contain"
         />
 
-        <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-5">
+        <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-6">
           <h1 className="text-3xl font-semibold text-center mb-6">{t('createAccount')}</h1>
 
           {error && (
@@ -184,9 +200,14 @@ export default function SignUpForm({
               {t('phone')}
             </span>
             <input
-              type="text"
+              type="number"
               value={signUpPhone}
-              onChange={(e) => setSignUpPhone(e.target.value)}
+              onChange={(e) => {
+                setSignUpPhone(e.target.value);
+                if (phoneError) {
+                  setPhoneError('');
+                }
+              }}
               onFocus={() => setIsPhoneFocused(true)}
               onBlur={() => setIsPhoneFocused(false)}
               className="w-full h-12 p-2 pl-8 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -196,6 +217,7 @@ export default function SignUpForm({
               <PhoneOutlined className="w-5 h-5" />
             </span>
           </div>
+          {phoneError && <p className="-mt-3 text-sm text-red-500">{phoneError}</p>}
 
           {/*UserName Field */}
           <div className="relative">

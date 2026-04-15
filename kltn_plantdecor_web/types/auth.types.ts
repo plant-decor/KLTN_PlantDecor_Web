@@ -118,6 +118,7 @@ export interface UserProfile extends CustomerProfile {
 
 export interface UpdateUserProfileRequest {
   userName: string;
+  phoneNumber: string;
   fullName: string;
   address: string;
   birthYear: number;

@@ -6,7 +6,7 @@ import { logoutAllAction } from '@/app/actions/authenticationActions';
 import { authService } from '@/lib/api/authService';
 import { useRouter } from 'next/navigation';
 import { getDeviceId } from '@/lib/utils/deviceId';
-import { clearClientAccessToken } from '@/lib/axios/tokenStorage';
+import { clearClientAccessToken, getClientAccessToken, getClientRefreshToken } from '@/lib/axios/tokenStorage';
 
 interface Session {
   id: number;
@@ -64,7 +64,11 @@ export default function SessionsPage() {
     if (!confirm('Bạn có chắc muốn đăng xuất tất cả thiết bị?')) return;
 
     try {
-      const result = await logoutAllAction();
+      const result = await logoutAllAction({
+        accessToken: getClientAccessToken() || '',
+        refreshToken: getClientRefreshToken() || '',
+        deviceId: getDeviceId(),
+      });
 
       if (!result.success) {
         throw new Error(result.message);

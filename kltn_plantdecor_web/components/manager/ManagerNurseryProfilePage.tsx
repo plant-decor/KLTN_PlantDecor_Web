@@ -39,10 +39,12 @@ import type {
   UpdateMyManagerNurseryRequest,
 } from '@/types/manager-store-catalog.types';
 import type { ResponseModel } from '@/types/api.types';
+import { isValidPhoneNumber10Digits } from '@/lib/utils/phoneNumber';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 
 type ManagerProfileFormState = {
   userName: string;
+  phoneNumber: string;
   fullName: string;
   address: string;
   birthYear: string;
@@ -163,6 +165,7 @@ export default function ManagerNurseryProfilePage() {
 
   const [profileForm, setProfileForm] = useState<ManagerProfileFormState>({
     userName: '',
+    phoneNumber: '',
     fullName: '',
     address: '',
     birthYear: '',
@@ -194,6 +197,7 @@ export default function ManagerNurseryProfilePage() {
     setUserProfile(profile);
     setProfileForm({
       userName: profile.username ?? '',
+      phoneNumber: profile.phoneNumber ?? '',
       fullName: profile.fullName ?? '',
       address: profile.address ?? '',
       birthYear: toStringOrEmpty(profile.birthYear),
@@ -296,12 +300,20 @@ export default function ManagerNurseryProfilePage() {
   };
 
   const handleProfileSave = async () => {
+    const phoneNumber = profileForm.phoneNumber.trim();
+
+    if (!isValidPhoneNumber10Digits(phoneNumber)) {
+      setProfileError(t('phoneNumberInvalid'));
+      return;
+    }
+
     setProfileSaving(true);
     setProfileError(null);
 
     const request: UpdateUserProfileRequest = {
       userName: profileForm.userName.trim(),
       fullName: profileForm.fullName.trim(),
+      phoneNumber,
       address: profileForm.address.trim(),
       birthYear: parseNumberOrZero(profileForm.birthYear),
       gender: profileForm.gender,
@@ -473,6 +485,16 @@ export default function ManagerNurseryProfilePage() {
                         fullWidth
                       />
                       <TextField
+                        type='number'
+                        label={tAuth('phone')}
+                        value={profileForm.phoneNumber}
+                        onChange={(event) => handleProfileInputChange('phoneNumber', event.target.value)}
+                        fullWidth
+                      />
+                    </Stack>
+
+                    <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+                      <TextField
                         label={tAuth('fullName')}
                         value={profileForm.fullName}
                         onChange={(event) => handleProfileInputChange('fullName', event.target.value)}
@@ -632,7 +654,7 @@ export default function ManagerNurseryProfilePage() {
                       />
                     </Stack>
 
-                    <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+                    {/* <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
                       <TextField
                         label={t('nurserySection.latitude')}
                         type="number"
@@ -651,7 +673,7 @@ export default function ManagerNurseryProfilePage() {
                         }
                         fullWidth
                       />
-                    </Stack>
+                    </Stack> */}
 
                     <FormControlLabel
                       control={

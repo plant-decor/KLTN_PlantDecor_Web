@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import createIntlMiddleware from "next-intl/middleware";
 import { routing } from "@/i18n/routing";
 import { ROLE_TO_ROUTES, ROUTE_TO_ROLES } from "@/lib/constants/roleRoutes";
+import { getDefaultPath } from "@/lib/utils/roleHelper";
 
 const intlMiddleware = createIntlMiddleware(routing);
 
@@ -55,6 +56,7 @@ export default function proxy(request: NextRequest) {
   }
 
   const authToken = request.cookies.get("accessToken")?.value;
+  const refreshToken = request.cookies.get("refreshToken")?.value;
   const userRole = normalizeRole(request.cookies.get("userRole")?.value);
 
   const segments = pathname.split("/");
@@ -65,7 +67,9 @@ export default function proxy(request: NextRequest) {
     segments.includes("login") || segments.includes("register");
   const forceLogout = searchParams.get("forceLogout") === "1";
 
-  if (protectedRoute && !authToken) {
+  // Allow protected route pass-through when refresh token still exists.
+  // Client bootstrap/interceptor can silently refresh and rehydrate access token.
+  if (protectedRoute && !authToken && !refreshToken) {
     const loginPath = getLocalizedPath(pathname, "/login");
     const loginUrl = new URL(loginPath, request.nextUrl.origin);
     loginUrl.searchParams.set("redirectTo", pathname);
@@ -92,17 +96,7 @@ export default function proxy(request: NextRequest) {
   }
 
   if (isAuthPage && authToken && !forceLogout) {
-    const roleToDefaultPath: Record<string, string> = {
-      Admin: "/dashboard",
-      Manager: "/dashboard",
-      Staff: "/dashboard",
-      Consultant: "/consultant",
-      Caretaker: "/dashboard",
-      Shipper: "/dashboard",
-      Customer: "/",
-    };
-
-    const basePath = userRole ? roleToDefaultPath[userRole] || "/" : "/";
+    const basePath = getDefaultPath(userRole);
     const targetPath = getLocalizedPath(pathname, basePath);
 
     return NextResponse.redirect(new URL(targetPath, request.nextUrl.origin));

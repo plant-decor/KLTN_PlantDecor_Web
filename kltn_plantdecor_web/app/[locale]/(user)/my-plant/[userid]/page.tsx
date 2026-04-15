@@ -35,6 +35,7 @@ export default async function MyPlantPage({ params }: PageProps) {
 
   try {
     const plants = await getMyPlants();
+    console.log('Fetched my plants:', plants);  
     const uniquePlantIds = Array.from(new Set(plants.map((item) => item.plantId)));
 
     const guideResults = await Promise.allSettled(
@@ -71,7 +72,7 @@ export default async function MyPlantPage({ params }: PageProps) {
           </Typography>
         </Box>
 
-        {errorMessage && <Alert severity="error">{errorMessage}</Alert>}
+        {/* {errorMessage && <Alert severity="error">{errorMessage}</Alert>} */}
       </Stack>
 
       {myPlants.length === 0 ? (

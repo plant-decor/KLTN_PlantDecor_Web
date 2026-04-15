@@ -45,21 +45,31 @@ const toPositiveId = (value: number): number | null => {
 };
 
 const resolveWishlistItemHref = (item: WishlistListItem): string | null => {
-  const itemId = toPositiveId(item.itemId);
-  if (!itemId) {
-    return null;
-  }
-
   if (item.itemType === 'Plant' || item.itemType === 'PlantInstance') {
-    return `/products/${itemId}`;
+    const productId = toPositiveId(item.itemType === 'PlantInstance' ? (item.plantId ?? 0) : item.itemId);
+    if (!productId) {
+      return null;
+    }
+
+    return `/products/${productId}`;
   }
 
   if (item.itemType === 'PlantCombo') {
-    return `/combo/${itemId}`;
+    const comboId = toPositiveId(item.itemId);
+    if (!comboId) {
+      return null;
+    }
+
+    return `/combo/${comboId}`;
   }
 
   if (item.itemType === 'Material') {
-    return `/materials/${itemId}`;
+    const materialId = toPositiveId(item.itemId);
+    if (!materialId) {
+      return null;
+    }
+
+    return `/materials/${materialId}`;
   }
 
   return null;

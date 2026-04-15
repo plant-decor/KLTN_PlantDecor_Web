@@ -18,6 +18,7 @@ import CheckoutPayment from '@/components/checkout/CheckoutPayment';
 import CheckoutReview from '@/components/checkout/CheckoutReview';
 import CheckoutComplete from '@/components/checkout/CheckoutComplete';
 import { get } from '@/lib/api/apiService';
+import { isValidPhoneNumber10Digits } from '@/lib/utils/phoneNumber';
 import {
   fetchCartItems,
   type CartApiItem,
@@ -82,6 +83,8 @@ export default function CheckoutPageClient({
   const searchParams = useSearchParams();
   const locale = useLocale();
   const tCheckout = useTranslations('checkout');
+  const tAuth = useTranslations('auth');
+  const tError = useTranslations('profile');
   const tCommon = useTranslations('common');
   const STEPS = [
     tCheckout('shipping'),
@@ -283,6 +286,11 @@ export default function CheckoutPageClient({
       const { fullName, phone, address, notes } = checkoutData.shippingInfo;
       if (!fullName || !phone || !address) {
         setError(tCheckout('errors.missingRequiredShippingFields'));
+        return;
+      }
+
+      if (!isValidPhoneNumber10Digits(phone)) {
+        setError(tError('phoneNumberInvalid'));
         return;
       }
 

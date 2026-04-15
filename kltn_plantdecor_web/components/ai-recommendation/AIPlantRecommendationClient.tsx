@@ -8,7 +8,6 @@ import { useAuthStore } from '@/lib/store/authStore';
 import { addItemToCart } from '@/lib/api/cartWishlistService';
 import { notifyCartUpdated } from '@/lib/utils/cartEvents';
 import { searchShopNurseries, type ShopNurseryListItem } from '@/lib/api/shopPlantsService';
-import ClickableImageViewer from '@/components/image-view/ClickableImageViewer';
 import {
   analyzeRoomUpload,
   generateLayoutImages,

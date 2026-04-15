@@ -337,7 +337,8 @@ export default function ManagerCareServiceManagementPageClient() {
             startIcon={<AddIcon />}
             onClick={() => void handleAddPackage()}
             disabled={submitting || notOfferedPackages.length === 0}
-          >
+            sx={{backgroundColor: 'var(--primary)'}}
+          > 
             {submitting ? "Đang thêm..." : "Thêm gói"}
           </Button>
         </DialogActions>

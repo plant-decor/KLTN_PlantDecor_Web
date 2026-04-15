@@ -4,6 +4,9 @@ export interface CartItem {
   id: number;
   cartId: number;
   commonPlantId: number | null;
+  plantId?: number | null;
+  plantComboId?: number | null;
+  materialId?: number | null;
   price: number;
   productName: string;
   quantity: number;

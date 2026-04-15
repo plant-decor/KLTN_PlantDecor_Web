@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { useEffect, useMemo, useState, type MouseEvent } from 'react';
 import { Button, Drawer } from '@mui/material';
+import { Link } from '@/i18n/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/authStore';
@@ -34,6 +35,35 @@ interface NurseryOption {
   nurseryMaterialId?: number | null;
   nurseryPlantComboId?: number | null;
 }
+
+const toPositiveId = (value: number): number | null => {
+  if (!Number.isFinite(value) || value <= 0) {
+    return null;
+  }
+
+  return Math.floor(value);
+};
+
+const resolveWishlistItemHref = (item: WishlistListItem): string | null => {
+  const itemId = toPositiveId(item.itemId);
+  if (!itemId) {
+    return null;
+  }
+
+  if (item.itemType === 'Plant' || item.itemType === 'PlantInstance') {
+    return `/products/${itemId}`;
+  }
+
+  if (item.itemType === 'PlantCombo') {
+    return `/combo/${itemId}`;
+  }
+
+  if (item.itemType === 'Material') {
+    return `/materials/${itemId}`;
+  }
+
+  return null;
+};
 
 const formatCreatedAt = (value: string, locale: string, fallback: string): string => {
   if (!value) return fallback;
@@ -77,6 +107,8 @@ export default function WishlistPlantCard({
     if (item.itemType === 'PlantCombo') return tWishlist('typePlantCombo');
     return tWishlist('typeMaterial');
   }, [item.itemType, tWishlist]);
+
+  const itemHref = useMemo(() => resolveWishlistItemHref(item), [item]);
 
   useEffect(() => {
     if (!isDrawerOpen) return;
@@ -252,17 +284,37 @@ export default function WishlistPlantCard({
     <>
       <article className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow min-h-115 h-full flex flex-col">
         <div className="relative w-full basis-[50%] shrink-0">
-          <Image
-            src={item.itemImageUrl || '/img/fallbackplant.avif'}
-            alt={item.itemName}
-            fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-cover"
-          />
+          {itemHref ? (
+            <Link href={itemHref} className="block relative w-full h-full">
+              <Image
+                src={item.itemImageUrl || '/img/fallbackplant.avif'}
+                alt={item.itemName}
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                className="object-cover"
+              />
+            </Link>
+          ) : (
+            <Image
+              src={item.itemImageUrl || '/img/fallbackplant.avif'}
+              alt={item.itemName}
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              className="object-cover"
+            />
+          )}
         </div>
 
         <div className="basis-[20%] min-h-0 p-4 sm:p-5 space-y-1 overflow-hidden">
-          <h3 className="font-semibold text-gray-900 line-clamp-2">{item.itemName}</h3>
+          {itemHref ? (
+            <Link href={itemHref} className="block">
+              <h3 className="font-semibold text-gray-900 line-clamp-2 hover:underline">
+                {item.itemName}
+              </h3>
+            </Link>
+          ) : (
+            <h3 className="font-semibold text-gray-900 line-clamp-2">{item.itemName}</h3>
+          )}
           <p className="text-sm text-gray-600 line-clamp-1">{typeLabel}</p>
           {item.nurseryName ? (
             <p className="text-sm text-gray-600 line-clamp-1">

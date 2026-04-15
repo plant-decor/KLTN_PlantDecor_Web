@@ -17,6 +17,7 @@ import {
 } from "@mui/material";
 import type { AdminCareServicePackageListItem } from "@/types/admin-service-package.types";
 import { toCurrency } from "./types";
+import { hoverGlowStyle } from "@/lib/styles/buttonStyles";
 
 interface ServicePackageTableProps {
   packages: AdminCareServicePackageListItem[];
@@ -78,7 +79,7 @@ export default function ServicePackageTable({
                 </TableRow>
               ) : (
                 packages.map((item) => (
-                  <TableRow key={item.id} hover sx={{ opacity: item.isActive ? 1 : 0.65 }}>
+                  <TableRow key={item.id} hover sx={{ opacity: item.isActive ? 1 : 0.65, ...hoverGlowStyle }}>
                     <TableCell>{item.id}</TableCell>
                     <TableCell>
                       <Typography variant="body2" fontWeight={600}>

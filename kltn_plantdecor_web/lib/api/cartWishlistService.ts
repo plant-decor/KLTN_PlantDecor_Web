@@ -18,6 +18,9 @@ export interface CartApiItemResponse {
 export interface CartApiItem {
   cartId: number;
   commonPlantId: number | null;
+  plantId?: number | null;
+  plantComboId?: number | null;
+  materialId?: number | null;
   createdAt?: string;
   createAt?: string;
   updateAt?: string;

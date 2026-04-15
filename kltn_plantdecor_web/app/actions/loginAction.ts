@@ -21,8 +21,8 @@ export async function logoutAction() {
   return logoutActionImpl();
 }
 
-export async function logoutAllAction() {
-  return logoutAllActionImpl();
+export async function logoutAllAction(payload: { accessToken: string; refreshToken: string; deviceId: string }) {
+  return logoutAllActionImpl(payload);
 }
 
 export async function refreshTokenAction(request?: Partial<RefreshTokenRequest>) {

@@ -29,6 +29,7 @@ import {
   ServiceType,
   DifficultyLevel,
 } from "@/types/service.types";
+import { hoverGlowStyle } from "@/lib/styles/buttonStyles";
 
 interface CarePackageManagementTableProps {
   packages: CareServicePackage[];
@@ -130,6 +131,7 @@ export const CarePackageManagementTable: React.FC<CarePackageManagementTableProp
                 hover
                 sx={{
                   opacity: pkg.isActive ? 1 : 0.6,
+                  ...hoverGlowStyle
                 }}
               >
                 <TableCell>

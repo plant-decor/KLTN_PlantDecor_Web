@@ -32,3 +32,27 @@ export const updateUserAvatar = async (
     },
   });
 };
+
+export const changePassword = async (
+  currentPassword: string,
+  newPassword: string,
+  confirmNewPassword: string,
+  loading = true
+): Promise<ResponseModel<unknown>> => {
+  return apiClient.put('/User/change-password', {
+    currentPassword,
+    newPassword,
+    confirmNewPassword,
+  }, loading);
+};
+
+export const setPasswordForGoogleLogin = async (
+  newPassword: string,
+  confirmNewPassword: string,
+  loading = true
+): Promise<ResponseModel<unknown>> => {
+  return apiClient.post('/User/set-password-for-google-login', {
+    newPassword,
+    confirmNewPassword,
+  }, loading);
+};

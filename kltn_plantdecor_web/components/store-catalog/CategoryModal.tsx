@@ -146,17 +146,17 @@ export default function CategoryModal({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{category ? 'Edit Category' : 'Add New Category'}</DialogTitle>
+      <DialogTitle>{category ? 'Cập nhật danh mục' : 'Thêm danh mục mới'}</DialogTitle>
       <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
         <TextField
-          label="Category Name"
+          label="Tên danh mục"
           name="name"
           value={formData.name}
           onChange={handleChange}
           fullWidth
         />
         <TextField
-          label="Description"
+          label="Mô tả"
           name="description"
           value={formData.description || ''}
           onChange={handleChange}
@@ -165,10 +165,10 @@ export default function CategoryModal({
           rows={3}
         />
         <FormControl fullWidth>
-          <InputLabel id="category-parent-label">Parent Category</InputLabel>
+          <InputLabel id="category-parent-label">Danh mục cha</InputLabel>
           <Select
             labelId="category-parent-label"
-            label="Parent Category"
+            label="Danh mục cha"
             value={formData.parentCategoryId == null ? '' : String(formData.parentCategoryId)}
             onChange={handleParentCategoryChange}
           >
@@ -180,11 +180,11 @@ export default function CategoryModal({
             ))}
           </Select>
           <FormHelperText>
-            Parent category must have the same category type.
+            Danh mục cha phải có cùng loại danh mục.
           </FormHelperText>
         </FormControl>
         <TextField
-          label="Category Type"
+          label="Loại danh mục"
           name="categoryType"
           type="number"
           value={formData.categoryType || 0}
@@ -198,13 +198,15 @@ export default function CategoryModal({
               onChange={handleActiveChange}
             />
           }
-          label="Active"
+          label="Trạng thái hoạt động"
         />
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={saving}>Cancel</Button>
-        <Button onClick={handleSave} variant="contained" disabled={saving}>
-          {category ? 'Update' : 'Add'}
+        <Button onClick={handleSave} variant="contained" disabled={saving}
+        sx={{backgroundColor: 'var(--primary)'}}
+        >
+          {category ? 'Cập nhật' : 'Thêm'}
         </Button>
       </DialogActions>
     </Dialog>

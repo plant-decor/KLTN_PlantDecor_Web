@@ -26,6 +26,7 @@ interface AuthState {
 
   // Tokens (memory only - không persist)
   accessToken: string | null;
+  accessTokenExpiresAt: number | null;
   refreshToken: string | null;
 
   // User Actions
@@ -35,8 +36,10 @@ interface AuthState {
 
   // Token Actions
   setAccessToken: (token: string) => void;
+  setAccessTokenExpiresAt: (expiresAt: number | null) => void;
   setRefreshToken: (token: string) => void;
   getAccessToken: () => string | null;
+  getAccessTokenExpiresAt: () => number | null;
   getRefreshToken: () => string | null;
   clearTokens: () => void;
   clearAll: () => void; // Clear both user and tokens
@@ -53,6 +56,7 @@ export const useAuthStore = create<AuthState>()(
 
       // Token state (will NOT be persisted)
       accessToken: null,
+      accessTokenExpiresAt: null,
       refreshToken: null,
 
       // User actions
@@ -79,12 +83,20 @@ export const useAuthStore = create<AuthState>()(
         set({ accessToken: token });
       },
 
+      setAccessTokenExpiresAt: (expiresAt: number | null) => {
+        set({ accessTokenExpiresAt: expiresAt });
+      },
+
       setRefreshToken: (token: string) => {
         set({ refreshToken: token });
       },
 
       getAccessToken: () => {
         return get().accessToken;
+      },
+
+      getAccessTokenExpiresAt: () => {
+        return get().accessTokenExpiresAt;
       },
 
       getRefreshToken: () => {
@@ -94,6 +106,7 @@ export const useAuthStore = create<AuthState>()(
       clearTokens: () => {
         set({
           accessToken: null,
+          accessTokenExpiresAt: null,
           refreshToken: null,
         });
       },
@@ -103,6 +116,7 @@ export const useAuthStore = create<AuthState>()(
           user: null,
           isAuthenticated: false,
           accessToken: null,
+          accessTokenExpiresAt: null,
           refreshToken: null,
           isAuthBootstrapCompleted: false,
         });

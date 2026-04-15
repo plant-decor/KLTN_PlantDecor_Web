@@ -1,10 +1,7 @@
+'use client';
+
+import StoreUsersPageClient from '@/components/store-management/store-users/StoreUsersPageClient';
+
 export default function StoreUsersPage() {
-  return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="text-center">
-        <h1 className="text-3xl font-bold mb-4">Store Users</h1>
-        <p className="text-gray-600 text-lg">🚀 Chức năng đang phát triển</p>
-      </div>
-    </div>
-  );
+  return <StoreUsersPageClient />;
 }

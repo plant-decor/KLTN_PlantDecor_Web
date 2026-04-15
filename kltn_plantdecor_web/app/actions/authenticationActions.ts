@@ -321,7 +321,10 @@ export async function refreshTokenAction(
       expiresIn: normalized.expiresIn,
     };
   } catch (error) {
-    await clearAuthenticationCookies();
+    const status = (error as ErrorWithCause).status;
+    if (status === 400 || status === 401) {
+      await clearAuthenticationCookies();
+    }
     return {
       success: false,
       message: error instanceof Error ? error.message : 'Làm mới phiên đăng nhập thất bại.',

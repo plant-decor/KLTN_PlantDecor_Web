@@ -22,13 +22,13 @@ export default function ServiceOrderApproveDialog({
     <Dialog open={open} onClose={submitting ? undefined : onClose} fullWidth maxWidth="xs">
       <DialogTitle>Xác nhận duyệt đơn</DialogTitle>
       <DialogContent dividers>
-        Bạn có chắc chắn muốn phê duyệt đơn dịch vụ #{target?.id}?
+        Bạn có chắc chắn muốn phê duyệt đơn dịch vụ?
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={submitting}>
           Hủy
         </Button>
-        <Button onClick={onConfirm} disabled={submitting} variant="contained" color="success">
+        <Button onClick={onConfirm} disabled={submitting} variant="contained" sx={{backgroundColor: 'var(--primary)'}}>
           {submitting ? 'Đang xử lý...' : 'Phê duyệt'}
         </Button>
       </DialogActions>

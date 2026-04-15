@@ -31,8 +31,6 @@ export {
 // Customer Flow Components
 export { default as ServiceCatalog } from './ServiceCatalog';
 export { default as ServiceDetail } from './ServiceDetail';
-export { default as ServiceRegistrationForm } from './ServiceRegistrationForm';
-export { default as CustomerServicePageClient } from './CustomerServicePageClient';
 
 // Admin Flow Components
 export { default as CarePackageManagementTable } from './CarePackageManagementTable';

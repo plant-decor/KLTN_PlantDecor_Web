@@ -611,6 +611,7 @@
     "latitude": "Latitude",
     "longitude": "Longitude",
     "phoneReadOnly": "Phone number is read-only",
+    "phoneNumberInvalid": "Phone number must contain exactly 10 digits",
     "notificationSettings": "Notification settings",
     "receiveNotifications": "Receive notifications",
     "notificationDescription": "Receive care reminders, promotions and new updates",
@@ -664,6 +665,7 @@
         "Other": "Other"
       }
     },
+      "phoneNumberInvalid": "Phone number must contain exactly 10 digits",
     "nurserySection": {
       "title": "Nursery Profile",
       "id": "Nursery ID",

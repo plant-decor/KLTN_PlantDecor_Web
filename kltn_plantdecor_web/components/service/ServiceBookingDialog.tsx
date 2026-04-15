@@ -25,6 +25,7 @@ import {
 import { useTranslations } from 'next-intl';
 import { toast } from 'react-toastify';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
+import { isValidPhoneNumber10Digits } from '@/lib/utils/phoneNumber';
 import {
   getDayOfWeekEnums,
   getNearbyNurseries,
@@ -64,6 +65,7 @@ const getLocalDateInputValue = (date: Date = new Date()) => {
 
 export default function ServiceBookingDialog({ open, onClose, onSubmit }: ServiceBookingDialogProps) {
   const t = useTranslations('services');
+  const tError = useTranslations('profile');
   const tCommon = useTranslations('common');
 
   const [packages, setPackages] = useState<CareServicePackage[]>([]);
@@ -347,9 +349,9 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit }: Servic
         newErrors.address = t('addressRequired');
     }
     if (!formData.phone.trim()) {
-        newErrors.phone = t('phoneRequired');
-    } else if (!/^[0-9+\s-()]+$/.test(formData.phone)) {
-        newErrors.phone = t('phoneInvalid');
+      newErrors.phone = tError('phoneRequired');
+    } else if (!isValidPhoneNumber10Digits(formData.phone)) {
+      newErrors.phone = tError('phoneNumberInvalid');
     }
     if (!formData.serviceDate) {
         newErrors.serviceDate = t('serviceDateRequired');
@@ -521,6 +523,7 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit }: Servic
             />
 
             <TextField
+              type='number'
               fullWidth
               label={t('phone')}
               placeholder={t('enterPhone')}

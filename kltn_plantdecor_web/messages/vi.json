@@ -612,6 +612,7 @@
     "latitude": "Vĩ độ",
     "longitude": "Kinh độ",
     "phoneReadOnly": "Số điện thoại là chỉ đọc",
+    "phoneNumberInvalid": "Số điện thoại phải gồm đúng 10 chữ số",
     "notificationSettings": "Cài đặt thông báo",
     "receiveNotifications": "Nhận thông báo",
     "notificationDescription": "Nhận nhắc nhở chăm sóc cây, thông tin khuyến mãi và cập nhật mới",
@@ -652,7 +653,7 @@
       "uploadingAvatar": "Đang tải ảnh đại diện...",
       "role": "Vai trò",
       "nurseryName": "Tên nhà vườn",
-      "userName": "Username",
+      "userName": "Tên quản lý",
       "birthYear": "Năm sinh",
       "gender": "Giới tính",
       "latitude": "Vĩ độ",
@@ -683,7 +684,8 @@
       "fetchProfile": "Không thể tải hồ sơ quản lý",
       "fetchNursery": "Không thể tải thông tin nhà vườn",
       "updateProfile": "Không thể cập nhật hồ sơ quản lý",
-      "updateNursery": "Không thể cập nhật thông tin nhà vườn"
+      "updateNursery": "Không thể cập nhật thông tin nhà vườn",
+      "phoneNumberInvalid": "Số điện thoại phải gồm đúng 10 chữ số"
     }
   },
   "wishlist": {

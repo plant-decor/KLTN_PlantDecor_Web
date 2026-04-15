@@ -25,6 +25,7 @@ import { getUserProfile, updateUserProfile, updateUserAvatar } from '@/lib/api/u
 import ChangePasswordModal from '@/components/profile/ChangePasswordModal';
 import SetPasswordModal from '@/components/profile/SetPasswordModal';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
+import { isValidPhoneNumber10Digits } from '@/lib/utils/phoneNumber';
 import { useTranslations } from 'next-intl';
 import type { UserProfile, UpdateUserProfileRequest } from '@/types/auth.types';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
@@ -107,13 +108,20 @@ export default function ProfilePage({ params }: PageProps) {
 
   const handleSaveChanges = async () => {
     try {
+      const phoneNumber = (profile.phoneNumber || '').trim();
+
+      if (!isValidPhoneNumber10Digits(phoneNumber)) {
+        setError(t('phoneNumberInvalid'));
+        return;
+      }
+
       setIsSaving(true);
       setError(null);
 
       // Build request matching API format
       const request: UpdateUserProfileRequest = {
         userName: profile.username || '',
-        phoneNumber: profile.phoneNumber || '',
+        phoneNumber,
         fullName: profile.fullName || '',
         address: profile.address || '',
         birthYear: profile.birthYear || 0,
@@ -320,6 +328,7 @@ export default function ProfilePage({ params }: PageProps) {
                 {/* Phone Number */}
                 <TextField
                   label={tAuth('phone')}
+                  type='number'
                   value={profile.phoneNumber || ''}
                   onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
                   fullWidth

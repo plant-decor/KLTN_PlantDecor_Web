@@ -49,7 +49,7 @@ export const updateMyManagerNursery = async (
   request: UpdateMyManagerNurseryRequest,
   loading = true
 ): Promise<ResponseModel<ManagerNursery>> => {
-  return apiClient.patch('/admin/my-nursery', request, loading);
+  return apiClient.patch('/manager/my-nursery', request, loading);
 };
 
 export const getManagerCommonPlants = async (

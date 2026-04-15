@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import createIntlMiddleware from "next-intl/middleware";
 import { routing } from "@/i18n/routing";
 import { ROLE_TO_ROUTES, ROUTE_TO_ROLES } from "@/lib/constants/roleRoutes";
+import { getDefaultPath } from "@/lib/utils/roleHelper";
 
 const intlMiddleware = createIntlMiddleware(routing);
 
@@ -92,17 +93,7 @@ export default function proxy(request: NextRequest) {
   }
 
   if (isAuthPage && authToken && !forceLogout) {
-    const roleToDefaultPath: Record<string, string> = {
-      Admin: "/dashboard",
-      Manager: "/dashboard",
-      Staff: "/dashboard",
-      Consultant: "/consultant",
-      Caretaker: "/dashboard",
-      Shipper: "/dashboard",
-      Customer: "/",
-    };
-
-    const basePath = userRole ? roleToDefaultPath[userRole] || "/" : "/";
+    const basePath = getDefaultPath(userRole);
     const targetPath = getLocalizedPath(pathname, basePath);
 
     return NextResponse.redirect(new URL(targetPath, request.nextUrl.origin));

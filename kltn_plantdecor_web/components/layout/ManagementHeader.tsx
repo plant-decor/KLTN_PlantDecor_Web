@@ -8,7 +8,7 @@ interface ManagementHeaderProps {
   description?: string;
   entityLabel: string;
   count?: number;
-  actionLabel: string;
+  actionLabel?: string;
   onAction?: () => void;
 }
 
@@ -46,7 +46,7 @@ export default function ManagementHeader({
           <Typography variant="h6" fontWeight={600}>
             Danh sách {entityLabel} ({count})
           </Typography>
-          {onAction && (
+          {actionLabel && onAction && (
             <Button
               variant="contained"
               startIcon={<Add />}

@@ -40,7 +40,7 @@ export const SIDEBAR_ITEMS_BY_ROLE: Record<UserRole, SidebarItem[]> = {
     { label: 'Quản lý gói dịch vụ', href: '/admin/service-management', icon: 'services' },
     { label: 'Quản lý chuyên môn', href: '/admin/specializations-management', icon: 'catalog' },
     { label: 'Quản lý người dùng', href: '/admin/user-management', icon: 'users' },
-    { label: 'Quản lý cửa hàng', href: '/admin/store-management', icon: 'store' },
+    { label: 'Quản lý sản phẩm', href: '/admin/store-management', icon: 'store' },
     { label: 'Quản lý chăm sóc cây', href: '/admin/plant-guide-management', icon: 'tasks' },
     { label: 'Danh mục & Thẻ', href: '/admin/categories-tags', icon: 'tags' },
     { label: 'Cài đặt', href: '/admin/setting', icon: 'settings' },

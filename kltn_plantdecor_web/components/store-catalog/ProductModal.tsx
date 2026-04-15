@@ -414,8 +414,10 @@ export default function ProductModal({
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose}>Cancel</Button>
-          <Button onClick={handleSave} variant="contained">
-            {product ? 'Update' : 'Add'}
+          <Button onClick={handleSave} variant="contained"
+          sx={{backgroundColor: 'var(--primary)'}}
+          >
+            {product ? 'Cập nhật' : 'Thêm'}
           </Button>
         </DialogActions>
       </Dialog>

@@ -187,8 +187,10 @@ export default function InstanceModal({
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSave} variant="contained">
-          {instance ? 'Update' : 'Add'}
+        <Button onClick={handleSave} variant="contained"
+        sx={{backgroundColor: 'var(--primary)'}}
+        >
+          {instance ? 'Cập nhật' : 'Thêm'}
         </Button>
       </DialogActions>
     </Dialog>

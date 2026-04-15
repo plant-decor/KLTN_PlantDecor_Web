@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { useAuthStore } from '@/lib/store/authStore';
 import type { User } from '@/types/auth.types';
 import { refreshTokenAction } from '@/app/actions/authenticationActions';
+import { useTokenRefresh } from '@/hooks/useTokenRefresh';
 import {
   getClientAccessToken,
   setClientAccessToken,
@@ -17,8 +18,12 @@ import {
  * Initializes auth store once when the app boots on the client.
  */
 export function AuthProvider({ children, initialUser }: { children: React.ReactNode; initialUser: User | null }) {
-  const { setUser, setAuthBootstrapCompleted } = useAuthStore();
+  const { setUser, setAuthBootstrapCompleted, isAuthenticated, isAuthBootstrapCompleted } = useAuthStore();
   const initializedRef = useRef(false);
+
+  useTokenRefresh({
+    enabled: isAuthenticated && isAuthBootstrapCompleted,
+  });
 
   useEffect(() => {
     if (initializedRef.current) {
@@ -45,7 +50,7 @@ export function AuthProvider({ children, initialUser }: { children: React.ReactN
           }
 
           if (refreshed.success && refreshed.token) {
-            setClientAccessToken(refreshed.token);
+            setClientAccessToken(refreshed.token, refreshed.expiresIn);
 
             if (refreshed.refreshToken) {
               setClientRefreshToken(refreshed.refreshToken);

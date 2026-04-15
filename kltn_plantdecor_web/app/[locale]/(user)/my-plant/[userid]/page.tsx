@@ -63,7 +63,7 @@ export default async function MyPlantPage({ params }: PageProps) {
     <Container maxWidth="xl" sx={{ py: { xs: 4, md: 8 } }}>
       <Stack spacing={3} sx={{ mb: 4 }}>
         <Box>
-          <Typography variant="h3" fontWeight={800} gutterBottom className="font-Inter">
+          <Typography variant="h3" fontWeight={700} gutterBottom className="font-Inter">
             {t('title')}
           </Typography>
           <Typography variant="body1" color="text.secondary">

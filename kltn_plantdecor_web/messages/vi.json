@@ -581,27 +581,41 @@
     "personalInfo": "Thông tin cá nhân",
     "security": "Bảo mật",
     "changePassword": "Đổi mật khẩu",
+    "setPassword": "Đặt mật khẩu",
+    "setPasswordTitle": "Đặt mật khẩu",
+    "setPasswordDescription": "Đặt mật khẩu cho tài khoản được xác thực bằng Google của bạn để bảo mật tài khoản",
+    "passwordSetSuccess": "Mật khẩu đã được đặt thành công",
+    "setPasswordFailed": "Không thể đặt mật khẩu",
+    "setPasswordError": "Lỗi khi đặt mật khẩu",
     "avatar": "Ảnh đại diện",
     "bio": "Giới thiệu",
     "saveChanges": "Lưu thay đổi",
+    "saving": "Đang lưu...",
     "cancelChanges": "Hủy thay đổi",
     "gender": "Giới tính",
     "male": "Nam",
     "female": "Nữ",
     "other": "Khác",
+    "unknown": "Không xác định",
     "birthYear": "Năm sinh",
+    "username": "Tên người dùng",
     "shippingAddress": "Địa chỉ giao hàng",
     "detailedAddress": "Địa chỉ chi tiết",
     "addressPlaceholder": "Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố",
+    "phoneReadOnly": "Số điện thoại là chỉ đọc",
     "notificationSettings": "Cài đặt thông báo",
     "receiveNotifications": "Nhận thông báo",
     "notificationDescription": "Nhận nhắc nhở chăm sóc cây, thông tin khuyến mãi và cập nhật mới",
     "unsupportedFormat": "Định dạng không được hỗ trợ. Vui lòng chọn JPEG, JPG, PNG hoặc HEIF",
     "fileSizeExceeded": "Kích thước file không được vượt quá 5MB",
+    "errorLoadingProfile": "Lỗi tải hồ sơ",
+    "errorSavingProfile": "Lỗi lưu hồ sơ",
+    "errorUploadingAvatar": "Lỗi tải ảnh đại diện",
     "currentPassword": "Mật khẩu hiện tại",
     "newPassword": "Mật khẩu mới",
     "confirmNewPassword": "Xác nhận mật khẩu mới",
     "passwordMinLength": "Ít nhất 6 ký tự",
+    "passwordRequirements": "Yêu cầu mật khẩu:",
     "changePasswordTitle": "Đổi mật khẩu",
     "tooManyFailedAttempts": "Quá nhiều lần thất bại",
     "recaptchaRequiredForPassword": "Vì lý do bảo mật, vui lòng hoàn thành xác thực reCAPTCHA.",
@@ -957,6 +971,77 @@
     "map": {
       "title": "Bản Đồ Văn Phòng/Vườn Ươm",
       "placeholder": "Bản đồ Google Maps sẽ được cập nhật trong phiên bản tiếp theo."
+    }
+  },
+  "aiRecommendation": {
+    "title": "Đề xuất cây cảnh bằng AI",
+    "steps": {
+      "roomInput": "Thông tin phòng và sở thích",
+      "roomAnalysis": "Phân tích phòng",
+      "recommendations": "Đề xuất",
+      "generatedImages": "Hình ảnh được tạo ra"
+    },
+    "roomInput": {
+      "title": "1) Thông tin phòng và sở thích",
+      "uploadImageButtonLabel": "Tải lên ảnh phòng",
+      "fengShuiElement": "Phong thủy mệnh",
+      "roomType": "Loại phòng",
+      "roomStyle": "Phong cách phòng",
+      "minBudget": "Ngân sách tối thiểu",
+      "maxBudget": "Ngân sách tối đa",
+      "careLevel": "Mức độ chăm sóc",
+      "nurseries": "Vườn ươm/cửa hàng (tùy chọn)",
+      "nurseriesPlaceholder": "Chọn vườn ươm/cửa hàng để ưu tiên (nếu có)",
+      "hasAllergy": "Dị ứng cây",
+      "petSafe": "An toàn với thú cưng",
+      "childSafe": "An toàn với trẻ em",
+      "allergyPlantsTitle": "Cây gây dị ứng",
+      "allergySearchPlaceholder": "Tìm kiếm cây gây dị ứng",
+      "allergyNote": "Ghi chú dị ứng",
+      "allergyNotePlaceholder": "Mô tả chi tiết dị ứng (tùy chọn)",
+      "noAllergyResults": "Không có cây phù hợp",
+      "analyzeButton": "Phân tích và đề xuất",
+      "analyzingButton": "Đang phân tích phòng...",
+      "errors": {
+        "selectImage": "Vui lòng tải lên ảnh phòng trước khi phân tích.",
+        "unsupportedFormat": "Định dạng ảnh không được hỗ trợ. Vui lòng chọn JPEG, JPG hoặc PNG.",
+        "fileTooLarge": "Kích thước tệp phải nhỏ hơn hoặc bằng 10MB."
+      }
+    },
+    "roomAnalysis": {
+      "title": "2) Phân tích phòng"
+    },
+    "recommendations": {
+      "title": "3) Đề xuất cây cảnh",
+      "titleWithCount": "3) Cây cảnh được đề xuất ({count})",
+      "reason": "Lý do:",
+      "placement": "Vị trí:",
+      "addToCartButton": "Thêm vào giỏ hàng",
+      "buyNowButton": "Mua ngay",
+      "errors": {
+        "addToCartFailed": "Không thể thêm sản phẩm vào giỏ hàng.",
+        "missingCommonPlantId": "Không thể thêm sản phẩm vào giỏ hàng vì ID cây cảnh không tồn tại.",
+        "checkoutFailed": "Không thể mua ngay vì ID phiên bản cây cảnh không tồn tại.",
+        "addedToCart": "Đã thêm {name} vào giỏ hàng."
+      }
+    },
+    "generatedImages": {
+      "title": "4) Hình ảnh phòng được tạo ra",
+      "generatingLabel": "Đang tạo hình ảnh AI...",
+      "imageFailed": "Tạo hình ảnh thất bại cho đề xuất này.",
+      "placementLabel": "Vị trí:",
+      "successCount": "Đã tạo {success}/{total} hình ảnh. Thất bại: {failed}",
+      "retryButton": "Thử lại tạo hình ảnh",
+      "errors": {
+        "generateFailed": "Tạo hình ảnh thất bại."
+      }
+    },
+    "errors": {
+      "analyzeRoomFailed": "Phân tích ảnh phòng thất bại.",
+      "noAnalysisResult": "Không có kết quả phân tích nào được trả về từ máy chủ."
+    },
+    "validation": {
+      "roomImageRequired": "Vui lòng tải lên ảnh phòng"
     }
   }
 }

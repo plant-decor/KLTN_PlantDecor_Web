@@ -580,27 +580,41 @@
     "personalInfo": "Personal information",
     "security": "Security",
     "changePassword": "Change password",
+    "setPassword": "Set Password",
+    "setPasswordTitle": "Set Password",
+    "setPasswordDescription": "Set a password for your Google-authenticated account to secure your account",
+    "passwordSetSuccess": "Password set successfully",
+    "setPasswordFailed": "Failed to set password",
+    "setPasswordError": "Error setting password",
     "avatar": "Avatar",
     "bio": "Bio",
     "saveChanges": "Save changes",
+    "saving": "Saving...",
     "cancelChanges": "Cancel changes",
     "gender": "Gender",
     "male": "Male",
     "female": "Female",
     "other": "Other",
+    "unknown": "Unknown",
     "birthYear": "Birth year",
+    "username": "Username",
     "shippingAddress": "Shipping address",
     "detailedAddress": "Detailed address",
     "addressPlaceholder": "House number, street, ward, district, province/city",
+    "phoneReadOnly": "Phone number is read-only",
     "notificationSettings": "Notification settings",
     "receiveNotifications": "Receive notifications",
     "notificationDescription": "Receive care reminders, promotions and new updates",
     "unsupportedFormat": "Unsupported format. Please choose JPEG, JPG, PNG or HEIF",
     "fileSizeExceeded": "File size must not exceed 5MB",
+    "errorLoadingProfile": "Error loading profile",
+    "errorSavingProfile": "Error saving profile",
+    "errorUploadingAvatar": "Error uploading avatar",
     "currentPassword": "Current password",
     "newPassword": "New password",
     "confirmNewPassword": "Confirm new password",
     "passwordMinLength": "At least 6 characters",
+    "passwordRequirements": "Password Requirements:",
     "changePasswordTitle": "Change password",
     "tooManyFailedAttempts": "Too many failed attempts",
     "recaptchaRequiredForPassword": "For security reasons, please complete the reCAPTCHA verification.",
@@ -953,6 +967,77 @@
     "map": {
       "title": "Office/Nursery Map",
       "placeholder": "Google Maps integration will be added in a future release (Coming soon)."
+    }
+  },
+  "aiRecommendation": {
+    "title": "AI Plant Recommendation",
+    "steps": {
+      "roomInput": "Room Input",
+      "roomAnalysis": "Room Analysis",
+      "recommendations": "Recommendations",
+      "generatedImages": "Generated Images"
+    },
+    "roomInput": {
+      "title": "1) Room input and preferences",
+      "uploadImageButtonLabel": "Upload room image",
+      "fengShuiElement": "Feng Shui element",
+      "roomType": "Room type",
+      "roomStyle": "Room style",
+      "minBudget": "Min budget",
+      "maxBudget": "Max budget",
+      "careLevel": "Care level",
+      "nurseries": "Preferred nurseries (optional)",
+      "nurseriesPlaceholder": "Select one or more nurseries",
+      "hasAllergy": "Has allergy",
+      "petSafe": "Pet safe",
+      "childSafe": "Child safe",
+      "allergyPlantsTitle": "Allergy plants",
+      "allergySearchPlaceholder": "Search allergy plants",
+      "allergyNote": "Allergy note",
+      "allergyNotePlaceholder": "Describe allergy details (optional)",
+      "noAllergyResults": "No matching plants",
+      "analyzeButton": "Analyze and recommend",
+      "analyzingButton": "Analyzing room...",
+      "errors": {
+        "selectImage": "Please upload a room image before analyzing.",
+        "unsupportedFormat": "Unsupported image format. Please select JPEG, JPG, PNG or HEIF.",
+        "fileTooLarge": "File size must be less than or equal to 10MB."
+      }
+    },
+    "roomAnalysis": {
+      "title": "2) Room analysis"
+    },
+    "recommendations": {
+      "title": "3) Recommended plants",
+      "titleWithCount": "3) Recommended plants ({count})",
+      "reason": "Reason:",
+      "placement": "Placement:",
+      "addToCartButton": "Add to cart",
+      "buyNowButton": "Buy now",
+      "errors": {
+        "addToCartFailed": "Failed to add item to cart.",
+        "missingCommonPlantId": "Cannot add this recommendation to cart because plant id is missing.",
+        "checkoutFailed": "Cannot buy now because plant instance id is missing.",
+        "addedToCart": "Added {name} to cart."
+      }
+    },
+    "generatedImages": {
+      "title": "4) Generated room images",
+      "generatingLabel": "Generating AI room images...",
+      "imageFailed": "Image generation failed for this recommendation.",
+      "placementLabel": "Placement:",
+      "successCount": "Generated {success}/{total} image(s). Failed: {failed}",
+      "retryButton": "Retry generate images",
+      "errors": {
+        "generateFailed": "Failed to generate AI images."
+      }
+    },
+    "errors": {
+      "analyzeRoomFailed": "Failed to analyze room image.",
+      "noAnalysisResult": "No analysis result returned from server."
+    },
+    "validation": {
+      "roomImageRequired": "Please upload a room image"
     }
   }
 }

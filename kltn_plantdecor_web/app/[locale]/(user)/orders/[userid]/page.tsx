@@ -199,12 +199,6 @@ export default function OrdersPage() {
         {tOrderHistory('title')}
       </Typography>
 
-      {error ? (
-        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError('')}>
-          {error}
-        </Alert>
-      ) : null}
-
       <Card sx={{ mb: 3, boxShadow: 2 }}>
         <Tabs
           value={currentTab}

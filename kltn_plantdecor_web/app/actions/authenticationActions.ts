@@ -26,6 +26,7 @@ interface AuthenticatedActionResult extends ActionResult {
   user?: User;
   token?: string;
   refreshToken?: string;
+  expiresIn?: number;
 }
 
 interface RefreshActionResult extends ActionResult {
@@ -244,6 +245,7 @@ export async function loginAction(email: string, password: string, deviceId?: st
       user: normalized.user, // ✅ lấy từ JWT
       token: normalized.token,
       refreshToken: normalized.refreshToken,
+      expiresIn: normalized.expiresIn,
     };
   } catch (err) {
     return {
@@ -278,6 +280,7 @@ export async function loginWithGoogleAction(
       user, // ✅ giờ đã có user
       token: normalized.token,
       refreshToken: normalized.refreshToken,
+      expiresIn: normalized.expiresIn,
     };
   } catch (error) {
     return {

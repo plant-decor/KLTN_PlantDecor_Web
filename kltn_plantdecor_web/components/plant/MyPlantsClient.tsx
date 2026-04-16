@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import { useLocale, useTranslations } from 'next-intl';
 import type { MyPlantItemWithGuide } from '@/types/my-plant.types';
+import { localizeRoomDesignEnumLabel } from '@/lib/utils/roomDesignEnumI18n';
 import ClickableImageViewer from '../image-view/ClickableImageViewer';
 
 interface MyPlantsClientProps {
@@ -93,6 +94,7 @@ const GuideField = ({
 
 export default function MyPlantsClient({ plants }: MyPlantsClientProps) {
   const t = useTranslations('myPlantClient');
+  const tRoomDesignEnum = useTranslations('roomDesignEnums');
   const locale = useLocale();
 
   return (
@@ -228,7 +230,11 @@ export default function MyPlantsClient({ plants }: MyPlantsClientProps) {
                       <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                         <GuideField
                           label={t('guide.fields.light')}
-                          value={plant.guide.lightRequirementName}
+                          value={localizeRoomDesignEnumLabel(
+                            plant.guide.lightRequirementName,
+                            tRoomDesignEnum,
+                            'LightRequirement'
+                          )}
                           fallback={notUpdated}
                         />
                       </Grid>

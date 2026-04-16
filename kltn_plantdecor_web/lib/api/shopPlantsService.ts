@@ -129,6 +129,11 @@ export interface PlantEnumGroup {
   values: PlantEnumValue[];
 }
 
+export interface RoomDesignEnumGroup {
+  enumName: 'RoomType' | 'RoomStyle' | 'LightRequirement' | string;
+  values: PlantEnumValue[];
+}
+
 export interface ShopNurseryListItem {
   id: number;
   nurseryMaterialId: number | null;
@@ -195,6 +200,17 @@ export const getPlantEnums = async (
   }
 
   return apiClient.get('/system/enums/plants', undefined, loading);
+};
+
+export const getRoomDesignEnums = async (
+  isServer: boolean,
+  loading = true
+): Promise<ResponseModel<RoomDesignEnumGroup[]>> => {
+  if (isServer) {
+    return apiServer.get('/system/enums/room-design');
+  }
+
+  return apiClient.get('/system/enums/room-design', undefined, loading);
 };
 
 export const searchShopNurseries = async (

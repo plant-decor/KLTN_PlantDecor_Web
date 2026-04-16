@@ -739,6 +739,8 @@
     "careInstructions": "Care instructions",
     "origin": "Origin",
     "placement": "Placement",
+    "roomType": "Room type",
+    "roomStyle": "Room style",
     "growthRate": "Growth rate",
     "uniqueInstance": "Unique instance",
     "categories": "Categories",
@@ -980,6 +982,45 @@
     "map": {
       "title": "Office/Nursery Map",
       "placeholder": "Google Maps integration will be added in a future release (Coming soon)."
+    }
+  },
+  "roomDesignEnums": {
+    "roomType": {
+      "livingRoom": "Living room",
+      "bedroom": "Bedroom",
+      "kitchen": "Kitchen",
+      "bathroom": "Bathroom",
+      "homeOffice": "Home office",
+      "office": "Office",
+      "balcony": "Balcony",
+      "corridor": "Corridor",
+      "diningRoom": "Dining room",
+      "outdoor": "Outdoor",
+      "garden": "Garden"
+    },
+    "roomStyle": {
+      "minimalist": "Minimalist",
+      "scandinavian": "Scandinavian",
+      "tropical": "Tropical",
+      "industrial": "Industrial",
+      "bohemian": "Bohemian",
+      "modern": "Modern",
+      "japanese": "Japanese",
+      "mediterranean": "Mediterranean",
+      "rustic": "Rustic",
+      "classic": "Classic",
+      "contemporary": "Contemporary"
+    },
+    "lightRequirement": {
+      "lowLight": "Low light",
+      "mediumLight": "Medium light",
+      "highLight": "High light",
+      "directSunlight": "Direct sunlight",
+      "indirectLight": "Indirect light",
+      "brightIndirectLight": "Bright indirect light",
+      "partialShade": "Partial shade",
+      "shade": "Shade",
+      "fullSun": "Full sun"
     }
   },
   "aiRecommendation": {

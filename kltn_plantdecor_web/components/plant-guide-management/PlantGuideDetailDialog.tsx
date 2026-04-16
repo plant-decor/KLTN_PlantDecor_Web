@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Box,
   Chip,
@@ -16,6 +17,7 @@ import {
 } from '@mui/material';
 import type { AdminPlantGuideDetail } from '@/types/admin-plant-guide.types';
 import { formatDateTime } from '@/lib/utils/dateUtils';
+import { localizeRoomDesignEnumLabel } from '@/lib/utils/roomDesignEnumI18n';
 
 interface PlantGuideDetailDialogProps {
   open: boolean;
@@ -36,6 +38,7 @@ const DetailField = ({ label, value }: { label: string; value?: string | number 
 );
 
 export default function PlantGuideDetailDialog({ open, guide, loading = false, onClose }: PlantGuideDetailDialogProps) {
+  const tRoomDesignEnum = useTranslations('roomDesignEnums');
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle>Chi tiết Plant Guide</DialogTitle>
@@ -48,7 +51,16 @@ export default function PlantGuideDetailDialog({ open, guide, loading = false, o
               <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mb: 1.5 }}>
                 <Chip label={`ID #${guide.id}`} size="small" variant="outlined" />
                 <Chip label={`Plant ID #${guide.plantId}`} size="small" color="primary" variant="outlined" />
-                <Chip label={guide.lightRequirementName} size="small" color="secondary" variant="outlined" />
+                <Chip
+                  label={localizeRoomDesignEnumLabel(
+                    guide.lightRequirementName,
+                    tRoomDesignEnum,
+                    'LightRequirement'
+                  )}
+                  size="small"
+                  color="secondary"
+                  variant="outlined"
+                />
               </Stack>
               <Typography variant="h5" fontWeight={800} gutterBottom>
                 {guide.plantName}
@@ -57,7 +69,14 @@ export default function PlantGuideDetailDialog({ open, guide, loading = false, o
 
             <Grid container spacing={2.5}>
               <Grid size={{ xs: 12, sm: 6 }}>
-                <DetailField label="Ánh sáng" value={guide.lightRequirementName} />
+                <DetailField
+                  label="Ánh sáng"
+                  value={localizeRoomDesignEnumLabel(
+                    guide.lightRequirementName,
+                    tRoomDesignEnum,
+                    'LightRequirement'
+                  )}
+                />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <DetailField label="Tưới nước" value={guide.watering} />

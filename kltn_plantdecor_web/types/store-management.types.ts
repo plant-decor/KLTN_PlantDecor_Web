@@ -16,6 +16,8 @@ export interface PlantEnumPayload {
   sizes: PlantEnumValue[];
   careLevelTypes: PlantEnumValue[];
   lightRequirements: PlantEnumValue[];
+  roomTypes: PlantEnumValue[];
+  roomStyles: PlantEnumValue[];
 }
 
 export interface Plant {
@@ -33,6 +35,8 @@ export interface Plant {
   availableInstances: number;
   availableCommonQuantity: number;
   totalAvailableStock: number;
+  roomType?: number[];
+  roomStyle?: number[];
   categoryNames: string[];
   tagNames: string[];
 }
@@ -95,6 +99,8 @@ export interface PlantDetail {
   images: PlantDetailImage[];
   totalInstances?: number;
   availableInstances?: number;
+  roomType?: number[];
+  roomStyle?: number[];
 }
 
 export interface PlantUpsertRequest {
@@ -117,6 +123,8 @@ export interface PlantUpsertRequest {
   potSize: string;
   careLevelType: number;
   careLevel: string;
+  roomType?: number[];
+  roomStyle?: number[];
   isActive: boolean;
   isUniqueInstance: boolean;
 }
@@ -135,8 +143,8 @@ export interface PlantCombo {
   comboType: number;
   comboTypeName?: string;
   description: string;
-  suitableSpace: string;
-  suitableRooms: string[];
+  suitableSpace: number;
+  suitableRooms: number[];
   fengShuiElement: number | null;
   fengShuiPurpose: string;
   petSafe?: boolean;
@@ -196,8 +204,8 @@ export interface PlantComboCreateRequest {
   comboName: string;
   comboType: number;
   description: string;
-  suitableSpace: string;
-  suitableRooms: string[];
+  suitableSpace: number;
+  suitableRooms: number[];
   fengShuiElement: number;
   fengShuiPurpose: string;
   themeName: string;
@@ -216,8 +224,8 @@ export interface PlantComboUpdateRequest {
   comboName: string;
   comboType: number;
   description: string;
-  suitableSpace: string;
-  suitableRooms: string[];
+  suitableSpace: number;
+  suitableRooms: number[];
   fengShuiElement: number;
   fengShuiPurpose: string;
   themeName: string;
@@ -243,8 +251,8 @@ export interface PlantComboFormData {
   comboName: string;
   comboType: number;
   description: string;
-  suitableSpace: string;
-  suitableRooms: string[];
+  suitableSpace: number;
+  suitableRooms: number[];
   fengShuiElement: number;
   fengShuiPurpose: string;
   themeName: string;

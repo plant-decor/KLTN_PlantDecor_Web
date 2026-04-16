@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Alert,
   Box,
@@ -22,6 +23,7 @@ import type { AdminPlantGuideDetail } from '@/types/admin-plant-guide.types';
 import { getAdminPlantGuideByPlantId } from '@/lib/api/adminPlantGuidesService';
 import { getFengShuiColors, getFengShuiElementLabel } from '@/lib/utils/fengShui';
 import { formatCurrency } from '@/lib/utils/formatUtil';
+import { localizeRoomDesignEnumLabel } from '@/lib/utils/roomDesignEnumI18n';
 
 interface PlantViewDialogProps {
   open: boolean;
@@ -47,6 +49,21 @@ const formatDateTime = (value?: string) => {
   return date.toLocaleString('vi-VN');
 };
 
+const renderEnumChips = (ids: number[] | undefined, options: { value: number; name: string }[]) => {
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return <Typography variant="body2" color="text.secondary">-</Typography>;
+  }
+
+  return (
+    <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+      {ids.map((id) => {
+        const label = options.find((item) => item.value === id)?.name ?? String(id);
+        return <Chip key={`enum-${id}`} size="small" label={label} variant="outlined" />;
+      })}
+    </Stack>
+  );
+};
+
 const GuideField = ({ label, value }: { label: string; value?: string | number | null }) => (
   <Box>
     <Typography variant="body2" color="text.secondary">
@@ -59,6 +76,7 @@ const GuideField = ({ label, value }: { label: string; value?: string | number |
 );
 
 export default function PlantViewDialog({ open, plant, enums, onClose }: PlantViewDialogProps) {
+  const tRoomDesignEnum = useTranslations('roomDesignEnums');
   const [guide, setGuide] = useState<AdminPlantGuideDetail | null>(null);
   const [guideLoading, setGuideLoading] = useState(false);
   const [guideError, setGuideError] = useState<string | null>(null);
@@ -210,6 +228,26 @@ export default function PlantViewDialog({ open, plant, enums, onClose }: PlantVi
                 <Typography variant="body2" color="text.secondary">Available instances</Typography>
                 <Typography variant="body1" fontWeight="600">{plant.availableInstances ?? 0}</Typography>
               </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>Room type</Typography>
+                {renderEnumChips(
+                  plant.roomType,
+                  enums.roomTypes.map((item) => ({
+                    ...item,
+                    name: localizeRoomDesignEnumLabel(item.name, tRoomDesignEnum, 'RoomType'),
+                  }))
+                )}
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>Room style</Typography>
+                {renderEnumChips(
+                  plant.roomStyle,
+                  enums.roomStyles.map((item) => ({
+                    ...item,
+                    name: localizeRoomDesignEnumLabel(item.name, tRoomDesignEnum, 'RoomStyle'),
+                  }))
+                )}
+              </Grid>
             </Grid>
           </Box>
 
@@ -256,7 +294,14 @@ export default function PlantViewDialog({ open, plant, enums, onClose }: PlantVi
             ) : guide ? (
               <Grid container spacing={2.5}>
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <GuideField label="Ánh sáng" value={guide.lightRequirementName} />
+                  <GuideField
+                    label="Ánh sáng"
+                    value={localizeRoomDesignEnumLabel(
+                      guide.lightRequirementName,
+                      tRoomDesignEnum,
+                      'LightRequirement'
+                    )}
+                  />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <GuideField label="Tưới nước" value={guide.watering} />

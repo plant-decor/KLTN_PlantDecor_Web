@@ -44,6 +44,9 @@ export default function PlantComboTab({}: PlantComboTabProps) {
   const {
     combos,
     comboPlants,
+    enums,
+    enumLoading,
+    enumError,
     saving,
     plantsLoading,
     error,
@@ -51,6 +54,7 @@ export default function PlantComboTab({}: PlantComboTabProps) {
     fetchCombos,
     fetchComboById,
     fetchComboPlants,
+    loadEnums,
     savePlantCombo,
     toggleComboActive,
     setPage,
@@ -65,10 +69,11 @@ export default function PlantComboTab({}: PlantComboTabProps) {
   } = useAdminTags();
 
   useEffect(() => {
+    void loadEnums();
     void fetchCombos({ pageNumber: 1, pageSize: 10 });
     void fetchComboPlants();
     void fetchTags({ pageNumber: 1, pageSize: 1000 });
-  }, [fetchComboPlants, fetchCombos, fetchTags]);
+  }, [fetchComboPlants, fetchCombos, fetchTags, loadEnums]);
 
   const tagOptions = useMemo<OptionItem[]>(() => {
     return tags.map((tag) => ({ id: tag.id, name: tag.tagName }));
@@ -167,9 +172,9 @@ export default function PlantComboTab({}: PlantComboTabProps) {
         </Button>
       </Stack>
 
-      {(error || tagError) && (
+      {(error || tagError || enumError) && (
         <Alert severity="error" onClose={clearError} sx={{ mb: 2 }}>
-          {error || tagError}
+          {error || tagError || enumError}
         </Alert>
       )}
 
@@ -191,6 +196,10 @@ export default function PlantComboTab({}: PlantComboTabProps) {
         plants={comboPlants}
         plantsLoading={plantsLoading}
         tags={tagOptions}
+        lightRequirementOptions={enums.lightRequirements}
+        roomTypeOptions={enums.roomTypes}
+        enumLoading={enumLoading}
+        enumError={enumError}
         onPlantSearch={handlePlantSearch}
         onClose={() => {
           setFormOpen(false);
@@ -202,6 +211,8 @@ export default function PlantComboTab({}: PlantComboTabProps) {
       <PlantComboViewDialog
         open={viewOpen}
         combo={viewingData}
+        lightRequirementOptions={enums.lightRequirements}
+        roomTypeOptions={enums.roomTypes}
         nurseries={viewNurseries}
         nurseriesLoading={nurseriesLoading}
         onClose={() => {

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Box,
   Chip,
@@ -20,6 +21,7 @@ import {
 import { Delete, Edit, Visibility } from '@mui/icons-material';
 import type { AdminPlantGuideDetail } from '@/types/admin-plant-guide.types';
 import { formatDateTime } from '@/lib/utils/dateUtils';
+import { localizeRoomDesignEnumLabel } from '@/lib/utils/roomDesignEnumI18n';
 
 interface PlantGuideTableProps {
   plantGuides: AdminPlantGuideDetail[];
@@ -54,6 +56,7 @@ export default function PlantGuideTable({
   onEdit,
   onDelete,
 }: PlantGuideTableProps) {
+  const tRoomDesignEnum = useTranslations('roomDesignEnums');
   const handleChangePage = (_event: unknown, newPage: number) => {
     onPageChange(newPage + 1);
   };
@@ -105,7 +108,15 @@ export default function PlantGuideTable({
                     </Stack>
                   </TableCell>
                   <TableCell>
-                    <Chip label={guide.lightRequirementName} size="small" variant="outlined" />
+                    <Chip
+                      label={localizeRoomDesignEnumLabel(
+                        guide.lightRequirementName,
+                        tRoomDesignEnum,
+                        'LightRequirement'
+                      )}
+                      size="small"
+                      variant="outlined"
+                    />
                   </TableCell>
                   <TableCell>{guide.watering}</TableCell>
                   <TableCell sx={{ maxWidth: 260 }}>

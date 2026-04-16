@@ -28,6 +28,7 @@ interface StoreUserDetailDialogProps {
   onClose: () => void;
   onToggleSpecialization: (specializationId: number) => void;
   onSaveAll: () => void;
+  readOnly?: boolean;
 }
 
 const getStatusLabel = (status: number) => {
@@ -63,6 +64,7 @@ export default function StoreUserDetailDialog({
   onClose,
   onToggleSpecialization,
   onSaveAll,
+  readOnly = false,
 }: StoreUserDetailDialogProps) {
   return (
     <Dialog open={open} onClose={submitting ? undefined : onClose} fullWidth maxWidth="md">
@@ -130,6 +132,7 @@ export default function StoreUserDetailDialog({
               submitting={submitting}
               onToggleSpecialization={onToggleSpecialization}
               onSaveAll={onSaveAll}
+              readOnly={readOnly}
             />
           </Stack>
         )}

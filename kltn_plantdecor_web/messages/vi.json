@@ -743,6 +743,8 @@
     "careInstructions": "Hướng dẫn chăm sóc",
     "origin": "Nguồn gốc",
     "placement": "Vị trí",
+    "roomType": "Loại phòng",
+    "roomStyle": "Phong cách phòng",
     "growthRate": "Tốc độ phát triển",
     "uniqueInstance": "Cây đặc biệt",
     "categories": "Danh mục",
@@ -984,6 +986,45 @@
     "map": {
       "title": "Bản Đồ Văn Phòng/Vườn Ươm",
       "placeholder": "Bản đồ Google Maps sẽ được cập nhật trong phiên bản tiếp theo."
+    }
+  },
+  "roomDesignEnums": {
+    "roomType": {
+      "livingRoom": "Phòng khách",
+      "bedroom": "Phòng ngủ",
+      "kitchen": "Nhà bếp",
+      "bathroom": "Phòng tắm",
+      "homeOffice": "Phòng làm việc tại nhà",
+      "office": "Văn phòng",
+      "balcony": "Ban công",
+      "corridor": "Hành lang",
+      "diningRoom": "Phòng ăn",
+      "outdoor": "Ngoài trời",
+      "garden": "Sân vườn"
+    },
+    "roomStyle": {
+      "minimalist": "Tối giản",
+      "scandinavian": "Bắc u",
+      "tropical": "Nhiệt đới",
+      "industrial": "Công nghiệp",
+      "bohemian": "Bohemian",
+      "modern": "Hiện đại",
+      "japanese": "Nhật Bản",
+      "mediterranean": "Địa Trung Hải",
+      "rustic": "Mộc mạc",
+      "classic": "Cổ điển",
+      "contemporary": "Đương đại"
+    },
+    "lightRequirement": {
+      "lowLight": "Ánh sáng yếu",
+      "mediumLight": "Ánh sáng trung bình",
+      "highLight": "Ánh sáng mạnh",
+      "directSunlight": "Nắng trực tiếp",
+      "indirectLight": "Ánh sáng gián tiếp",
+      "brightIndirectLight": "Ánh sáng gián tiếp mạnh",
+      "partialShade": "Bóng râm một phần",
+      "shade": "Bóng râm",
+      "fullSun": "Nắng toàn phần"
     }
   },
   "aiRecommendation": {

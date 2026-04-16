@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Alert,
   Box,
@@ -32,6 +33,7 @@ import type {
   AdminPlantGuideFormData,
 } from '@/types/admin-plant-guide.types';
 import type { Plant } from '@/types/store-management.types';
+import { localizeRoomDesignEnumLabel } from '@/lib/utils/roomDesignEnumI18n';
 import Image from 'next/image';
 
 interface PlantGuideFormDialogProps {
@@ -76,7 +78,8 @@ export default function PlantGuideFormDialog({
   onSubmit,
   isLoading = false,
 }: PlantGuideFormDialogProps) {
-   const fallbackImage = '/img/fallbackplant.avif';
+  const tRoomDesignEnum = useTranslations('roomDesignEnums');
+  const fallbackImage = '/img/fallbackplant.avif';
 
   const { control, handleSubmit, reset, setValue, getValues } = useForm<AdminPlantGuideFormData>({
     defaultValues,
@@ -303,7 +306,7 @@ export default function PlantGuideFormDialog({
                       </MenuItem>
                       {lightRequirementOptions.map((item) => (
                         <MenuItem key={item.value} value={item.name}>
-                          {item.name}
+                          {localizeRoomDesignEnumLabel(item.name, tRoomDesignEnum, 'LightRequirement')}
                         </MenuItem>
                       ))}
                     </Select>

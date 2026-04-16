@@ -11,8 +11,8 @@ import {
 import {
   assignSpecializationToStaff,
   getActiveSpecializationsForStaff,
-  getMyNurseryStaffDetail,
-  getMyNurseryStaffList,
+  getMyNurseryCaretakerDetail,
+  getMyNurseryCaretakerList,
   replaceStaffSpecializations,
 } from "@/lib/api/managerStoreUsersService";
 import type { NurseryServiceScheduleItem, ServiceProgressDetail } from "@/types/care-service.types";
@@ -21,8 +21,6 @@ import ServiceProgressDetailDialog from "@/components/service/schedule-services/
 import CaretakerScheduleDrawer from "./CaretakerScheduleDrawer";
 import StoreUserDetailDialog from "./StoreUserDetailDialog";
 import StoreUsersTable from "./StoreUsersTable";
-import CreateStaffFormDialog from "./CreateStaffFormDialog";
-import CreateCaretakerFormDialog from "./CreateCaretakerFormDialog";
 
 interface PaginationState {
   pageNumber: number;
@@ -67,7 +65,7 @@ const getErrorMessage = (error: unknown, fallback: string): string => {
   return candidate.response?.data?.message || candidate.message || fallback;
 };
 
-export default function StoreUsersPageClient() {
+export default function CaretakerManagementPageClient() {
   const [items, setItems] = useState<StoreUserItem[]>([]);
   const [pagination, setPagination] = useState<PaginationState>(DEFAULT_PAGINATION);
   const [loading, setLoading] = useState(false);
@@ -94,15 +92,12 @@ export default function StoreUsersPageClient() {
   const [scheduleDetailError, setScheduleDetailError] = useState<string | null>(null);
   const [scheduleDetail, setScheduleDetail] = useState<ServiceProgressDetail | null>(null);
 
-  const [staffDialogOpen, setStaffDialogOpen] = useState(false);
-  const [caretakerDialogOpen, setCaretakerDialogOpen] = useState(false);
-
   const fetchList = useCallback(async (nextPage: number, nextSize: number) => {
     setLoading(true);
     setError(null);
 
     try {
-      const payload = await getMyNurseryStaffList({ pageNumber: nextPage, pageSize: nextSize }, false);
+      const payload = await getMyNurseryCaretakerList({ pageNumber: nextPage, pageSize: nextSize }, false);
       setItems(payload.items);
       setPagination({
         pageNumber: payload.pageNumber,
@@ -125,7 +120,7 @@ export default function StoreUsersPageClient() {
 
     try {
       const [staffDetail, options] = await Promise.all([
-        getMyNurseryStaffDetail(staffId, false),
+        getMyNurseryCaretakerDetail(staffId, false),
         getActiveSpecializationsForStaff(false),
       ]);
 
@@ -156,10 +151,6 @@ export default function StoreUsersPageClient() {
     void fetchList(DEFAULT_PAGINATION.pageNumber, DEFAULT_PAGINATION.pageSize);
     void fetchSpecializationOptions();
   }, [fetchList, fetchSpecializationOptions]);
-
-  const handleRefresh = () => {
-    void fetchList(pagination.pageNumber, pagination.pageSize);
-  };
 
   const handleViewDetail = (staffId: number) => {
     setDetailOpen(true);
@@ -258,16 +249,6 @@ export default function StoreUsersPageClient() {
     setSelectedSpecializationIds([]);
   };
 
-  const handleStaffCreated = () => {
-    toast.success("Tạo nhân viên thành công");
-    void fetchList(1, pagination.pageSize);
-  };
-
-  const handleCaretakerCreated = () => {
-    toast.success("Tạo nhân viên chăm sóc thành công");
-    void fetchList(1, pagination.pageSize);
-  };
-
   const handleToggleSpecialization = (specializationId: number) => {
     setSelectedSpecializationIds((prev) => {
       if (prev.includes(specializationId)) {
@@ -279,7 +260,7 @@ export default function StoreUsersPageClient() {
 
   const refreshDetailAndList = async (staffId: number) => {
     const [refreshedDetail] = await Promise.all([
-      getMyNurseryStaffDetail(staffId, false),
+      getMyNurseryCaretakerDetail(staffId, false),
       fetchList(pagination.pageNumber, pagination.pageSize),
     ]);
 
@@ -338,20 +319,10 @@ export default function StoreUsersPageClient() {
     <Box sx={{ bgcolor: "#f5f5f5", minHeight: "100vh", p: { xs: 2, md: 4 } }}>
       <Paper elevation={0} sx={{ p: { xs: 2, md: 3 }, borderRadius: 2 }}>
         <ManagementHeader
-          title="Người dùng cửa hàng"
-          description="Quản lý danh sách nhân viên chăm sóc của vựa và chuyên môn tương ứng"
+          title="Nhân viên chăm sóc"
+          description="Xem danh sách nhân viên chăm sóc của vựa và chuyên môn tương ứng"
           entityLabel="nhân viên chăm sóc"
           count={pagination.totalCount}
-          actions={[
-            {
-              label: "Tạo nhân viên",
-              onClick: () => setStaffDialogOpen(true),
-            },
-            {
-              label: "Tạo nhân viên chăm sóc",
-              onClick: () => setCaretakerDialogOpen(true),
-            },
-          ]}
         />
 
         {error && (
@@ -370,6 +341,7 @@ export default function StoreUsersPageClient() {
           onViewDetail={handleViewDetail}
           onViewSchedule={handleViewSchedule}
           onQuickAssign={handleAssignQuick}
+          readOnly={true}
           onChangePage={(_event, nextPage) => {
             void fetchList(nextPage + 1, pagination.pageSize);
           }}
@@ -390,6 +362,7 @@ export default function StoreUsersPageClient() {
         onClose={closeDetailDialog}
         onToggleSpecialization={handleToggleSpecialization}
         onSaveAll={handleSaveAllSpecializations}
+        readOnly={true}
       />
 
       <CaretakerScheduleDrawer
@@ -413,18 +386,6 @@ export default function StoreUsersPageClient() {
         error={scheduleDetailError}
         detail={scheduleDetail}
         onClose={closeScheduleProgressDetailDialog}
-      />
-
-      <CreateStaffFormDialog
-        open={staffDialogOpen}
-        onClose={() => setStaffDialogOpen(false)}
-        onStaffCreated={handleStaffCreated}
-      />
-
-      <CreateCaretakerFormDialog
-        open={caretakerDialogOpen}
-        onClose={() => setCaretakerDialogOpen(false)}
-        onCaretakerCreated={handleCaretakerCreated}
       />
     </Box>
   );

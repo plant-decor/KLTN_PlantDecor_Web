@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Box } from '@mui/material';
 import { toast } from 'react-toastify';
 import ManagementHeader from '@/components/layout/ManagementHeader';
-import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 import PlantGuideTable from './PlantGuideTable';
 import PlantGuideFormDialog from './PlantGuideFormDialog';
 import PlantGuideDetailDialog from './PlantGuideDetailDialog';

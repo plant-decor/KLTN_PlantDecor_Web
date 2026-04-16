@@ -18,13 +18,12 @@ import {
   SmartToy as SmartToyIcon,
   Menu as MenuIcon,
   Close as CloseIcon,
-  ExpandMore as ExpandMoreIcon,
 } from '@mui/icons-material';
 import {
   GUEST_ACTIONS,
-  HeaderNavItem,
+  type HeaderNavItem,
   NAV_ITEMS_BY_ROLE,
-  UserRole,
+  type UserRole,
   USER_MENU_ITEMS,
   type HeaderIconKey,
 } from '@/lib/constants/header';
@@ -41,6 +40,8 @@ const NAV_LABEL_KEYS: Record<HeaderIconKey, string> = {
   myPlant: 'myPlant',
   ai: 'aiRecommendation',
 };
+
+const getNavLabelKey = (icon: HeaderIconKey): string => NAV_LABEL_KEYS[icon];
 
 const USER_MENU_LABEL_KEYS: Record<string, string> = {
   '/profile/[userid]': 'profile',
@@ -85,7 +86,6 @@ export default function Navigation({ initialStoreCategories = [] }: NavigationPr
   const params = useParams<{ locale?: string }>();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isStoreHoverOpen, setIsStoreHoverOpen] = useState(false);
-  const [isMobileStoreOpen, setIsMobileStoreOpen] = useState(false);
   const [storeCategories, setStoreCategories] = useState<CategoryResponse[]>(initialStoreCategories);
   const { user, clearAll } = useAuthStore();
   const tNav = useTranslations('nav');
@@ -199,7 +199,7 @@ export default function Navigation({ initialStoreCategories = [] }: NavigationPr
         {nodes.map((category) => (
           <li key={category.id}>
             <Link
-              href={`/plant-store?categoryIds=${category.id}` as any}
+              href={`/plant-store?categoryIds=${category.id}`}
               className="block rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors"
               onClick={() => {
                 setIsStoreHoverOpen(false);
@@ -217,37 +217,12 @@ export default function Navigation({ initialStoreCategories = [] }: NavigationPr
     );
   };
 
-  const renderMobileCategoryTree = (nodes: CategoryResponse[], level = 0): ReactNode => {
-    if (!nodes.length) {
-      return null;
-    }
-
-    return (
-      <ul className={level === 0 ? 'space-y-1' : 'space-y-1 pl-4 border-l border-gray-100 mt-1'}>
-        {nodes.map((category) => (
-          <li key={`mobile-${category.id}`}>
-            <Link
-              href={`/plant-store?categoryIds=${category.id}` as any}
-              className="block rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              {category.name}
-            </Link>
-            {Array.isArray(category.subCategories) && category.subCategories.length > 0
-              ? renderMobileCategoryTree(category.subCategories, level + 1)
-              : null}
-          </li>
-        ))}
-      </ul>
-    );
-  };
-
   return (
     <nav className="bg-white shadow-sm border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="hidden sm:flex lg:flex md:flex items-center justify-around h-12">
           <div className="flex items-center gap-1 lg:gap-6">
-            {navItems.map((item: any) => {
+            {navItems.map((item: HeaderNavItem) => {
               const isStoreItem = item.icon === 'store';
               const shouldRenderStoreMenu = isStoreItem && canShowStoreCategoryMenu;
 
@@ -255,12 +230,12 @@ export default function Navigation({ initialStoreCategories = [] }: NavigationPr
           return (
             <Link
               key={item.icon}
-              href={resolveHref(item.href, userId) as any}
+              href={resolveHref(item.href, userId)}
               className="inline-flex items-center gap-1.5 lg:gap-2 text-gray-700 hover:text-green-600 transition-colors duration-200 hover:bg-green-50 px-2.5 lg:px-4 py-2 rounded-full"
             >
               <span className="hidden lg:inline-flex">{ICONS[item.icon as HeaderIconKey]}</span>
               <span className="text-xs lg:text-sm font-semibold whitespace-nowrap">
-                {tNav(NAV_LABEL_KEYS[item.icon as HeaderIconKey] as any)}
+                {tNav(getNavLabelKey(item.icon))}
               </span>
             </Link>
           );
@@ -274,12 +249,12 @@ export default function Navigation({ initialStoreCategories = [] }: NavigationPr
             onMouseLeave={() => setIsStoreHoverOpen(false)}
           >
             <Link
-              href={resolveHref(item.href, userId) as any}
+              href={resolveHref(item.href, userId)}
               className="inline-flex items-center gap-1.5 lg:gap-2 text-gray-700 hover:text-green-600 transition-colors duration-200 hover:bg-green-50 px-2.5 lg:px-4 py-2 rounded-full"
             >
               <span className="hidden lg:inline-flex">{ICONS[item.icon as HeaderIconKey]}</span>
               <span className="text-xs lg:text-sm font-semibold whitespace-nowrap">
-                {tNav(NAV_LABEL_KEYS[item.icon as HeaderIconKey] as any)}
+                {tNav(getNavLabelKey(item.icon))}
               </span>
             </Link>
 
@@ -334,13 +309,13 @@ export default function Navigation({ initialStoreCategories = [] }: NavigationPr
               {navItems.map((item) => (
                 <Link
                   key={item.icon}
-                  href={resolveHref(item.href, userId) as any}
+                  href={resolveHref(item.href, userId)}
                   className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-green-50 hover:text-green-600 transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {ICONS[item.icon as HeaderIconKey]}
                   <span className="text-sm font-medium">
-                    {tNav(NAV_LABEL_KEYS[item.icon as HeaderIconKey] as any)}
+                    {tNav(getNavLabelKey(item.icon))}
                   </span>
                 </Link>
               ))}
@@ -375,14 +350,14 @@ export default function Navigation({ initialStoreCategories = [] }: NavigationPr
               {isGuest && (
                 <>
                   <Link
-                    href={GUEST_ACTIONS.login.href as any}
+                    href={GUEST_ACTIONS.login.href}
                     className="block w-full text-center py-2 rounded-lg border border-green-600 text-green-600 text-sm font-medium hover:bg-green-50 transition-colors"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     {tAuth('login')}
                   </Link>
                   <Link
-                    href={GUEST_ACTIONS.register.href as any}
+                    href={GUEST_ACTIONS.register.href}
                     className="block w-full text-center py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 transition-colors"
                     onClick={() => setIsMenuOpen(false)}
                   >
@@ -412,7 +387,7 @@ export default function Navigation({ initialStoreCategories = [] }: NavigationPr
                     ) : (
                       <Link
                         key={item.label}
-                        href={resolveHref(item.href, userId) as any}
+                        href={resolveHref(item.href, userId)}
                         className="block px-2 py-2 text-gray-700 hover:bg-green-50 hover:text-green-600 rounded-lg text-sm transition-colors"
                         onClick={() => setIsMenuOpen(false)}
                       >

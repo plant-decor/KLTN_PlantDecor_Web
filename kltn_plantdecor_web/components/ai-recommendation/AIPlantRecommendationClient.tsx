@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/authStore';
 import { addItemToCart } from '@/lib/api/cartWishlistService';
 import { notifyCartUpdated } from '@/lib/utils/cartEvents';
-import { searchShopNurseries, type ShopNurseryListItem } from '@/lib/api/shopPlantsService';
+import type { ShopNurseryListItem } from '@/lib/api/shopPlantsService';
 import {
   analyzeRoomUpload,
   generateLayoutImages,

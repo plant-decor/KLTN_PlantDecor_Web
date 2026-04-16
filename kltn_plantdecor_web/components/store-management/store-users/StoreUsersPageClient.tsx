@@ -1,10 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import RefreshIcon from "@mui/icons-material/Refresh";
-import { Alert, Box, Button, Paper, Stack, Typography } from "@mui/material";
+import { Alert, Box, Paper } from "@mui/material";
 import { toast } from "react-toastify";
 import ManagementHeader from "@/components/layout/ManagementHeader";
+import {
+  getCaretakerScheduleByRange,
+  getServiceProgressDetail,
+} from "@/lib/api/careServiceService";
 import {
   assignSpecializationToStaff,
   getActiveSpecializationsForStaff,
@@ -12,7 +15,10 @@ import {
   getMyNurseryStaffList,
   replaceStaffSpecializations,
 } from "@/lib/api/managerStoreUsersService";
+import type { NurseryServiceScheduleItem, ServiceProgressDetail } from "@/types/care-service.types";
 import type { StoreUserItem, StoreUserSpecializationOption } from "@/types/store-management.types";
+import ServiceProgressDetailDialog from "@/components/service/schedule-services/ServiceProgressDetailDialog";
+import CaretakerScheduleDrawer from "./CaretakerScheduleDrawer";
 import StoreUserDetailDialog from "./StoreUserDetailDialog";
 import StoreUsersTable from "./StoreUsersTable";
 
@@ -26,6 +32,24 @@ const DEFAULT_PAGINATION: PaginationState = {
   pageNumber: 1,
   pageSize: 10,
   totalCount: 0,
+};
+
+const toApiDate = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const getMonthRange = () => {
+  const now = new Date();
+  const first = new Date(now.getFullYear(), now.getMonth(), 1);
+  const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+  return {
+    from: toApiDate(first),
+    to: toApiDate(last),
+  };
 };
 
 const getErrorMessage = (error: unknown, fallback: string): string => {
@@ -55,6 +79,18 @@ export default function StoreUsersPageClient() {
 
   const [specializationOptions, setSpecializationOptions] = useState<StoreUserSpecializationOption[]>([]);
   const [selectedSpecializationIds, setSelectedSpecializationIds] = useState<number[]>([]);
+
+  const [scheduleDrawerOpen, setScheduleDrawerOpen] = useState(false);
+  const [selectedCaretaker, setSelectedCaretaker] = useState<StoreUserItem | null>(null);
+  const [scheduleItems, setScheduleItems] = useState<NurseryServiceScheduleItem[]>([]);
+  const [scheduleLoading, setScheduleLoading] = useState(false);
+  const [scheduleError, setScheduleError] = useState<string | null>(null);
+  const [scheduleFromDate, setScheduleFromDate] = useState<string>(getMonthRange().from);
+  const [scheduleToDate, setScheduleToDate] = useState<string>(getMonthRange().to);
+  const [scheduleDetailOpen, setScheduleDetailOpen] = useState(false);
+  const [scheduleDetailLoading, setScheduleDetailLoading] = useState(false);
+  const [scheduleDetailError, setScheduleDetailError] = useState<string | null>(null);
+  const [scheduleDetail, setScheduleDetail] = useState<ServiceProgressDetail | null>(null);
 
   const fetchList = useCallback(async (nextPage: number, nextSize: number) => {
     setLoading(true);
@@ -123,6 +159,87 @@ export default function StoreUsersPageClient() {
   const handleViewDetail = (staffId: number) => {
     setDetailOpen(true);
     void fetchDetail(staffId);
+  };
+
+  const fetchCaretakerSchedule = useCallback(async (caretakerId: number, from: string, to: string) => {
+    setScheduleLoading(true);
+    setScheduleError(null);
+
+    try {
+      const payload = await getCaretakerScheduleByRange(caretakerId, from, to, false);
+      setScheduleItems(payload);
+    } catch (loadError) {
+      const message = getErrorMessage(loadError, "Không thể tải lịch công việc caretaker");
+      setScheduleError(message);
+      setScheduleItems([]);
+      toast.error(message);
+    } finally {
+      setScheduleLoading(false);
+    }
+  }, []);
+
+  const handleViewSchedule = (staffId: number) => {
+    const caretaker = items.find((staff) => staff.id === staffId) ?? null;
+    if (!caretaker) {
+      toast.error("Không tìm thấy caretaker trong danh sách hiện tại");
+      return;
+    }
+
+    const monthRange = getMonthRange();
+    setSelectedCaretaker(caretaker);
+    setScheduleDrawerOpen(true);
+    setScheduleFromDate(monthRange.from);
+    setScheduleToDate(monthRange.to);
+    void fetchCaretakerSchedule(caretaker.id, monthRange.from, monthRange.to);
+  };
+
+  const closeScheduleDrawer = () => {
+    setScheduleDrawerOpen(false);
+    setSelectedCaretaker(null);
+    setScheduleItems([]);
+    setScheduleError(null);
+  };
+
+  const handleRefreshSchedule = () => {
+    if (!selectedCaretaker) {
+      return;
+    }
+
+    if (!scheduleFromDate || !scheduleToDate) {
+      toast.error("Vui lòng chọn đầy đủ khoảng ngày");
+      return;
+    }
+
+    if (scheduleFromDate > scheduleToDate) {
+      toast.error("Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc");
+      return;
+    }
+
+    void fetchCaretakerSchedule(selectedCaretaker.id, scheduleFromDate, scheduleToDate);
+  };
+
+  const handleViewScheduleProgressDetail = async (serviceProgressId: number) => {
+    setScheduleDetailOpen(true);
+    setScheduleDetailLoading(true);
+    setScheduleDetailError(null);
+
+    try {
+      const detailPayload = await getServiceProgressDetail(serviceProgressId, false);
+      setScheduleDetail(detailPayload);
+    } catch (detailLoadError) {
+      const message = getErrorMessage(detailLoadError, "Không thể tải chi tiết phiên chăm sóc");
+      setScheduleDetailError(message);
+      setScheduleDetail(null);
+      toast.error(message);
+    } finally {
+      setScheduleDetailLoading(false);
+    }
+  };
+
+  const closeScheduleProgressDetailDialog = () => {
+    setScheduleDetailOpen(false);
+    setScheduleDetailError(null);
+    setScheduleDetail(null);
   };
 
   const closeDetailDialog = () => {
@@ -227,6 +344,7 @@ export default function StoreUsersPageClient() {
           totalCount={pagination.totalCount}
           loading={loading}
           onViewDetail={handleViewDetail}
+          onViewSchedule={handleViewSchedule}
           onQuickAssign={handleAssignQuick}
           onChangePage={(_event, nextPage) => {
             void fetchList(nextPage + 1, pagination.pageSize);
@@ -248,6 +366,29 @@ export default function StoreUsersPageClient() {
         onClose={closeDetailDialog}
         onToggleSpecialization={handleToggleSpecialization}
         onSaveAll={handleSaveAllSpecializations}
+      />
+
+      <CaretakerScheduleDrawer
+        open={scheduleDrawerOpen}
+        caretaker={selectedCaretaker}
+        fromDate={scheduleFromDate}
+        toDate={scheduleToDate}
+        loading={scheduleLoading}
+        error={scheduleError}
+        items={scheduleItems}
+        onClose={closeScheduleDrawer}
+        onChangeFromDate={setScheduleFromDate}
+        onChangeToDate={setScheduleToDate}
+        onRefresh={handleRefreshSchedule}
+        onViewProgressDetail={handleViewScheduleProgressDetail}
+      />
+
+      <ServiceProgressDetailDialog
+        open={scheduleDetailOpen}
+        loading={scheduleDetailLoading}
+        error={scheduleDetailError}
+        detail={scheduleDetail}
+        onClose={closeScheduleProgressDetailDialog}
       />
     </Box>
   );

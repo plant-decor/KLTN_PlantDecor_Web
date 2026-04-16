@@ -21,6 +21,7 @@ import {
   Typography,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import { useState, type MouseEvent } from "react";
 import type { StoreUserItem, StoreUserSpecializationOption } from "@/types/store-management.types";
@@ -33,6 +34,7 @@ interface StoreUsersTableProps {
   totalCount: number;
   loading: boolean;
   onViewDetail: (staffId: number) => void;
+  onViewSchedule: (staffId: number) => void;
   onQuickAssign: (staffId: number, specializationId: number) => void;
   onChangePage: (_event: unknown, nextPage: number) => void;
   onChangeRowsPerPage: (nextPageSize: number) => void;
@@ -68,6 +70,7 @@ export default function StoreUsersTable({
   totalCount,
   loading,
   onViewDetail,
+  onViewSchedule,
   onQuickAssign,
   onChangePage,
   onChangeRowsPerPage,
@@ -175,6 +178,12 @@ export default function StoreUsersTable({
                           <AddIcon />
                         </IconButton>
                       </span>
+                    </Tooltip>
+
+                    <Tooltip title="Xem lịch công việc">
+                      <IconButton color="info" onClick={() => onViewSchedule(staff.id)}>
+                        <CalendarMonthIcon />
+                      </IconButton>
                     </Tooltip>
                   </Stack>
                 </TableCell>

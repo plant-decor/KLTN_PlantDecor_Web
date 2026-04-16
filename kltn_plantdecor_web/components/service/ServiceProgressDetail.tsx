@@ -17,7 +17,6 @@ import {
   TextField,
   Divider,
   Alert,
-  CircularProgress,
   Grid,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
@@ -45,7 +44,6 @@ export const ServiceProgressDetail: React.FC<ServiceProgressDetailProps> = ({
   registration,
   progressLogs,
   addOns,
-  loading = false,
   onApproveAddOn,
   onRejectAddOn,
   onGenerateInvoice,

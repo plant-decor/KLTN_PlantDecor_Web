@@ -152,7 +152,7 @@ export default function UserManagementPage() {
     setPage(0);
   };
 
-  const handleFormChange = (field: keyof UserFormData, value: any) => {
+  const handleFormChange = (field: keyof UserFormData, value: UserFormData[keyof UserFormData]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors((prev) => {

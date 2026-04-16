@@ -148,10 +148,10 @@ const toComboId = (payload: unknown): number | null => {
 export const useAdminPlantCombos = (): UseAdminPlantCombosReturn => {
   const [combos, setCombos] = useState<PlantCombo[]>([]);
   const [comboPlants, setComboPlants] = useState<Plant[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
-  const [plantsLoading, setPlantsLoading] = useState(false);
+  const [plantsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState<PaginationState>(defaultPagination);
   const [filters, setFilters] = useState<ListFilters>({ keyword: '' });

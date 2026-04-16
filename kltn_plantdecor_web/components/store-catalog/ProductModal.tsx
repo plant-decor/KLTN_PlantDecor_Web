@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import {
   Dialog,
   DialogTitle,
@@ -48,47 +49,38 @@ export default function ProductModal({
   categories,
   tags,
 }: ProductModalProps) {
+  const createEmptyProduct = (): Partial<Product> => ({
+    id: '',
+    name: '',
+    description: '',
+    scientificName: '',
+    imageUrl: '',
+    price: 0,
+    categoryIds: [],
+    tagIds: [],
+    instances: [],
+    createdAt: new Date().toISOString().split('T')[0],
+    updatedAt: new Date().toISOString().split('T')[0],
+  });
+
   const [formData, setFormData] = useState<Partial<Product>>(
-    product || {
-      id: Math.random().toString(36).substr(2, 9),
-      name: '',
-      description: '',
-      scientificName: '',
-      imageUrl: '',
-      price: 0,
-      categoryIds: [],
-      tagIds: [],
-      instances: [],
-      createdAt: new Date().toISOString().split('T')[0],
-      updatedAt: new Date().toISOString().split('T')[0],
-    }
+    product || createEmptyProduct()
   );
-  const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>(product?.imageUrl || '');
   const [instanceModalOpen, setInstanceModalOpen] = useState(false);
   const [editingInstance, setEditingInstance] = useState<PlantInstance | undefined>();
 
   useEffect(() => {
     if (product) {
-      setFormData(product);
-      setImagePreview(product.imageUrl || '');
-      setImageFile(null);
-    } else {
-      setFormData({
-        id: Math.random().toString(36).substr(2, 9),
-        name: '',
-        description: '',
-        scientificName: '',
-        imageUrl: '',
-        price: 0,
-        categoryIds: [],
-        tagIds: [],
-        instances: [],
-        createdAt: new Date().toISOString().split('T')[0],
-        updatedAt: new Date().toISOString().split('T')[0],
+      queueMicrotask(() => {
+        setFormData(product);
+        setImagePreview(product.imageUrl || '');
       });
-      setImagePreview('');
-      setImageFile(null);
+    } else {
+      queueMicrotask(() => {
+        setFormData(createEmptyProduct());
+        setImagePreview('');
+      });
     }
   }, [product, open]);
 
@@ -105,7 +97,6 @@ export default function ProductModal({
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setImageFile(file);
       // Create preview URL
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -142,6 +133,7 @@ export default function ProductModal({
     ) {
       onSave({
         ...formData,
+        id: formData.id || `plant-${Date.now()}`,
         updatedAt: new Date().toISOString().split('T')[0],
       } as Product);
     }
@@ -226,9 +218,11 @@ export default function ProductModal({
             </Button>
             {imagePreview && (
               <Box sx={{ mt: 2, textAlign: 'center' }}>
-                <img
+                  <Image
                   src={imagePreview}
                   alt="Preview"
+                    width={400}
+                    height={200}
                   style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 8 }}
                 />
               </Box>

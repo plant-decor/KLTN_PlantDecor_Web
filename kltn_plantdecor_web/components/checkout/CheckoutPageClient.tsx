@@ -83,7 +83,6 @@ export default function CheckoutPageClient({
   const searchParams = useSearchParams();
   const locale = useLocale();
   const tCheckout = useTranslations('checkout');
-  const tAuth = useTranslations('auth');
   const tError = useTranslations('profile');
   const tCommon = useTranslations('common');
   const STEPS = [
@@ -451,7 +450,6 @@ export default function CheckoutPageClient({
         {activeStep === 1 && (
           <CheckoutReview
             checkoutData={checkoutData}
-            userId={userId}
             cartId={cartId}
             createdOrder={createdOrder}
           />

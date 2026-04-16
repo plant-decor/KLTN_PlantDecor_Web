@@ -50,6 +50,7 @@ export const SIDEBAR_ITEMS_BY_ROLE: Record<UserRole, SidebarItem[]> = {
     { label: 'Số liệu cửa hàng', href: '/manager/store-metrics', icon: 'metrics' },
     { label: 'Danh mục cửa hàng', href: '/manager/store-catalog', icon: 'catalog' },
     { label: 'Người dùng cửa hàng', href: '/manager/store-users', icon: 'users' },
+    { label: 'Lịch chăm sóc dịch vụ', href: '/manager/schedule-services', icon: 'scheduled' },
     { label: 'Thông tin vựa', href: '/manager/nursery-profile', icon: 'inventory' },
     { label: 'Quản lý dịch vụ chăm sóc', href: '/manager/care-service-management', icon: 'services' },
     { label: 'Đơn hàng bán', href: '/manager/sales-orders', icon: 'orders' },

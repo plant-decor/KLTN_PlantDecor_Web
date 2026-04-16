@@ -115,7 +115,7 @@ export default function AdminSpecializationsManagementPageClient() {
     void fetchDetail();
   }, [modalOpen, modalMode, selectedId]);
 
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     if (submitting) {
       return;
     }
@@ -124,13 +124,13 @@ export default function AdminSpecializationsManagementPageClient() {
     setSelectedId(null);
     setDetail(null);
     setDetailError(null);
-  };
+  }, [submitting]);
 
-  const validateForm = (): string | null => {
+  const validateForm = useCallback((): string | null => {
     if (!formValue.name.trim()) return "Tên chuyên môn không được để trống";
     if (!formValue.description.trim()) return "Mô tả không được để trống";
     return null;
-  };
+  }, [formValue.description, formValue.name]);
 
   const handleSubmit = useCallback(async () => {
     const validationError = validateForm();
@@ -169,7 +169,7 @@ export default function AdminSpecializationsManagementPageClient() {
     } finally {
       setSubmitting(false);
     }
-  }, [closeModal, formValue, loadSpecializations, modalMode, selectedId]);
+  }, [closeModal, formValue, loadSpecializations, modalMode, selectedId, validateForm]);
 
   const handleDelete = async () => {
     if (!deleteTarget) {

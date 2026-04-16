@@ -5,7 +5,6 @@ import {
   Box,
   Typography,
   Card,
-  CardContent,
   Table,
   TableBody,
   TableCell,

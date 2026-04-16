@@ -15,7 +15,6 @@ import {
   TableHead,
   TableRow,
   Paper,
-  CircularProgress,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -41,7 +40,7 @@ import { ServiceRegistration, ServiceRegistrationStatus, ServiceProgress, Servic
 import ManageSearchIcon from '@mui/icons-material/ManageSearch';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import FolderIcon from '@mui/icons-material/Folder';
-import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
+import Image from 'next/image';
 
 const MOCK_SERVICES: ServiceRegistration[] = [
   {
@@ -140,7 +139,21 @@ const MOCK_ADDONS = [
   },
 ];
 
-const getProgressSteps = (t: any) => [
+type TranslationFunction = (key: string) => string;
+
+interface AddOnItem {
+  id: number;
+  serviceRegistrationId: number;
+  name: string;
+  description: string;
+  price: number;
+  quantity: number;
+  status: 'PROPOSED';
+  createdAt: string;
+  updatedAt: string;
+}
+
+const getProgressSteps = (t: TranslationFunction) => [
   { label: t('checkIn'), action: ServiceProgressAction.CHECK_IN },
   { label: t('survey'), action: ServiceProgressAction.SURVEY },
   { label: t('workInProgress'), action: ServiceProgressAction.WORK_IN_PROGRESS },
@@ -148,19 +161,15 @@ const getProgressSteps = (t: any) => [
   { label: t('checkout'), action: ServiceProgressAction.CHECK_OUT },
 ];
 
-interface PageProps {
-  params: Promise<{ locale: string }>;
-}
-
-export default function StaffServiceProcessPage({ params }: PageProps) {
+export default function StaffServiceProcessPage() {
   const t = useTranslations('services');
   const tCommon = useTranslations('common');
 
-  const [services, setServices] = useState<ServiceRegistration[]>(MOCK_SERVICES);
+  const [services] = useState<ServiceRegistration[]>(MOCK_SERVICES);
   const [selectedService, setSelectedService] = useState<ServiceRegistration | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [progressLogs] = useState<ServiceProgress[]>(MOCK_PROGRESS);
-  const [addOns] = useState<any[]>(MOCK_ADDONS);
+  const [addOns] = useState<AddOnItem[]>(MOCK_ADDONS);
 
   const handleViewDetails = (service: ServiceRegistration) => {
     setSelectedService(service);
@@ -352,10 +361,12 @@ export default function StaffServiceProcessPage({ params }: PageProps) {
                             </Typography>
                             <ImageList cols={1} rowHeight={200}>
                               <ImageListItem>
-                                <img
+                                <Image
                                   src={log.evidenceImageUrl}
                                   alt="Evidence"
-                                  style={{ borderRadius: '4px' }}
+                                  width={300}
+                                  height={200}
+                                  style={{ borderRadius: '4px', objectFit: 'cover' }}
                                 />
                               </ImageListItem>
                             </ImageList>

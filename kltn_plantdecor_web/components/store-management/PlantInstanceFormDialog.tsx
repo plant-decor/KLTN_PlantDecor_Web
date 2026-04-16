@@ -57,18 +57,23 @@ export default function PlantInstanceFormDialog({
   useEffect(() => {
     if (editingData) {
       reset(editingData);
-      if (editingData.images) {
-        setImages(
-          editingData.images.map((img) => ({
-            ...img,
-            file: new File([], ''),
-            preview: img.preview || img.url || '',
-          }))
-        );
+      const existingImages = editingData.images;
+      if (existingImages) {
+        queueMicrotask(() => {
+          setImages(
+            existingImages.map((img) => ({
+              ...img,
+              file: new File([], ''),
+              preview: img.preview || img.url || '',
+            }))
+          );
+        });
       }
     } else {
       reset(defaultInstance);
-      setImages([]);
+      queueMicrotask(() => {
+        setImages([]);
+      });
     }
   }, [editingData, open, reset]);
 

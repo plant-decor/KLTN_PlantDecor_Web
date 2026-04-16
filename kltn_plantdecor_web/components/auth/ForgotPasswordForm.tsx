@@ -6,7 +6,6 @@ import { EmailOutlined } from '@mui/icons-material';
 import Image from 'next/image';
 
 interface ForgotPasswordFormProps {
-  isVisible: boolean;
   onBack: () => void;
   onSubmit: (email: string) => Promise<void>;
   isLoading?: boolean;
@@ -15,7 +14,6 @@ interface ForgotPasswordFormProps {
 }
 
 export default function ForgotPasswordForm({
-  isVisible,
   onBack,
   onSubmit,
   isLoading = false,

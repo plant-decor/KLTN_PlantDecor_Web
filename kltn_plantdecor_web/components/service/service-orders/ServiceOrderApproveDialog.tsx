@@ -13,7 +13,6 @@ interface ServiceOrderApproveDialogProps {
 
 export default function ServiceOrderApproveDialog({
   open,
-  target,
   submitting,
   onClose,
   onConfirm,

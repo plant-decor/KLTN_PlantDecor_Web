@@ -32,8 +32,6 @@ import ClickableImageViewer from '../image-view/ClickableImageViewer';
 
 const SEARCH_DEBOUNCE_MS = 300;
 const MAX_VISIBLE_ITEMS = 6;
-const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/heif'];
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 const FENG_SHUI_OPTIONS = [
   { value: '', label: '--' },

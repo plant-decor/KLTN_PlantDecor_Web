@@ -14,12 +14,10 @@ import {
   Select,
   MenuItem,
   Typography,
-  Chip,
   CircularProgress,
-  Alert,
   Grid,
 } from "@mui/material";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import {
@@ -48,7 +46,6 @@ export const CarePackageForm: React.FC<CarePackageFormProps> = ({
     control,
     handleSubmit,
     reset,
-    watch,
     formState: { errors, isSubmitting },
   } = useForm<CareServicePackageFormData>({
     defaultValues: {
@@ -67,12 +64,14 @@ export const CarePackageForm: React.FC<CarePackageFormProps> = ({
 
   const [features, setFeatures] = React.useState<string[]>([]);
 
-  const serviceType = watch("serviceType");
+  const serviceType = useWatch({ control, name: "serviceType" });
 
   useEffect(() => {
     if (editingPackage) {
       reset(editingPackage);
-      setFeatures(editingPackage.features || []);
+      queueMicrotask(() => {
+        setFeatures(editingPackage.features || []);
+      });
     } else {
       reset({
         name: "",
@@ -86,7 +85,9 @@ export const CarePackageForm: React.FC<CarePackageFormProps> = ({
         unitPrice: 0,
         isActive: true,
       });
-      setFeatures([]);
+      queueMicrotask(() => {
+        setFeatures([]);
+      });
     }
   }, [editingPackage, reset, open]);
 

@@ -137,7 +137,7 @@ export default function AdminServiceManagementPageClient() {
     void fetchDetail();
   }, [modalOpen, modalMode, selectedId]);
 
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     if (submitting) {
       return;
     }
@@ -146,9 +146,9 @@ export default function AdminServiceManagementPageClient() {
     setSelectedId(null);
     setDetail(null);
     setDetailError(null);
-  };
+  }, [submitting]);
 
-  const validateForm = (): string | null => {
+  const validateForm = useCallback((): string | null => {
     if (!formValue.name.trim()) return "Tên gói không được để trống";
     if (!formValue.description.trim()) return "Mô tả không được để trống";
     if (!formValue.features.trim()) return "Features không được để trống";
@@ -172,7 +172,7 @@ export default function AdminServiceManagementPageClient() {
     }
 
     return null;
-  };
+  }, [formValue, modalMode]);
 
   const handleSubmit = useCallback(async () => {
     const validationError = validateForm();
@@ -224,7 +224,7 @@ export default function AdminServiceManagementPageClient() {
     } finally {
       setSubmitting(false);
     }
-  }, [closeModal, formValue, loadPackages, modalMode, selectedId]);
+  }, [closeModal, formValue, loadPackages, modalMode, selectedId, validateForm]);
 
   const handleDelete = async (id: number) => {
     try {

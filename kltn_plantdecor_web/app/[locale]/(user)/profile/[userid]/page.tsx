@@ -8,7 +8,6 @@ import {
   Typography,
   TextField,
   Button,
-  Avatar,
   Switch,
   FormControlLabel,
   MenuItem,
@@ -31,13 +30,14 @@ import type { UserProfile, UpdateUserProfileRequest } from '@/types/auth.types';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
 import ClickableImageViewer from '@/components/image-view/ClickableImageViewer';
 
-interface PageProps {
-  params: Promise<{ userid: string }>;
-}
-
-export default function ProfilePage({ params }: PageProps) {
+export default function ProfilePage() {
   const t = useTranslations('profile');
   const tAuth = useTranslations('auth');
+
+  type AvatarResponsePayload = {
+    avatarURL?: string;
+    avatarUrl?: string;
+  };
 
   const normalizeGender = (gender: UserProfile['gender']): 'Unknown' | 'Male' | 'Female' | 'Other' => {
     if (gender === 'Male' || gender === 'Female' || gender === 'Other' || gender === 'Unknown') {
@@ -99,7 +99,7 @@ export default function ProfilePage({ params }: PageProps) {
     void fetchProfile();
   }, [fetchProfile]);
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: keyof UserProfile, value: UserProfile[keyof UserProfile]) => {
     setProfile((prev) => ({
       ...prev,
       [field]: value,
@@ -172,7 +172,7 @@ export default function ProfilePage({ params }: PageProps) {
       const response = await updateUserAvatar(file, false);
 
       if (response?.payload) {
-        const payloadData = response.payload as any;
+        const payloadData = response.payload as AvatarResponsePayload;
         const newAvatarUrl = payloadData.avatarURL || payloadData.avatarUrl;
         if (newAvatarUrl) {
           setProfile((prev) => ({

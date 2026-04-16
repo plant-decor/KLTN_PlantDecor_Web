@@ -16,7 +16,6 @@ import {
   Chip,
   Typography,
   TablePagination,
-  CircularProgress,
   Tooltip,
 } from '@mui/material';
 import {

@@ -18,6 +18,7 @@ import { useTranslations } from 'next-intl';
 import type { Order, OrderInvoiceDetail } from '@/types/order.types';
 import { formatCurrency, formatDate, getStatusInfo } from './orderHistoryUtils';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
+import Image from 'next/image';
 
 const SERVICE_ORDER_TYPE = 4;
 const ORDER_ITEM_FALLBACK_IMAGE = '/img/fallbackplant.avif';
@@ -97,7 +98,7 @@ export default function OrderHistoryList({
       </Box>
     );
   }
-
+  console.log('orders', orders);
   if (orders.length === 0) {
     return (
       <Card sx={{ boxShadow: 2 }}>
@@ -124,7 +125,7 @@ export default function OrderHistoryList({
         const isRetrying = retryOrderId !== null && retryLoadingOrderId === retryOrderId;
         const canCancelOrder = order.statusName === 'Pending' || order.statusName === 'DepositPaid';
         const isCancelling = canCancelOrder && cancelLoadingOrderId === order.id;
-
+        console.log('items', displayItems.map((item) => item.imageUrl));
         return (
           <Card key={order.id} sx={{ boxShadow: 2, '&:hover': { boxShadow: 4 } }}>
             <CardContent>
@@ -178,12 +179,13 @@ export default function OrderHistoryList({
                         {getOrderItemIcon(order.orderType)}
                       </Avatar>
                     ) : (
-                      <Avatar
-                        variant="rounded"
-                        src={item.imageUrl || ORDER_ITEM_FALLBACK_IMAGE}
+                      <Image
+                        src={item.imageUrl || '/img/fallbackplant.avif'}
                         alt={item.itemName}
-                        imgProps={{ loading: 'lazy' }}
-                        sx={{ width: 60, height: 60, bgcolor: 'grey.200' }}
+                        width={60}
+                        height={60}
+                        className='aspect-square rounded-2xl'
+                        loading="lazy"
                       />
                     )}
                     <Box sx={{ flex: 1 }}>

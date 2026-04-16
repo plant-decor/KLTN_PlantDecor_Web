@@ -10,6 +10,7 @@ import type {
   StoreUserListQuery,
   StoreUserSpecializationOption,
 } from "@/types/store-management.types";
+import type { CreateStaffRequest, CreateStaffResponse, CreateCaretakerRequest, CreateCaretakerResponse } from "@/types/auth.types";
 
 const QUERY_CONFIG = {
   showToast: false,
@@ -197,7 +198,7 @@ const toPaginatedPayload = (
   };
 };
 
-export const getMyNurseryStaffList = async (
+export const getMyNurseryCaretakerList = async (
   query?: StoreUserListQuery,
   loading = true
 ): Promise<StoreUserListPayload> => {
@@ -213,9 +214,40 @@ export const getMyNurseryStaffList = async (
   return toPaginatedPayload(unwrapPayloadData(response), pageNumber, pageSize);
 };
 
-export const getMyNurseryStaffDetail = async (staffId: number, loading = true): Promise<StoreUserItem> => {
+export const getMyNurseryStaffList = async (
+  query?: StoreUserListQuery,
+  loading = true
+): Promise<StoreUserListPayload> => {
+  const response = await apiClient.get<WrappedResponse<unknown>>(
+    "manager/nurseries/my-nursery/team",
+    buildPaginationParams(query),
+    loading,
+    QUERY_CONFIG
+  );
+
+  const pageNumber = query?.pageNumber ?? 1;
+  const pageSize = query?.pageSize ?? 10;
+  return toPaginatedPayload(unwrapPayloadData(response), pageNumber, pageSize);
+};
+
+export const getMyNurseryCaretakerDetail = async (staffId: number, loading = true): Promise<StoreUserItem> => {
   const response = await apiClient.get<WrappedResponse<unknown>>(
     `manager/nurseries/my-nursery/staff/${staffId}`,
+    undefined,
+    loading,
+    QUERY_CONFIG
+  );
+
+  const normalized = normalizeStaffItem(unwrapPayloadData(response));
+  if (!normalized) {
+    throw new Error("Không thể đọc dữ liệu nhân viên");
+  }
+
+  return normalized;
+};
+export const getMyNurseryStaffDetail = async (staffId: number, loading = true): Promise<StoreUserItem> => {
+  const response = await apiClient.get<WrappedResponse<unknown>>(
+    `manager/nurseries/my-nursery/team/${staffId}`,
     undefined,
     loading,
     QUERY_CONFIG
@@ -286,4 +318,42 @@ export const getActiveSpecializationsForStaff = async (loading = true): Promise<
     .map((item) => normalizeSpecializationOption(item))
     .filter((item): item is StoreUserSpecializationOption => Boolean(item))
     .filter((item) => item.isActive);
+};
+
+export const createNurseryStaff = async (
+  request: CreateStaffRequest,
+  loading = true
+): Promise<CreateStaffResponse> => {
+  const response = await apiClient.post<WrappedResponse<CreateStaffResponse>>(
+    "Authentication/create-staff",
+    request,
+    loading,
+    MUTATION_CONFIG
+  );
+
+  const result = unwrapPayloadData(response);
+  if (!result || !result.user) {
+    throw new Error("Không thể tạo nhân viên");
+  }
+
+  return result;
+};
+
+export const createNurseryCareaker = async (
+  request: CreateCaretakerRequest,
+  loading = true
+): Promise<CreateCaretakerResponse> => {
+  const response = await apiClient.post<WrappedResponse<CreateCaretakerResponse>>(
+    "Authentication/create-caretaker",
+    request,
+    loading,
+    MUTATION_CONFIG
+  );
+
+  const result = unwrapPayloadData(response);
+  if (!result) {
+    throw new Error("Không thể tạo nhân viên chăm sóc");
+  }
+
+  return result;
 };

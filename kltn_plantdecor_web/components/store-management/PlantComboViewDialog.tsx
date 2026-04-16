@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Box,
   Chip,
@@ -19,11 +20,14 @@ import {
 import type { PlantCombo } from '@/types/store-management.types';
 import { getFengShuiColors, getFengShuiElementLabel } from '@/lib/utils/fengShui';
 import { formatCurrency } from '@/lib/utils/formatUtil';
+import { localizeRoomDesignEnumLabel } from '@/lib/utils/roomDesignEnumI18n';
 import type { ShopNurseryListItem } from '@/lib/api/shopPlantsService';
 
 interface PlantComboViewDialogProps {
   open: boolean;
   combo?: PlantCombo;
+  lightRequirementOptions?: Array<{ value: number; name: string }>;
+  roomTypeOptions?: Array<{ value: number; name: string }>;
   nurseries?: ShopNurseryListItem[];
   nurseriesLoading?: boolean;
   onClose: () => void;
@@ -32,16 +36,33 @@ interface PlantComboViewDialogProps {
 export default function PlantComboViewDialog({
   open,
   combo,
+  lightRequirementOptions = [],
+  roomTypeOptions = [],
   nurseries = [],
   nurseriesLoading = false,
   onClose,
 }: PlantComboViewDialogProps) {
+  const tRoomDesignEnum = useTranslations('roomDesignEnums');
   if (!combo) {
     return null;
   }
 
   const fengShuiColors = getFengShuiColors(combo.fengShuiElement);
   const fengShuiLabel = getFengShuiElementLabel(combo.fengShuiElement);
+  const suitableSpaceLabel =
+    localizeRoomDesignEnumLabel(
+      lightRequirementOptions.find((item) => item.value === Number(combo.suitableSpace))?.name,
+      tRoomDesignEnum,
+      'LightRequirement'
+    ) ||
+    (combo.suitableSpace ? String(combo.suitableSpace) : '-');
+  const suitableRoomLabels = (combo.suitableRooms || []).map((id) => {
+    return localizeRoomDesignEnumLabel(
+      roomTypeOptions.find((item) => item.value === Number(id))?.name ?? String(id),
+      tRoomDesignEnum,
+      'RoomType'
+    );
+  });
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
@@ -117,7 +138,7 @@ export default function PlantComboViewDialog({
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="body2" color="text.secondary">Không gian phù hợp</Typography>
-                <Typography variant="body1">{combo.suitableSpace || '-'}</Typography>
+                <Typography variant="body1">{suitableSpaceLabel}</Typography>
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="body2" color="text.secondary">Phòng phù hợp</Typography>
@@ -125,7 +146,9 @@ export default function PlantComboViewDialog({
                   {(combo.suitableRooms || []).length === 0 ? (
                     <Typography variant="body1">-</Typography>
                   ) : (
-                    combo.suitableRooms.map((room) => <Chip key={room} size="small" label={room} sx={{ mb: 0.5 }} />)
+                    suitableRoomLabels.map((roomLabel, index) => (
+                      <Chip key={`${roomLabel}-${index}`} size="small" label={roomLabel} sx={{ mb: 0.5 }} />
+                    ))
                   )}
                 </Stack>
               </Grid>

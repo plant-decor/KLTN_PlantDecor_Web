@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import type { Metadata } from 'next';
-import { getPlantComboNurseries } from '@/lib/api/shopPlantsService';
+import { getPlantComboNurseries, getRoomDesignEnums } from '@/lib/api/shopPlantsService';
 import {
   getShopComboById,
   searchShopUnified,
@@ -12,6 +12,7 @@ import type { PlantCombo } from '@/types/store-management.types';
 import ClickableImageViewer from '@/components/image-view/ClickableImageViewer';
 import ComboDetailPurchasePanel from '@/components/product/ComboDetailPurchasePanel';
 import { formatCurrency } from '@/lib/utils/formatUtil';
+import { localizeRoomDesignEnumLabel } from '@/lib/utils/roomDesignEnumI18n';
 
 interface ComboDetailPageProps {
   params: Promise<{ locale: string; comboId: string }>;
@@ -25,6 +26,51 @@ const PRICE_CURRENCY = 'VND';
 const getPayload = <T,>(response: { payload?: T; data?: T } | null | undefined): T | null => {
   if (!response) return null;
   return response.payload ?? response.data ?? null;
+};
+
+const getRoomDesignLabelMaps = (
+  rawEnums: unknown,
+  tRoomDesignEnum: (key: string) => string
+) => {
+  const lightRequirementById = new Map<number, string>();
+  const roomTypeById = new Map<number, string>();
+
+  const groups = Array.isArray(rawEnums) ? rawEnums : [];
+  groups.forEach((group) => {
+    if (!group || typeof group !== 'object') {
+      return;
+    }
+
+    const candidate = group as { enumName?: unknown; values?: unknown };
+    if (typeof candidate.enumName !== 'string' || !Array.isArray(candidate.values)) {
+      return;
+    }
+
+    candidate.values.forEach((valueItem) => {
+      if (!valueItem || typeof valueItem !== 'object') {
+        return;
+      }
+
+      const option = valueItem as { value?: unknown; name?: unknown };
+      const value = Number(option.value);
+      if (!Number.isInteger(value) || typeof option.name !== 'string') {
+        return;
+      }
+
+      if (candidate.enumName === 'LightRequirement') {
+        lightRequirementById.set(
+          value,
+          localizeRoomDesignEnumLabel(option.name, tRoomDesignEnum, 'LightRequirement')
+        );
+      }
+
+      if (candidate.enumName === 'RoomType') {
+        roomTypeById.set(value, localizeRoomDesignEnumLabel(option.name, tRoomDesignEnum, 'RoomType'));
+      }
+    });
+  });
+
+  return { lightRequirementById, roomTypeById };
 };
 
 const serializeJsonLd = (data: unknown): string => JSON.stringify(data).replace(/</g, '\\u003c');
@@ -49,12 +95,12 @@ const getFallbackCombo = async (comboId: number): Promise<ShopUnifiedComboItem |
   return payload.items.items.find((item) => item.type === 'Combo' && item.combo?.id === comboId)?.combo ?? null;
 };
 
-const buildComboTitle = (comboName: string, suitableSpace: string, locale: string): string => {
+const buildComboTitle = (comboName: string, suitableSpaceLabel: string, locale: string): string => {
   if (locale === 'en') {
-    return `Combo ${comboName} - Green Solution for ${suitableSpace || 'Your Space'} | ${SITE_NAME}`;
+    return `Combo ${comboName} - Green Solution for ${suitableSpaceLabel || 'Your Space'} | ${SITE_NAME}`;
   }
 
-  return `Combo ${comboName} - Giải pháp xanh cho ${suitableSpace || 'không gian của bạn'} | ${SITE_NAME}`;
+  return `Combo ${comboName} - Giải pháp xanh cho ${suitableSpaceLabel || 'không gian của bạn'} | ${SITE_NAME}`;
 };
 
 const buildComboDescription = (
@@ -73,6 +119,7 @@ const buildComboDescription = (
 
 export async function generateMetadata({ params }: ComboDetailPageProps): Promise<Metadata> {
   const { locale, comboId } = await params;
+  const tRoomDesignEnum = await getTranslations({ locale, namespace: 'roomDesignEnums' });
   const numericComboId = Number(comboId);
 
   if (!Number.isFinite(numericComboId) || numericComboId <= 0) {
@@ -85,12 +132,15 @@ export async function generateMetadata({ params }: ComboDetailPageProps): Promis
     getShopComboById(numericComboId, true, false).catch(() => null),
     getFallbackCombo(numericComboId),
   ]);
+  const roomDesignEnumsResponse = await getRoomDesignEnums(true, false).catch(() => null);
 
   const combo = getPayload<PlantCombo>(comboResponse);
+  const roomDesignEnums = getPayload(roomDesignEnumsResponse) ?? [];
+  const { lightRequirementById } = getRoomDesignLabelMaps(roomDesignEnums, tRoomDesignEnum);
   const comboName = combo?.comboName || fallbackCombo?.name || `Combo #${comboId}`;
   const comboDescription = combo?.description || fallbackCombo?.description || '';
-  const suitableSpace = combo?.suitableSpace || '';
-  const title = buildComboTitle(comboName, suitableSpace, locale);
+  const suitableSpaceLabel = lightRequirementById.get(Number(combo?.suitableSpace)) || '';
+  const title = buildComboTitle(comboName, suitableSpaceLabel, locale);
   const description = buildComboDescription(comboDescription, comboName, locale);
 
   const imageUrls = [
@@ -124,6 +174,7 @@ export default async function ComboDetailPage({ params }: ComboDetailPageProps) 
   const tCommon = await getTranslations({ locale, namespace: 'common' });
   const tProducts = await getTranslations({ locale, namespace: 'products' });
   const tCombo = await getTranslations({ locale, namespace: 'combo' });
+  const tRoomDesignEnum = await getTranslations({ locale, namespace: 'roomDesignEnums' });
   const numericComboId = Number(comboId);
 
   if (!Number.isFinite(numericComboId) || numericComboId <= 0) {
@@ -135,8 +186,11 @@ export default async function ComboDetailPage({ params }: ComboDetailPageProps) 
     getPlantComboNurseries(numericComboId, true, false).catch(() => null),
     getFallbackCombo(numericComboId),
   ]);
+  const roomDesignEnumsResponse = await getRoomDesignEnums(true, false).catch(() => null);
 
   const combo = getPayload<PlantCombo>(comboResponse);
+  const roomDesignEnums = getPayload(roomDesignEnumsResponse) ?? [];
+  const { lightRequirementById, roomTypeById } = getRoomDesignLabelMaps(roomDesignEnums, tRoomDesignEnum);
   const nurseries = getPayload(nurseriesResponse) ?? [];
 
   const comboName = combo?.comboName || fallbackCombo?.name || `Combo #${comboId}`;
@@ -145,8 +199,9 @@ export default async function ComboDetailPage({ params }: ComboDetailPageProps) 
   const seasonName = combo?.seasonName || '';
   const themeName = combo?.themeName || '';
   const themeDescription = combo?.themeDescription || '';
-  const suitableSpace = combo?.suitableSpace || '';
-  const suitableRooms = Array.isArray(combo?.suitableRooms) ? combo?.suitableRooms : [];
+  const suitableSpaceLabel = lightRequirementById.get(Number(combo?.suitableSpace)) || '';
+  const suitableRooms = Array.isArray(combo?.suitableRooms) ? combo.suitableRooms : [];
+  const suitableRoomLabels = suitableRooms.map((roomId) => roomTypeById.get(Number(roomId)) || String(roomId));
   const comboPrice = combo?.comboPrice ?? fallbackCombo?.price ?? 0;
 
   const imageUrls = [
@@ -246,12 +301,12 @@ export default async function ComboDetailPage({ params }: ComboDetailPageProps) 
               </div>
               <div className="bg-gray-50 rounded-lg p-4 col-span-2">
                 <p className="text-sm text-gray-500 mb-1">Suitable space</p>
-                <p className="font-semibold text-gray-900">{suitableSpace || tCommon('noData')}</p>
+                <p className="font-semibold text-gray-900">{suitableSpaceLabel || tCommon('noData')}</p>
               </div>
               <div className="bg-gray-50 rounded-lg p-4 col-span-2">
                 <p className="text-sm text-gray-500 mb-1">Suitable rooms</p>
                 <p className="font-semibold text-gray-900">
-                  {suitableRooms.length > 0 ? suitableRooms.join(', ') : tCommon('noData')}
+                  {suitableRoomLabels.length > 0 ? suitableRoomLabels.join(', ') : tCommon('noData')}
                 </p>
               </div>
             </div>

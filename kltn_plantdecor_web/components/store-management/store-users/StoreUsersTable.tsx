@@ -38,6 +38,7 @@ interface StoreUsersTableProps {
   onQuickAssign: (staffId: number, specializationId: number) => void;
   onChangePage: (_event: unknown, nextPage: number) => void;
   onChangeRowsPerPage: (nextPageSize: number) => void;
+  readOnly?: boolean;
 }
 
 const getStatusLabel = (status: number) => {
@@ -74,6 +75,7 @@ export default function StoreUsersTable({
   onQuickAssign,
   onChangePage,
   onChangeRowsPerPage,
+  readOnly = false,
 }: StoreUsersTableProps) {
   const [quickMenuAnchorEl, setQuickMenuAnchorEl] = useState<HTMLElement | null>(null);
   const [quickMenuStaffId, setQuickMenuStaffId] = useState<number | null>(null);
@@ -168,17 +170,19 @@ export default function StoreUsersTable({
                       </IconButton>
                     </Tooltip>
 
-                    <Tooltip title="Gán nhanh chuyên môn">
-                      <span>
-                        <IconButton
-                          color="secondary"
-                          onClick={(event) => openQuickMenu(event, staff.id)}
-                          disabled={getAvailableSpecializations(staff).length === 0}
-                        >
-                          <AddIcon />
-                        </IconButton>
-                      </span>
-                    </Tooltip>
+                    {!readOnly && (
+                      <Tooltip title="Gán nhanh chuyên môn">
+                        <span>
+                          <IconButton
+                            color="secondary"
+                            onClick={(event) => openQuickMenu(event, staff.id)}
+                            disabled={getAvailableSpecializations(staff).length === 0}
+                          >
+                            <AddIcon />
+                          </IconButton>
+                        </span>
+                      </Tooltip>
+                    )}
 
                     <Tooltip title="Xem lịch công việc">
                       <IconButton color="info" onClick={() => onViewSchedule(staff.id)}>

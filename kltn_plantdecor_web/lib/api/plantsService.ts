@@ -39,6 +39,8 @@ export interface PlantDetailResponse {
   potIncluded: boolean | null;
   potSize: string | null;
   careLevel: string;
+  roomType?: number[];
+  roomStyle?: number[];
   isActive: boolean;
   isUniqueInstance: boolean;
   createdAt: string;

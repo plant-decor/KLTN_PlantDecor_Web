@@ -64,6 +64,7 @@ export const ROLE_TO_ROUTES: Record<string, string[]> = {
     "ai-plant-recommendation",
   ],
   Customer: [
+    "services",
     "profile",
     "orders",
     "wishlist",
@@ -80,6 +81,8 @@ export const ROUTE_TO_ROLES: Record<string, string[]> = {
   caretaker: ["Admin", "Manager", "Caretaker"],
   shipper: ["Admin", "Manager", "Shipper"],
   consultant: ["Admin", "Manager", "Staff", "Consultant"],
+  services: ["Customer"],
+  cart: ["Customer"],
   dashboard: [
     "Admin",
     "Manager",

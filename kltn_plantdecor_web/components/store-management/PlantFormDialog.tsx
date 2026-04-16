@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Dialog,
   DialogTitle,
@@ -33,6 +34,7 @@ import type {
 import type { PlantGuideFormData } from '@/types/admin-plant-guide.types';
 import { FENG_SHUI_ELEMENT_OPTIONS } from '@/lib/utils/fengShui';
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils/formatUtil';
+import { localizeRoomDesignEnumLabel } from '@/lib/utils/roomDesignEnumI18n';
 
 interface OptionItem {
   id: number;
@@ -73,6 +75,8 @@ const defaultPlant: PlantFormData = {
   potSize: '',
   careLevelType: 0,
   careLevel: '',
+  roomType: [],
+  roomStyle: [],
   isActive: true,
   isUniqueInstance: false,
   categoryIds: [],
@@ -102,6 +106,7 @@ export default function PlantFormDialog({
   onSubmit,
   isLoading = false,
 }: PlantFormDialogProps) {
+  const tRoomDesignEnum = useTranslations('roomDesignEnums');
   const { control, handleSubmit, reset, setValue } = useForm<PlantFormData>({
     defaultValues: defaultPlant,
   });
@@ -135,6 +140,8 @@ export default function PlantFormDialog({
         potSize: editingData.potSize || '',
         careLevelType: editingData.careLevelType,
         careLevel: editingData.careLevel,
+        roomType: editingData.roomType || [],
+        roomStyle: editingData.roomStyle || [],
         isActive: editingData.isActive,
         isUniqueInstance: editingData.isUniqueInstance,
         categoryIds: editingData.categories.map((item) => item.id),
@@ -340,6 +347,88 @@ export default function PlantFormDialog({
                   render={({ field }) => <TextField {...field} label="Growth rate" fullWidth required />}
                 />
               </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Controller
+                  name="roomType"
+                  control={control}
+                  render={({ field }) => (
+                    <FormControl fullWidth>
+                      <InputLabel>Room type</InputLabel>
+                      <Select
+                        {...field}
+                        multiple
+                        label="Room type"
+                        value={field.value || []}
+                        onChange={(event) => {
+                          const raw = event.target.value as number[] | string[];
+                          field.onChange(raw.map((item) => Number(item)));
+                        }}
+                        renderValue={(selected) => (
+                          <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap">
+                            {(selected as number[]).map((id) => {
+                              const item = enums.roomTypes.find((option) => option.value === id);
+                              return (
+                                <Chip
+                                  key={id}
+                                  label={localizeRoomDesignEnumLabel(item?.name ?? id, tRoomDesignEnum, 'RoomType')}
+                                  size="small"
+                                />
+                              );
+                            })}
+                          </Stack>
+                        )}
+                      >
+                        {enums.roomTypes.map((item) => (
+                          <MenuItem key={item.value} value={item.value}>
+                            {localizeRoomDesignEnumLabel(item.name, tRoomDesignEnum, 'RoomType')}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  )}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Controller
+                  name="roomStyle"
+                  control={control}
+                  render={({ field }) => (
+                    <FormControl fullWidth>
+                      <InputLabel>Room style</InputLabel>
+                      <Select
+                        {...field}
+                        multiple
+                        label="Room style"
+                        value={field.value || []}
+                        onChange={(event) => {
+                          const raw = event.target.value as number[] | string[];
+                          field.onChange(raw.map((item) => Number(item)));
+                        }}
+                        renderValue={(selected) => (
+                          <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap">
+                            {(selected as number[]).map((id) => {
+                              const item = enums.roomStyles.find((option) => option.value === id);
+                              return (
+                                <Chip
+                                  key={id}
+                                  label={localizeRoomDesignEnumLabel(item?.name ?? id, tRoomDesignEnum, 'RoomStyle')}
+                                  size="small"
+                                />
+                              );
+                            })}
+                          </Stack>
+                        )}
+                      >
+                        {enums.roomStyles.map((item) => (
+                          <MenuItem key={item.value} value={item.value}>
+                            {localizeRoomDesignEnumLabel(item.name, tRoomDesignEnum, 'RoomStyle')}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  )}
+                />
+              </Grid>
             </Grid>
           </Box>
 
@@ -421,7 +510,9 @@ export default function PlantFormDialog({
                           Chọn ánh sáng
                         </MenuItem>
                         {enums.lightRequirements.map((item) => (
-                          <MenuItem key={item.value} value={item.name}>{item.name}</MenuItem>
+                          <MenuItem key={item.value} value={item.name}>
+                            {localizeRoomDesignEnumLabel(item.name, tRoomDesignEnum, 'LightRequirement')}
+                          </MenuItem>
                         ))}
                       </Select>
                     </FormControl>

@@ -28,6 +28,7 @@ import { searchShopNurseries, type ShopNurseryListItem } from '@/lib/api/shopPla
 import { getAllergyPlants } from '@/lib/api/aiRecommendationService';
 import type { AllergyPlantOption } from '@/types/ai-recommendation.types';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
+import { localizeRoomDesignEnumLabel } from '@/lib/utils/roomDesignEnumI18n';
 import ClickableImageViewer from '../image-view/ClickableImageViewer';
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -135,6 +136,7 @@ export default function RoomInputCard({
   onErrorDismiss,
 }: RoomInputCardProps) {
   const t = useTranslations('aiRecommendation.roomInput');
+  const tRoomDesignEnum = useTranslations('roomDesignEnums');
   const [imagePreviewUrlLocal, setImagePreviewUrl] = useState<string | null>(null);
   const [nurseryLoading, setNurseryLoading] = useState(false);
   const [nurseryOptions, setNurseryOptions] = useState<ShopNurseryListItem[]>([]);
@@ -296,7 +298,7 @@ export default function RoomInputCard({
           >
             {ROOM_TYPE_OPTIONS.map((option) => (
               <MenuItem key={option} value={option}>
-                {option}
+                {localizeRoomDesignEnumLabel(option, tRoomDesignEnum, 'RoomType')}
               </MenuItem>
             ))}
           </TextField>
@@ -311,7 +313,7 @@ export default function RoomInputCard({
           >
             {ROOM_STYLE_OPTIONS.map((option) => (
               <MenuItem key={option} value={option}>
-                {option}
+                {localizeRoomDesignEnumLabel(option, tRoomDesignEnum, 'RoomStyle')}
               </MenuItem>
             ))}
           </TextField>

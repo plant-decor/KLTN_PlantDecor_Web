@@ -12,6 +12,10 @@ import type {
   PlantComboUpdateRequest,
 } from '@/types/store-management.types';
 import {
+  fetchRoomDesignEnumOptions,
+  type SystemEnumOption,
+} from '@/lib/api/adminPlantGuidesService';
+import {
   addPlantComboItem,
   assignPlantComboTags,
   createAdminPlantCombo,
@@ -46,9 +50,18 @@ interface SavePlantComboParams {
   editingCombo?: PlantCombo;
 }
 
+interface ComboEnums {
+  lightRequirements: SystemEnumOption[];
+  roomTypes: SystemEnumOption[];
+  roomStyles: SystemEnumOption[];
+}
+
 interface UseAdminPlantCombosReturn {
   combos: PlantCombo[];
   comboPlants: Plant[];
+  enums: ComboEnums;
+  enumLoading: boolean;
+  enumError: string | null;
   saving: boolean;
   detailLoading: boolean;
   plantsLoading: boolean;
@@ -58,6 +71,7 @@ interface UseAdminPlantCombosReturn {
   fetchCombos: (params?: { pageNumber?: number; pageSize?: number }) => Promise<void>;
   fetchComboById: (id: number) => Promise<PlantCombo | null>;
   fetchComboPlants: (keyword?: string) => Promise<void>;
+  loadEnums: () => Promise<void>;
   savePlantCombo: (params: SavePlantComboParams) => Promise<boolean>;
   toggleComboActive: (id: number) => Promise<boolean>;
   setKeyword: (keyword: string) => void;
@@ -73,6 +87,12 @@ const defaultPagination: PaginationState = {
   totalPages: 1,
   hasPrevious: false,
   hasNext: false,
+};
+
+const EMPTY_ENUMS: ComboEnums = {
+  lightRequirements: [],
+  roomTypes: [],
+  roomStyles: [],
 };
 
 const getResponsePayload = <T,>(response: { data?: T; payload?: T }): T | undefined => {
@@ -100,14 +120,24 @@ const normalizeItemPayload = (item: PlantComboItem): PlantComboItemUpsertRequest
   };
 };
 
+const normalizeNumberArray = (values?: number[]): number[] => {
+  if (!Array.isArray(values)) {
+    return [];
+  }
+
+  return Array.from(
+    new Set(values.map((item) => Number(item)).filter((item) => Number.isInteger(item) && item > 0))
+  );
+};
+
 const normalizeCreatePayload = (formData: PlantComboFormData): PlantComboCreateRequest => {
   return {
     comboCode: formData.comboCode.trim(),
     comboName: formData.comboName.trim(),
     comboType: formData.comboType,
     description: formData.description.trim(),
-    suitableSpace: formData.suitableSpace.trim(),
-    suitableRooms: formData.suitableRooms.map((item) => item.trim()).filter(Boolean),
+    suitableSpace: Number(formData.suitableSpace) || 0,
+    suitableRooms: normalizeNumberArray(formData.suitableRooms),
     fengShuiElement: Number(formData.fengShuiElement) || 0,
     fengShuiPurpose: formData.fengShuiPurpose.trim(),
     themeName: formData.themeName.trim(),
@@ -124,8 +154,8 @@ const normalizeUpdatePayload = (formData: PlantComboFormData): PlantComboUpdateR
     comboName: formData.comboName.trim(),
     comboType: formData.comboType,
     description: formData.description.trim(),
-    suitableSpace: formData.suitableSpace.trim(),
-    suitableRooms: formData.suitableRooms.map((item) => item.trim()).filter(Boolean),
+    suitableSpace: Number(formData.suitableSpace) || 0,
+    suitableRooms: normalizeNumberArray(formData.suitableRooms),
     fengShuiElement: Number(formData.fengShuiElement) || 0,
     fengShuiPurpose: formData.fengShuiPurpose.trim(),
     themeName: formData.themeName.trim(),
@@ -148,6 +178,9 @@ const toComboId = (payload: unknown): number | null => {
 export const useAdminPlantCombos = (): UseAdminPlantCombosReturn => {
   const [combos, setCombos] = useState<PlantCombo[]>([]);
   const [comboPlants, setComboPlants] = useState<Plant[]>([]);
+  const [enums, setEnums] = useState<ComboEnums>(EMPTY_ENUMS);
+  const [enumLoading, setEnumLoading] = useState(false);
+  const [enumError, setEnumError] = useState<string | null>(null);
   const [, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -243,6 +276,20 @@ export const useAdminPlantCombos = (): UseAdminPlantCombosReturn => {
       if (requestId === plantSearchRequestRef.current) {
         setError(normalizeError(err));
       }
+    }
+  }, []);
+
+  const loadEnums = useCallback(async () => {
+    setEnumLoading(true);
+    setEnumError(null);
+
+    try {
+      const roomDesignOptions = await fetchRoomDesignEnumOptions(true);
+      setEnums(roomDesignOptions);
+    } catch (err) {
+      setEnumError(normalizeError(err));
+    } finally {
+      setEnumLoading(false);
     }
   }, []);
 
@@ -388,6 +435,9 @@ export const useAdminPlantCombos = (): UseAdminPlantCombosReturn => {
   return {
     combos,
     comboPlants,
+    enums,
+    enumLoading,
+    enumError,
     saving,
     detailLoading,
     plantsLoading,
@@ -397,6 +447,7 @@ export const useAdminPlantCombos = (): UseAdminPlantCombosReturn => {
     fetchCombos,
     fetchComboById,
     fetchComboPlants,
+    loadEnums,
     savePlantCombo,
     toggleComboActive,
     setKeyword,

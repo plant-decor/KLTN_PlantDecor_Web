@@ -4,6 +4,7 @@ import { getTranslations } from 'next-intl/server';
 import type { Metadata } from 'next';
 import { getPlantById, type PlantDetailResponse } from '@/lib/api/plantsService';
 import {
+  getRoomDesignEnums,
   getShopPlantInstanceById,
   type ShopPlantInstanceDetail,
   type ShopPlantInstanceImage,
@@ -15,6 +16,7 @@ import ProductDetailPurchasePanel from '@/components/product/ProductDetailPurcha
 import ClickableImageViewer from '@/components/image-view/ClickableImageViewer';
 import { getFengShuiColors, getFengShuiElementLabel } from '@/lib/utils/fengShui';
 import { formatCurrency } from '@/lib/utils/formatUtil';
+import { localizeRoomDesignEnumLabel } from '@/lib/utils/roomDesignEnumI18n';
 import { get } from '@/lib/api/apiService.server';
 import { ResponseModel } from '@/types/api.types';
 
@@ -53,6 +55,48 @@ const parsePositiveInt = (value: string | undefined): number | null => {
 };
 
 const serializeJsonLd = (data: unknown): string => JSON.stringify(data).replace(/</g, '\\u003c');
+
+const getRoomDesignLabelMaps = (
+  rawEnums: unknown,
+  tRoomDesignEnum: (key: string) => string
+) => {
+  const roomTypeById = new Map<number, string>();
+  const roomStyleById = new Map<number, string>();
+
+  const groups = Array.isArray(rawEnums) ? rawEnums : [];
+  groups.forEach((group) => {
+    if (!group || typeof group !== 'object') {
+      return;
+    }
+
+    const candidate = group as { enumName?: unknown; values?: unknown };
+    if (typeof candidate.enumName !== 'string' || !Array.isArray(candidate.values)) {
+      return;
+    }
+
+    candidate.values.forEach((valueItem) => {
+      if (!valueItem || typeof valueItem !== 'object') {
+        return;
+      }
+
+      const option = valueItem as { value?: unknown; name?: unknown };
+      const value = Number(option.value);
+      if (!Number.isInteger(value) || typeof option.name !== 'string') {
+        return;
+      }
+
+      if (candidate.enumName === 'RoomType') {
+        roomTypeById.set(value, localizeRoomDesignEnumLabel(option.name, tRoomDesignEnum, 'RoomType'));
+      }
+
+      if (candidate.enumName === 'RoomStyle') {
+        roomStyleById.set(value, localizeRoomDesignEnumLabel(option.name, tRoomDesignEnum, 'RoomStyle'));
+      }
+    });
+  });
+
+  return { roomTypeById, roomStyleById };
+};
 
 const toImageUrls = (images: PlantDetailResponse['images']): string[] => {
   if (!images || !Array.isArray(images)) {
@@ -233,6 +277,7 @@ const getNurseryCommonOrInstance = async (plant: PlantDetailResponse): Promise<N
 export default async function ProductDetailPage({ params, searchParams }: PageProps) {
   const [{ plantid, locale }, query] = await Promise.all([params, searchParams]);
   const t = await getTranslations({ locale, namespace: 'productDetail' });
+  const tRoomDesignEnum = await getTranslations({ locale, namespace: 'roomDesignEnums' });
   const booleanLabel = (value: boolean | null | undefined) => (value ? t('yes') : t('no'));
 
   const plantId = Number(plantid);
@@ -242,11 +287,16 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
 
   const selectedInstanceId = parsePositiveInt(toSingle(query.instanceId));
 
-  const response = await getPlantById(plantId, true, false);
+  const [response, roomDesignEnumsResponse] = await Promise.all([
+    getPlantById(plantId, true, false),
+    getRoomDesignEnums(true, false).catch(() => null),
+  ]);
   const plant = getPayload<PlantDetailResponse>(response);
   if (!plant) {
     notFound();
   }
+  const roomDesignEnums = getPayload(roomDesignEnumsResponse) ?? [];
+  const { roomTypeById, roomStyleById } = getRoomDesignLabelMaps(roomDesignEnums, tRoomDesignEnum);
 
   let selectedInstanceDetail: ShopPlantInstanceDetail | null = null;
   if (selectedInstanceId && plant.totalInstances > 0) {
@@ -271,6 +321,8 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
   const plantForActions = mapPlantDetailToSamplePlant(plant, mainImage);
   const isNurseryAvailable = await getNurseryCommonOrInstance(plant);
   const totalAvailableStock = getTotalAvailableStock(plant);
+  const roomTypeLabels = (plant.roomType ?? []).map((item) => roomTypeById.get(Number(item)) || String(item));
+  const roomStyleLabels = (plant.roomStyle ?? []).map((item) => roomStyleById.get(Number(item)) || String(item));
   const productJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -429,6 +481,18 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
               <div className="bg-gray-50 rounded-lg p-4">
                 <p className="text-sm text-gray-500 mb-1">{t('uniqueInstance')}</p>
                 <p className="font-semibold text-gray-900">{booleanLabel(plant.isUniqueInstance)}</p>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-4 col-span-2">
+                <p className="text-sm text-gray-500 mb-1">{t('roomType')}</p>
+                <p className="font-semibold text-gray-900">
+                  {roomTypeLabels.length > 0 ? roomTypeLabels.join(', ') : t('notAvailable')}
+                </p>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-4 col-span-2">
+                <p className="text-sm text-gray-500 mb-1">{t('roomStyle')}</p>
+                <p className="font-semibold text-gray-900">
+                  {roomStyleLabels.length > 0 ? roomStyleLabels.join(', ') : t('notAvailable')}
+                </p>
               </div>
             </div>
           </div>

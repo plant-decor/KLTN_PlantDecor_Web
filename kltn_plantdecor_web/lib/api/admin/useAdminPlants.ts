@@ -18,7 +18,7 @@ import {
 } from '@/lib/api/adminPlantsService';
 import {
   createAdminPlantGuide,
-  fetchLightRequirementOptions,
+  fetchRoomDesignEnumOptions,
   getAdminPlantGuideByPlantId,
   updateAdminPlantGuide,
 } from '@/lib/api/adminPlantGuidesService';
@@ -85,6 +85,8 @@ const EMPTY_ENUMS: PlantEnumPayload = {
   sizes: [],
   careLevelTypes: [],
   lightRequirements: [],
+  roomTypes: [],
+  roomStyles: [],
 };
 
 const defaultFilters: PlantFilters = {
@@ -121,6 +123,15 @@ const normalizeError = (err: unknown): string => {
 
 const toUpsertPayload = (data: PlantFormData): PlantUpsertRequest => {
   const normalizeText = (value: string) => value.trim();
+  const normalizeNumberArray = (values?: number[]) => {
+    if (!Array.isArray(values)) {
+      return [];
+    }
+
+    return Array.from(
+      new Set(values.map((item) => Number(item)).filter((item) => Number.isInteger(item) && item > 0))
+    );
+  };
 
   return {
     name: normalizeText(data.name),
@@ -142,6 +153,8 @@ const toUpsertPayload = (data: PlantFormData): PlantUpsertRequest => {
     potSize: normalizeText(data.potSize),
     careLevelType: data.careLevelType,
     careLevel: normalizeText(data.careLevel),
+    roomType: normalizeNumberArray(data.roomType),
+    roomStyle: normalizeNumberArray(data.roomStyle),
     isActive: data.isActive,
     isUniqueInstance: data.isUniqueInstance,
   };
@@ -175,6 +188,8 @@ const normalizeEnums = (groups: PlantEnumGroup[]): PlantEnumPayload => {
     sizes: byName.get('PlantSize')?.values ?? [],
     careLevelTypes: byName.get('CareLevelType')?.values ?? [],
     lightRequirements: [],
+    roomTypes: [],
+    roomStyles: [],
   };
 };
 
@@ -432,15 +447,17 @@ export const useAdminPlants = (): UseAdminPlantsReturn => {
     setEnumError(null);
 
     try {
-      const [plantEnumResponse, lightRequirementOptions] = await Promise.all([
+      const [plantEnumResponse, roomDesignOptions] = await Promise.all([
         getPlantEnums(true),
-        fetchLightRequirementOptions(true),
+        fetchRoomDesignEnumOptions(true),
       ]);
 
       const payload = getResponsePayload(plantEnumResponse) ?? [];
       setEnums({
         ...normalizeEnums(payload),
-        lightRequirements: lightRequirementOptions,
+        lightRequirements: roomDesignOptions.lightRequirements,
+        roomTypes: roomDesignOptions.roomTypes,
+        roomStyles: roomDesignOptions.roomStyles,
       });
     } catch (err) {
       setEnumError(normalizeError(err));

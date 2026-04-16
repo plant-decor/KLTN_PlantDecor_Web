@@ -157,10 +157,6 @@ export default function StoreUsersPageClient() {
     void fetchSpecializationOptions();
   }, [fetchList, fetchSpecializationOptions]);
 
-  const handleRefresh = () => {
-    void fetchList(pagination.pageNumber, pagination.pageSize);
-  };
-
   const handleViewDetail = (staffId: number) => {
     setDetailOpen(true);
     void fetchDetail(staffId);

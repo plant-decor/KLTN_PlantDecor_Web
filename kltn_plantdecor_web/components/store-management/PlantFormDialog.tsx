@@ -17,6 +17,7 @@ import {
   Divider,
   Typography,
   FormControl,
+  FormHelperText,
   InputLabel,
   MenuItem,
   Select,
@@ -35,6 +36,14 @@ import type { PlantGuideFormData } from '@/types/admin-plant-guide.types';
 import { FENG_SHUI_ELEMENT_OPTIONS } from '@/lib/utils/fengShui';
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils/formatUtil';
 import { localizeRoomDesignEnumLabel } from '@/lib/utils/roomDesignEnumI18n';
+import {
+  PLANT_GUIDE_LABELS,
+  BOOLEAN_FLAGS_LABELS,
+  mapEditingDataToForm,
+  getDefaultPlant,
+  handleMultipleSelectChange,
+  getValidationMessage,
+} from './PlantFormDialog.utils';
 
 interface OptionItem {
   id: number;
@@ -55,44 +64,6 @@ interface PlantFormDialogProps {
   isLoading?: boolean;
 }
 
-const defaultPlant: PlantFormData = {
-  name: '',
-  specificName: '',
-  origin: '',
-  description: '',
-  basePrice: 0,
-  placementType: 0,
-  size: 0,
-  growthRate: '',
-  toxicity: false,
-  airPurifying: false,
-  hasFlower: false,
-  petSafe: false,
-  childSafe: false,
-  fengShuiElement: 0,
-  fengShuiMeaning: '',
-  potIncluded: false,
-  potSize: '',
-  careLevelType: 0,
-  careLevel: '',
-  roomType: [],
-  roomStyle: [],
-  isActive: true,
-  isUniqueInstance: false,
-  categoryIds: [],
-  tagIds: [],
-  plantGuide: {
-    lightRequirement: '',
-    watering: '',
-    fertilizing: '',
-    pruning: '',
-    temperature: '',
-    humidity: '',
-    soil: '',
-    careNotes: '',
-  },
-};
-
 export default function PlantFormDialog({
   open,
   editingData,
@@ -108,7 +79,7 @@ export default function PlantFormDialog({
 }: PlantFormDialogProps) {
   const tRoomDesignEnum = useTranslations('roomDesignEnums');
   const { control, handleSubmit, reset, setValue } = useForm<PlantFormData>({
-    defaultValues: defaultPlant,
+    defaultValues: getDefaultPlant(),
   });
   const potIncluded = useWatch({ control, name: 'potIncluded' });
 
@@ -120,34 +91,7 @@ export default function PlantFormDialog({
     }
 
     if (editingData) {
-      reset({
-        name: editingData.name,
-        specificName: editingData.specificName || '',
-        origin: editingData.origin || '',
-        description: editingData.description || '',
-        basePrice: editingData.basePrice,
-        placementType: editingData.placementType,
-        size: editingData.size,
-        growthRate: editingData.growthRate || '',
-        toxicity: editingData.toxicity,
-        airPurifying: editingData.airPurifying,
-        hasFlower: editingData.hasFlower,
-        petSafe: editingData.petSafe,
-        childSafe: editingData.childSafe,
-        fengShuiElement: editingData.fengShuiElement ?? 0,
-        fengShuiMeaning: editingData.fengShuiMeaning || '',
-        potIncluded: editingData.potIncluded,
-        potSize: editingData.potSize || '',
-        careLevelType: editingData.careLevelType,
-        careLevel: editingData.careLevel,
-        roomType: editingData.roomType || [],
-        roomStyle: editingData.roomStyle || [],
-        isActive: editingData.isActive,
-        isUniqueInstance: editingData.isUniqueInstance,
-        categoryIds: editingData.categories.map((item) => item.id),
-        tagIds: editingData.tags.map((item) => item.id),
-        plantGuide: plantGuideData || defaultPlant.plantGuide,
-      });
+      reset(mapEditingDataToForm(editingData, plantGuideData));
 
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setImages(
@@ -162,7 +106,7 @@ export default function PlantFormDialog({
       return;
     }
 
-    reset(defaultPlant);
+    reset(getDefaultPlant());
     setImages([]);
   }, [editingData, open, plantGuideData, reset]);
 
@@ -171,13 +115,13 @@ export default function PlantFormDialog({
       return;
     }
 
-    if (enums.placementTypes[0]?.value) {
+    if (enums.placementTypes[0]?.value !== undefined) {
       setValue('placementType', enums.placementTypes[0].value);
     }
-    if (enums.sizes[0]?.value) {
+    if (enums.sizes[0]?.value !== undefined) {
       setValue('size', enums.sizes[0].value);
     }
-    if (enums.careLevelTypes[0]?.value) {
+    if (enums.careLevelTypes[0]?.value !== undefined) {
       setValue('careLevelType', enums.careLevelTypes[0].value);
     }
     if (enums.lightRequirements[0]?.name) {
@@ -213,7 +157,16 @@ export default function PlantFormDialog({
                   name="name"
                   control={control}
                   rules={{ required: true }}
-                  render={({ field }) => <TextField {...field} label="Plant name" fullWidth required />}
+                  render={({ field, fieldState }) => (
+                    <TextField
+                      {...field}
+                      label="Plant name"
+                      fullWidth
+                      required
+                      error={Boolean(fieldState.error)}
+                      helperText={getValidationMessage(fieldState.error)}
+                    />
+                  )}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -221,7 +174,16 @@ export default function PlantFormDialog({
                   name="specificName"
                   control={control}
                   rules={{ required: true }}
-                  render={({ field }) => <TextField {...field} label="Specific name" fullWidth required />}
+                  render={({ field, fieldState }) => (
+                    <TextField
+                      {...field}
+                      label="Specific name"
+                      fullWidth
+                      required
+                      error={Boolean(fieldState.error)}
+                      helperText={getValidationMessage(fieldState.error)}
+                    />
+                  )}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -229,7 +191,16 @@ export default function PlantFormDialog({
                   name="origin"
                   control={control}
                   rules={{ required: true }}
-                  render={({ field }) => <TextField {...field} label="Origin" fullWidth required />}
+                  render={({ field, fieldState }) => (
+                    <TextField
+                      {...field}
+                      label="Origin"
+                      fullWidth
+                      required
+                      error={Boolean(fieldState.error)}
+                      helperText={getValidationMessage(fieldState.error)}
+                    />
+                  )}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -237,7 +208,7 @@ export default function PlantFormDialog({
                   name="basePrice"
                   control={control}
                   rules={{ required: true, min: 0 }}
-                  render={({ field }) => (
+                  render={({ field, fieldState }) => (
                     <TextField
                       {...field}
                       value={formatCurrencyInput(field.value ?? 0, 'vi')}
@@ -246,6 +217,8 @@ export default function PlantFormDialog({
                       type="text"
                       inputProps={{ inputMode: 'numeric' }}
                       onChange={(e) => field.onChange(parseCurrencyInput(e.target.value))}
+                      error={Boolean(fieldState.error)}
+                      helperText={getValidationMessage(fieldState.error)}
                     />
                   )}
                 />
@@ -255,7 +228,18 @@ export default function PlantFormDialog({
                   name="description"
                   control={control}
                   rules={{ required: true }}
-                  render={({ field }) => <TextField {...field} label="Description" fullWidth multiline rows={3} required />}
+                  render={({ field, fieldState }) => (
+                    <TextField
+                      {...field}
+                      label="Description"
+                      fullWidth
+                      multiline
+                      rows={3}
+                      required
+                      error={Boolean(fieldState.error)}
+                      helperText={getValidationMessage(fieldState.error)}
+                    />
+                  )}
                 />
               </Grid>
             </Grid>
@@ -272,9 +256,9 @@ export default function PlantFormDialog({
                 <Controller
                   name="placementType"
                   control={control}
-                  rules={{ required: true, min: 1 }}
-                  render={({ field }) => (
-                    <FormControl fullWidth>
+                  rules={{ required: true, min: 0 }}
+                  render={({ field, fieldState }) => (
+                    <FormControl fullWidth error={Boolean(fieldState.error)}>
                       <InputLabel>Placement type</InputLabel>
                       <Select
                         {...field}
@@ -285,6 +269,7 @@ export default function PlantFormDialog({
                           <MenuItem key={item.value} value={item.value}>{item.name}</MenuItem>
                         ))}
                       </Select>
+                      <FormHelperText>{getValidationMessage(fieldState.error)}</FormHelperText>
                     </FormControl>
                   )}
                 />
@@ -293,9 +278,9 @@ export default function PlantFormDialog({
                 <Controller
                   name="size"
                   control={control}
-                  rules={{ required: true, min: 1 }}
-                  render={({ field }) => (
-                    <FormControl fullWidth>
+                  rules={{ required: true, min: 0 }}
+                  render={({ field, fieldState }) => (
+                    <FormControl fullWidth error={Boolean(fieldState.error)}>
                       <InputLabel>Size</InputLabel>
                       <Select
                         {...field}
@@ -306,6 +291,7 @@ export default function PlantFormDialog({
                           <MenuItem key={item.value} value={item.value}>{item.name}</MenuItem>
                         ))}
                       </Select>
+                      <FormHelperText>{getValidationMessage(fieldState.error)}</FormHelperText>
                     </FormControl>
                   )}
                 />
@@ -314,9 +300,9 @@ export default function PlantFormDialog({
                 <Controller
                   name="careLevelType"
                   control={control}
-                  rules={{ required: true, min: 1 }}
-                  render={({ field }) => (
-                    <FormControl fullWidth>
+                  rules={{ required: true, min: 0 }}
+                  render={({ field, fieldState }) => (
+                    <FormControl fullWidth error={Boolean(fieldState.error)}>
                       <InputLabel>Care level type</InputLabel>
                       <Select
                         {...field}
@@ -327,6 +313,7 @@ export default function PlantFormDialog({
                           <MenuItem key={item.value} value={item.value}>{item.name}</MenuItem>
                         ))}
                       </Select>
+                      <FormHelperText>{getValidationMessage(fieldState.error)}</FormHelperText>
                     </FormControl>
                   )}
                 />
@@ -336,7 +323,16 @@ export default function PlantFormDialog({
                   name="careLevel"
                   control={control}
                   rules={{ required: true }}
-                  render={({ field }) => <TextField {...field} label="Care level" fullWidth required />}
+                  render={({ field, fieldState }) => (
+                    <TextField
+                      {...field}
+                      label="Care level"
+                      fullWidth
+                      required
+                      error={Boolean(fieldState.error)}
+                      helperText={getValidationMessage(fieldState.error)}
+                    />
+                  )}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -344,7 +340,16 @@ export default function PlantFormDialog({
                   name="growthRate"
                   control={control}
                   rules={{ required: true }}
-                  render={({ field }) => <TextField {...field} label="Growth rate" fullWidth required />}
+                  render={({ field, fieldState }) => (
+                    <TextField
+                      {...field}
+                      label="Growth rate"
+                      fullWidth
+                      required
+                      error={Boolean(fieldState.error)}
+                      helperText={getValidationMessage(fieldState.error)}
+                    />
+                  )}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -360,8 +365,7 @@ export default function PlantFormDialog({
                         label="Room type"
                         value={field.value || []}
                         onChange={(event) => {
-                          const raw = event.target.value as number[] | string[];
-                          field.onChange(raw.map((item) => Number(item)));
+                          field.onChange(handleMultipleSelectChange(event.target.value as number[] | string[]));
                         }}
                         renderValue={(selected) => (
                           <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap">
@@ -401,8 +405,7 @@ export default function PlantFormDialog({
                         label="Room style"
                         value={field.value || []}
                         onChange={(event) => {
-                          const raw = event.target.value as number[] | string[];
-                          field.onChange(raw.map((item) => Number(item)));
+                          field.onChange(handleMultipleSelectChange(event.target.value as number[] | string[]));
                         }}
                         renderValue={(selected) => (
                           <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap">
@@ -444,8 +447,8 @@ export default function PlantFormDialog({
                   name="fengShuiElement"
                   control={control}
                   rules={{ required: true, min: 1 }}
-                  render={({ field }) => (
-                    <FormControl fullWidth required>
+                  render={({ field, fieldState }) => (
+                    <FormControl fullWidth required error={Boolean(fieldState.error)}>
                       <InputLabel>Feng shui element</InputLabel>
                       <Select
                         {...field}
@@ -459,6 +462,7 @@ export default function PlantFormDialog({
                           <MenuItem key={item.value} value={item.value}>{item.label}</MenuItem>
                         ))}
                       </Select>
+                      <FormHelperText>{getValidationMessage(fieldState.error)}</FormHelperText>
                     </FormControl>
                   )}
                 />
@@ -468,7 +472,16 @@ export default function PlantFormDialog({
                   name="fengShuiMeaning"
                   control={control}
                   rules={{ required: true }}
-                  render={({ field }) => <TextField {...field} label="Feng shui meaning" fullWidth required />}
+                  render={({ field, fieldState }) => (
+                    <TextField
+                      {...field}
+                      label="Feng shui meaning"
+                      fullWidth
+                      required
+                      error={Boolean(fieldState.error)}
+                      helperText={getValidationMessage(fieldState.error)}
+                    />
+                  )}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -481,10 +494,19 @@ export default function PlantFormDialog({
                         return true;
                       }
 
-                      return Boolean(value?.trim());
+                      return Boolean(value?.trim()) || 'Pot size is required when pot is included.';
                     },
                   }}
-                  render={({ field }) => <TextField {...field} label="Pot size" fullWidth required={potIncluded} />}
+                  render={({ field, fieldState }) => (
+                    <TextField
+                      {...field}
+                      label="Pot size"
+                      fullWidth
+                      required={potIncluded}
+                      error={Boolean(fieldState.error)}
+                      helperText={getValidationMessage(fieldState.error)}
+                    />
+                  )}
                 />
               </Grid>
             </Grid>
@@ -502,12 +524,12 @@ export default function PlantFormDialog({
                   name="plantGuide.lightRequirement"
                   control={control}
                   rules={{ required: true }}
-                  render={({ field }) => (
-                    <FormControl fullWidth required>
-                      <InputLabel>Ánh sáng</InputLabel>
-                      <Select {...field} label="Ánh sáng">
+                  render={({ field, fieldState }) => (
+                    <FormControl fullWidth required error={Boolean(fieldState.error)}>
+                      <InputLabel>{PLANT_GUIDE_LABELS.lightRequirement}</InputLabel>
+                      <Select {...field} label={PLANT_GUIDE_LABELS.lightRequirement}>
                         <MenuItem value="" disabled>
-                          Chọn ánh sáng
+                          {PLANT_GUIDE_LABELS.lightRequirementPlaceholder}
                         </MenuItem>
                         {enums.lightRequirements.map((item) => (
                           <MenuItem key={item.value} value={item.name}>
@@ -515,6 +537,7 @@ export default function PlantFormDialog({
                           </MenuItem>
                         ))}
                       </Select>
+                      <FormHelperText>{getValidationMessage(fieldState.error)}</FormHelperText>
                     </FormControl>
                   )}
                 />
@@ -524,7 +547,16 @@ export default function PlantFormDialog({
                   name="plantGuide.watering"
                   control={control}
                   rules={{ required: true }}
-                  render={({ field }) => <TextField {...field} label="Tưới nước" fullWidth required />}
+                  render={({ field, fieldState }) => (
+                    <TextField
+                      {...field}
+                      label={PLANT_GUIDE_LABELS.watering}
+                      fullWidth
+                      required
+                      error={Boolean(fieldState.error)}
+                      helperText={getValidationMessage(fieldState.error)}
+                    />
+                  )}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -532,7 +564,16 @@ export default function PlantFormDialog({
                   name="plantGuide.fertilizing"
                   control={control}
                   rules={{ required: true }}
-                  render={({ field }) => <TextField {...field} label="Bón phân" fullWidth required />}
+                  render={({ field, fieldState }) => (
+                    <TextField
+                      {...field}
+                      label={PLANT_GUIDE_LABELS.fertilizing}
+                      fullWidth
+                      required
+                      error={Boolean(fieldState.error)}
+                      helperText={getValidationMessage(fieldState.error)}
+                    />
+                  )}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -540,7 +581,16 @@ export default function PlantFormDialog({
                   name="plantGuide.pruning"
                   control={control}
                   rules={{ required: true }}
-                  render={({ field }) => <TextField {...field} label="Cắt tỉa" fullWidth required />}
+                  render={({ field, fieldState }) => (
+                    <TextField
+                      {...field}
+                      label={PLANT_GUIDE_LABELS.pruning}
+                      fullWidth
+                      required
+                      error={Boolean(fieldState.error)}
+                      helperText={getValidationMessage(fieldState.error)}
+                    />
+                  )}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -548,7 +598,16 @@ export default function PlantFormDialog({
                   name="plantGuide.temperature"
                   control={control}
                   rules={{ required: true }}
-                  render={({ field }) => <TextField {...field} label="Nhiệt độ" fullWidth required />}
+                  render={({ field, fieldState }) => (
+                    <TextField
+                      {...field}
+                      label={PLANT_GUIDE_LABELS.temperature}
+                      fullWidth
+                      required
+                      error={Boolean(fieldState.error)}
+                      helperText={getValidationMessage(fieldState.error)}
+                    />
+                  )}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -556,7 +615,16 @@ export default function PlantFormDialog({
                   name="plantGuide.humidity"
                   control={control}
                   rules={{ required: true }}
-                  render={({ field }) => <TextField {...field} label="Độ ẩm" fullWidth required />}
+                  render={({ field, fieldState }) => (
+                    <TextField
+                      {...field}
+                      label={PLANT_GUIDE_LABELS.humidity}
+                      fullWidth
+                      required
+                      error={Boolean(fieldState.error)}
+                      helperText={getValidationMessage(fieldState.error)}
+                    />
+                  )}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -564,7 +632,16 @@ export default function PlantFormDialog({
                   name="plantGuide.soil"
                   control={control}
                   rules={{ required: true }}
-                  render={({ field }) => <TextField {...field} label="Đất trồng" fullWidth required />}
+                  render={({ field, fieldState }) => (
+                    <TextField
+                      {...field}
+                      label={PLANT_GUIDE_LABELS.soil}
+                      fullWidth
+                      required
+                      error={Boolean(fieldState.error)}
+                      helperText={getValidationMessage(fieldState.error)}
+                    />
+                  )}
                 />
               </Grid>
               <Grid size={{ xs: 12 }}>
@@ -572,7 +649,18 @@ export default function PlantFormDialog({
                   name="plantGuide.careNotes"
                   control={control}
                   rules={{ required: true }}
-                  render={({ field }) => <TextField {...field} label="Ghi chú chăm sóc" fullWidth multiline minRows={4} required />}
+                  render={({ field, fieldState }) => (
+                    <TextField
+                      {...field}
+                      label={PLANT_GUIDE_LABELS.careNotes}
+                      fullWidth
+                      multiline
+                      minRows={4}
+                      required
+                      error={Boolean(fieldState.error)}
+                      helperText={getValidationMessage(fieldState.error)}
+                    />
+                  )}
                 />
               </Grid>
             </Grid>
@@ -598,8 +686,7 @@ export default function PlantFormDialog({
                         label="Categories"
                         value={field.value || []}
                         onChange={(event) => {
-                          const raw = event.target.value as number[] | string[];
-                          field.onChange(raw.map((item) => Number(item)));
+                          field.onChange(handleMultipleSelectChange(event.target.value as number[] | string[]));
                         }}
                         renderValue={(selected) => (
                           <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap">
@@ -631,8 +718,7 @@ export default function PlantFormDialog({
                         label="Tags"
                         value={field.value || []}
                         onChange={(event) => {
-                          const raw = event.target.value as number[] | string[];
-                          field.onChange(raw.map((item) => Number(item)));
+                          field.onChange(handleMultipleSelectChange(event.target.value as number[] | string[]));
                         }}
                         renderValue={(selected) => (
                           <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap">
@@ -661,14 +747,25 @@ export default function PlantFormDialog({
               Boolean flags
             </Typography>
             <Grid container spacing={1}>
-              <Grid size={{ xs: 6, sm: 3 }}><Controller name="toxicity" control={control} render={({ field }) => <FormControlLabel control={<Checkbox checked={field.value} onChange={(e) => field.onChange(e.target.checked)} />} label="Toxicity" />} /></Grid>
-              <Grid size={{ xs: 6, sm: 3 }}><Controller name="airPurifying" control={control} render={({ field }) => <FormControlLabel control={<Checkbox checked={field.value} onChange={(e) => field.onChange(e.target.checked)} />} label="Air purifying" />} /></Grid>
-              <Grid size={{ xs: 6, sm: 3 }}><Controller name="hasFlower" control={control} render={({ field }) => <FormControlLabel control={<Checkbox checked={field.value} onChange={(e) => field.onChange(e.target.checked)} />} label="Has flower" />} /></Grid>
-              <Grid size={{ xs: 6, sm: 3 }}><Controller name="petSafe" control={control} render={({ field }) => <FormControlLabel control={<Checkbox checked={field.value} onChange={(e) => field.onChange(e.target.checked)} />} label="Pet safe" />} /></Grid>
-              <Grid size={{ xs: 6, sm: 3 }}><Controller name="childSafe" control={control} render={({ field }) => <FormControlLabel control={<Checkbox checked={field.value} onChange={(e) => field.onChange(e.target.checked)} />} label="Child safe" />} /></Grid>
-              <Grid size={{ xs: 6, sm: 3 }}><Controller name="potIncluded" control={control} render={({ field }) => <FormControlLabel control={<Checkbox checked={field.value} onChange={(e) => field.onChange(e.target.checked)} />} label="Pot included" />} /></Grid>
-              <Grid size={{ xs: 6, sm: 3 }}><Controller name="isUniqueInstance" control={control} render={({ field }) => <FormControlLabel control={<Checkbox checked={field.value} onChange={(e) => field.onChange(e.target.checked)} />} label="Unique instance" />} /></Grid>
-              <Grid size={{ xs: 6, sm: 3 }}><Controller name="isActive" control={control} render={({ field }) => <FormControlLabel control={<Checkbox checked={field.value} onChange={(e) => field.onChange(e.target.checked)} />} label="Active" />} /></Grid>
+              {(Object.entries(BOOLEAN_FLAGS_LABELS) as Array<[
+                keyof typeof BOOLEAN_FLAGS_LABELS,
+                string,
+              ]>).map(
+                ([fieldName, label]) => (
+                  <Grid key={fieldName} size={{ xs: 6, sm: 3 }}>
+                    <Controller
+                      name={fieldName}
+                      control={control}
+                      render={({ field }) => (
+                        <FormControlLabel
+                          control={<Checkbox checked={field.value} onChange={(e) => field.onChange(e.target.checked)} />}
+                          label={label}
+                        />
+                      )}
+                    />
+                  </Grid>
+                )
+              )}
             </Grid>
           </Box>
 

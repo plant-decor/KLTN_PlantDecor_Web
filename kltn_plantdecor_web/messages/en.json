@@ -540,7 +540,10 @@
   },
   "orderHistory": {
     "title": "Order history",
+    "allOrdersTab": "All orders",
+    "pendingPaymentTab": "Pending payment",
     "noOrdersFound": "No orders found",
+    "noPendingOrdersFound": "No pending-payment orders found",
     "orderType": {
       "uniquePlant": "Unique plant",
       "buyNow": "Buy now",
@@ -551,6 +554,7 @@
     "moreItems": "more item(s)",
     "total": "Total",
     "viewDetail": "View detail",
+    "payNow": "Pay now",
     "retryPayment": "Retry payment",
     "retryingPayment": "Retrying...",
     "retryPaymentFailed": "Failed to retry payment. Please try again.",

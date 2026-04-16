@@ -84,6 +84,7 @@ export default function PlantFormDialog({
   const potIncluded = useWatch({ control, name: 'potIncluded' });
 
   const [images, setImages] = useState<ImageUploadData[]>([]);
+  const [includePlantGuide, setIncludePlantGuide] = useState(false);
 
   useEffect(() => {
     if (!open) {
@@ -92,6 +93,7 @@ export default function PlantFormDialog({
 
     if (editingData) {
       reset(mapEditingDataToForm(editingData, plantGuideData));
+      setIncludePlantGuide(Boolean(plantGuideData));
 
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setImages(
@@ -107,11 +109,12 @@ export default function PlantFormDialog({
     }
 
     reset(getDefaultPlant());
+    setIncludePlantGuide(false);
     setImages([]);
   }, [editingData, open, plantGuideData, reset]);
 
   useEffect(() => {
-    if (!open || editingData) {
+    if (!open || editingData || !includePlantGuide) {
       return;
     }
 
@@ -124,13 +127,21 @@ export default function PlantFormDialog({
     if (enums.careLevelTypes[0]?.value !== undefined) {
       setValue('careLevelType', enums.careLevelTypes[0].value);
     }
-    if (enums.lightRequirements[0]?.name) {
+    if (enums.lightRequirements[0]?.name && !editingData) {
       setValue('plantGuide.lightRequirement', enums.lightRequirements[0].name);
     }
-  }, [editingData, enums.careLevelTypes, enums.lightRequirements, enums.placementTypes, enums.sizes, open, setValue]);
+  }, [editingData, enums.careLevelTypes, enums.lightRequirements, enums.placementTypes, enums.sizes, includePlantGuide, open, setValue]);
 
   const handleFormSubmit = (data: PlantFormData) => {
-    onSubmit(data, images);
+    onSubmit(
+      includePlantGuide
+        ? data
+        : {
+            ...data,
+            plantGuide: undefined,
+          },
+      images
+    );
   };
 
   const isEnumReady =
@@ -515,155 +526,176 @@ export default function PlantFormDialog({
           <Divider />
 
           <Box>
-            <Typography variant="h6" fontWeight="600" gutterBottom>
-              Plant Guide
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Controller
-                  name="plantGuide.lightRequirement"
-                  control={control}
-                  rules={{ required: true }}
-                  render={({ field, fieldState }) => (
-                    <FormControl fullWidth required error={Boolean(fieldState.error)}>
-                      <InputLabel>{PLANT_GUIDE_LABELS.lightRequirement}</InputLabel>
-                      <Select {...field} label={PLANT_GUIDE_LABELS.lightRequirement}>
-                        <MenuItem value="" disabled>
-                          {PLANT_GUIDE_LABELS.lightRequirementPlaceholder}
-                        </MenuItem>
-                        {enums.lightRequirements.map((item) => (
-                          <MenuItem key={item.value} value={item.name}>
-                            {localizeRoomDesignEnumLabel(item.name, tRoomDesignEnum, 'LightRequirement')}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                      <FormHelperText>{getValidationMessage(fieldState.error)}</FormHelperText>
-                    </FormControl>
-                  )}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Controller
-                  name="plantGuide.watering"
-                  control={control}
-                  rules={{ required: true }}
-                  render={({ field, fieldState }) => (
-                    <TextField
-                      {...field}
-                      label={PLANT_GUIDE_LABELS.watering}
-                      fullWidth
-                      required
-                      error={Boolean(fieldState.error)}
-                      helperText={getValidationMessage(fieldState.error)}
+            <Stack spacing={1.5}>
+              <Box>
+                <Typography variant="h6" fontWeight="600" gutterBottom>
+                  Plant Guide
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Plant Guide is optional. You can add or update it later from the plant edit form or in
+                  /admin/plant-guide-management.
+                </Typography>
+              </Box>
+
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={includePlantGuide}
+                    onChange={(event) => setIncludePlantGuide(event.target.checked)}
+                  />
+                }
+                label="Add plant guide now"
+              />
+
+              {includePlantGuide && (
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Controller
+                      name="plantGuide.lightRequirement"
+                      control={control}
+                      rules={{ required: true }}
+                      render={({ field, fieldState }) => (
+                        <FormControl fullWidth required error={Boolean(fieldState.error)}>
+                          <InputLabel>{PLANT_GUIDE_LABELS.lightRequirement}</InputLabel>
+                          <Select {...field} label={PLANT_GUIDE_LABELS.lightRequirement}>
+                            <MenuItem value="" disabled>
+                              {PLANT_GUIDE_LABELS.lightRequirementPlaceholder}
+                            </MenuItem>
+                            {enums.lightRequirements.map((item) => (
+                              <MenuItem key={item.value} value={item.name}>
+                                {localizeRoomDesignEnumLabel(item.name, tRoomDesignEnum, 'LightRequirement')}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                          <FormHelperText>{getValidationMessage(fieldState.error)}</FormHelperText>
+                        </FormControl>
+                      )}
                     />
-                  )}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Controller
-                  name="plantGuide.fertilizing"
-                  control={control}
-                  rules={{ required: true }}
-                  render={({ field, fieldState }) => (
-                    <TextField
-                      {...field}
-                      label={PLANT_GUIDE_LABELS.fertilizing}
-                      fullWidth
-                      required
-                      error={Boolean(fieldState.error)}
-                      helperText={getValidationMessage(fieldState.error)}
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Controller
+                      name="plantGuide.watering"
+                      control={control}
+                      rules={{ required: true }}
+                      render={({ field, fieldState }) => (
+                        <TextField
+                          {...field}
+                          label={PLANT_GUIDE_LABELS.watering}
+                          fullWidth
+                          required
+                          error={Boolean(fieldState.error)}
+                          helperText={getValidationMessage(fieldState.error)}
+                        />
+                      )}
                     />
-                  )}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Controller
-                  name="plantGuide.pruning"
-                  control={control}
-                  rules={{ required: true }}
-                  render={({ field, fieldState }) => (
-                    <TextField
-                      {...field}
-                      label={PLANT_GUIDE_LABELS.pruning}
-                      fullWidth
-                      required
-                      error={Boolean(fieldState.error)}
-                      helperText={getValidationMessage(fieldState.error)}
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Controller
+                      name="plantGuide.fertilizing"
+                      control={control}
+                      rules={{ required: true }}
+                      render={({ field, fieldState }) => (
+                        <TextField
+                          {...field}
+                          label={PLANT_GUIDE_LABELS.fertilizing}
+                          fullWidth
+                          required
+                          error={Boolean(fieldState.error)}
+                          helperText={getValidationMessage(fieldState.error)}
+                        />
+                      )}
                     />
-                  )}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Controller
-                  name="plantGuide.temperature"
-                  control={control}
-                  rules={{ required: true }}
-                  render={({ field, fieldState }) => (
-                    <TextField
-                      {...field}
-                      label={PLANT_GUIDE_LABELS.temperature}
-                      fullWidth
-                      required
-                      error={Boolean(fieldState.error)}
-                      helperText={getValidationMessage(fieldState.error)}
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Controller
+                      name="plantGuide.pruning"
+                      control={control}
+                      rules={{ required: true }}
+                      render={({ field, fieldState }) => (
+                        <TextField
+                          {...field}
+                          label={PLANT_GUIDE_LABELS.pruning}
+                          fullWidth
+                          required
+                          error={Boolean(fieldState.error)}
+                          helperText={getValidationMessage(fieldState.error)}
+                        />
+                      )}
                     />
-                  )}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Controller
-                  name="plantGuide.humidity"
-                  control={control}
-                  rules={{ required: true }}
-                  render={({ field, fieldState }) => (
-                    <TextField
-                      {...field}
-                      label={PLANT_GUIDE_LABELS.humidity}
-                      fullWidth
-                      required
-                      error={Boolean(fieldState.error)}
-                      helperText={getValidationMessage(fieldState.error)}
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Controller
+                      name="plantGuide.temperature"
+                      control={control}
+                      rules={{ required: true }}
+                      render={({ field, fieldState }) => (
+                        <TextField
+                          {...field}
+                          label={PLANT_GUIDE_LABELS.temperature}
+                          fullWidth
+                          required
+                          error={Boolean(fieldState.error)}
+                          helperText={getValidationMessage(fieldState.error)}
+                        />
+                      )}
                     />
-                  )}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Controller
-                  name="plantGuide.soil"
-                  control={control}
-                  rules={{ required: true }}
-                  render={({ field, fieldState }) => (
-                    <TextField
-                      {...field}
-                      label={PLANT_GUIDE_LABELS.soil}
-                      fullWidth
-                      required
-                      error={Boolean(fieldState.error)}
-                      helperText={getValidationMessage(fieldState.error)}
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Controller
+                      name="plantGuide.humidity"
+                      control={control}
+                      rules={{ required: true }}
+                      render={({ field, fieldState }) => (
+                        <TextField
+                          {...field}
+                          label={PLANT_GUIDE_LABELS.humidity}
+                          fullWidth
+                          required
+                          error={Boolean(fieldState.error)}
+                          helperText={getValidationMessage(fieldState.error)}
+                        />
+                      )}
                     />
-                  )}
-                />
-              </Grid>
-              <Grid size={{ xs: 12 }}>
-                <Controller
-                  name="plantGuide.careNotes"
-                  control={control}
-                  rules={{ required: true }}
-                  render={({ field, fieldState }) => (
-                    <TextField
-                      {...field}
-                      label={PLANT_GUIDE_LABELS.careNotes}
-                      fullWidth
-                      multiline
-                      minRows={4}
-                      required
-                      error={Boolean(fieldState.error)}
-                      helperText={getValidationMessage(fieldState.error)}
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Controller
+                      name="plantGuide.soil"
+                      control={control}
+                      rules={{ required: true }}
+                      render={({ field, fieldState }) => (
+                        <TextField
+                          {...field}
+                          label={PLANT_GUIDE_LABELS.soil}
+                          fullWidth
+                          required
+                          error={Boolean(fieldState.error)}
+                          helperText={getValidationMessage(fieldState.error)}
+                        />
+                      )}
                     />
-                  )}
-                />
-              </Grid>
-            </Grid>
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <Controller
+                      name="plantGuide.careNotes"
+                      control={control}
+                      rules={{ required: true }}
+                      render={({ field, fieldState }) => (
+                        <TextField
+                          {...field}
+                          label={PLANT_GUIDE_LABELS.careNotes}
+                          fullWidth
+                          multiline
+                          minRows={4}
+                          required
+                          error={Boolean(fieldState.error)}
+                          helperText={getValidationMessage(fieldState.error)}
+                        />
+                      )}
+                    />
+                  </Grid>
+                </Grid>
+              )}
+            </Stack>
           </Box>
 
           <Divider />

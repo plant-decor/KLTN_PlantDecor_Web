@@ -230,8 +230,8 @@ export const useAdminPlantCombos = (): UseAdminPlantCombosReturn => {
           keyword: normalizedKeyword,
           isActive: true,
           isUniqueInstance: false,
-          sortBy: 'name',
-          sortDirection: 'asc',
+          sortBy: '',
+          sortDirection: '',
         },
         true
       );

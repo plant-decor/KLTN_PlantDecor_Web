@@ -180,12 +180,11 @@ export default function PlantComboFormDialog({
   }, [comboItems, plantOptions, selectedPlantMap]);
 
   const hasKeyword = keyword.trim().length > 0;
-  const loading = plantsLoading;
   const items = plants;
-  const showSuggestionDropdown = searchOpen && (hasKeyword || loading);
+  const showSuggestionDropdown = searchOpen && (hasKeyword);
   const noResults = useMemo(
-    () => hasKeyword && !loading && items.length === 0,
-    [hasKeyword, loading, items.length]
+    () => hasKeyword && items.length === 0,
+    [hasKeyword, items.length]
   );
 
   useEffect(() => {

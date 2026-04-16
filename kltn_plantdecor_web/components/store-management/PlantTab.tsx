@@ -123,8 +123,8 @@ export default function PlantTab({}: PlantTabProps) {
     void fetchPlants({
       pagination: { pageNumber: 1, pageSize: 10 },
       keyword: '',
-      sortBy: 'name',
-      sortDirection: 'asc',
+      sortBy: '',
+      sortDirection: '',
     });
     void fetchCategoryTree();
     void fetchTags({ pageNumber: 1, pageSize: 1000 });

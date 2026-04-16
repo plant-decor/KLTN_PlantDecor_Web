@@ -89,8 +89,8 @@ const EMPTY_ENUMS: PlantEnumPayload = {
 
 const defaultFilters: PlantFilters = {
   keyword: '',
-  sortBy: 'name',
-  sortDirection: 'asc',
+  sortBy: '',
+  sortDirection: '',
 };
 
 const defaultPagination: PaginationState = {

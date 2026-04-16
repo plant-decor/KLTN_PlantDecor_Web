@@ -180,7 +180,7 @@ export default function OrderHistoryList({
                       </Avatar>
                     ) : (
                       <Image
-                        src={item.imageUrl || '/img/fallbackplant.avif'}
+                        src={item.imageUrl || ORDER_ITEM_FALLBACK_IMAGE}
                         alt={item.itemName}
                         width={60}
                         height={60}

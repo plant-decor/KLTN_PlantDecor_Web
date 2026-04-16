@@ -57,6 +57,7 @@ interface OrderHistoryListProps {
   onViewDetail: (orderId: number) => void;
   onRetryPayment: (orderId: number) => Promise<void>;
   onCancelOrder: (orderId: number) => Promise<void>;
+  emptyMessage?: string;
 }
 
 export default function OrderHistoryList({
@@ -67,6 +68,7 @@ export default function OrderHistoryList({
   onViewDetail,
   onRetryPayment,
   onCancelOrder,
+  emptyMessage,
 }: OrderHistoryListProps) {
   const tOrderHistory = useTranslations('orderHistory');
 
@@ -106,7 +108,7 @@ export default function OrderHistoryList({
           <Box sx={{ textAlign: 'center', py: 8 }}>
             <ShoppingCartIcon sx={{ fontSize: 80, color: 'text.secondary', mb: 2 }} />
             <Typography variant="h6" color="text.secondary">
-              {tOrderHistory('noOrdersFound')}
+              {emptyMessage ?? tOrderHistory('noOrdersFound')}
             </Typography>
           </Box>
         </CardContent>

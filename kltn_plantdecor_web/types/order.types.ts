@@ -21,8 +21,6 @@ export type OrderStatusName =
   | 'Rejected'
   | 'PendingConfirmation';
 
-export type OrderStatusFilter = 'All' | OrderStatusName;
-
 export type BuyNowItemType = 1 | 2 | 3;
 
 interface OrderCreateBaseRequest {
@@ -154,6 +152,7 @@ export interface OrderCreatePayload {
 export type CreateOrderResponse = ApiResponseWithPayload<OrderCreatePayload>;
 
 export type InvoiceByOrderResponse = ApiResponseWithPayload<OrderInvoice[]>;
+export type PendingInvoicesResponse = ApiResponseWithPayload<OrderInvoice[]>;
 export type MyOrdersResponse = ApiResponseWithPayload<Order[]>;
 export type MyOrderDetailResponse = ApiResponseWithPayload<Order>;
 

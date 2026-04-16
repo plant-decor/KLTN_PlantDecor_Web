@@ -17,24 +17,34 @@ import {
 import { useTranslations } from 'next-intl';
 import OrderDetailModal from '@/components/order-history/OrderDetailModal';
 import OrderHistoryList from '@/components/order-history/OrderHistoryList';
-import { STATUS_TABS } from '@/components/order-history/orderHistoryUtils';
 import {
   cancelOrder,
   continuePaymentByInvoice,
+  getPendingInvoicesForCurrentUser,
   getInvoicesByOrderId,
   getMyOrderById,
   getMyOrders,
 } from '@/lib/api/orderService';
 import type { Order } from '@/types/order.types';
 
+type OrdersTab = 0 | 1;
+
+function hasPendingInvoice(order: Order): boolean {
+  return order.invoices.some((invoice) => invoice.statusName === 'Pending');
+}
+
 export default function OrdersPage() {
   const tOrderHistory = useTranslations('orderHistory');
-  const [currentTab, setCurrentTab] = useState(0);
+  const [currentTab, setCurrentTab] = useState<OrdersTab>(0);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-  const requestSequenceRef = useRef(0);
+  const [pendingOrders, setPendingOrders] = useState<Order[]>([]);
+  const [loadingAllOrders, setLoadingAllOrders] = useState(true);
+  const [loadingPendingOrders, setLoadingPendingOrders] = useState(false);
+  const allOrdersRequestSequenceRef = useRef(0);
+  const pendingOrdersRequestSequenceRef = useRef(0);
 
   const [retryLoadingOrderId, setRetryLoadingOrderId] = useState<number | null>(null);
+  const [paymentLoadingInvoiceId, setPaymentLoadingInvoiceId] = useState<number | null>(null);
   const [retryError, setRetryError] = useState('');
   const [cancelLoadingOrderId, setCancelLoadingOrderId] = useState<number | null>(null);
   const [cancelError, setCancelError] = useState('');
@@ -45,42 +55,88 @@ export default function OrdersPage() {
   const [detailError, setDetailError] = useState('');
   const [detailOpen, setDetailOpen] = useState(false);
 
-  const selectedStatus = STATUS_TABS[currentTab]?.value ?? 'All';
+  const fetchAllOrders = useCallback(async () => {
+    const requestId = ++allOrdersRequestSequenceRef.current;
+
+    try {
+      setLoadingAllOrders(true);
+      const list = await getMyOrders();
+      if (requestId !== allOrdersRequestSequenceRef.current) {
+        return;
+      }
+      setOrders(Array.isArray(list) ? list : []);
+    } catch (err) {
+      if (requestId !== allOrdersRequestSequenceRef.current) {
+        return;
+      }
+      console.error(err instanceof Error ? err.message : 'Cannot load order list');
+    } finally {
+      if (requestId === allOrdersRequestSequenceRef.current) {
+        setLoadingAllOrders(false);
+      }
+    }
+  }, []);
+
+  const fetchPendingOrders = useCallback(async () => {
+    const requestId = ++pendingOrdersRequestSequenceRef.current;
+
+    try {
+      setLoadingPendingOrders(true);
+      const pendingInvoices = await getPendingInvoicesForCurrentUser();
+
+      if (requestId !== pendingOrdersRequestSequenceRef.current) {
+        return;
+      }
+
+      if (pendingInvoices.length === 0) {
+        setPendingOrders([]);
+        return;
+      }
+
+      const latestInvoiceByOrder = new Map<number, string>();
+      pendingInvoices.forEach((invoice) => {
+        const currentIssuedDate = latestInvoiceByOrder.get(invoice.orderId);
+        if (!currentIssuedDate || new Date(invoice.issuedDate).getTime() > new Date(currentIssuedDate).getTime()) {
+          latestInvoiceByOrder.set(invoice.orderId, invoice.issuedDate);
+        }
+      });
+
+      const sortedOrderIds = [...latestInvoiceByOrder.entries()]
+        .sort((a, b) => new Date(b[1]).getTime() - new Date(a[1]).getTime())
+        .map(([orderId]) => orderId);
+
+      const orderDetails = await Promise.all(sortedOrderIds.map((orderId) => getMyOrderById(orderId)));
+
+      if (requestId !== pendingOrdersRequestSequenceRef.current) {
+        return;
+      }
+
+      const mappedOrders = orderDetails.filter((order): order is Order => !!order && hasPendingInvoice(order));
+      setPendingOrders(mappedOrders);
+    } catch (err) {
+      if (requestId !== pendingOrdersRequestSequenceRef.current) {
+        return;
+      }
+      console.error(err instanceof Error ? err.message : 'Cannot load pending orders');
+      setPendingOrders([]);
+    } finally {
+      if (requestId === pendingOrdersRequestSequenceRef.current) {
+        setLoadingPendingOrders(false);
+      }
+    }
+  }, []);
 
   useEffect(() => {
-    let isMounted = true;
-    const requestId = ++requestSequenceRef.current;
+    void fetchAllOrders();
+  }, [fetchAllOrders]);
 
-    const fetchOrders = async () => {
-      try {
-        setLoading(true);
-        const orderStatus = selectedStatus === 'All' ? undefined : selectedStatus;
-        const list = await getMyOrders(orderStatus);
+  useEffect(() => {
+    if (currentTab !== 1) {
+      return;
+    }
 
-        if (!isMounted || requestId !== requestSequenceRef.current) {
-          return;
-        }
-
-        setOrders(Array.isArray(list) ? list : []);
-      } catch (err) {
-        if (!isMounted || requestId !== requestSequenceRef.current) {
-          return;
-        }
-
-        console.error(err instanceof Error ? err.message : 'Cannot load order list');
-      } finally {
-        if (isMounted && requestId === requestSequenceRef.current) {
-          setLoading(false);
-        }
-      }
-    };
-
-    void fetchOrders();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [selectedStatus]);
+    void fetchPendingOrders();
+  }, [currentTab, fetchPendingOrders]);
 
   const handleViewDetail = useCallback(async (orderId: number) => {
     try {
@@ -133,6 +189,21 @@ export default function OrdersPage() {
     }
   }, [tOrderHistory]);
 
+  const handlePayInvoice = useCallback(async (invoiceId: number) => {
+    try {
+      setPaymentLoadingInvoiceId(invoiceId);
+      setRetryError('');
+
+      const paymentUrl = await continuePaymentByInvoice(invoiceId);
+      window.location.assign(paymentUrl);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : tOrderHistory('retryPaymentFailed');
+      setRetryError(message);
+    } finally {
+      setPaymentLoadingInvoiceId(null);
+    }
+  }, [tOrderHistory]);
+
   const confirmCancelOrder = useCallback(async () => {
     if (cancelConfirmOrderId === null) {
       return;
@@ -144,17 +215,15 @@ export default function OrdersPage() {
 
       const cancelledOrder = await cancelOrder(cancelConfirmOrderId);
 
-      setOrders((prevOrders) => {
-        const updatedOrders = prevOrders.map((order) =>
-          order.id === cancelledOrder.id ? cancelledOrder : order
-        );
+      setOrders((prevOrders) =>
+        prevOrders.map((order) => (order.id === cancelledOrder.id ? cancelledOrder : order))
+      );
 
-        if (selectedStatus === 'All') {
-          return updatedOrders;
-        }
-
-        return updatedOrders.filter((order) => order.statusName === selectedStatus);
-      });
+      setPendingOrders((prevOrders) =>
+        prevOrders
+          .map((order) => (order.id === cancelledOrder.id ? cancelledOrder : order))
+          .filter((order) => hasPendingInvoice(order))
+      );
 
       setDetailOrder((prevDetail) =>
         prevDetail && prevDetail.id === cancelledOrder.id ? cancelledOrder : prevDetail
@@ -166,7 +235,7 @@ export default function OrdersPage() {
       setCancelLoadingOrderId(null);
       setCancelConfirmOrderId(null);
     }
-  }, [cancelConfirmOrderId, selectedStatus, tOrderHistory]);
+  }, [cancelConfirmOrderId, tOrderHistory]);
 
   const handleCancelOrder = useCallback((orderId: number) => {
     if (cancelLoadingOrderId !== null) {
@@ -200,18 +269,15 @@ export default function OrdersPage() {
       <Card sx={{ mb: 3, boxShadow: 2 }}>
         <Tabs
           value={currentTab}
-          onChange={(_, value) => setCurrentTab(value)}
-          variant="scrollable"
-          scrollButtons="auto"
+          onChange={(_, value) => setCurrentTab(value as OrdersTab)}
           sx={{
             borderBottom: 1,
             borderColor: 'divider',
             '& .MuiTab-root': { fontWeight: 600, textTransform: 'none', fontSize: '1rem' },
           }}
         >
-          {STATUS_TABS.map((tab) => (
-            <Tab key={tab.value} label={tab.label} />
-          ))}
+          <Tab label={tOrderHistory('allOrdersTab')} />
+          <Tab label={tOrderHistory('pendingPaymentTab')} />
         </Tabs>
       </Card>
 
@@ -227,13 +293,16 @@ export default function OrdersPage() {
       ) : null}
 
       <OrderHistoryList
-        orders={orders}
-        loading={loading}
+        orders={currentTab === 0 ? orders : pendingOrders}
+        loading={currentTab === 0 ? loadingAllOrders : loadingPendingOrders}
         retryLoadingOrderId={retryLoadingOrderId}
         cancelLoadingOrderId={cancelLoadingOrderId}
         onViewDetail={handleViewDetail}
         onRetryPayment={handleRetryPayment}
         onCancelOrder={handleCancelOrder}
+        emptyMessage={
+          currentTab === 0 ? tOrderHistory('noOrdersFound') : tOrderHistory('noPendingOrdersFound')
+        }
       />
 
       <OrderDetailModal
@@ -242,8 +311,9 @@ export default function OrdersPage() {
         loading={detailLoading}
         error={detailError}
         retryLoadingOrderId={retryLoadingOrderId}
+        paymentLoadingInvoiceId={paymentLoadingInvoiceId}
         cancelLoadingOrderId={cancelLoadingOrderId}
-        onRetryPayment={handleRetryPayment}
+        onPayInvoice={handlePayInvoice}
         onCancelOrder={handleCancelOrder}
         onClose={closeDetailModal}
       />

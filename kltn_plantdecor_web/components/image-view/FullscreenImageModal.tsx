@@ -172,15 +172,14 @@ export default function FullscreenImageModal({
               <Image
                 src={images[activeStep]}
                 alt={`${alt} ${activeStep + 1}`}
-                layout="fill"
-                loading='eager'
+                fill
+                sizes="100vw"
                 className="object-contain"
                 style={{
                   transform: `scale(${zoom})`,
                   transition: 'transform 0.2s ease-in-out',
                   cursor: zoom > 1 ? 'grab' : 'pointer',
                 }}
-                priority
                 quality={90}
               />
             </div>

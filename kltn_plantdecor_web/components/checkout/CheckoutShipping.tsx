@@ -28,7 +28,6 @@ export default function CheckoutShipping({
   userProfile,
   onDataChange,
 }: CheckoutShippingProps) {
-  const tAuth = useTranslations('auth');
   const tError = useTranslations('profile');
   const [formData, setFormData] = useState({
     fullName: checkoutData.shippingInfo?.fullName ?? userProfile?.fullName ?? '',

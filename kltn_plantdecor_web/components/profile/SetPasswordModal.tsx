@@ -95,6 +95,11 @@ export default function SetPasswordModal({ open, onClose }: SetPasswordModalProp
         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
           {t('setPasswordDescription') || 'Set a password for your Google-authenticated account'}
         </Typography>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
         {message && (
           <Alert severity="success" sx={{ mb: 2 }}>
             {message}

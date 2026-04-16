@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/authStore';
 import CartBadge from '@/components/cart/CartBadge';
@@ -54,22 +54,16 @@ export default function Header({ initialStoreCategories = [] }: HeaderProps) {
   const userId = user?.id || null;
   const avatarImageSrc = user?.avatar?.trim() || null;
   const avatarLabel = user?.name ? user.name.charAt(0).toUpperCase() : 'U';
-  const [hasAvatarImageError, setHasAvatarImageError] = useState(false);
+  const [failedAvatarSrc, setFailedAvatarSrc] = useState<string | null>(null);
+  const hasAvatarImageError = Boolean(avatarImageSrc && failedAvatarSrc === avatarImageSrc);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const tAuth = useTranslations('auth');
   const tUserMenu = useTranslations('headerUserMenu');
-
-  useEffect(() => {
-    setHasAvatarImageError(false);
-  }, [avatarImageSrc]);
 
   const getUserMenuLabel = (href: string) => {
     const key = USER_MENU_LABEL_KEYS[href];
     return key ? tUserMenu(key) : href;
   };
-
-  // Check if user has notification access (staff, manager, admin, shipper, caretaker)
-  const hasNotificationAccess = user && ['ADMIN', 'MANAGER', 'STAFF', 'SHIPPER', 'CARETAKER'].includes(user.role?.toUpperCase() || '');
 
   const handleLogout = async () => {
     try {
@@ -153,7 +147,7 @@ export default function Header({ initialStoreCategories = [] }: HeaderProps) {
                           height={32}
                           alt={user?.name || 'User avatar'}
                           className="h-8 w-8 rounded-full object-cover"
-                          onError={() => setHasAvatarImageError(true)}
+                          onError={() => setFailedAvatarSrc(avatarImageSrc)}
                         />
                       ) : (
                         <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-green-600 text-sm font-semibold text-white">

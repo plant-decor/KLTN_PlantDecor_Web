@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useParams, usePathname, useRouter } from 'next/navigation';
-import { useMemo, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   Dashboard as DashboardIcon,

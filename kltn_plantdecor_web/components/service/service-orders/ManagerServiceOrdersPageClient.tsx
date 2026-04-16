@@ -29,8 +29,7 @@ export default function ManagerServiceOrdersPageClient() {
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<typeof ALL_STATUS_FILTER | ServiceRegistrationStatusEnum>(ALL_STATUS_FILTER);
   const [pageNumber, setPageNumber] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [totalCount, setTotalCount] = useState(0);
+  const pageSize = 10;
 
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -77,7 +76,6 @@ export default function ManagerServiceOrdersPageClient() {
       );
 
       setItems(response.items);
-      setTotalCount(response.totalCount);
     } catch (loadError) {
       const message = getErrorMessage(loadError, 'Không thể tải danh sách đơn dịch vụ');
       setError(message);

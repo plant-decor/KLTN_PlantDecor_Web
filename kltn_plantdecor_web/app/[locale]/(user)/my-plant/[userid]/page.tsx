@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
-import { Alert, Box, Button, Container, Stack, Typography } from '@mui/material';
+import { Box, Button, Container, Stack, Typography } from '@mui/material';
 import { getTranslations } from 'next-intl/server';
 import MyPlantsClient from '@/components/plant/MyPlantsClient';
 import { getCurrentUser } from '@/lib/auth/getCurrentUser';
@@ -31,7 +31,6 @@ export default async function MyPlantPage({ params }: PageProps) {
   }
 
   let myPlants: MyPlantItemWithGuide[] = [];
-  let errorMessage: string | null = null;
 
   try {
     const plants = await getMyPlants();
@@ -57,7 +56,7 @@ export default async function MyPlantPage({ params }: PageProps) {
       guide: guideMap.get(item.plantId) ?? null,
     }));
   } catch (error) {
-    errorMessage = error instanceof Error ? error.message : t('errors.loadPlants');
+    console.error(error instanceof Error ? error.message : t('errors.loadPlants'));
   }
 
   return (

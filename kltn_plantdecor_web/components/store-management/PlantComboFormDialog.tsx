@@ -180,12 +180,11 @@ export default function PlantComboFormDialog({
   }, [comboItems, plantOptions, selectedPlantMap]);
 
   const hasKeyword = keyword.trim().length > 0;
-  const loading = plantsLoading;
   const items = plants;
-  const showSuggestionDropdown = searchOpen && (hasKeyword || loading);
+  const showSuggestionDropdown = searchOpen && (hasKeyword);
   const noResults = useMemo(
-    () => hasKeyword && !loading && items.length === 0,
-    [hasKeyword, loading, items.length]
+    () => hasKeyword && items.length === 0,
+    [hasKeyword, items.length]
   );
 
   useEffect(() => {
@@ -227,19 +226,23 @@ export default function PlantComboFormDialog({
           })) || [],
       });
 
-      setImages(
-        (editingData.images || []).map((img) => ({
-          id: img.id,
-          existingImageId: img.id,
-          preview: img.imageUrl,
-          url: img.imageUrl,
-          isThumbnail: Boolean(img.isPrimary),
-          createdAt: img.createdAt,
-        }))
-      );
-      setKeyword('');
-      setSearchOpen(false);
-      setSelectedPlantMap(initialSelectedPlantMap);
+      queueMicrotask(() => {
+        setImages(
+          (editingData.images || []).map((img) => ({
+            id: img.id,
+            existingImageId: img.id,
+            preview: img.imageUrl,
+            url: img.imageUrl,
+            isThumbnail: Boolean(img.isPrimary),
+            createdAt: img.createdAt,
+          }))
+        );
+      });
+      queueMicrotask(() => {
+        setKeyword('');
+        setSearchOpen(false);
+        setSelectedPlantMap(initialSelectedPlantMap);
+      });
       lastSearchedKeywordRef.current = null;
       return;
     }
@@ -248,11 +251,13 @@ export default function PlantComboFormDialog({
       ...defaultCombo,
       comboItems: [{ ...defaultComboItem }],
     });
-    setImages([]);
-    setRoomDraft('');
-    setKeyword('');
-    setSearchOpen(false);
-    setSelectedPlantMap({});
+    queueMicrotask(() => {
+      setImages([]);
+      setRoomDraft('');
+      setKeyword('');
+      setSearchOpen(false);
+      setSelectedPlantMap({});
+    });
     lastSearchedKeywordRef.current = null;
   }, [editingData, open, reset]);
 

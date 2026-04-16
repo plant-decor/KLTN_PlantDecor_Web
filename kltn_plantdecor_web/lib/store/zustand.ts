@@ -32,20 +32,6 @@ export const useLoadingStore = create<LoadingState>((set) => ({
   setLoading: (loading) => set({ loading }),
 }));
 
-interface UserState {
-  user: {
-    token: string | null;
-    id: string;
-    username: string;
-    email: string;
-    role_code: string;
-    avatarUrl: string;
-  } | null;
-  setUser: (user: { id: string; email: string; role_code: string; token: string, username: string, avatarUrl: string }) => void;
-  clearUser: () => void;
-  getToken: () => string | null; // Add this function to get the token
-}
-
 // export const useUserStore = create<UserState>((set) => ({
 //   user: JSON.parse(localStorage.getItem("user") || "null"),
 //   setUser: (user) => {

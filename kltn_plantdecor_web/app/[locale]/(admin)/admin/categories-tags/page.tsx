@@ -9,7 +9,7 @@ import {
 import type { Category, Tag } from '@/data/storeCatalogData';
 import { useAdminCategories } from '@/lib/api/admin/useAdminCategories';
 import { useAdminTags } from '@/lib/api/admin/useAdminTags';
-import type { CategoryCreateUpdateRequest, CategoryResponse } from '@/lib/api/categoriesService';
+import type { CategoryCreateUpdateRequest, CategoryResponse, CategoryTreeNode } from '@/lib/api/categoriesService';
 import { getTagEnums, type TagCreateUpdateRequest, type TagEnumValue } from '@/lib/api/tagService';
 import CategoryModal from '@/components/store-catalog/CategoryModal';
 import TagModal from '@/components/store-catalog/TagModal';
@@ -18,6 +18,28 @@ import CategorySection, { type HierarchicalCategoryRow } from '@/components/admi
 import TagsSection from '@/components/admin/categories-tags/TagsSection';
 import TabPanel from '@/components/admin/categories-tags/TabPanel';
 import ConfirmActionDialog from '@/components/admin/categories-tags/ConfirmActionDialog';
+
+type CategoryNode = CategoryResponse | CategoryTreeNode;
+
+interface CategoryFormInput {
+  name: string;
+  parentCategoryId?: number | null;
+  isActive?: boolean;
+  categoryType?: number;
+}
+
+interface TagFormInput {
+  tagName: string;
+  tagType: number;
+}
+
+const isObjectRecord = (value: unknown): value is Record<string, unknown> => {
+  return typeof value === 'object' && value !== null;
+};
+
+const hasChildren = (node: CategoryNode): node is CategoryTreeNode & { children: CategoryTreeNode[] } => {
+  return Array.isArray((node as CategoryTreeNode).children);
+};
 
 export default function CategoriesTagsPage() {
   const [tabValue, setTabValue] = useState(0);
@@ -66,42 +88,49 @@ export default function CategoriesTagsPage() {
   } = useAdminTags();
 
   const loading = categoriesLoading || tagsLoading;
-  const getNodeChildren = (node: any): any[] => {
-    if (Array.isArray(node?.subCategories)) {
+  const getNodeChildren = (node: CategoryNode): CategoryNode[] => {
+    if (Array.isArray(node.subCategories)) {
       return node.subCategories;
     }
 
-    if (Array.isArray(node?.children)) {
+    if (hasChildren(node)) {
       return node.children;
     }
 
     return [];
   };
 
-  const normalizeNode = (node: any): CategoryResponse => {
+  const normalizeNode = (node: unknown): CategoryResponse => {
+    if (!isObjectRecord(node)) {
+      return {
+        id: 0,
+        name: '',
+        isActive: false,
+        categoryType: 0,
+      };
+    }
+
     return {
       id: Number(node.id),
       name: String(node.name ?? ''),
-      parentCategoryId: node.parentCategoryId ?? null,
+      parentCategoryId: (node.parentCategoryId as number | null | undefined) ?? null,
       isActive: Boolean(node.isActive),
       categoryType: Number(node.categoryType ?? 0),
-      parentCategoryName: node.parentCategoryName ?? null,
-      categoryTypeName: node.categoryTypeName,
-      createdAt: node.createdAt,
-      updatedAt: node.updatedAt,
-      subCategories: node.subCategories,
+      parentCategoryName: (node.parentCategoryName as string | null | undefined) ?? null,
+      categoryTypeName: node.categoryTypeName as string | undefined,
+      createdAt: node.createdAt as string | undefined,
+      updatedAt: node.updatedAt as string | undefined,
+      subCategories: Array.isArray(node.subCategories)
+        ? (node.subCategories as CategoryResponse[])
+        : undefined,
     };
   };
 
   const parentCategoryOptions = useMemo(() => {
-    const flattenTree = (nodes: any[]): CategoryResponse[] => {
+    const flattenTree = (nodes: CategoryNode[]): CategoryResponse[] => {
       const flattened: CategoryResponse[] = [];
 
       nodes.forEach((node) => {
-        if (!node || typeof node !== 'object') {
-          return;
-        }
-
         const normalizedNode = normalizeNode(node);
         flattened.push(normalizedNode);
 
@@ -149,12 +178,8 @@ export default function CategoriesTagsPage() {
   const hierarchicalCategories = useMemo(() => {
     const flattened: HierarchicalCategoryRow[] = [];
 
-    const walk = (nodes: any[], level: number) => {
+    const walk = (nodes: CategoryNode[], level: number) => {
       nodes.forEach((node) => {
-        if (!node || typeof node !== 'object') {
-          return;
-        }
-
         const normalizedNode = normalizeNode(node);
         const children = getNodeChildren(node);
         const hasChildren = children.length > 0;
@@ -234,7 +259,7 @@ export default function CategoriesTagsPage() {
   };
 
   // ============ Categories Handlers ============
-  const handleSaveCategory = async (category: any): Promise<boolean> => {
+  const handleSaveCategory = async (category: CategoryFormInput): Promise<boolean> => {
     if (editingCategory) {
       const updateData: CategoryCreateUpdateRequest = {
         name: category.name,
@@ -299,7 +324,7 @@ export default function CategoriesTagsPage() {
   };
 
   // ============ Tags Handlers ============
-  const handleSaveTag = async (tag: any): Promise<boolean> => {
+  const handleSaveTag = async (tag: TagFormInput): Promise<boolean> => {
     const payload: TagCreateUpdateRequest = {
       tagName: String(tag?.tagName ?? '').trim(),
       tagType: Number(tag?.tagType ?? 0),
@@ -335,12 +360,10 @@ export default function CategoriesTagsPage() {
       return;
     }
 
-    let success = false;
-
     if (deleteTarget.type === 'category') {
-      success = await deleteCategory(deleteTarget.id);
+      await deleteCategory(deleteTarget.id);
     } else if (deleteTarget.type === 'tag') {
-      success = await deleteTag(deleteTarget.id);
+      await deleteTag(deleteTarget.id);
     }
     setDeleteConfirmOpen(false);
     setDeleteTarget(null);

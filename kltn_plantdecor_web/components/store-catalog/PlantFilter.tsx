@@ -137,7 +137,7 @@ export default function PlantFilter({
     applyFilters(resetFilters);
   };
 
-  const FilterContent = () => (
+  const renderFilterContent = () => (
     <>
       {/* Search Input - Only show if enableSearch is true */}
       {enableSearch && (
@@ -249,7 +249,7 @@ export default function PlantFilter({
   );
 
   if (renderInlineOnMobile) {
-    return <FilterContent />;
+    return renderFilterContent();
   }
 
   return (
@@ -257,7 +257,7 @@ export default function PlantFilter({
       {/* Desktop - Sticky Sidebar */}
       <div className="hidden md:block bg-white rounded-lg shadow-md p-6 sticky top-4">
         <h2 className="text-xl font-bold text-gray-900 mb-6">{t('title')}</h2>
-        <FilterContent />
+        {renderFilterContent()}
       </div>
 
       {/* Mobile - Filter Button */}
@@ -290,7 +290,7 @@ export default function PlantFilter({
 
             {/* Content */}
             <div className="px-6 py-6">
-              <FilterContent />
+              {renderFilterContent()}
             </div>
           </div>
         </>

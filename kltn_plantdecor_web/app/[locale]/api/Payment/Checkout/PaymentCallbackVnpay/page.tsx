@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter, useParams } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/authStore';
 
@@ -12,50 +12,24 @@ function PaymentCallbackContent() {
   const user = useAuthStore((state) => state.user);
   const userId = user?.id ? String(user.id) : null;
 
-  const [status, setStatus] = useState<{
-    loading: boolean;
-    success: boolean | null;
-    orderId: string | null;
-    amount: string | null;
-  }>({
-    loading: true,
-    success: null,
-    orderId: null,
-    amount: null,
-  });
+  const responseCode = searchParams.get('vnp_ResponseCode');
+  const transactionStatus = searchParams.get('vnp_TransactionStatus');
+  const orderInfo = searchParams.get('vnp_OrderInfo');
+  const amountRaw = searchParams.get('vnp_Amount');
+
+  const orderIdMatch = orderInfo?.match(/\d+/);
+  const orderId = orderIdMatch ? orderIdMatch[0] : null;
+  const amount = amountRaw ? (parseInt(amountRaw) / 100).toLocaleString('vi-VN') : '0';
+  const isSuccessful = responseCode === '00' && transactionStatus === '00';
 
   useEffect(() => {
-    // 1. Trích xuất dữ liệu từ VNPay Query Params
-    const responseCode = searchParams.get('vnp_ResponseCode');
-    const transactionStatus = searchParams.get('vnp_TransactionStatus');
-    const orderInfo = searchParams.get('vnp_OrderInfo');
-    const amountRaw = searchParams.get('vnp_Amount');
-
-    // Giả sử vnp_OrderInfo có dạng "OrderId: 4" hoặc "Thanh toan don hang 4"
-    // Chúng ta dùng Regex để trích xuất số ID đơn hàng cho chắc chắn
-    const orderIdMatch = orderInfo?.match(/\d+/);
-    const orderId = orderIdMatch ? orderIdMatch[0] : null;
-    
-    // VNPay gửi amount nhân 100 (ví dụ 1000000 = 10,000 VND)
-    const realAmount = amountRaw ? (parseInt(amountRaw) / 100).toLocaleString('vi-VN') : '0';
-
-    // 2. Kiểm tra trạng thái (00 là thành công)
-    const isSuccessful = responseCode === '00' && transactionStatus === '00';
-
-    setStatus({
-      loading: false,
-      success: isSuccessful,
-      orderId: orderId,
-      amount: realAmount,
-    });
-
-    // 3. LÀM SẠCH URL (Quan trọng nhất)
+    // LÀM SẠCH URL (Quan trọng nhất)
     // Xóa toàn bộ query params để URL trông đẹp và bảo mật hơn
     // Kết quả: https://localhost:3000/vi/api/Payment/Checkout/PaymentCallbackVnpay
     const cleanUrl = window.location.pathname;
     window.history.replaceState({}, '', cleanUrl);
 
-  }, [searchParams]);
+  }, []);
 
   const handleRedirect = () => {
     const resolvedLocale = Array.isArray(locale) ? locale[0] : locale;
@@ -63,18 +37,10 @@ function PaymentCallbackContent() {
     router.push(targetPath);
   };
 
-  if (status.loading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <p className="text-lg font-medium">Đang xác thực giao dịch...</p>
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-50">
       <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-8 text-center">
-        {status.success ? (
+        {isSuccessful ? (
           <>
             <div className="text-green-500 text-6xl mb-4">✓</div>
             <h1 className="text-2xl font-bold text-gray-800 mb-2">Thanh toán thành công!</h1>
@@ -91,11 +57,11 @@ function PaymentCallbackContent() {
         <div className="border-t border-b py-4 mb-6 text-left">
           <div className="flex justify-between mb-2">
             <span className="text-gray-500">Mã đơn hàng:</span>
-            <span className="font-semibold">#{status.orderId || 'N/A'}</span>
+            <span className="font-semibold">#{orderId || 'N/A'}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-500">Số tiền:</span>
-            <span className="font-semibold text-blue-600">{status.amount} VND</span>
+            <span className="font-semibold text-blue-600">{amount} VND</span>
           </div>
         </div>
 

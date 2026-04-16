@@ -7,7 +7,6 @@ import {
   CardContent,
   Typography,
   Button,
-  Chip,
   Table,
   TableBody,
   TableCell,
@@ -38,11 +37,7 @@ const MOCK_CARETAKERS = [
   { id: 4, name: 'Phạm Thị D', rating: 4.6, totalServices: 41 },
 ];
 
-interface PageProps {
-  params: Promise<{ locale: string }>;
-}
-
-export default function StaffServiceRequestPage({ params }: PageProps) {
+export default function StaffServiceRequestPage() {
   const t = useTranslations('services');
   const tCommon = useTranslations('common');
   

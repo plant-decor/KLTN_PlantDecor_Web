@@ -3,17 +3,13 @@
 import React, { useState } from 'react';
 import {
   Box,
-  Container,
   Tabs,
   Tab,
   Paper,
-  Typography,
-  Stack,
 } from '@mui/material';
-import { LocalFlorist, DonutSmall, Inventory2, Spa } from '@mui/icons-material';
+import { LocalFlorist, DonutSmall, Inventory2 } from '@mui/icons-material';
 import PlantTab from './PlantTab';
 import PlantComboTab from './PlantComboTab';
-import PlantInstanceTab from './PlantInstanceTab';
 import MaterialTab from './MaterialTab';
 import type { Plant, PlantCombo, PlantInstance, Material } from '@/types/store-management.types';
 import ManagementHeader from '../layout/ManagementHeader';

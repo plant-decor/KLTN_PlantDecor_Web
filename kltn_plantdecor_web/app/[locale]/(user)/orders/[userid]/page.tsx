@@ -32,7 +32,6 @@ export default function OrdersPage() {
   const [currentTab, setCurrentTab] = useState(0);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const requestSequenceRef = useRef(0);
 
   const [retryLoadingOrderId, setRetryLoadingOrderId] = useState<number | null>(null);
@@ -55,7 +54,6 @@ export default function OrdersPage() {
     const fetchOrders = async () => {
       try {
         setLoading(true);
-        setError('');
         const orderStatus = selectedStatus === 'All' ? undefined : selectedStatus;
         const list = await getMyOrders(orderStatus);
 
@@ -69,7 +67,7 @@ export default function OrdersPage() {
           return;
         }
 
-        setError(err instanceof Error ? err.message : 'Cannot load order list');
+        console.error(err instanceof Error ? err.message : 'Cannot load order list');
       } finally {
         if (isMounted && requestId === requestSequenceRef.current) {
           setLoading(false);

@@ -9,7 +9,6 @@ import {
   Chip,
   Alert,
   Dialog,
-  CircularProgress,
   Divider,
   Avatar,
   Card,
@@ -47,7 +46,6 @@ interface AddOnProposal {
 
 export const CaretakerJobDetail: React.FC<CaretakerJobDetailProps> = ({
   task,
-  loading = false,
   onCheckIn,
   onCheckOut,
   onUploadEvidence,
@@ -306,7 +304,7 @@ export const CaretakerJobDetail: React.FC<CaretakerJobDetailProps> = ({
         {isCheckedIn && (
           <>
             <Alert severity="info" sx={{ mb: 3 }}>
-              ✓ Bạn đã check-in. Nhấn "Check-out" khi hoàn thành công việc.
+              ✓ Bạn đã check-in. Nhấn &quot;Check-out&quot; khi hoàn thành công việc.
             </Alert>
 
             <Divider sx={{ mb: 3 }} />

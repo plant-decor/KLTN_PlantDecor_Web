@@ -13,12 +13,6 @@ import {
   RadioGroup,
   Typography,
 } from '@mui/material';
-import {
-  CreditCard as CreditCardIcon,
-  AccountBalance as BankIcon,
-  LocalAtm as CashIcon,
-  AccountBalanceWallet as WalletIcon,
-} from '@mui/icons-material';
 import type { CheckoutData } from '@/types/cart.types';
 import type { OrderInvoice } from '@/types/order.types';
 import { createPaymentUrl, getInvoicesByOrderId } from '@/lib/api/orderService';

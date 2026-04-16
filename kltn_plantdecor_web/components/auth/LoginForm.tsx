@@ -34,7 +34,7 @@ export default function LoginForm({
     e.preventDefault();
     setErrors({});
 
-    const result = await onSubmit(email, password);
+    await onSubmit(email, password);
   };
 
   return (

@@ -2,15 +2,9 @@ import React from "react";
 import {
   Card,
   CardContent,
-  CardActions,
   Box,
   Typography,
   Button,
-  Chip,
-  Container,
-  CircularProgress,
-  Avatar,
-  Grid,
 } from "@mui/material";
 import {
   Timeline,
@@ -35,7 +29,6 @@ export const ServiceProgressTimeline: React.FC<ServiceProgressTimelineProps> = (
   registration,
   progressLogs,
   onSelectRegistration,
-  back = false,
 }) => {
   const getActionLabel = (action: string) => {
     const labels: Record<string, string> = {

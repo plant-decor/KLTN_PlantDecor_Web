@@ -21,7 +21,7 @@ interface Column {
   minWidth?: number;
   maxWidth?: number;
   align?: 'left' | 'right' | 'center';
-  format?: (value: any, row: ServiceRegistration) => React.ReactNode;
+  format?: (value: unknown, row: ServiceRegistration) => React.ReactNode;
 }
 
 interface ServiceRequestTableProps {
@@ -49,13 +49,16 @@ export default function ServiceRequestTable({
     {
       id: 'serviceDate',
       label: t('serviceDate'),
-      format: (value) => new Date(value).toLocaleDateString(),
+      format: (value) => {
+        const parsedDate = value instanceof Date ? value : new Date(String(value ?? ''));
+        return Number.isNaN(parsedDate.getTime()) ? '' : parsedDate.toLocaleDateString();
+      },
     },
     {
       id: 'address',
       label: t('address'),
       maxWidth: 200,
-      format: (value) => value,
+      format: (value) => String(value ?? ''),
     },
     { id: 'phone', label: t('phone') },
     ...(showStatus
@@ -63,7 +66,7 @@ export default function ServiceRequestTable({
           {
             id: 'status',
             label: t('status'),
-            format: (value: any) => <ServiceStatusChip status={value} />,
+            format: (value: unknown) => <ServiceStatusChip status={Number(value)} />,
           },
         ]
       : []),
@@ -72,7 +75,7 @@ export default function ServiceRequestTable({
           {
             id: 'mainCaretakerId',
             label: t('caretaker'),
-            format: (value: any) => (value ? `Caretaker #${value}` : '-'),
+            format: (value: unknown) => (value ? `Caretaker #${String(value)}` : '-'),
           },
         ]
       : []),

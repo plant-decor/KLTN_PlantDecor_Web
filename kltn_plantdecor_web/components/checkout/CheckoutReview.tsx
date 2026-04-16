@@ -22,14 +22,12 @@ import type { OrderCreatePayload } from '@/types/order.types';
 
 interface CheckoutReviewProps {
   checkoutData: CheckoutData;
-  userId: string;
   cartId: string;
   createdOrder?: OrderCreatePayload | null;
 }
 
 export default function CheckoutReview({
   checkoutData,
-  userId,
   cartId,
   createdOrder,
 }: CheckoutReviewProps) {

@@ -2,6 +2,8 @@
  * Reusable button hover animations for MUI sx prop
  */
 
+import type { Theme } from '@mui/material/styles';
+
 export const hoverLiftStyle = {
   transition: 'all 0.3s ease',
   '&:hover': {
@@ -13,7 +15,7 @@ export const hoverLiftStyle = {
 export const hoverGlowStyle = {
   transition: 'all 0.3s ease',
   '&:hover': {
-    boxShadow: (theme: any) => `0 0 20px ${theme.palette.primary.main}40`,
+    boxShadow: (theme: Theme) => `0 0 20px ${theme.palette.primary.main}40`,
   },
 };
 

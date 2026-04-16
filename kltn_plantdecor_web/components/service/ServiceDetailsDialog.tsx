@@ -62,7 +62,7 @@ export default function ServiceDetailsDialog({
 }: ServiceDetailsDialogProps) {
   const t = useTranslations('services');
   const tCommon = useTranslations('common');
-
+  console.log('ServiceDetailsDialog render', { service });
   const formatDate = (date?: string) => {
     if (!date) {
       return '-';
@@ -172,13 +172,27 @@ export default function ServiceDetailsDialog({
             )}
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>{renderReadOnlyField(t('shift'), formatShift(service.preferredShift))}</Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            {renderReadOnlyField(t('scheduleDays'), formatScheduleDays(service.scheduleDaysOfWeek))}
-          </Grid>
+          {service.scheduleDaysOfWeek && 
+            service.scheduleDaysOfWeek.length === 0 ? (
+            <Grid size={{ xs: 12, md: 6 }}>
+              {renderReadOnlyField(t('scheduleDays'), t('scheduleDaysError'))}
+            </Grid>
+          ) : (
+            <Grid size={{ xs: 12, md: 6 }}>
+              {renderReadOnlyField(t('scheduleDays'), formatScheduleDays(service.scheduleDaysOfWeek))}
+            </Grid>
+          ) 
+          }
           <Grid size={{ xs: 12, md: 6 }}>{renderReadOnlyField(t('phone'), service.phone || '-')}</Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            {renderReadOnlyField(t('orderId'), service.orderId ? `#${service.orderId}` : '-')}
-          </Grid>
+          {service.orderId ? (
+            <Grid size={{ xs: 12, md: 6 }}>
+              {renderReadOnlyField(t('orderId'), service.orderId ? `#${service.orderId}` : '-')}
+            </Grid>
+          ) : 
+            <Grid size={{ xs: 24, md: 12 }}>
+              {renderReadOnlyField(t('orderId'), t('orderIdError'))}
+            </Grid>
+          }
           <Grid size={{ xs: 12 }}>{renderReadOnlyField(t('address'), service.address || '-', true)}</Grid>
           <Grid size={{ xs: 12 }}>{renderReadOnlyField(t('notes'), service.note || '-', true)}</Grid>
 

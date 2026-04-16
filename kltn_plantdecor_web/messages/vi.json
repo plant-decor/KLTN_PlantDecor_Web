@@ -541,7 +541,10 @@
   },
   "orderHistory": {
     "title": "Lịch sử đơn hàng",
+    "allOrdersTab": "Tất cả đơn hàng",
+    "pendingPaymentTab": "Chưa thanh toán",
     "noOrdersFound": "Không tìm thấy đơn hàng",
+    "noPendingOrdersFound": "Không có đơn hàng chưa thanh toán",
     "orderType": {
       "uniquePlant": "Cây độc bản",
       "buyNow": "Mua ngay",
@@ -552,6 +555,7 @@
     "moreItems": "sản phẩm khác",
     "total": "Tổng cộng",
     "viewDetail": "Xem chi tiết",
+    "payNow": "Thanh toán",
     "retryPayment": "Thanh toán lại",
     "retryingPayment": "Đang tạo lại thanh toán...",
     "retryPaymentFailed": "Không thể thanh toán lại. Vui lòng thử lại.",

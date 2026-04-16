@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useReducer } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   Dialog,
@@ -50,6 +50,36 @@ interface OptionItem {
   name: string;
 }
 
+type ImageStateAction =
+  | { type: 'set'; images: ImageUploadData[] }
+  | { type: 'clear' };
+
+function imagesReducer(_state: ImageUploadData[], action: ImageStateAction): ImageUploadData[] {
+  switch (action.type) {
+    case 'set':
+      return action.images;
+    case 'clear':
+      return [];
+    default:
+      return [];
+  }
+}
+
+type PlantGuideStateAction =
+  | { type: 'set'; value: boolean }
+  | { type: 'clear' };
+
+function plantGuideReducer(_state: boolean, action: PlantGuideStateAction): boolean {
+  switch (action.type) {
+    case 'set':
+      return action.value;
+    case 'clear':
+      return false;
+    default:
+      return false;
+  }
+}
+
 interface PlantFormDialogProps {
   open: boolean;
   editingData?: PlantDetail;
@@ -83,8 +113,8 @@ export default function PlantFormDialog({
   });
   const potIncluded = useWatch({ control, name: 'potIncluded' });
 
-  const [images, setImages] = useState<ImageUploadData[]>([]);
-  const [includePlantGuide, setIncludePlantGuide] = useState(false);
+  const [images, dispatchImages] = useReducer(imagesReducer, [] as ImageUploadData[]);
+  const [includePlantGuide, dispatchPlantGuide] = useReducer(plantGuideReducer, false);
 
   useEffect(() => {
     if (!open) {
@@ -93,24 +123,23 @@ export default function PlantFormDialog({
 
     if (editingData) {
       reset(mapEditingDataToForm(editingData, plantGuideData));
-      setIncludePlantGuide(Boolean(plantGuideData));
-
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setImages(
-        editingData.images.map((image) => ({
+      dispatchPlantGuide({ type: 'set', value: Boolean(plantGuideData) });
+      dispatchImages({
+        type: 'set',
+        images: editingData.images.map((image) => ({
           id: image.id,
           existingImageId: image.id,
           preview: image.imageUrl,
           url: image.imageUrl,
           isThumbnail: false,
-        }))
-      );
+        })),
+      });
       return;
     }
 
     reset(getDefaultPlant());
-    setIncludePlantGuide(false);
-    setImages([]);
+    dispatchPlantGuide({ type: 'clear' });
+    dispatchImages({ type: 'clear' });
   }, [editingData, open, plantGuideData, reset]);
 
   useEffect(() => {
@@ -541,7 +570,7 @@ export default function PlantFormDialog({
                 control={
                   <Checkbox
                     checked={includePlantGuide}
-                    onChange={(event) => setIncludePlantGuide(event.target.checked)}
+                    onChange={(event) => dispatchPlantGuide({ type: 'set', value: event.target.checked })}
                   />
                 }
                 label="Add plant guide now"
@@ -803,7 +832,7 @@ export default function PlantFormDialog({
 
           <Divider />
 
-          <ImageUpload images={images} onImagesChange={setImages} label="Plant images" maxImages={10} />
+          <ImageUpload images={images} onImagesChange={(nextImages) => dispatchImages({ type: 'set', images: nextImages })} label="Plant images" maxImages={10} />
         </Stack>
       </DialogContent>
       <DialogActions>

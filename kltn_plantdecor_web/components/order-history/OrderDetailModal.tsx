@@ -65,8 +65,9 @@ interface OrderDetailModalProps {
   loading: boolean;
   error: string;
   retryLoadingOrderId: number | null;
+  paymentLoadingInvoiceId: number | null;
   cancelLoadingOrderId: number | null;
-  onRetryPayment: (orderId: number) => Promise<void>;
+  onPayInvoice: (invoiceId: number) => Promise<void>;
   onCancelOrder: (orderId: number) => Promise<void>;
   onClose: () => void;
 }
@@ -77,14 +78,14 @@ export default function OrderDetailModal({
   loading,
   error,
   retryLoadingOrderId,
+  paymentLoadingInvoiceId,
   cancelLoadingOrderId,
-  onRetryPayment,
+  onPayInvoice,
   onCancelOrder,
   onClose,
 }: OrderDetailModalProps) {
   const tOrderHistory = useTranslations('orderHistory');
   const statusInfo = order ? getStatusInfo(order.statusName) : null;
-  const retryOrderId = order?.statusName === 'Pending' ? order.id : null;
   const canCancelOrder = order?.statusName === 'Pending' || order?.statusName === 'DepositPaid';
   const isCancelling = !!order && cancelLoadingOrderId === order.id;
   const displayItems = order ? getDisplayItems(order) : [];
@@ -297,17 +298,17 @@ export default function OrderDetailModal({
                     <Typography variant="body1" fontWeight="bold" sx={{ mt: 1 }}>
                       {formatCurrency(invoice.totalAmount)}
                     </Typography>
-                    {invoice.statusName === 'Pending' && retryOrderId !== null ? (
+                    {invoice.statusName === 'Pending' ? (
                       <Button
                         variant="contained"
                         size="small"
                         sx={{ mt: 1.5, backgroundColor: 'var(--primary)', ...hoverLiftStyle }}
-                        onClick={() => void onRetryPayment(retryOrderId)}
-                        disabled={retryLoadingOrderId === retryOrderId || isCancelling}
+                        onClick={() => void onPayInvoice(invoice.id)}
+                        disabled={paymentLoadingInvoiceId === invoice.id || isCancelling}
                       >
-                        {retryLoadingOrderId === retryOrderId
+                        {paymentLoadingInvoiceId === invoice.id
                           ? tOrderHistory('retryingPayment')
-                          : tOrderHistory('retryPayment')}
+                          : tOrderHistory('payNow')}
                       </Button>
                     ) : null}
                   </Card>

@@ -8,24 +8,6 @@ import HourglassTopIcon from '@mui/icons-material/HourglassTop';
 import ReplayIcon from '@mui/icons-material/Replay';
 import type { ReactElement } from 'react';
 import type { ChipProps } from '@mui/material/Chip';
-import type { OrderStatusFilter } from '@/types/order.types';
-
-export const STATUS_TABS: Array<{ value: OrderStatusFilter; label: string }> = [
-  { value: 'All', label: 'All' },
-  { value: 'Pending', label: 'Pending' },
-  { value: 'DepositPaid', label: 'DepositPaid' },
-  { value: 'Paid', label: 'Paid' },
-  { value: 'Shipping', label: 'Shipping' },
-  { value: 'Delivered', label: 'Delivered' },
-  { value: 'RemainingPaymentPending', label: 'RemainingPaymentPending' },
-  { value: 'PendingConfirmation', label: 'PendingConfirmation' },
-  { value: 'Completed', label: 'Completed' },
-  { value: 'RefundRequested', label: 'RefundRequested' },
-  { value: 'Refunded', label: 'Refunded' },
-  { value: 'Rejected', label: 'Rejected' },
-  { value: 'Failed', label: 'Failed' },
-  { value: 'Cancelled', label: 'Cancelled' },
-];
 
 export function formatCurrency(value: number): string {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);

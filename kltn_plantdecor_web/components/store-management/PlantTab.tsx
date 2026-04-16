@@ -105,7 +105,7 @@ export default function PlantTab({}: PlantTabProps) {
     loadEnums,
     clearError,
   } = useAdminPlants();
-
+  console.log('PlantTab render', { plants });
   const {
     categoryTree,
     error: categoryError,

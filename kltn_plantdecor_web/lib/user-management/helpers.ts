@@ -2,7 +2,7 @@ import type { UserRole } from '@/lib/constants/header';
 import type { SampleUser } from '@/data/sampledata';
 
 export const getRoleColor = (role: UserRole): 'default' | 'primary' | 'secondary' | 'error' | 'warning' | 'info' | 'success' => {
-  const colorMap: Record<UserRole, any> = {
+  const colorMap: Record<UserRole, 'default' | 'primary' | 'secondary' | 'error' | 'warning' | 'info' | 'success'> = {
     guest: 'secondary',
     customer: 'default',
     admin: 'error',

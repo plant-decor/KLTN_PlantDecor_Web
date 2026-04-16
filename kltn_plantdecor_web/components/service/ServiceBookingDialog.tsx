@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Box,
@@ -18,7 +18,6 @@ import {
   InputLabel,
   MenuItem,
   Select,
-  Stack,
   TextField,
   Typography,
 } from '@mui/material';
@@ -229,7 +228,7 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit }: Servic
     }
   };
 
-  const handleSearchNearbyNurseries = async (options?: { packageId?: number; latitude?: number; longitude?: number }) => {
+  const handleSearchNearbyNurseries = useCallback(async (options?: { packageId?: number; latitude?: number; longitude?: number }) => {
     const packageId = options?.packageId ?? selectedPackageId;
     const latitude = options?.latitude ?? formData.latitude;
     const longitude = options?.longitude ?? formData.longitude;
@@ -264,7 +263,7 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit }: Servic
     } finally {
       setLoadingNearby(false);
     }
-  };
+  }, [formData.latitude, formData.longitude, selectedPackageId, t]);
 
   useEffect(() => {
     if (!open || !selectedPackageId || !hasLatLng) {
@@ -282,7 +281,7 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit }: Servic
       latitude: formData.latitude,
       longitude: formData.longitude,
     });
-  }, [formData.latitude, formData.longitude, hasLatLng, open, selectedPackageId]);
+  }, [formData.latitude, formData.longitude, handleSearchNearbyNurseries, hasLatLng, open, selectedPackageId]);
 
   const handleUseCurrentLocation = () => {
     if (!navigator.geolocation) {

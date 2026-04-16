@@ -10,7 +10,6 @@ import {
   ClickAwayListener,
   InputAdornment,
   List,
-  ListItem,
   ListItemButton,
   ListItemText,
   Paper,

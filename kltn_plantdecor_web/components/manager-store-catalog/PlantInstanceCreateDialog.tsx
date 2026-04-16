@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   Box,
   Button,
@@ -62,17 +62,13 @@ export default function PlantInstanceCreateDialog({
 
   const hasValidPlant = useMemo(() => plants.some((plant) => plant.id === form.plantId), [plants, form.plantId]);
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
+  const handleDialogEnter = useCallback(() => {
     setForm({
       ...DEFAULT_FORM,
       plantId: plants[0]?.id ?? 0,
     });
     setImages([]);
-  }, [open, plants]);
+  }, [plants]);
 
   const handleNumberChange = <K extends keyof CreatePlantInstanceInput>(key: K, value: string) => {
     const parsedValue = parseNumericValue(value);
@@ -90,7 +86,7 @@ export default function PlantInstanceCreateDialog({
     form.healthStatus.trim().length > 0;
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+    <Dialog open={open} onClose={onClose} TransitionProps={{ onEnter: handleDialogEnter }} maxWidth="md" fullWidth>
       <DialogTitle>Create Plant Instance</DialogTitle>
       <DialogContent dividers>
         <Stack spacing={2.5}>

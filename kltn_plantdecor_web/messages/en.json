@@ -317,6 +317,8 @@
     }
   },
   "services": {
+    "orderIdError": "The service order did not confirm.",
+    "scheduleDaysError": "The service order did not confirm.",
     "title": "Services",
     "subtitle": "We provide a variety of plant care services",
     "careService": "Care Service",

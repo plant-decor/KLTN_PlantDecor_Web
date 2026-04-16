@@ -20,7 +20,6 @@ import type { SampleUser } from '@/data/sampledata';
 import type { UserRole } from '@/lib/constants/header';
 import { ROLE_OPTIONS, STATUS_OPTIONS } from '@/lib/user-management/constants';
 import type { UserFormData, ValidationErrors } from '@/lib/user-management/validation';
-import { DEFAULT_FORM_DATA } from '@/lib/user-management/validation';
 
 interface UserFormDialogProps {
   open: boolean;
@@ -29,7 +28,7 @@ interface UserFormDialogProps {
   errors: ValidationErrors;
   onClose: () => void;
   onSave: () => void;
-  onFormChange: (field: keyof UserFormData, value: any) => void;
+  onFormChange: (field: keyof UserFormData, value: UserFormData[keyof UserFormData]) => void;
 }
 
 export default function UserFormDialog({

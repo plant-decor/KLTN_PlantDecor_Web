@@ -1,6 +1,6 @@
 'use client';
 
-import { Alert, Box, Button, Card, CardContent, CircularProgress, Stack, Typography } from '@mui/material';
+import { Box, Button, Card, CardContent, CircularProgress, Typography } from '@mui/material';
 import { useTranslations } from 'next-intl';
 import type { GenerateLayoutImagesPayload, AnalyzeRoomUploadPayload } from '@/types/ai-recommendation.types';
 import GeneratedImageItem from './GeneratedImageItem';

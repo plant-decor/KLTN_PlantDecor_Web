@@ -213,3 +213,72 @@ export interface EligibleCaretaker {
   status: number;
   specializations: EligibleCaretakerSpecialization[];
 }
+
+export interface ServiceProgressShift {
+  id: number;
+  shiftName: string;
+  startTime: string;
+  endTime: string;
+}
+
+export interface ServiceProgressCaretaker {
+  id: number;
+  fullName: string;
+  email: string;
+  phone: string;
+  avatar: string | null;
+}
+
+export interface ServiceProgressCustomer {
+  id: number;
+  fullName: string;
+  email: string;
+  phone: string | null;
+  avatar: string | null;
+}
+
+export interface ServiceProgressCareServicePackage {
+  id: number;
+  name: string;
+  description: string;
+  visitPerWeek: number | null;
+  durationDays: number;
+  serviceType: number;
+  unitPrice: number;
+}
+
+export interface ServiceProgressNurseryCareService {
+  id: number;
+  nurseryId: number;
+  nurseryName: string;
+  careServicePackage: ServiceProgressCareServicePackage;
+}
+
+export interface ServiceProgressServiceRegistration {
+  id: number;
+  address: string;
+  phone: string;
+  nurseryCareService: ServiceProgressNurseryCareService;
+  customer: ServiceProgressCustomer | null;
+}
+
+export interface NurseryServiceScheduleItem {
+  id: number;
+  serviceRegistrationId: number;
+  status: number;
+  statusName: string;
+  taskDate: string;
+  actualStartTime: string | null;
+  actualEndTime: string | null;
+  description: string | null;
+  evidenceImageUrl: string | null;
+  shift: ServiceProgressShift | null;
+  caretaker: ServiceProgressCaretaker | null;
+  serviceRegistration: ServiceProgressServiceRegistration | null;
+}
+
+export type ServiceProgressDetail = NurseryServiceScheduleItem;
+
+export interface ServiceProgressReassignRequest {
+  newCaretakerId: number;
+}

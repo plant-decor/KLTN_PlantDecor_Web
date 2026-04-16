@@ -45,7 +45,6 @@ export default function PlantComboTab({}: PlantComboTabProps) {
     combos,
     comboPlants,
     saving,
-    detailLoading,
     plantsLoading,
     error,
     pagination,
@@ -125,7 +124,7 @@ export default function PlantComboTab({}: PlantComboTabProps) {
       return;
     }
 
-    const success = await toggleComboActive(toggleTarget.id);
+    await toggleComboActive(toggleTarget.id);
 
     setToggleOpen(false);
     setToggleTarget(null);

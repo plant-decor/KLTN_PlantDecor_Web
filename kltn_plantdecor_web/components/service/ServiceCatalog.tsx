@@ -7,7 +7,6 @@ import {
   Typography,
   Box,
   Chip,
-  Rating,
   Container,
   CircularProgress,
   Grid,

@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import {
   Box,
   Alert,
-  CircularProgress,
 } from "@mui/material";
 import CaretakerTaskList from "@/components/service/CaretakerTaskList";
 import CaretakerJobDetail from "@/components/service/CaretakerJobDetail";

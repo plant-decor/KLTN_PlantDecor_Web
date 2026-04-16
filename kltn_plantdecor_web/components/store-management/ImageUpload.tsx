@@ -18,7 +18,6 @@ import {
 } from '@mui/material';
 import { Delete, CloudUpload } from '@mui/icons-material';
 import type { ImageUploadData } from '@/types/store-management.types';
-import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 
 interface ImageUploadProps {
   images: ImageUploadData[];
@@ -90,7 +89,6 @@ export default function ImageUpload({
           padding: 2,
           textAlign: 'center',
           cursor: 'pointer',
-          ...hoverLiftStyle,
         }}
         component="label"
       >

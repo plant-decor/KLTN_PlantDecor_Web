@@ -1,119 +1,35 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   Alert,
   Box,
-  Button,
   Card,
   CardContent,
   Container,
   Grid,
-  MenuItem,
   Snackbar,
   Stack,
-  TextField,
   Typography,
 } from "@mui/material";
 import {
-  ChatBubbleOutline,
-  HeadsetMicOutlined,
-  LocalFloristOutlined,
   LocationOnOutlined,
   PhoneOutlined,
-  SupportAgentOutlined,
 } from "@mui/icons-material";
 import type { ShopNurseryListItem } from "@/lib/api/shopPlantsService";
-import { OPEN_SUPPORT_CHAT_EVENT } from "@/lib/constants/chat";
-import { Link } from "@/i18n/navigation";
-
-type SubjectOption = "general" | "service" | "order";
-
-type FormValues = {
-  name: string;
-  email: string;
-  subject: SubjectOption;
-  message: string;
-};
-
-type FormErrors = Partial<Record<keyof FormValues, string>>;
 
 interface ContactPageClientProps {
   nurseries: ShopNurseryListItem[];
   hasNurseryFetchError: boolean;
 }
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 export default function ContactPageClient({
   nurseries,
   hasNurseryFetchError,
 }: ContactPageClientProps) {
   const t = useTranslations("contactPage");
-  const [formValues, setFormValues] = useState<FormValues>({
-    name: "",
-    email: "",
-    subject: "general",
-    message: "",
-  });
-  const [errors, setErrors] = useState<FormErrors>({});
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
-
-  const subjectOptions = useMemo(
-    () => [
-      { value: "general" as const, label: t("form.subjectOptions.general") },
-      { value: "service" as const, label: t("form.subjectOptions.service") },
-      { value: "order" as const, label: t("form.subjectOptions.order") },
-    ],
-    [t]
-  );
-
-  const validate = (values: FormValues): FormErrors => {
-    const nextErrors: FormErrors = {};
-
-    if (!values.name.trim()) {
-      nextErrors.name = t("form.errors.required");
-    }
-
-    if (!values.email.trim()) {
-      nextErrors.email = t("form.errors.required");
-    } else if (!EMAIL_REGEX.test(values.email.trim())) {
-      nextErrors.email = t("form.errors.invalidEmail");
-    }
-
-    if (!values.subject) {
-      nextErrors.subject = t("form.errors.required");
-    }
-
-    if (!values.message.trim()) {
-      nextErrors.message = t("form.errors.required");
-    }
-
-    return nextErrors;
-  };
-
-  const handleOpenSupportChat = () => {
-    window.dispatchEvent(new CustomEvent(OPEN_SUPPORT_CHAT_EVENT));
-  };
-
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const nextErrors = validate(formValues);
-    setErrors(nextErrors);
-
-    if (Object.keys(nextErrors).length > 0) {
-      return;
-    }
-
-    setIsSuccessOpen(true);
-    setFormValues({
-      name: "",
-      email: "",
-      subject: "general",
-      message: "",
-    });
-  };
 
   return (
     <Box className="bg-gray-50 pb-16">

@@ -110,15 +110,19 @@ export default function PlantGuideFormDialog({
         soil: editingData.soil || '',
         careNotes: editingData.careNotes || '',
       });
-      setPlantKeyword(editingData.plantName || `Plant #${editingData.plantId}`);
-      setSearchOpen(false);
+      queueMicrotask(() => {
+        setPlantKeyword(editingData.plantName || `Plant #${editingData.plantId}`);
+        setSearchOpen(false);
+      });
       lastSearchedKeywordRef.current = null;
       return;
     }
 
     reset(defaultValues);
-    setPlantKeyword('');
-    setSearchOpen(false);
+    queueMicrotask(() => {
+      setPlantKeyword('');
+      setSearchOpen(false);
+    });
     lastSearchedKeywordRef.current = null;
   }, [editingData, open, reset]);
 

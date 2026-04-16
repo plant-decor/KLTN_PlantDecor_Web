@@ -102,11 +102,11 @@ export default function CheckoutResultPage() {
         <Paper
           elevation={3}
           className="p-8 text-center rounded-2xl border-t-8"
-          style={{ borderColor: isSuccess ? '#2e7d32' : '#d32f2f' }}
+          style={{ borderColor: isSuccess ? '#13EC5B' : '#d32f2f' }}
         >
           <Box className="flex flex-col items-center mb-6">
             {isSuccess ? (
-              <CheckCircle sx={{ color: '#2e7d32', width: 80, height: 80 }} />
+              <CheckCircle sx={{ color: '#13EC5B', width: 80, height: 80 }} />
             ) : (
               <Cancel sx={{ color: '#d32f2f', width: 80, height: 80 }} />
             )}
@@ -128,6 +128,7 @@ export default function CheckoutResultPage() {
               variant="determinate"
               value={(countdown / 5) * 100}
               color={isSuccess ? 'success' : 'error'}
+                className={`${isSuccess ? 'bg-primary' : 'text-error'}`}
               size={60}
             />
             <Box className="absolute flex flex-col items-center justify-center">

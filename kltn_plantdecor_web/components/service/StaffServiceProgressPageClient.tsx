@@ -203,7 +203,7 @@ export const StaffServiceProgressPageClient: React.FC = () => {
             <Box sx={{ p: 3 }}>
               <h3>Hướng Dẫn Theo Dõi Tiến Độ</h3>
               <ul>
-                <li>Click "Xem Chi Tiết" để xem chi tiết từng dịch vụ</li>
+                <li>Click &quot;Xem Chi Tiết&quot; để xem chi tiết từng dịch vụ</li>
                 <li>Xem các update tiến độ từ nhân viên chăm sóc</li>
                 <li>Duyệt hoặc từ chối dịch vụ phát sinh</li>
                 <li>Tạo hóa đơn khi hoàn thành</li>

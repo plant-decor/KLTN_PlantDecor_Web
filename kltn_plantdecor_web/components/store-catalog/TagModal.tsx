@@ -21,6 +21,13 @@ interface TagModalProps {
   tagTypeOptions: TagEnumValue[];
 }
 
+const DEFAULT_TAG: Tag = {
+  id: 0,
+  tagName: '',
+  tagType: 1,
+  tagTypeName: '',
+};
+
 export default function TagModal({
   open,
   onClose,
@@ -28,19 +35,7 @@ export default function TagModal({
   tag,
   tagTypeOptions,
 }: TagModalProps) {
-  const defaultTag: Tag = {
-    id: 0,
-    tagName: '',
-    tagType: 1,
-    tagTypeName: '',
-  };
-
-  const [formData, setFormData] = useState<Tag>({
-    id: 0,
-    tagName: '',
-    tagType: 1,
-    tagTypeName: '',
-  });
+  const [formData, setFormData] = useState<Tag>(DEFAULT_TAG);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -48,23 +43,29 @@ export default function TagModal({
       return;
     }
 
-    setFormData((prev) => {
-      if (prev.tagType > 0) {
-        return prev;
-      }
+    queueMicrotask(() => {
+      setFormData((prev) => {
+        if (prev.tagType > 0) {
+          return prev;
+        }
 
-      return {
-        ...prev,
-        tagType: tagTypeOptions[0].value,
-      };
+        return {
+          ...prev,
+          tagType: tagTypeOptions[0].value,
+        };
+      });
     });
   }, [tagTypeOptions]);
 
   useEffect(() => {
     if (tag) {
-      setFormData(tag);
+      queueMicrotask(() => {
+        setFormData(tag);
+      });
     } else {
-      setFormData(defaultTag);
+      queueMicrotask(() => {
+        setFormData(DEFAULT_TAG);
+      });
     }
   }, [tag, open]);
 
@@ -97,7 +98,7 @@ export default function TagModal({
     setSaving(false);
 
     if (success) {
-      setFormData(defaultTag);
+      setFormData(DEFAULT_TAG);
       onClose();
     }
   };

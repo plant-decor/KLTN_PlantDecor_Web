@@ -13,10 +13,13 @@ import type {
   ManagerServiceRegistration,
   ManagerServiceRegistrationsQuery,
   MyServiceRegistration,
+  NurseryServiceScheduleItem,
   NearbyNursery,
   NearbyNurseryQuery,
   NurseryCareService,
   PaginatedApiResponse,
+  ServiceProgressDetail,
+  ServiceProgressReassignRequest,
   ServiceRegistrationsQuery,
 } from "@/types/care-service.types";
 
@@ -415,6 +418,89 @@ const normalizeEligibleCaretaker = (item: unknown): EligibleCaretaker | null => 
     avatarUrl: toNullableText(item.avatarUrl),
     status: toNumber(item.status),
     specializations,
+  };
+};
+
+const normalizeNurseryServiceScheduleItem = (item: unknown): NurseryServiceScheduleItem | null => {
+  if (!isRecord(item)) {
+    return null;
+  }
+
+  const id = toNumber(item.id, Number.NaN);
+  if (!Number.isFinite(id)) {
+    return null;
+  }
+
+  const shift = isRecord(item.shift) ? item.shift : null;
+  const caretaker = isRecord(item.caretaker) ? item.caretaker : null;
+  const serviceRegistration = isRecord(item.serviceRegistration) ? item.serviceRegistration : null;
+  const nurseryCareService =
+    serviceRegistration && isRecord(serviceRegistration.nurseryCareService)
+      ? serviceRegistration.nurseryCareService
+      : null;
+  const careServicePackage =
+    nurseryCareService && isRecord(nurseryCareService.careServicePackage)
+      ? nurseryCareService.careServicePackage
+      : null;
+  const customer = serviceRegistration && isRecord(serviceRegistration.customer) ? serviceRegistration.customer : null;
+
+  return {
+    id,
+    serviceRegistrationId: toNumber(item.serviceRegistrationId),
+    status: toNumber(item.status),
+    statusName: toText(item.statusName),
+    taskDate: toText(item.taskDate),
+    actualStartTime: toNullableText(item.actualStartTime),
+    actualEndTime: toNullableText(item.actualEndTime),
+    description: toNullableText(item.description),
+    evidenceImageUrl: toNullableText(item.evidenceImageUrl),
+    shift: shift
+      ? {
+          id: toNumber(shift.id),
+          shiftName: toText(shift.shiftName),
+          startTime: toText(shift.startTime),
+          endTime: toText(shift.endTime),
+        }
+      : null,
+    caretaker: caretaker
+      ? {
+          id: toNumber(caretaker.id),
+          fullName: toText(caretaker.fullName),
+          email: toText(caretaker.email),
+          phone: toText(caretaker.phone),
+          avatar: toNullableText(caretaker.avatar),
+        }
+      : null,
+    serviceRegistration: serviceRegistration
+      ? {
+          id: toNumber(serviceRegistration.id),
+          address: toText(serviceRegistration.address),
+          phone: toText(serviceRegistration.phone),
+          nurseryCareService: {
+            id: toNumber(nurseryCareService?.id),
+            nurseryId: toNumber(nurseryCareService?.nurseryId),
+            nurseryName: toText(nurseryCareService?.nurseryName),
+            careServicePackage: {
+              id: toNumber(careServicePackage?.id),
+              name: toText(careServicePackage?.name),
+              description: toText(careServicePackage?.description),
+              visitPerWeek: toNullableNumber(careServicePackage?.visitPerWeek),
+              durationDays: toNumber(careServicePackage?.durationDays),
+              serviceType: toNumber(careServicePackage?.serviceType),
+              unitPrice: toNumber(careServicePackage?.unitPrice),
+            },
+          },
+          customer: customer
+            ? {
+                id: toNumber(customer.id),
+                fullName: toText(customer.fullName),
+                email: toText(customer.email),
+                phone: toNullableText(customer.phone),
+                avatar: toNullableText(customer.avatar),
+              }
+            : null,
+        }
+      : null,
   };
 };
 
@@ -868,4 +954,84 @@ export const assignCaretakerToManagerServiceRegistration = async (
   }
 
   return normalized;
+};
+
+export const getNurseryScheduleByDate = async (
+  date: string,
+  loading = true
+): Promise<NurseryServiceScheduleItem[]> => {
+  const response = await apiClient.get<WrappedResponse<unknown>>(
+    "service-progress/nursery-schedule",
+    { date },
+    loading,
+    QUERY_CONFIG
+  );
+
+  const payload = unwrapPayloadData(response);
+  if (!Array.isArray(payload)) {
+    return [];
+  }
+
+  return payload
+    .map((item) => normalizeNurseryServiceScheduleItem(item))
+    .filter((item): item is NurseryServiceScheduleItem => Boolean(item));
+};
+
+export const getServiceProgressDetail = async (id: number, loading = true): Promise<ServiceProgressDetail> => {
+  const response = await apiClient.get<WrappedResponse<unknown>>(
+    `service-progress/${id}`,
+    undefined,
+    loading,
+    QUERY_CONFIG
+  );
+
+  const normalized = normalizeNurseryServiceScheduleItem(unwrapPayloadData(response));
+  if (!normalized) {
+    throw new Error("Không thể tải chi tiết phiên chăm sóc");
+  }
+
+  return normalized;
+};
+
+export const reassignServiceProgressCaretaker = async (
+  id: number,
+  data: ServiceProgressReassignRequest,
+  loading = true
+): Promise<ServiceProgressDetail> => {
+  const response = await apiClient.put<WrappedResponse<unknown>>(
+    `service-progress/${id}/reassign`,
+    data,
+    loading,
+    MUTATION_CONFIG
+  );
+
+  const normalized = normalizeNurseryServiceScheduleItem(unwrapPayloadData(response));
+  if (!normalized) {
+    throw new Error("Không thể chuyển caretaker cho phiên chăm sóc");
+  }
+
+  return normalized;
+};
+
+export const getCaretakerScheduleByRange = async (
+  caretakerId: number,
+  from: string,
+  to: string,
+  loading = true
+): Promise<NurseryServiceScheduleItem[]> => {
+  const response = await apiClient.get<WrappedResponse<unknown>>(
+    `service-progress/nursery-schedule/caretaker/${caretakerId}`,
+    { from, to },
+    loading,
+    QUERY_CONFIG
+  );
+
+  const payload = unwrapPayloadData(response);
+  if (!Array.isArray(payload)) {
+    return [];
+  }
+
+  return payload
+    .map((item) => normalizeNurseryServiceScheduleItem(item))
+    .filter((item): item is NurseryServiceScheduleItem => Boolean(item));
 };

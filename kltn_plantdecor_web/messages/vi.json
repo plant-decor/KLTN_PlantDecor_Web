@@ -318,6 +318,8 @@
     }
   },
   "services": {
+    "orderIdError": "Đơn dịch vụ chưa được xác nhận.",
+    "scheduleDaysError": "Đơn dịch vụ chưa được xác nhận.",
     "title": "Dịch vụ",
     "subtitle": "Chúng tôi cung cấp đa dạng dịch vụ chăm sóc cây cảnh",
     "careService": "Dịch vụ chăm sóc",

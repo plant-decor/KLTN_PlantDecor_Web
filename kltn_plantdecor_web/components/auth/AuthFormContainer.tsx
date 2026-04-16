@@ -240,7 +240,6 @@ export default function AuthFormContainer() {
       {currentForm === 'forgot' && (
         <div className="lg:w-4/5 lg:h-4/5 w-full h-5/6 flex border border-black rounded-[30px] bg-white z-10 overflow-hidden">
           <ForgotPasswordForm
-            isVisible={true}
             onBack={handleBackToLogin}
             onSubmit={handleForgotPasswordSubmit}
             isLoading={isSubmitting}

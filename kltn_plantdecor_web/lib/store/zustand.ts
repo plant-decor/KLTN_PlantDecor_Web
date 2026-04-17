@@ -1,23 +1,5 @@
 import { create } from 'zustand';
 
-// import { API_CONTANTS } from '../constants/apiContants';
-
-interface SidebarState {
-  isSidebarOpen: boolean;
-  toggleSidebar: () => void;
-  closeSidebar: () => void;
-}
-
-export const useSidebarStore = create<SidebarState>((set, get) => ({
-  isSidebarOpen: false,
-  toggleSidebar: () => {
-    const { isSidebarOpen } = get();
-    set({ isSidebarOpen: !isSidebarOpen });
-  },
-  closeSidebar: () => set({ isSidebarOpen: false }),
-}));
-
-
 type LoadingState = {
   isLoadingFlag: boolean;
   setIsLoadingFlag: (isLoadingFlag: boolean) => void;

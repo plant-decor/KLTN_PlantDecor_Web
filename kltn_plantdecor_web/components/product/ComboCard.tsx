@@ -44,7 +44,7 @@ export default function ComboCard({
   useEffect(() => {
     setIsWishlisted(initialWishlisted);
   }, [initialWishlisted]);
-
+  
   useEffect(() => {
     if (!isDrawerOpen) return;
     let mounted = true;
@@ -138,7 +138,7 @@ export default function ComboCard({
         <Link href={`/combo/${combo.id}`} className="block basis-[50%] shrink-0">
           <div className="relative w-full h-full">
             <Image
-              src={combo.imageUrl || '/img/fallbackplant.avif'}
+              src={combo.primaryImageUrl || '/img/fallbackplant.avif'}
               alt={combo.name}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"

@@ -87,11 +87,11 @@ export default function PlantInstanceCreateDialog({
 
   return (
     <Dialog open={open} onClose={onClose} TransitionProps={{ onEnter: handleDialogEnter }} maxWidth="md" fullWidth>
-      <DialogTitle>Create Plant Instance</DialogTitle>
+      <DialogTitle>Tạo mới cây độc bản</DialogTitle>
       <DialogContent dividers>
         <Stack spacing={2.5}>
           <Typography variant="body2" color="text.secondary">
-            Create one plant instance per request. If you upload images, the first image marked as thumbnail will be used for thumbnail upload.
+            Vui lòng điền đầy đủ thông tin để tạo mới cây độc bản. Các trường có dấu * là bắt buộc.
           </Typography>
 
           <Grid container spacing={2}>
@@ -202,7 +202,7 @@ export default function PlantInstanceCreateDialog({
           disabled={!canSubmit || submitting}
           sx={{ backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)' }}
         >
-          {submitting ? 'Creating...' : 'Create'}
+          {submitting ? 'Đang thêm...' : 'Thêm cây'}
         </Button>
       </DialogActions>
     </Dialog>

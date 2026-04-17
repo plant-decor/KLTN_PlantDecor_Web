@@ -146,7 +146,7 @@ export async function generateMetadata({ params }: ComboDetailPageProps): Promis
   const imageUrls = [
     combo?.primaryImageUrl,
     ...(combo?.images?.map((image) => image.imageUrl) ?? []),
-    fallbackCombo?.imageUrl,
+    fallbackCombo?.primaryImageUrl,
   ].filter((url): url is string => Boolean(url));
 
   const ogImage = imageUrls[0] || FALLBACK_IMAGE || DEFAULT_OG_IMAGE;
@@ -207,7 +207,7 @@ export default async function ComboDetailPage({ params }: ComboDetailPageProps) 
   const imageUrls = [
     combo?.primaryImageUrl,
     ...(combo?.images?.map((image) => image.imageUrl) ?? []),
-    fallbackCombo?.imageUrl,
+    fallbackCombo?.primaryImageUrl,
   ].filter((url): url is string => Boolean(url));
 
   const displayImages = imageUrls.length > 0 ? [...new Set(imageUrls)] : [FALLBACK_IMAGE];

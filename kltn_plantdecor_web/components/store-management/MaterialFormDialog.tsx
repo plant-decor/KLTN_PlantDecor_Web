@@ -368,7 +368,7 @@ export default function MaterialFormDialog({
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
         <Button onClick={handleSubmit(handleFormSubmit)} variant="contained" disabled={isLoading}>
-          {isLoading ? 'Saving...' : 'Save'}
+          {isLoading ? 'Đang thêm...' : 'Thêm vật tư'}
         </Button>
       </DialogActions>
     </Dialog>

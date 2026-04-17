@@ -89,7 +89,7 @@ export interface ShopUnifiedComboItem {
   comboTypeName?: string;
   description?: string;
   price: number;
-  imageUrl: string | null;
+  primaryImageUrl: string | null;
   nurseries?: ShopUnifiedComboNursery[];
 }
 

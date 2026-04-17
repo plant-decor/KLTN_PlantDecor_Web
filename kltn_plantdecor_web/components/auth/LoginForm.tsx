@@ -86,6 +86,7 @@ export default function LoginForm({
                 {t('email')}
               </span>
               <input
+              required
                 id="email"
                 type="email"
                 value={email}
@@ -116,6 +117,7 @@ export default function LoginForm({
               </span>
               <input
                 id="password"
+                required
                 type={isPasswordVisible ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

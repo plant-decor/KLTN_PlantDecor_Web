@@ -572,7 +572,7 @@ function ManagerMaterialMode() {
             variant="contained"
             disabled={submitting || editForm.quantity < 0}
           >
-            Save
+            Lưu
           </Button>
         </DialogActions>
       </Dialog>

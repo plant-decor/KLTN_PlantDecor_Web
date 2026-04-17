@@ -838,7 +838,7 @@ export default function PlantFormDialog({
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
         <Button onClick={handleSubmit(handleFormSubmit)} variant="contained" disabled={disableSubmit}>
-          {isLoading ? 'Saving...' : 'Save'}
+          {isLoading ? 'Đang thêm...' : 'Thêm cây'}
         </Button>
       </DialogActions>
     </Dialog>

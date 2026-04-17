@@ -128,7 +128,6 @@ export default function CheckoutResultPage() {
               variant="determinate"
               value={(countdown / 5) * 100}
               color={isSuccess ? 'success' : 'error'}
-                className={`${isSuccess ? 'bg-primary' : 'text-error'}`}
               size={60}
             />
             <Box className="absolute flex flex-col items-center justify-center">

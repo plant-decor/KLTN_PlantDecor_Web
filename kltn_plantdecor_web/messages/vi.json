@@ -117,7 +117,11 @@
     "careHistory": "Lịch sử chăm sóc",
     "assignDelivery": "Giao hàng",
     "deliveryHistory": "Lịch sử giao hàng",
-    "logout": "Đăng xuất"
+    "logout": "Đăng xuất",
+    "logoutConfirmTitle": "Xác nhận đăng xuất",
+    "logoutConfirmMessage": "Bạn có chắc chắn muốn đăng xuất khỏi hệ thống không?",
+    "cancel": "Hủy",
+    "confirmLogout": "Xác nhận"
   },
   "home": {
     "heroTitle": "Nâng tầm không gian sống với",
@@ -443,7 +447,7 @@
     "useCurrentLocation": "Dùng vị trí hiện tại",
     "searchingNurseries": "Đang tìm vựa...",
     "searchMatchingNurseries": "Tìm vựa phù hợp",
-    "radiusWithLocation": "Bán kính tìm vựa: 10km (đã có tọa độ)",
+    "radiusWithLocation": "Bán kính tìm vựa: 20km (đã có tọa độ)",
     "radiusWithoutLocation": "Bán kính tìm vựa: toàn khu vực (chưa có tọa độ)",
     "serviceDatePast": "Ngày dịch vụ không được nhỏ hơn hôm nay",
     "providerNursery": "Vựa cung cấp dịch vụ",

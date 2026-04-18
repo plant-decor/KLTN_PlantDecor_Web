@@ -358,7 +358,7 @@ export default function PlantFormDialog({
                   )}
                 />
               </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
+              {/* <Grid size={{ xs: 12, sm: 6 }}>
                 <Controller
                   name="careLevel"
                   control={control}
@@ -374,7 +374,7 @@ export default function PlantFormDialog({
                     />
                   )}
                 />
-              </Grid>
+              </Grid> */}
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Controller
                   name="growthRate"

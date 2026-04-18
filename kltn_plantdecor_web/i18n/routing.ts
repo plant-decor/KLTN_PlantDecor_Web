@@ -4,8 +4,8 @@ export const routing = defineRouting({
   // All supported locales
   locales: ['vi', 'en'],
 
-  // Default locale (Vietnamese)
-  defaultLocale: 'vi',
+  // Default locale (English)
+  defaultLocale: 'en',
 
   // Locale prefix strategy:
   // 'as-needed' = default locale has no prefix (e.g. /products, /en/products)

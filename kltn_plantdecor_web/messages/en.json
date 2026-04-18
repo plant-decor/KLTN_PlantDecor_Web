@@ -30,6 +30,7 @@
     "password": "Password",
     "confirmPassword": "Confirm password",
     "fullName": "Full name",
+    "username": "Username",
     "phone": "Phone number",
     "address": "Address",
     "loginTitle": "Welcome back",
@@ -116,7 +117,11 @@
     "careHistory": "Care History",
     "assignDelivery": "Assign Delivery",
     "deliveryHistory": "Delivery History",
-    "logout": "Log out"
+    "logout": "Log out",
+    "logoutConfirmTitle": "Confirm log out",
+    "logoutConfirmMessage": "Are you sure you want to log out of the system?",
+    "cancel": "Cancel",
+    "confirmLogout": "Confirm"
   },
   "home": {
     "heroTitle": "Elevate your living space with",
@@ -442,7 +447,7 @@
     "useCurrentLocation": "Use current location",
     "searchingNurseries": "Searching nurseries...",
     "searchMatchingNurseries": "Find matching nurseries",
-    "radiusWithLocation": "Search radius: 10km (coordinates available)",
+    "radiusWithLocation": "Search radius: 20km (coordinates available)",
     "radiusWithoutLocation": "Search radius: global area (coordinates unavailable)",
     "providerNursery": "Service provider nursery",
     "selectProviderNursery": "Select service provider nursery",

@@ -127,7 +127,7 @@ export default function CheckoutResultPage() {
             <CircularProgress
               variant="determinate"
               value={(countdown / 5) * 100}
-              color={isSuccess ? 'success' : 'error'}
+              sx={{color: isSuccess ? '#13EC5B' : '#d32f2f'}}
               size={60}
             />
             <Box className="absolute flex flex-col items-center justify-center">
@@ -151,7 +151,7 @@ export default function CheckoutResultPage() {
               startIcon={<HistoryOutlined sx={{ width: 18, height: 18 }} />}
               onClick={handleRedirect}
               style={{
-                backgroundColor: isSuccess ? '#2e7d32' : '#1976d2',
+                backgroundColor: isSuccess ? '#13EC5B' : '#1976d2',
                 borderRadius: '12px',
                 padding: '12px',
               }}

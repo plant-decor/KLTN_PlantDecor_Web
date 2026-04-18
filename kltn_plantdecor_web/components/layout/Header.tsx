@@ -6,7 +6,7 @@ import { useAuthStore } from '@/lib/store/authStore';
 import CartBadge from '@/components/cart/CartBadge';
 // import { NotificationBell } from '@/components/notifications/NotificationBell';
 import Navigation from './Navigation';
-import LanguageSwitcher from './LanguageSwitcher';
+// import LanguageSwitcher from './LanguageSwitcher';
 import { Link } from '@/i18n/navigation';
 import { GUEST_ACTIONS, USER_MENU_ITEMS } from '@/lib/constants/header';
 import { logoutAction } from '@/app/actions/loginAction';

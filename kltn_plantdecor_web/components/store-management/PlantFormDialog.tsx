@@ -23,6 +23,7 @@ import {
   Select,
   Alert,
   Chip,
+  Switch,
 } from '@mui/material';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import ImageUpload from './ImageUpload';
@@ -186,6 +187,31 @@ export default function PlantFormDialog({
       <DialogContent dividers sx={{ maxHeight: '80vh', overflow: 'auto' }}>
         <Stack spacing={3}>
           {enumError && <Alert severity="error">Failed to load plant enums. Please retry later.</Alert>}
+
+          <Box>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+              <Controller
+                name="isActive"
+                control={control}
+                render={({ field }) => (
+                  <FormControlLabel
+                    control={<Switch checked={field.value} onChange={(event) => field.onChange(event.target.checked)} />}
+                    label="Active"
+                  />
+                )}
+              />
+              <Controller
+                name="isUniqueInstance"
+                control={control}
+                render={({ field }) => (
+                  <FormControlLabel
+                    control={<Switch checked={field.value} onChange={(event) => field.onChange(event.target.checked)} />}
+                    label="Unique instance"
+                  />
+                )}
+              />
+            </Stack>
+          </Box>
 
           <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom>
@@ -358,23 +384,6 @@ export default function PlantFormDialog({
                   )}
                 />
               </Grid>
-              {/* <Grid size={{ xs: 12, sm: 6 }}>
-                <Controller
-                  name="careLevel"
-                  control={control}
-                  rules={{ required: true }}
-                  render={({ field, fieldState }) => (
-                    <TextField
-                      {...field}
-                      label="Care level"
-                      fullWidth
-                      required
-                      error={Boolean(fieldState.error)}
-                      helperText={getValidationMessage(fieldState.error)}
-                    />
-                  )}
-                />
-              </Grid> */}
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Controller
                   name="growthRate"
@@ -568,7 +577,7 @@ export default function PlantFormDialog({
 
               <FormControlLabel
                 control={
-                  <Checkbox
+                  <Switch
                     checked={includePlantGuide}
                     onChange={(event) => dispatchPlantGuide({ type: 'set', value: event.target.checked })}
                   />
@@ -813,6 +822,7 @@ export default function PlantFormDialog({
                 string,
               ]>).map(
                 ([fieldName, label]) => (
+                  fieldName === 'isUniqueInstance' || fieldName === 'isActive' ? null :
                   <Grid key={fieldName} size={{ xs: 6, sm: 3 }}>
                     <Controller
                       name={fieldName}

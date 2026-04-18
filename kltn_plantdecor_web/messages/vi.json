@@ -1040,8 +1040,7 @@
     "steps": {
       "roomInput": "Thông tin phòng và sở thích",
       "roomAnalysis": "Phân tích phòng",
-      "recommendations": "Đề xuất",
-      "generatedImages": "Hình ảnh được tạo ra"
+      "results": "Kết quả"
     },
     "roomInput": {
       "title": "1) Thông tin phòng và sở thích",
@@ -1074,8 +1073,8 @@
       "title": "2) Phân tích phòng"
     },
     "recommendations": {
-      "title": "3) Đề xuất cây cảnh",
-      "titleWithCount": "3) Cây cảnh được đề xuất ({count})",
+      "title": "Đề xuất cây cảnh",
+      "titleWithCount": "Cây cảnh được đề xuất ({count})",
       "reason": "Lý do:",
       "placement": "Vị trí:",
       "addToCartButton": "Thêm vào giỏ hàng",
@@ -1088,10 +1087,15 @@
       }
     },
     "generatedImages": {
-      "title": "4) Hình ảnh phòng được tạo ra",
+      "title": "Hình ảnh phòng được tạo ra",
       "generatingLabel": "Đang tạo hình ảnh AI...",
       "imageFailed": "Tạo hình ảnh thất bại cho đề xuất này.",
       "placementLabel": "Vị trí:",
+      "priceLabel": "Giá:",
+      "plantFallbackName": "Cây đề xuất",
+      "plantDescriptionFallback": "Chưa có mô tả.",
+      "plantInfoPending": "Chưa có thông tin cây cho hình ảnh này.",
+      "addingToCartButton": "Đang thêm vào giỏ...",
       "successCount": "Đã tạo {success}/{total} hình ảnh. Thất bại: {failed}",
       "retryButton": "Thử lại tạo hình ảnh",
       "errors": {

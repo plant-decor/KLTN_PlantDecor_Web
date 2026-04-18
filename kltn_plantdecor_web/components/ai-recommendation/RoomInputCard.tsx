@@ -517,7 +517,7 @@ export default function RoomInputCard({
             variant="contained"
             onClick={onAnalyze}
             disabled={isAnalyzing || !imageFile || !roomType.trim() || !roomStyle.trim()}
-            sx={{ px: 3, py: 1.2, fontWeight: 'bold', ...hoverLiftStyle }}
+            sx={{ px: 3, py: 1.2, fontWeight: 'bold', ...hoverLiftStyle, backgroundColor: 'var(--primary)' }}
           >
             {isAnalyzing ? t('analyzingButton') : t('analyzeButton')}
           </Button>

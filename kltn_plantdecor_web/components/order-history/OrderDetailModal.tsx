@@ -25,7 +25,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useTranslations } from 'next-intl';
-import type { Order, OrderInvoiceDetail } from '@/types/order.types';
+import type { Order } from '@/types/order.types';
 import {
   formatCurrency,
   formatDate,
@@ -35,34 +35,34 @@ import {
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 import Image from 'next/image';
 
-type OrderDisplayItem = {
-  id: number;
-  imageUrl: string | null;
-  itemName: string;
-  quantity: number;
-  price: number;
-  statusName: string;
-};
+// type OrderDisplayItem = {
+//   id: number;
+//   imageUrl: string | null;
+//   itemName: string;
+//   quantity: number;
+//   price: number;
+//   statusName: string;
+// };
 
-function mapInvoiceDetailToDisplayItem(detail: OrderInvoiceDetail): OrderDisplayItem {
-  return {
-    id: detail.id,
-    imageUrl: detail.imageUrl,
-    itemName: detail.itemName,
-    quantity: detail.quantity,
-    price: detail.unitPrice,
-    statusName: detail.statusName,
-  };
-}
+// function mapInvoiceDetailToDisplayItem(detail: OrderInvoiceDetail): OrderDisplayItem {
+//   return {
+//     id: detail.id,
+//     imageUrl: detail.imageUrl,
+//     itemName: detail.itemName,
+//     quantity: detail.quantity,
+//     price: detail.unitPrice,
+//     statusName: detail.statusName,
+//   };
+// }
 
-function getDisplayItems(order: Order): OrderDisplayItem[] {
-  if (order.orderType !== 4) {
-    return order.items;
-  }
+// function getDisplayItems(order: Order): OrderDisplayItem[] {
+//   if (order.orderType !== 4) {
+//     return order.items;
+//   }
 
-  const invoiceWithDetails = order.invoices.find((invoice) => invoice.details.length > 0);
-  return invoiceWithDetails ? invoiceWithDetails.details.map(mapInvoiceDetailToDisplayItem) : [];
-}
+//   const invoiceWithDetails = order.invoices.find((invoice) => invoice.details.length > 0);
+//   return invoiceWithDetails ? invoiceWithDetails.details.map(mapInvoiceDetailToDisplayItem) : [];
+// }
 
 interface OrderDetailModalProps {
   open: boolean;
@@ -91,9 +91,9 @@ export default function OrderDetailModal({
 }: OrderDetailModalProps) {
   const tOrderHistory = useTranslations('orderHistory');
   const statusInfo = order ? getStatusInfo(order.statusName) : null;
-  const canCancelOrder = order?.statusName === 'Pending' || order?.statusName === 'DepositPaid';
+  const canCancelOrder = order?.statusName === 'Pending' || order?.statusName === 'DepositPaid' || order?.statusName === 'Paid';
   const isCancelling = !!order && cancelLoadingOrderId === order.id;
-  const displayItems = order ? getDisplayItems(order) : [];
+  // const displayItems = order ? getDisplayItems(order) : [];
   console.log('OrderDetailModal render - order:', order);
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>

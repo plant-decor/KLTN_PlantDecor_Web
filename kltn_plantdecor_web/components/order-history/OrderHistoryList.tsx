@@ -125,7 +125,7 @@ export default function OrderHistoryList({
         const remainingItems = totalDisplayItems - displayItems.length;
         const retryOrderId = order.statusName === 'Pending' ? order.id : null;
         const isRetrying = retryOrderId !== null && retryLoadingOrderId === retryOrderId;
-        const canCancelOrder = order.statusName === 'Pending' || order.statusName === 'DepositPaid';
+        const canCancelOrder = order.statusName === 'Pending' || order.statusName === 'DepositPaid' || order.statusName === 'Paid';
         const isCancelling = canCancelOrder && cancelLoadingOrderId === order.id;
         console.log('items', displayItems.map((item) => item.imageUrl));
         return (

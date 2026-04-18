@@ -17,6 +17,12 @@ interface NominatimResponse {
   display_name?: string;
 }
 
+interface NominatimSearchResult {
+  display_name: string;
+  lat: string;
+  lon: string;
+}
+
 export interface AddressSuggestion {
   display_name: string;
   latitude: number;
@@ -93,7 +99,7 @@ export async function searchAddressSuggestions(
       return [];
     }
 
-    const data = await response.json();
+    const data: NominatimSearchResult[] = await response.json();
 
     if (!Array.isArray(data)) {
       return [];
@@ -101,12 +107,12 @@ export async function searchAddressSuggestions(
 
     return data
       .filter(
-        (item: any) =>
+        (item: NominatimSearchResult) =>
           item.display_name &&
           typeof item.lat === 'string' &&
           typeof item.lon === 'string'
       )
-      .map((item: any) => ({
+      .map((item: NominatimSearchResult) => ({
         display_name: item.display_name,
         latitude: parseFloat(item.lat),
         longitude: parseFloat(item.lon),

@@ -1037,8 +1037,7 @@
     "steps": {
       "roomInput": "Room Input",
       "roomAnalysis": "Room Analysis",
-      "recommendations": "Recommendations",
-      "generatedImages": "Generated Images"
+      "results": "Results"
     },
     "roomInput": {
       "title": "1) Room input and preferences",
@@ -1071,8 +1070,8 @@
       "title": "2) Room analysis"
     },
     "recommendations": {
-      "title": "3) Recommended plants",
-      "titleWithCount": "3) Recommended plants ({count})",
+      "title": "Recommended plants",
+      "titleWithCount": "Recommended plants ({count})",
       "reason": "Reason:",
       "placement": "Placement:",
       "addToCartButton": "Add to cart",
@@ -1085,10 +1084,15 @@
       }
     },
     "generatedImages": {
-      "title": "4) Generated room images",
+      "title": "Generated room images",
       "generatingLabel": "Generating AI room images...",
       "imageFailed": "Image generation failed for this recommendation.",
       "placementLabel": "Placement:",
+      "priceLabel": "Price:",
+      "plantFallbackName": "Recommended plant",
+      "plantDescriptionFallback": "No description available.",
+      "plantInfoPending": "Plant details are not available yet for this image.",
+      "addingToCartButton": "Adding to cart...",
       "successCount": "Generated {success}/{total} image(s). Failed: {failed}",
       "retryButton": "Retry generate images",
       "errors": {

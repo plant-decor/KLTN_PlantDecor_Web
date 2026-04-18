@@ -1,6 +1,9 @@
 import type { AxiosRequestConfig } from "axios";
 import * as apiClient from "@/lib/api/apiService.client";
 import * as apiServer from "@/lib/api/apiService.server";
+import type { ApiClientRequestConfig } from "@/lib/api/apiService.client";
+
+export type ApiServiceRequestConfig = ApiClientRequestConfig;
 
 // Backward-compatible bridge. Prefer importing from apiService.client/apiService.server directly.
 export async function get<T>(
@@ -8,7 +11,7 @@ export async function get<T>(
   params: AxiosRequestConfig["params"] = undefined,
   isServer = false,
   loading = true,
-  config: AxiosRequestConfig = {}
+  config: ApiServiceRequestConfig = {}
 ): Promise<T> {
   if (isServer) {
     return apiServer.get<T>(url, params, config);
@@ -21,7 +24,7 @@ export async function post<T>(
   data: unknown = undefined,
   isServer = false,
   loading = true,
-  config: AxiosRequestConfig = {}
+  config: ApiServiceRequestConfig = {}
 ): Promise<T> {
   if (isServer) {
     return apiServer.post<T>(url, data, config);
@@ -34,7 +37,7 @@ export async function put<T>(
   data: unknown = undefined,
   isServer = false,
   loading = true,
-  config: AxiosRequestConfig = {}
+  config: ApiServiceRequestConfig = {}
 ): Promise<T> {
   if (isServer) {
     return apiServer.put<T>(url, data, config);
@@ -47,7 +50,7 @@ export async function patch<T>(
   data: unknown = undefined,
   isServer = false,
   loading = true,
-  config: AxiosRequestConfig = {}
+  config: ApiServiceRequestConfig = {}
 ): Promise<T> {
   if (isServer) {
     return apiServer.patch<T>(url, data, config);
@@ -59,7 +62,7 @@ export async function del<T>(
   url: string,
   isServer = false,
   loading = true,
-  config: AxiosRequestConfig = {}
+  config: ApiServiceRequestConfig = {}
 ): Promise<T> {
   if (isServer) {
     return apiServer.del<T>(url, config);

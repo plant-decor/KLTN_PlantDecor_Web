@@ -34,6 +34,7 @@ import {
 } from './orderHistoryUtils';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 import Image from 'next/image';
+import { canCreateReturnTicket, isPendingNurseryOrderDetail } from './returnTicket.constants';
 
 // type OrderDisplayItem = {
 //   id: number;
@@ -72,8 +73,10 @@ interface OrderDetailModalProps {
   retryLoadingOrderId: number | null;
   paymentLoadingInvoiceId: number | null;
   cancelLoadingOrderId: number | null;
+  creatingReturnTicket: boolean;
   onPayInvoice: (invoiceId: number) => Promise<void>;
   onCancelOrder: (orderId: number) => Promise<void>;
+  onCreateReturnTicket: (orderId: number) => void;
   onClose: () => void;
 }
 
@@ -85,16 +88,23 @@ export default function OrderDetailModal({
   retryLoadingOrderId,
   paymentLoadingInvoiceId,
   cancelLoadingOrderId,
+  creatingReturnTicket,
   onPayInvoice,
   onCancelOrder,
+  onCreateReturnTicket,
   onClose,
 }: OrderDetailModalProps) {
   const tOrderHistory = useTranslations('orderHistory');
   const statusInfo = order ? getStatusInfo(order.statusName) : null;
   const canCancelOrder = order?.statusName === 'Pending' || order?.statusName === 'DepositPaid' || order?.statusName === 'Paid';
+  const canCreateReturn = !!order
+    && canCreateReturnTicket(order.statusName)
+    && order.nurseryOrders.some((nurseryOrder) =>
+      nurseryOrder.items.some((item) => isPendingNurseryOrderDetail(item.statusName))
+    );
   const isCancelling = !!order && cancelLoadingOrderId === order.id;
   // const displayItems = order ? getDisplayItems(order) : [];
-  console.log('OrderDetailModal render - order:', order);
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
       <DialogTitle>
@@ -324,6 +334,15 @@ export default function OrderDetailModal({
       </DialogContent>
 
       <DialogActions>
+        {order && canCreateReturn ? (
+          <Button
+            variant="contained"
+            onClick={() => onCreateReturnTicket(order.id)}
+            disabled={creatingReturnTicket || isCancelling}
+          >
+            {creatingReturnTicket ? 'Opening return form...' : 'Create Return Ticket'}
+          </Button>
+        ) : null}
         {order && canCancelOrder ? (
           <Button
             variant="outlined"

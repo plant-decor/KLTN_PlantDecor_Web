@@ -8,19 +8,14 @@ import HourglassTopIcon from '@mui/icons-material/HourglassTop';
 import ReplayIcon from '@mui/icons-material/Replay';
 import type { ReactElement } from 'react';
 import type { ChipProps } from '@mui/material/Chip';
+import { formatDateTime } from '@/lib/utils/dateUtils';
 
 export function formatCurrency(value: number): string {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
 }
 
 export function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('vi-VN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return formatDateTime(dateStr);
 }
 
 export function getStatusInfo(statusName: string): {

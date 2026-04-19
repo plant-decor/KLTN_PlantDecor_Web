@@ -9,10 +9,10 @@ import {
   LockOpen,
   PersonOutline,
   PhoneOutlined,
-  HomeOutlined,
 } from '@mui/icons-material';
 import Image from 'next/image';
 import { isValidPhoneNumber10Digits } from '@/lib/utils/phoneNumber';
+import Link from 'next/link';
 
 interface SignUpFormProps {
   isVisible: boolean;
@@ -121,13 +121,15 @@ export default function SignUpForm({
         transition={{ duration: 0.8, ease: "easeInOut" }}
         className="lg:w-[65%] w-full h-full relative flex flex-col justify-center items-center overflow-y-auto"
       >
+        <Link href="/" className="border-none! block w-32 lg:w-44 h-10 lg:h-12 overflow-hidden absolute top-8 right-18">
         <Image
           src="/logo/logo-landscape.png"
           alt="Logo"
           width={200}
           height={200}
-          className="absolute top-8 right-18 w-40 h-40 object-contain"
+          className="w-full h-full object-cover scale-[1.25] lg:scale-[1.35] border-none!"
         />
+        </Link>
 
         <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-6">
           <h1 className="text-3xl font-semibold text-center mb-6">{t('createAccount')}</h1>
@@ -240,7 +242,7 @@ export default function SignUpForm({
               required
             />
             <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-700">
-              <HomeOutlined className="w-5 h-5" />
+              <PersonOutline className="w-5 h-5" />
             </span>
           </div>
 

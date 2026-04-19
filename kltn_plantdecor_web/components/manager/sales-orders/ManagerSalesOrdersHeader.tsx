@@ -1,54 +1,52 @@
-'use client';
+﻿'use client';
 
-import { Box, Button, FormControl, InputLabel, MenuItem, Select, Stack, Typography } from '@mui/material';
+import { Button, FormControl, InputLabel, MenuItem, Select, Stack, Typography } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import type { ManagerNurseryOrderStatus } from '@/types/manager-sales-orders.types';
-import { ALL_STATUS_FILTER, SALES_ORDER_STATUS_OPTIONS } from './managerSalesOrders.constants';
+import type { SelectChangeEvent } from '@mui/material/Select';
+import { SALES_ORDER_STATUS_OPTIONS } from './managerSalesOrders.constants';
 
 interface ManagerSalesOrdersHeaderProps {
-  statusFilter: typeof ALL_STATUS_FILTER | ManagerNurseryOrderStatus;
   totalCount: number;
+  statusFilter: number;
   loading: boolean;
-  onStatusFilterChange: (value: typeof ALL_STATUS_FILTER | ManagerNurseryOrderStatus) => void;
+  onStatusFilterChange: (value: number) => void;
   onRefresh: () => void;
 }
 
 export default function ManagerSalesOrdersHeader({
-  statusFilter,
   totalCount,
+  statusFilter,
   loading,
   onStatusFilterChange,
   onRefresh,
 }: ManagerSalesOrdersHeaderProps) {
+  const handleStatusChange = (event: SelectChangeEvent<number>) => {
+    onStatusFilterChange(Number(event.target.value));
+  };
+
   return (
-    <Stack
-      direction={{ xs: 'column', md: 'row' }}
-      spacing={2}
-      alignItems={{ xs: 'stretch', md: 'center' }}
-      justifyContent="space-between"
-      sx={{ mb: 2 }}
-    >
-      <Box>
-        <Typography variant="h4" fontWeight={700} gutterBottom>
-          Đơn hàng bán
-        </Typography>
-        <Typography color="text.secondary">Quản lý đơn hàng thuộc vườn của bạn</Typography>
-      </Box>
+    <Stack spacing={2} sx={{ mb: 2 }}>
+      <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={2}>
+        <div>
+          <Typography variant="h6" fontWeight={700}>
+            Sales Orders
+          </Typography>
+          <Typography color="text.secondary">Manage sales orders for your nursery</Typography>
+        </div>
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }}>
         <Typography variant="body2" color="text.secondary">
-          Tổng đơn: <strong>{totalCount}</strong>
+          Total orders: <strong>{totalCount}</strong>
         </Typography>
+      </Stack>
 
-        <FormControl size="small" sx={{ minWidth: 230 }}>
-          <InputLabel id="manager-sales-order-status-label">Trạng thái</InputLabel>
+      <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems="center">
+        <FormControl size="small" sx={{ minWidth: 260 }}>
+          <InputLabel id="manager-sales-order-status-label">Status</InputLabel>
           <Select
             labelId="manager-sales-order-status-label"
             value={statusFilter}
-            label="Trạng thái"
-            onChange={(event) =>
-              onStatusFilterChange(event.target.value as typeof ALL_STATUS_FILTER | ManagerNurseryOrderStatus)
-            }
+            label="Status"
+            onChange={handleStatusChange}
           >
             {SALES_ORDER_STATUS_OPTIONS.map((option) => (
               <MenuItem key={option.value} value={option.value}>
@@ -57,15 +55,6 @@ export default function ManagerSalesOrdersHeader({
             ))}
           </Select>
         </FormControl>
-
-        <Button
-          variant="outlined"
-          onClick={onRefresh}
-          startIcon={<RefreshIcon />}
-          disabled={loading}
-        >
-          Làm mới
-        </Button>
       </Stack>
     </Stack>
   );

@@ -188,11 +188,11 @@ export default function AuthFormContainer() {
       });
 
       if (!result.success) {
-        setError(result.message || 'Lỗi khi tạo tài khoản');
+        setError(result.message || 'Error during sign up');
         return;
       }
 
-      const successMessage = result.message || 'Tạo tài khoản thành công! Vui lòng kiểm tra email để xác thực.';
+      const successMessage = result.message || 'Sign up successful! Please check your email to verify your account.';
       toast.success(successMessage);
       setMessage(successMessage);
       setTimeout(() => {
@@ -201,7 +201,7 @@ export default function AuthFormContainer() {
       }, 2000);
     } catch (err) {
       console.error('Sign up error:', err);
-      setError('Lỗi khi tạo tài khoản');
+      setError('Error during sign up');
     } finally {
       endSubmit();
     }

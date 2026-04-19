@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { Dialog, DialogActions, DialogContent, DialogTitle, Button } from '@mui/material';
 import type { ManagerServiceRegistration } from '@/types/care-service.types';
@@ -19,16 +19,16 @@ export default function ServiceOrderApproveDialog({
 }: ServiceOrderApproveDialogProps) {
   return (
     <Dialog open={open} onClose={submitting ? undefined : onClose} fullWidth maxWidth="xs">
-      <DialogTitle>Xác nhận duyệt đơn</DialogTitle>
+      <DialogTitle>Confirm Order Approval</DialogTitle>
       <DialogContent dividers>
-        Bạn có chắc chắn muốn phê duyệt đơn dịch vụ?
+        Are you sure you want to approve this service order?
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={submitting}>
-          Hủy
+          Cancel
         </Button>
-        <Button onClick={onConfirm} disabled={submitting} variant="contained" sx={{backgroundColor: 'var(--primary)'}}>
-          {submitting ? 'Đang xử lý...' : 'Phê duyệt'}
+        <Button onClick={onConfirm} disabled={submitting} variant="contained" sx={{ backgroundColor: 'var(--primary)' }}>
+          {submitting ? 'Processing...' : 'Approve'}
         </Button>
       </DialogActions>
     </Dialog>

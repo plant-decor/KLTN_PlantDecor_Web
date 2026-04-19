@@ -176,7 +176,7 @@ export default function HeaderUnifiedSearch({ width, onNavigate }: HeaderUnified
 
   return (
     <ClickAwayListener onClickAway={() => setOpen(false)}>
-      <Box ref={rootRef} className="relative" sx={{ width: width ?? { md: '18ch', lg: '28ch' } }}>
+      <Box ref={rootRef} className="relative" sx={{ width: width ?? { md: '28ch', lg: '38ch' } }}>
         <Box component="form" onSubmit={handleSubmit}>
           <TextField
             id="header-unified-search"

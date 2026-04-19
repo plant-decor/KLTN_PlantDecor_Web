@@ -87,11 +87,11 @@ export default function PlantInstanceCreateDialog({
 
   return (
     <Dialog open={open} onClose={onClose} TransitionProps={{ onEnter: handleDialogEnter }} maxWidth="md" fullWidth>
-      <DialogTitle>Tạo mới cây độc bản</DialogTitle>
+      <DialogTitle>Create New Plant Instance</DialogTitle>
       <DialogContent dividers>
         <Stack spacing={2.5}>
           <Typography variant="body2" color="text.secondary">
-            Vui lòng điền đầy đủ thông tin để tạo mới cây độc bản. Các trường có dấu * là bắt buộc.
+            Please fill in all required information to create a new unique plant instance. Fields marked with * are required.
           </Typography>
 
           <Grid container spacing={2}>
@@ -202,7 +202,7 @@ export default function PlantInstanceCreateDialog({
           disabled={!canSubmit || submitting}
           sx={{ backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)' }}
         >
-          {submitting ? 'Đang thêm...' : 'Thêm cây'}
+          {submitting ? 'Creating...' : 'Create Instance'}
         </Button>
       </DialogActions>
     </Dialog>

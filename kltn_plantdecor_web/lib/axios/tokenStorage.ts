@@ -114,3 +114,12 @@ export const clearClientAccessToken = (): void => {
   useAuthStore.getState().clearTokens();
 };
 
+/**
+ * Clear only short-lived access token state.
+ * Keep refresh token persisted so silent refresh still works after reload/day change.
+ */
+export const clearClientAccessTokenState = (): void => {
+  useAuthStore.getState().setAccessToken('');
+  useAuthStore.getState().setAccessTokenExpiresAt(null);
+};
+

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import {
   Alert,
@@ -176,7 +176,7 @@ export default function CategorySection({
           sx={{ backgroundColor: 'var(--primary)', ...hoverLiftStyle }}
           onClick={onOpenCreate}
         >
-          Thêm danh mục mới
+          Add New Category
         </Button>
       </Box>
 

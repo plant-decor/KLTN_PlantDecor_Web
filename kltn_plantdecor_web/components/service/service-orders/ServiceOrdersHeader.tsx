@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { Button, Chip, FormControl, InputLabel, MenuItem, Select, Stack } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -29,17 +29,17 @@ export default function ServiceOrdersHeader({
   return (
     <>
       <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 2 }}>
-        <Chip color="warning" variant="outlined" label={`Chờ duyệt: ${pendingCount}`} />
-        <Chip color="info" variant="outlined" label={`Chờ thanh toán: ${awaitingPaymentCount}`} />
-        <Chip color="success" variant="outlined" label={`Đang hoạt động: ${activeCount}`} />
+        <Chip color="warning" variant="outlined" label={`Pending: ${pendingCount}`} />
+        <Chip color="info" variant="outlined" label={`Awaiting payment: ${awaitingPaymentCount}`} />
+        <Chip color="success" variant="outlined" label={`Active: ${activeCount}`} />
       </Stack>
 
       <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 2 }}>
         <FormControl size="small" sx={{ minWidth: 260 }}>
-          <InputLabel id="service-order-status-filter">Trạng thái</InputLabel>
+          <InputLabel id="service-order-status-filter">Status</InputLabel>
           <Select
             labelId="service-order-status-filter"
-            label="Trạng thái"
+            label="Status"
             value={statusFilter}
             onChange={(event) => {
               onStatusFilterChange(event.target.value as typeof ALL_STATUS_FILTER | ServiceRegistrationStatusEnum);
@@ -54,10 +54,10 @@ export default function ServiceOrdersHeader({
         </FormControl>
 
         <Button variant="outlined" startIcon={<RefreshIcon />} onClick={onRefresh} disabled={loading}>
-          Tải lại
+          Reload
         </Button>
 
-        <Chip label={`Bộ lọc: ${activeFilterLabel}`} variant="outlined" />
+        <Chip label={`Filter: ${activeFilterLabel}`} variant="outlined" />
       </Stack>
     </>
   );

@@ -2,13 +2,14 @@ import axios, { AxiosHeaders, type InternalAxiosRequestConfig } from "axios";
 import { useLoadingStore } from "@/lib/store/zustand";
 import { toast } from "react-toastify";
 import {
-  clearClientAccessToken,
+  clearClientAccessTokenState,
   getClientAccessToken,
   getClientRefreshToken,
   setClientAccessToken,
   setClientRefreshToken,
 } from "@/lib/axios/tokenStorage";
 import { refreshTokenAction } from "@/app/actions/authenticationActions";
+import { useAuthStore } from "@/lib/store/authStore";
 
 type AuthAwareRequestConfig = InternalAxiosRequestConfig & {
   showLoading?: boolean;
@@ -130,8 +131,10 @@ const tryRefreshAccessToken = async (forceRefresh = false): Promise<string | nul
     return existingToken;
   }
 
+  const authState = useAuthStore.getState();
+  const hasAuthContext = authState.isAuthenticated || !!authState.user;
   const refreshToken = getClientRefreshToken();
-  if (!refreshToken) {
+  if (!refreshToken && !hasAuthContext) {
     return null;
   }
 
@@ -150,7 +153,9 @@ const tryRefreshAccessToken = async (forceRefresh = false): Promise<string | nul
 
   try {
     // Use server action so refresh rotates HttpOnly cookies as well.
-    const refreshed = await refreshTokenAction({ refreshToken });
+    const refreshed = refreshToken
+      ? await refreshTokenAction({ refreshToken })
+      : await refreshTokenAction();
 
     if (!refreshed.success || !refreshed.token) {
       throw new Error(refreshed.message || "Unable to refresh access token");
@@ -165,7 +170,8 @@ const tryRefreshAccessToken = async (forceRefresh = false): Promise<string | nul
     processQueue(null);
     return refreshed.token;
   } catch (error) {
-    clearClientAccessToken();
+    // Keep refresh token state to survive transient failures/network blips.
+    clearClientAccessTokenState();
 
     processQueue(error);
     return null;
@@ -252,7 +258,7 @@ axiosClient.interceptors.response.use(
 
         return axiosClient(originalRequest);
       } catch (err) {
-        clearClientAccessToken();
+        clearClientAccessTokenState();
         if (originalRequest.redirectOnAuthFailure) {
           redirectToLogin();
         }

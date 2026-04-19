@@ -66,10 +66,12 @@ export type OrderCreateRequest =
 
 export interface OrderInvoiceDetail {
   id: number;
+  imageUrl: string | null;
   itemName: string;
   unitPrice: number;
   quantity: number;
   amount: number;
+  statusName: string;
 }
 
 export interface OrderInvoice {
@@ -87,7 +89,7 @@ export interface OrderInvoice {
 export interface OrderItem {
   id: number;
   itemName: string;
-  imageUrl?: string | null;
+  imageUrl: string | null;
   quantity: number;
   price: number;
   status: number;

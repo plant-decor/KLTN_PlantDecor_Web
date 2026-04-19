@@ -351,14 +351,14 @@ export default function PlantComboFormDialog({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
-      <DialogTitle>{editingData ? 'Chỉnh sửa combo cây' : 'Thêm combo cây mới'}</DialogTitle>
+      <DialogTitle>{editingData ? 'Edit Plant Combo' : 'Add New Plant Combo'}</DialogTitle>
       <DialogContent dividers sx={{ maxHeight: '80vh', overflow: 'auto' }}>
         <Stack spacing={3}>
-          {enumError && <Alert severity="error">Không thể tải enum room design.</Alert>}
+          {enumError && <Alert severity="error">Cannot load room design enum.</Alert>}
 
           <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom>
-              Thông tin cơ bản
+              Basic Information
             </Typography>
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -366,7 +366,7 @@ export default function PlantComboFormDialog({
                   name="comboCode"
                   control={control}
                   render={({ field }) => (
-                    <TextField {...field} label="Mã combo" fullWidth required disabled={Boolean(editingData)} />
+                    <TextField {...field} label="Combo Code" fullWidth required disabled={Boolean(editingData)} />
                   )}
                 />
               </Grid>
@@ -374,7 +374,7 @@ export default function PlantComboFormDialog({
                 <Controller
                   name="comboName"
                   control={control}
-                  render={({ field }) => <TextField {...field} label="Tên combo" fullWidth required />}
+                  render={({ field }) => <TextField {...field} label="Combo Name" fullWidth required />}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -383,11 +383,11 @@ export default function PlantComboFormDialog({
                   control={control}
                   render={({ field }) => (
                     <FormControl fullWidth>
-                      <InputLabel>Loại combo</InputLabel>
+                      <InputLabel>Combo Type</InputLabel>
                       <Select
                         {...field}
                         value={field.value}
-                        label="Loại combo"
+                        label="Combo Type"
                         onChange={(event) => field.onChange(Number(event.target.value))}
                       >
                         {COMBO_TYPE_OPTIONS.map((item) => (
@@ -406,11 +406,11 @@ export default function PlantComboFormDialog({
                   control={control}
                   render={({ field }) => (
                     <FormControl fullWidth>
-                      <InputLabel>Mùa</InputLabel>
+                      <InputLabel>Season</InputLabel>
                       <Select
                         {...field}
                         value={field.value}
-                        label="Mùa"
+                        label="Season"
                         onChange={(event) => field.onChange(Number(event.target.value))}
                       >
                         {SEASON_OPTIONS.map((item) => (
@@ -427,7 +427,7 @@ export default function PlantComboFormDialog({
                 <Controller
                   name="description"
                   control={control}
-                  render={({ field }) => <TextField {...field} label="Mô tả" fullWidth multiline rows={3} />}
+                  render={({ field }) => <TextField {...field} label="Description" fullWidth multiline rows={3} />}
                 />
               </Grid>
             </Grid>
@@ -435,7 +435,7 @@ export default function PlantComboFormDialog({
 
           <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom>
-              Điều kiện phù hợp
+              Suitable Conditions
             </Typography>
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -444,14 +444,14 @@ export default function PlantComboFormDialog({
                   control={control}
                   render={({ field }) => (
                     <FormControl fullWidth>
-                      <InputLabel>Không gian phù hợp</InputLabel>
+                      <InputLabel>Suitable Space</InputLabel>
                       <Select
                         {...field}
                         value={field.value || 0}
-                        label="Không gian phù hợp"
+                        label="Suitable Space"
                         onChange={(event) => field.onChange(Number(event.target.value))}
                       >
-                        <MenuItem value={0}>Chọn ánh sáng</MenuItem>
+                        <MenuItem value={0}>Select Light</MenuItem>
                         {lightRequirementOptions.map((item) => (
                           <MenuItem key={item.value} value={item.value}>
                             {localizeRoomDesignEnumLabel(item.name, tRoomDesignEnum, 'LightRequirement')}
@@ -468,12 +468,12 @@ export default function PlantComboFormDialog({
                   control={control}
                   render={({ field }) => (
                     <FormControl fullWidth>
-                      <InputLabel>Phòng phù hợp</InputLabel>
+                      <InputLabel>Suitable Rooms</InputLabel>
                       <Select
                         {...field}
                         multiple
-                        label="Phòng phù hợp"
-                        input={<OutlinedInput label="Phòng phù hợp" />}
+                        label="Suitable Rooms"
+                        input={<OutlinedInput label="Suitable Rooms" />}
                         value={field.value || []}
                         onChange={(event) => {
                           const raw = event.target.value as number[] | string[];
@@ -510,7 +510,7 @@ export default function PlantComboFormDialog({
 
           <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom>
-              Phong thủy và chủ đề
+              Feng Shui & Theme
             </Typography>
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -519,14 +519,14 @@ export default function PlantComboFormDialog({
                   control={control}
                   render={({ field }) => (
                     <FormControl fullWidth>
-                      <InputLabel>Yếu tố phong thủy</InputLabel>
+                      <InputLabel>Feng Shui Element</InputLabel>
                       <Select
                         {...field}
                         value={field.value}
-                        label="Yếu tố phong thủy"
+                        label="Feng Shui Element"
                         onChange={(event) => field.onChange(Number(event.target.value))}
                       >
-                        <MenuItem value={0}>Chọn mệnh</MenuItem>
+                        <MenuItem value={0}>Select Element</MenuItem>
                         {FENG_SHUI_ELEMENT_OPTIONS.map((item) => (
                           <MenuItem key={item.value} value={item.value}>
                             {item.label}
@@ -541,21 +541,21 @@ export default function PlantComboFormDialog({
                 <Controller
                   name="fengShuiPurpose"
                   control={control}
-                  render={({ field }) => <TextField {...field} label="Mục đích phong thủy" fullWidth />}
+                  render={({ field }) => <TextField {...field} label="Feng Shui Purpose" fullWidth />}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Controller
                   name="themeName"
                   control={control}
-                  render={({ field }) => <TextField {...field} label="Tên chủ đề" fullWidth />}
+                  render={({ field }) => <TextField {...field} label="Theme Name" fullWidth />}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Controller
                   name="themeDescription"
                   control={control}
-                  render={({ field }) => <TextField {...field} label="Mô tả chủ đề" fullWidth />}
+                  render={({ field }) => <TextField {...field} label="Theme Description" fullWidth />}
                 />
               </Grid>
             </Grid>
@@ -563,7 +563,7 @@ export default function PlantComboFormDialog({
 
           <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom>
-              Giá và tags
+              Price and Tags
             </Typography>
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -574,7 +574,7 @@ export default function PlantComboFormDialog({
                     <TextField
                       {...field}
                       value={formatCurrencyInput(field.value ?? 0, 'vi')}
-                      label="Giá combo"
+                      label="Combo Price"
                       fullWidth
                       type="text"
                       inputProps={{ inputMode: 'numeric' }}
@@ -624,7 +624,7 @@ export default function PlantComboFormDialog({
 
           <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom>
-              Danh sách cây trong combo
+              List of Plants in Combo
             </Typography>
             <ClickAwayListener onClickAway={() => setSearchOpen(false)}>
               <Box ref={searchRootRef} sx={{ position: 'relative', mb: 2, backgroundColor: '#f5f5f5' }}>
@@ -763,7 +763,7 @@ export default function PlantComboFormDialog({
             </ClickAwayListener>
             {itemFields.length === 0 && (
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                Chưa có cây trong combo, vui lòng thêm ít nhất 1 cây.
+                No plants added to this combo yet. Please use the search box above to quickly add plants, or click the button below to add manually.
               </Typography>
             )}
             <Stack spacing={1.5}>
@@ -774,11 +774,11 @@ export default function PlantComboFormDialog({
                     control={control}
                     render={({ field }) => (
                       <FormControl sx={{ minWidth: 260 }}>
-                        <InputLabel>Cây</InputLabel>
+                        <InputLabel>Plant</InputLabel>
                         <Select
                           {...field}
                           value={field.value || 0}
-                          label="Cây"
+                          label="Plant"
                           onChange={(event) => {
                             const nextPlantId = Number(event.target.value);
                             field.onChange(nextPlantId);
@@ -800,7 +800,7 @@ export default function PlantComboFormDialog({
                           disabled={plantsLoading}
                           MenuProps={plantSelectMenuProps}
                         >
-                          <MenuItem value={0}>Chọn cây</MenuItem>
+                          <MenuItem value={0}>Select Plant</MenuItem>
                           {resolvedPlantOptions.map((plant) => (
                             <MenuItem key={plant.id} value={plant.id}>
                               {plant.name}
@@ -817,7 +817,7 @@ export default function PlantComboFormDialog({
                     render={({ field }) => (
                       <TextField
                         {...field}
-                        label="Số lượng"
+                        label="Quantity"
                         type="number"
                         sx={{ width: 140 }}
                         onChange={(event) => field.onChange(Number(event.target.value))}
@@ -828,7 +828,7 @@ export default function PlantComboFormDialog({
                   <Controller
                     name={`comboItems.${index}.notes`}
                     control={control}
-                    render={({ field }) => <TextField {...field} label="Ghi chú" sx={{ minWidth: 260, flex: 1 }} />}
+                    render={({ field }) => <TextField {...field} label="Notes" sx={{ minWidth: 260, flex: 1 }} />}
                   />
 
                   <IconButton color="error" onClick={() => removeItem(index)}>
@@ -843,13 +843,13 @@ export default function PlantComboFormDialog({
               sx={{ mt: 2 }}
               onClick={() => appendItem({ ...defaultComboItem })}
             >
-              Thêm cây vào combo
+              Add Plant to Combo
             </Button>
           </Box>
 
           <Divider />
 
-          <ImageUpload images={images} onImagesChange={setImages} label="Hình ảnh combo" maxImages={10} />
+          <ImageUpload images={images} onImagesChange={setImages} label="Combo Images" maxImages={10} />
 
           <Box>
             <Controller
@@ -857,7 +857,7 @@ export default function PlantComboFormDialog({
               control={control}
               render={({ field }) => (
                 <Chip
-                  label={field.value ? 'Đang kích hoạt' : 'Đang vô hiệu'}
+                  label={field.value ? 'Active' : 'Inactive'}
                   color={field.value ? 'success' : 'default'}
                   onClick={() => setValue('isActive', !field.value)}
                   clickable
@@ -868,9 +868,9 @@ export default function PlantComboFormDialog({
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Hủy</Button>
+        <Button onClick={onClose}>Cancel</Button>
         <Button onClick={handleSubmit(handleFormSubmit)} variant="contained" disabled={isLoading || enumLoading}>
-          {isLoading ? 'Đang lưu...' : 'Lưu'}
+          {isLoading ? 'Processing...' : 'Save'}
         </Button>
       </DialogActions>
     </Dialog>

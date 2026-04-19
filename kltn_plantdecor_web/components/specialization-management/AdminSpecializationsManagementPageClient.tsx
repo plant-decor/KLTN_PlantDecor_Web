@@ -55,7 +55,7 @@ export default function AdminSpecializationsManagementPageClient() {
       const listResult = await getAllAdminSpecializations(false);
       setSpecializations(listResult);
     } catch (error) {
-      const message = getSpecializationErrorMessage(error, "Không thể tải danh sách chuyên môn");
+      const message = getSpecializationErrorMessage(error, "Cannot load specialization list");
       setPageError(message);
       toast.error(message);
     } finally {
@@ -104,7 +104,7 @@ export default function AdminSpecializationsManagementPageClient() {
           isActive: latestDetail.isActive,
         });
       } catch (error) {
-        const message = getSpecializationErrorMessage(error, "Không thể tải chi tiết chuyên môn");
+        const message = getSpecializationErrorMessage(error, "Can not load specialization detail");
         setDetailError(message);
         toast.error(message);
       } finally {
@@ -127,8 +127,8 @@ export default function AdminSpecializationsManagementPageClient() {
   }, [submitting]);
 
   const validateForm = useCallback((): string | null => {
-    if (!formValue.name.trim()) return "Tên chuyên môn không được để trống";
-    if (!formValue.description.trim()) return "Mô tả không được để trống";
+    if (!formValue.name.trim()) return "Specialization name is required";
+    if (!formValue.description.trim()) return "Description is required";
     return null;
   }, [formValue.description, formValue.name]);
 
@@ -149,7 +149,6 @@ export default function AdminSpecializationsManagementPageClient() {
         };
 
         await createAdminSpecialization(payload, false);
-        toast.success("Tạo chuyên môn thành công");
       } else if (modalMode === "edit" && selectedId !== null) {
         const payload: AdminSpecializationUpdateRequest = {
           name: formValue.name.trim(),
@@ -158,13 +157,13 @@ export default function AdminSpecializationsManagementPageClient() {
         };
 
         await updateAdminSpecialization(selectedId, payload, false);
-        toast.success("Cập nhật chuyên môn thành công");
+        // toast.success("Cập nhật chuyên môn thành công");
       }
 
       await loadSpecializations();
       closeModal();
     } catch (error) {
-      const message = getSpecializationErrorMessage(error, "Không thể lưu chuyên môn");
+      const message = getSpecializationErrorMessage(error, "Can not submit specialization data");
       toast.error(message);
     } finally {
       setSubmitting(false);
@@ -179,12 +178,12 @@ export default function AdminSpecializationsManagementPageClient() {
     try {
       setSubmitting(true);
       await deleteAdminSpecialization(deleteTarget.id, false);
-      toast.success("Đã xóa mềm chuyên môn");
+      toast.success("Successfully soft-deleted specialization");
       await loadSpecializations();
       setDeleteDialogOpen(false);
       setDeleteTarget(null);
     } catch (error) {
-      const message = getSpecializationErrorMessage(error, "Không thể xóa mềm chuyên môn");
+      const message = getSpecializationErrorMessage(error, "Cannot soft-delete specialization");
       toast.error(message);
     } finally {
       setSubmitting(false);
@@ -194,18 +193,18 @@ export default function AdminSpecializationsManagementPageClient() {
   return (
     <Box sx={{ bgcolor: "var(--background)", minHeight: "100vh", p: { xs: 2, md: 4 } }}>
       <ManagementHeader
-        title="Quản lý chuyên môn đặc biệt"
-        description="Quản trị các kĩ năng đặc biệt đang có trong hệ thống, bao gồm xem chi tiết, tạo mới, cập nhật và xóa mềm."
-        entityLabel="chuyên môn"
+        title="Specializations Management"
+        description="Manage the specializations that can be associated with care service packages."
+        entityLabel="Specializations"
         count={specializations.length}
-        actionLabel="Tạo chuyên môn mới"
+        actionLabel="Create Specialization"
         onAction={openCreateModal}
       />
 
       <Box className="mb-4 flex flex-wrap gap-3">
         <Box className="rounded-xl border border-(--card-border) bg-(--color-background) px-4 py-3 shadow-sm">
           <Typography variant="body2" color="text.secondary">
-            Tổng chuyên môn
+            Total Specializations
           </Typography>
           <Typography variant="h5" fontWeight={700} color="primary">
             {specializations.length}
@@ -213,7 +212,7 @@ export default function AdminSpecializationsManagementPageClient() {
         </Box>
         <Box className="rounded-xl border border-(--card-border) bg-(--color-background) px-4 py-3 shadow-sm">
           <Typography variant="body2" color="text.secondary">
-            Đang hoạt động
+            Active Specializations
           </Typography>
           <Typography variant="h5" fontWeight={700} color="primary">
             {activeCount}
@@ -254,16 +253,16 @@ export default function AdminSpecializationsManagementPageClient() {
       />
 
       <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>Xác nhận xóa mềm</DialogTitle>
+        <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent dividers>
-          Bạn có chắc muốn xóa mềm chuyên môn <strong>{deleteTarget?.name ?? ""}</strong> không?
+          Are you sure you want to delete the specialization <strong>{deleteTarget?.name ?? ""}</strong>?
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialogOpen(false)} disabled={submitting}>
-            Hủy
+            Cancel
           </Button>
           <Button onClick={() => void handleDelete()} color="error" variant="contained" disabled={submitting}>
-            {submitting ? "Đang xử lý..." : "Xóa mềm"}
+            {submitting ? "Processing..." : "Delete"}
           </Button>
         </DialogActions>
       </Dialog>

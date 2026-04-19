@@ -265,14 +265,14 @@ export default function ManagerPlantComboTab() {
         </Stack>
 
         <Stack direction="row" spacing={1}>
-          <Button
+          {/* <Button
             startIcon={<AutorenewIcon />}
             variant="outlined"
             onClick={() => void fetchCombos()}
             disabled={loading}
           >
             Refresh
-          </Button>
+          </Button> */}
           <Button
             startIcon={<AddIcon />}
             variant="contained"

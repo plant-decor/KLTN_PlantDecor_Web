@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material';
 import type { ManagerServiceRegistration } from '@/types/care-service.types';
@@ -24,25 +24,25 @@ export default function ServiceOrderCancelDialog({
 }: ServiceOrderCancelDialogProps) {
   return (
     <Dialog open={open} onClose={submitting ? undefined : onClose} fullWidth maxWidth="sm">
-      <DialogTitle>{target ? `Hủy đơn dịch vụ #${target.id}` : 'Hủy đơn dịch vụ'}</DialogTitle>
+      <DialogTitle>{target ? `Cancel service order #${target.id}` : 'Cancel service order'}</DialogTitle>
       <DialogContent dividers>
         <TextField
-          label="Lý do hủy"
+          label="Cancellation reason"
           fullWidth
           multiline
           minRows={3}
           value={reason}
           onChange={(event) => onReasonChange(event.target.value)}
           disabled={submitting}
-          placeholder="Nhập lý do hủy"
+          placeholder="Enter cancellation reason"
         />
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={submitting}>
-          Hủy
+          Cancel
         </Button>
         <Button onClick={onConfirm} disabled={submitting} variant="contained" color="error">
-          {submitting ? 'Đang xử lý...' : 'Xác nhận hủy'}
+          {submitting ? 'Processing...' : 'Confirm cancellation'}
         </Button>
       </DialogActions>
     </Dialog>

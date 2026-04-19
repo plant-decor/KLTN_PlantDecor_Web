@@ -41,6 +41,17 @@ function getLocalizedPath(pathname: string, basePath: string): string {
   return locale === routing.defaultLocale ? basePath : `/${locale}${basePath}`;
 }
 
+function isLocaleRootPath(pathname: string): boolean {
+  const trimmed = pathname.replace(/\/+$/, "") || "/";
+
+  if (trimmed === "/") {
+    return true;
+  }
+
+  const parts = trimmed.split("/").filter(Boolean);
+  return parts.length === 1 && routing.locales.includes(parts[0] as "vi" | "en");
+}
+
 export default function proxy(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
 
@@ -66,6 +77,7 @@ export default function proxy(request: NextRequest) {
   const isAuthPage =
     segments.includes("login") || segments.includes("register");
   const forceLogout = searchParams.get("forceLogout") === "1";
+  const hasSession = Boolean(authToken || refreshToken);
 
   // Allow protected route pass-through when refresh token still exists.
   // Client bootstrap/interceptor can silently refresh and rehydrate access token.
@@ -100,6 +112,15 @@ export default function proxy(request: NextRequest) {
     const targetPath = getLocalizedPath(pathname, basePath);
 
     return NextResponse.redirect(new URL(targetPath, request.nextUrl.origin));
+  }
+
+  // Re-open browser/tab at homepage should land on role dashboard for authenticated users.
+  if (!forceLogout && hasSession && userRole && isLocaleRootPath(pathname)) {
+    const basePath = getDefaultPath(userRole);
+    if (basePath !== "/") {
+      const targetPath = getLocalizedPath(pathname, basePath);
+      return NextResponse.redirect(new URL(targetPath, request.nextUrl.origin));
+    }
   }
 
   return intlMiddleware(request);

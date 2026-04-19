@@ -9,12 +9,14 @@ import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 
 interface PlantRecommendationCardProps {
   recommendation: RoomPlantRecommendation;
-  onAddToCart: (recommendation: RoomPlantRecommendation) => void;
-  onBuyNow: (recommendation: RoomPlantRecommendation) => void;
+  recommendationIndex: number;
+  onAddToCart: (recommendation: RoomPlantRecommendation, recommendationIndex: number) => void;
+  onBuyNow: (recommendation: RoomPlantRecommendation, recommendationIndex: number) => void;
 }
 
 export default function PlantRecommendationCard({
   recommendation,
+  recommendationIndex,
   onAddToCart,
   onBuyNow,
 }: PlantRecommendationCardProps) {
@@ -52,7 +54,7 @@ export default function PlantRecommendationCard({
           <Button
             variant="contained"
             size="small"
-            onClick={() => onAddToCart(recommendation)}
+            onClick={() => onAddToCart(recommendation, recommendationIndex)}
             disabled={!recommendation.isPurchasable}
             sx={hoverLiftStyle}
           >
@@ -64,7 +66,7 @@ export default function PlantRecommendationCard({
           <Button
             variant="outlined"
             size="small"
-            onClick={() => onBuyNow(recommendation)}
+            onClick={() => onBuyNow(recommendation, recommendationIndex)}
             disabled={!recommendation.isPurchasable}
             sx={hoverLiftStyle}
           >

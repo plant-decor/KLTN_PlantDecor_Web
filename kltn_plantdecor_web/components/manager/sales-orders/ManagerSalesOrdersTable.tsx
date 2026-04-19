@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import {
   Box,
@@ -56,21 +56,21 @@ export default function ManagerSalesOrdersTable({
         <Table size="small">
           <TableHead sx={{ backgroundColor: 'var(--primary)' }}>
             <TableRow>
-              <TableCell sx={{ fontWeight: 700 }}>Mã đơn vườn</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Mã đơn tổng</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Khách hàng</TableCell>
+              <TableCell sx={{ fontWeight: 700 }}>Nursery Order ID</TableCell>
+              <TableCell sx={{ fontWeight: 700 }}>Master Order ID</TableCell>
+              <TableCell sx={{ fontWeight: 700 }}>Customer</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>Shipper</TableCell>
               <TableCell sx={{ fontWeight: 700 }} align="right">
-                Tạm tính
+                Subtotal
               </TableCell>
               <TableCell sx={{ fontWeight: 700 }} align="center">
-                Trạng thái
+                Status
               </TableCell>
               <TableCell sx={{ fontWeight: 700 }} align="center">
-                Sản phẩm
+                Items
               </TableCell>
               <TableCell sx={{ fontWeight: 700 }} align="center">
-                Hành động
+                Actions
               </TableCell>
             </TableRow>
           </TableHead>
@@ -78,14 +78,14 @@ export default function ManagerSalesOrdersTable({
             {items.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
-                  <Typography color="text.secondary">Không có đơn hàng phù hợp bộ lọc hiện tại.</Typography>
+                  <Typography color="text.secondary">No orders match the current filter.</Typography>
                 </TableCell>
               </TableRow>
             ) : (
               items.map((item) => {
                 const mappedStatus = item.status as keyof typeof SALES_ORDER_STATUS_LABELS;
                 const customerDescription = `${item.customerName} - ${item.customerPhone}`;
-                const shipperDescription = item.shipperName || 'Chưa phân công';
+                const shipperDescription = item.shipperName || 'Unassigned';
 
                 return (
                   <TableRow key={item.id} hover>
@@ -121,8 +121,8 @@ export default function ManagerSalesOrdersTable({
                     </TableCell>
                     <TableCell align="center">{item.items.length}</TableCell>
                     <TableCell align="center">
-                      <Button variant="outlined" size="small" onClick={() => onViewDetail(item)}>
-                        <VisibilityIcon fontSize="small" />
+                      <Button size="small" onClick={() => onViewDetail(item)}>
+                        <VisibilityIcon fontSize="medium" className='hover:scale-110' />
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -140,7 +140,7 @@ export default function ManagerSalesOrdersTable({
           page={Math.max(pageNumber - 1, 0)}
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
-          labelRowsPerPage="Số dòng"
+          labelRowsPerPage="Rows"
         />
       </TableContainer>
     </Box>

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Box, CircularProgress, Paper } from '@mui/material';
@@ -61,7 +61,7 @@ export default function ManagerSalesOrdersPageClient() {
 
       setListData(payload);
     } catch (loadError) {
-      const message = getErrorMessage(loadError, 'Không thể tải danh sách đơn hàng');
+      const message = getErrorMessage(loadError, 'Failed to load sales orders');
       setError(message);
       toast.error(message);
       setListData((previous) => ({ ...previous, items: [] }));
@@ -83,7 +83,7 @@ export default function ManagerSalesOrdersPageClient() {
       const payload = await getManagerNurseryOrderDetail(item.id, false);
       setDetailItem(payload);
     } catch (detailError) {
-      toast.error(getErrorMessage(detailError, 'Không thể tải chi tiết đơn hàng'));
+      toast.error(getErrorMessage(detailError, 'Failed to load order details'));
       setDetailOpen(false);
       setDetailItem(null);
     } finally {
@@ -98,7 +98,7 @@ export default function ManagerSalesOrdersPageClient() {
         totalCount={listData.totalCount}
         loading={loading}
         onStatusFilterChange={(value) => {
-          setStatusFilter(value);
+          setStatusFilter(value as typeof ALL_STATUS_FILTER | ManagerNurseryOrderStatus);
           setPageNumber(1);
         }}
         onRefresh={() => void loadList()}

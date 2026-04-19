@@ -105,7 +105,7 @@ export const CarePackageForm: React.FC<CarePackageFormProps> = ({
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>
-        {editingPackage ? "Chỉnh Sửa Gói Dịch Vụ" : "Tạo Gói Dịch Vụ Mới"}
+        {editingPackage ? "Edit Package" : "Create Package"}
       </DialogTitle>
 
       <DialogContent dividers sx={{ maxHeight: "70vh", overflowY: "auto" }}>
@@ -118,12 +118,12 @@ export const CarePackageForm: React.FC<CarePackageFormProps> = ({
           <Controller
             name="name"
             control={control}
-            rules={{ required: "Tên gói là bắt buộc" }}
+            rules={{ required: "Package name is required" }}
             render={({ field }) => (
               <TextField
                 {...field}
                 fullWidth
-                label="Tên Gói Dịch Vụ"
+                label="Package Name"
                 error={!!errors.name}
                 helperText={errors.name?.message}
                 sx={{ mb: 2 }}
@@ -134,12 +134,12 @@ export const CarePackageForm: React.FC<CarePackageFormProps> = ({
           <Controller
             name="description"
             control={control}
-            rules={{ required: "Mô tả là bắt buộc" }}
+            rules={{ required: "Description is required" }}
             render={({ field }) => (
               <TextField
                 {...field}
                 fullWidth
-                label="Mô Tả Chi Tiết"
+                label="Description"
                 multiline
                 rows={3}
                 error={!!errors.description}
@@ -161,10 +161,10 @@ export const CarePackageForm: React.FC<CarePackageFormProps> = ({
                 control={control}
                 render={({ field }) => (
                   <FormControl fullWidth>
-                    <InputLabel>Loại Dịch Vụ</InputLabel>
-                    <Select {...field} label="Loại Dịch Vụ">
-                      <MenuItem value={ServiceType.ONETIME}>1 Lần</MenuItem>
-                      <MenuItem value={ServiceType.PERIODIC}>Định Kỳ</MenuItem>
+                    <InputLabel>Service Type</InputLabel>
+                    <Select {...field} label="Service Type">
+                      <MenuItem value={ServiceType.ONETIME}>One Time</MenuItem>
+                      <MenuItem value={ServiceType.PERIODIC}>Periodic</MenuItem>
                     </Select>
                   </FormControl>
                 )}
@@ -180,8 +180,8 @@ export const CarePackageForm: React.FC<CarePackageFormProps> = ({
                     <TextField
                       {...field}
                       fullWidth
-                      label="Tần Suất"
-                      placeholder="Ví dụ: Hàng tuần, Hàng tháng"
+                      label="Frequency"
+                      placeholder="e.g., Weekly, Monthly"
                     />
                   )}
                 />
@@ -193,14 +193,14 @@ export const CarePackageForm: React.FC<CarePackageFormProps> = ({
                 name="durationDays"
                 control={control}
                 rules={{
-                  required: "Thời gian là bắt buộc",
-                  min: { value: 1, message: "Phải ≥ 1 ngày" },
+                  required: "Duration is required",
+                  min: { value: 1, message: "Must be ≥ 1 day" },
                 }}
                 render={({ field }) => (
                   <TextField
                     {...field}
                     fullWidth
-                    label="Thời Gian (Ngày)"
+                    label="Duration (Days)"
                     type="number"
                     error={!!errors.durationDays}
                     helperText={errors.durationDays?.message}
@@ -215,12 +215,12 @@ export const CarePackageForm: React.FC<CarePackageFormProps> = ({
                 control={control}
                 render={({ field }) => (
                   <FormControl fullWidth>
-                    <InputLabel>Mức Độ Khó</InputLabel>
-                    <Select {...field} label="Mức Độ Khó">
-                      <MenuItem value={DifficultyLevel.EASY}>Dễ</MenuItem>
-                      <MenuItem value={DifficultyLevel.MEDIUM}>Trung Bình</MenuItem>
-                      <MenuItem value={DifficultyLevel.HARD}>Khó</MenuItem>
-                      <MenuItem value={DifficultyLevel.EXPERT}>Chuyên Gia</MenuItem>
+                    <InputLabel>Difficulty Level</InputLabel>
+                    <Select {...field} label="Difficulty Level">
+                      <MenuItem value={DifficultyLevel.EASY}>Easy</MenuItem>
+                      <MenuItem value={DifficultyLevel.MEDIUM}>Medium</MenuItem>
+                      <MenuItem value={DifficultyLevel.HARD}>Hard</MenuItem>
+                      <MenuItem value={DifficultyLevel.EXPERT}>Expert</MenuItem>
                     </Select>
                   </FormControl>
                 )}
@@ -230,7 +230,7 @@ export const CarePackageForm: React.FC<CarePackageFormProps> = ({
 
           {/* Giới Hạn & Giá */}
           <Typography variant="subtitle2" sx={{ fontWeight: "bold", mb: 2 }}>
-            Giới Hạn & Giá Cả
+            Space & Pricing
           </Typography>
 
           <Grid container spacing={2} sx={{ mb: 3 }}>
@@ -239,14 +239,14 @@ export const CarePackageForm: React.FC<CarePackageFormProps> = ({
                 name="areaLimit"
                 control={control}
                 rules={{
-                  required: "Diện tích là bắt buộc",
-                  min: { value: 1, message: "Phải > 0" },
+                  required: "Area limit is required",
+                  min: { value: 1, message: "Must be > 0" },
                 }}
                 render={({ field }) => (
                   <TextField
                     {...field}
                     fullWidth
-                    label="Diện Tích Tối Đa (m²)"
+                    label="Area Limit (m²)"
                     type="number"
                     error={!!errors.areaLimit}
                     helperText={errors.areaLimit?.message}
@@ -260,14 +260,14 @@ export const CarePackageForm: React.FC<CarePackageFormProps> = ({
                 name="unitPrice"
                 control={control}
                 rules={{
-                  required: "Giá là bắt buộc",
-                  min: { value: 0, message: "Giá phải ≥ 0" },
+                  required: "Unit price is required",
+                  min: { value: 0, message: "Unit price must be ≥ 0" },
                 }}
                 render={({ field }) => (
                   <TextField
                     {...field}
                     fullWidth
-                    label="Giá Cơ Bản (₫)"
+                    label="Base Price (₫)"
                     type="number"
                     error={!!errors.unitPrice}
                     helperText={errors.unitPrice?.message}
@@ -279,7 +279,7 @@ export const CarePackageForm: React.FC<CarePackageFormProps> = ({
 
           {/* Tính Năng */}
           <Typography variant="subtitle2" sx={{ fontWeight: "bold", mb: 2 }}>
-            Các Công Việc Bao Gồm
+            Features
           </Typography>
 
           <Box sx={{ mb: 3 }}>
@@ -293,7 +293,7 @@ export const CarePackageForm: React.FC<CarePackageFormProps> = ({
                     setFeatures(newFeatures);
                   }}
                   fullWidth
-                  placeholder="Ví dụ: Tưới nước, kiểm tra sâu bệnh"
+                  placeholder="e.g., Watering, Pest Inspection"
                   size="small"
                 />
                 <Button
@@ -312,7 +312,7 @@ export const CarePackageForm: React.FC<CarePackageFormProps> = ({
               startIcon={<AddIcon />}
               onClick={() => setFeatures([...features, ""])}
             >
-              Thêm Công Việc
+              Add Feature
             </Button>
           </Box>
 
@@ -323,7 +323,7 @@ export const CarePackageForm: React.FC<CarePackageFormProps> = ({
             render={({ field }) => (
               <FormControlLabel
                 control={<Switch {...field} />}
-                label="Gói dịch vụ hoạt động"
+                label="Service Package is Active"
                 sx={{ mb: 2 }}
               />
             )}
@@ -333,7 +333,7 @@ export const CarePackageForm: React.FC<CarePackageFormProps> = ({
 
       <DialogActions>
         <Button onClick={onClose} disabled={isSubmitting || loading}>
-          Huỷ
+          Cancel
         </Button>
         <Button
           onClick={handleSubmit(onFormSubmit)}
@@ -341,7 +341,7 @@ export const CarePackageForm: React.FC<CarePackageFormProps> = ({
           color="primary"
           disabled={isSubmitting || loading}
         >
-          {isSubmitting || loading ? <CircularProgress size={20} /> : "Lưu"}
+          {isSubmitting || loading ? <CircularProgress size={20} /> : "Save"}
         </Button>
       </DialogActions>
     </Dialog>

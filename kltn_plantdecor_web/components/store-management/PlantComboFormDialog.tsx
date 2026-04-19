@@ -214,15 +214,52 @@ export default function PlantComboFormDialog({
         }
       });
 
+      // Map suitableSpace from enum name (string) to value (number)
+      let mappedSuitableSpace = 0;
+      const suitableSpaceValue = editingData.suitableSpace;
+      if (suitableSpaceValue) {
+        if (typeof suitableSpaceValue === 'number') {
+          mappedSuitableSpace = suitableSpaceValue;
+        } else if (typeof suitableSpaceValue === 'string') {
+          const spaceStr = suitableSpaceValue as string;
+          if (spaceStr.length > 0) {
+            const found = lightRequirementOptions.find(
+              (opt) => opt.name === spaceStr || opt.name.toLowerCase() === spaceStr.toLowerCase()
+            );
+            mappedSuitableSpace = found?.value ?? 0;
+          }
+        }
+      }
+
+      // Map suitableRooms from enum names (strings) to values (numbers)
+      let mappedSuitableRooms: number[] = [];
+      if (Array.isArray(editingData.suitableRooms)) {
+        mappedSuitableRooms = editingData.suitableRooms
+          .map((room) => {
+            if (typeof room === 'number') {
+              return room;
+            }
+            if (typeof room === 'string') {
+              const roomStr = room as string;
+              if (roomStr.length > 0) {
+                const found = roomTypeOptions.find(
+                  (opt) => opt.name === roomStr || opt.name.toLowerCase() === roomStr.toLowerCase()
+                );
+                return found?.value ?? 0;
+              }
+            }
+            return 0;
+          })
+          .filter((value) => value > 0);
+      }
+
       reset({
         comboCode: editingData.comboCode || '',
         comboName: editingData.comboName || '',
         comboType: editingData.comboType || 1,
         description: editingData.description || '',
-        suitableSpace: Number(editingData.suitableSpace) || 0,
-        suitableRooms: Array.isArray(editingData.suitableRooms)
-          ? editingData.suitableRooms.map((item) => Number(item)).filter((item) => Number.isInteger(item) && item > 0)
-          : [],
+        suitableSpace: mappedSuitableSpace,
+        suitableRooms: mappedSuitableRooms,
         fengShuiElement: editingData.fengShuiElement || 0,
         fengShuiPurpose: editingData.fengShuiPurpose || '',
         themeName: editingData.themeName || '',
@@ -361,7 +398,7 @@ export default function PlantComboFormDialog({
               Basic Information
             </Typography>
             <Grid container spacing={2}>
-              <Grid size={{ xs: 12, sm: 6 }}>
+              {/* <Grid size={{ xs: 12, sm: 6 }}>
                 <Controller
                   name="comboCode"
                   control={control}
@@ -369,7 +406,7 @@ export default function PlantComboFormDialog({
                     <TextField {...field} label="Combo Code" fullWidth required disabled={Boolean(editingData)} />
                   )}
                 />
-              </Grid>
+              </Grid> */}
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Controller
                   name="comboName"

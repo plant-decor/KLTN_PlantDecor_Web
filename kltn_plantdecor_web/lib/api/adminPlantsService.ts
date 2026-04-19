@@ -134,14 +134,14 @@ export const assignPlantCategories = async (
   data: AssignCategoriesRequest,
   loading = true
 ): Promise<ResponseModel<void>> => {
-  return apiClient.post('/admin/Plants/assign-categories', data, loading);
+  return apiClient.post('/admin/Plants/assign-categories', data, loading, {showToast: false});
 };
 
 export const assignPlantTags = async (
   data: AssignTagsRequest,
   loading = true
 ): Promise<ResponseModel<void>> => {
-  return apiClient.post('/admin/Plants/assign-tags', data, loading);
+  return apiClient.post('/admin/Plants/assign-tags', data, loading, {showToast: false});
 };
 
 export const removePlantCategory = async (

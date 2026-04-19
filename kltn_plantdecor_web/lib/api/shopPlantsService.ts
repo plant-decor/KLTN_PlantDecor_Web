@@ -125,7 +125,7 @@ export interface PlantEnumValue {
 }
 
 export interface PlantEnumGroup {
-  enumName: 'PlacementType' | 'PlantSize' | 'CareLevelType' | string;
+  enumName: 'PlacementType' | 'PlantSize' | 'GrowthRate' | 'CareLevelType' | string;
   values: PlantEnumValue[];
 }
 

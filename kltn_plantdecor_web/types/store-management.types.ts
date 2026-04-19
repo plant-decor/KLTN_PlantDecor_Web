@@ -7,13 +7,14 @@ export interface PlantEnumValue {
 }
 
 export interface PlantEnumGroup {
-  enumName: 'PlacementType' | 'PlantSize' | 'CareLevelType' | string;
+  enumName: 'PlacementType' | 'PlantSize' | 'GrowthRate' | 'CareLevelType' | string;
   values: PlantEnumValue[];
 }
 
 export interface PlantEnumPayload {
   placementTypes: PlantEnumValue[];
   sizes: PlantEnumValue[];
+  growthRates: PlantEnumValue[];
   careLevelTypes: PlantEnumValue[];
   lightRequirements: PlantEnumValue[];
   roomTypes: PlantEnumValue[];
@@ -77,7 +78,7 @@ export interface PlantDetail {
   placementTypeName?: string;
   size: number;
   sizeName?: string;
-  growthRate: string | null;
+  growthRate: number | null;
   toxicity: boolean;
   airPurifying: boolean;
   hasFlower: boolean;
@@ -111,7 +112,7 @@ export interface PlantUpsertRequest {
   basePrice: number;
   placementType: number;
   size: number;
-  growthRate: string;
+  growthRate: number;
   toxicity: boolean;
   airPurifying: boolean;
   hasFlower: boolean;

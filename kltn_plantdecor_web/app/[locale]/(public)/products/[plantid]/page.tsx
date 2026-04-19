@@ -4,6 +4,7 @@ import { getTranslations } from 'next-intl/server';
 import type { Metadata } from 'next';
 import { getPlantById, type PlantDetailResponse } from '@/lib/api/plantsService';
 import {
+  getPlantEnums,
   getRoomDesignEnums,
   getShopPlantInstanceById,
   type ShopPlantInstanceDetail,
@@ -98,6 +99,38 @@ const getRoomDesignLabelMaps = (
   return { roomTypeById, roomStyleById };
 };
 
+const getPlantEnumLabelMap = (rawEnums: unknown, enumName: string): Map<number, string> => {
+  const labelById = new Map<number, string>();
+
+  const groups = Array.isArray(rawEnums) ? rawEnums : [];
+  groups.forEach((group) => {
+    if (!group || typeof group !== 'object') {
+      return;
+    }
+
+    const candidate = group as { enumName?: unknown; values?: unknown };
+    if (candidate.enumName !== enumName || !Array.isArray(candidate.values)) {
+      return;
+    }
+
+    candidate.values.forEach((valueItem) => {
+      if (!valueItem || typeof valueItem !== 'object') {
+        return;
+      }
+
+      const option = valueItem as { value?: unknown; name?: unknown };
+      const value = Number(option.value);
+      if (!Number.isInteger(value) || typeof option.name !== 'string') {
+        return;
+      }
+
+      labelById.set(value, option.name);
+    });
+  });
+
+  return labelById;
+};
+
 const toImageUrls = (images: PlantDetailResponse['images']): string[] => {
   if (!images || !Array.isArray(images)) {
     return [];
@@ -163,10 +196,10 @@ const getTotalAvailableStock = (plant: PlantDetailResponse): number => {
 
 const buildProductTitle = (plant: PlantDetailResponse, locale: string): string => {
   if (locale === 'en') {
-    return `${plant.name} - ${plant.size || 'Unknown size'} - Care ${plant.careLevel || 'Unknown'} | ${SITE_NAME}`;
+    return `${plant.name} - ${plant.size || 'Unknown size'} - Care ${plant.careLevelTypeName || 'Unknown'} | ${SITE_NAME}`;
   }
 
-  return `${plant.name} - ${plant.size || 'Kích thước chưa rõ'} - Chăm sóc ${plant.careLevel || 'chưa rõ'} | ${SITE_NAME}`;
+  return `${plant.name} - ${plant.size || 'Kích thước chưa rõ'} - Chăm sóc ${plant.careLevelTypeName || 'chưa rõ'} | ${SITE_NAME}`;
 };
 
 const buildProductDescription = (plant: PlantDetailResponse, locale: string): string => {
@@ -244,7 +277,7 @@ const mapPlantDetailToSamplePlant = (plant: PlantDetailResponse, imageUrl: strin
     name: plant.name,
     basePrice: plant.basePrice ?? 0,
     size: plant.size || 'Unknown',
-    careLevel: plant.careLevel || 'Unknown',
+    careLevel: plant.careLevelTypeName || 'Unknown',
     isActive: Boolean(plant.isActive),
     primaryImageUrl: imageUrl || null,
     totalInstances: plant.totalInstances ?? 0,
@@ -287,9 +320,10 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
 
   const selectedInstanceId = parsePositiveInt(toSingle(query.instanceId));
 
-  const [response, roomDesignEnumsResponse] = await Promise.all([
+  const [response, roomDesignEnumsResponse, plantEnumsResponse] = await Promise.all([
     getPlantById(plantId, true, false),
     getRoomDesignEnums(true, false).catch(() => null),
+    getPlantEnums(true, false).catch(() => null),
   ]);
   const plant = getPayload<PlantDetailResponse>(response);
   if (!plant) {
@@ -297,6 +331,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
   }
   const roomDesignEnums = getPayload(roomDesignEnumsResponse) ?? [];
   const { roomTypeById, roomStyleById } = getRoomDesignLabelMaps(roomDesignEnums, tRoomDesignEnum);
+  const growthRateById = getPlantEnumLabelMap(getPayload(plantEnumsResponse) ?? [], 'GrowthRate');
 
   let selectedInstanceDetail: ShopPlantInstanceDetail | null = null;
   if (selectedInstanceId && plant.totalInstances > 0) {
@@ -323,6 +358,8 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
   const totalAvailableStock = getTotalAvailableStock(plant);
   const roomTypeLabels = (plant.roomType ?? []).map((item) => roomTypeById.get(Number(item)) || String(item));
   const roomStyleLabels = (plant.roomStyle ?? []).map((item) => roomStyleById.get(Number(item)) || String(item));
+  const growthRateLabel =
+    typeof plant.growthRate === 'number' ? growthRateById.get(plant.growthRate) ?? String(plant.growthRate) : null;
   const productJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -473,11 +510,11 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
               </div>
               <div className="bg-gray-50 rounded-lg p-4">
                 <p className="text-sm text-gray-500 mb-1">{t('careLevel')}</p>
-                <p className="font-semibold text-gray-900">{plant.careLevel || t('notAvailable')}</p>
+                <p className="font-semibold text-gray-900">{plant.careLevelTypeName || t('notAvailable')}</p>
               </div>
               <div className="bg-gray-50 rounded-lg p-4">
                 <p className="text-sm text-gray-500 mb-1">{t('growthRate')}</p>
-                <p className="font-semibold text-gray-900">{plant.growthRate || t('notAvailable')}</p>
+                <p className="font-semibold text-gray-900">{growthRateLabel || t('notAvailable')}</p>
               </div>
               <div className="bg-gray-50 rounded-lg p-4">
                 <p className="text-sm text-gray-500 mb-1">{t('uniqueInstance')}</p>

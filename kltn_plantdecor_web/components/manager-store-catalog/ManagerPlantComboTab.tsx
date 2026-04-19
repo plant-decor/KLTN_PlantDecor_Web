@@ -295,7 +295,7 @@ export default function ManagerPlantComboTab() {
           <TableHead sx={{ backgroundColor: '#f4fff8' }}>
             <TableRow>
               <TableCell sx={{ fontWeight: 700 }}>ID</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Combo Code</TableCell>
+              {/* <TableCell sx={{ fontWeight: 700 }}>Combo Code</TableCell> */}
               <TableCell sx={{ fontWeight: 700 }}>Combo Name</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>Combo Type</TableCell>
               <TableCell sx={{ fontWeight: 700 }} align="right">
@@ -330,7 +330,7 @@ export default function ManagerPlantComboTab() {
               items.map((item) => (
                 <TableRow key={item.id} hover>
                   <TableCell>{item.id}</TableCell>
-                  <TableCell>{item.comboCode}</TableCell>
+                  {/* <TableCell>{item.comboCode}</TableCell> */}
                   <TableCell>{item.comboName}</TableCell>
                   <TableCell>{item.comboTypeName}</TableCell>
                   <TableCell align="right">{formatCurrency(item.price, 'vi')}</TableCell>

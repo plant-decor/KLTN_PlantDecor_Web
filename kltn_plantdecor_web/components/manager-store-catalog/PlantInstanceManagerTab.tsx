@@ -189,6 +189,7 @@ export default function PlantInstanceManagerTab({ nurseryId }: PlantInstanceMana
         {
           pagination: { pageNumber: 1, pageSize: 1000 },
           isUniqueInstance: true,
+          isActive: true,
         },
         true
       );

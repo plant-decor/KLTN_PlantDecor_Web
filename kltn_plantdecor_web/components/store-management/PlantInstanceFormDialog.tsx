@@ -87,13 +87,13 @@ export default function PlantInstanceFormDialog({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>{editingData ? 'Chỉnh sửa mẫu cây' : 'Thêm mẫu cây mới'}</DialogTitle>
+      <DialogTitle>{editingData ? 'Edit Plant Instance' : 'Add New Plant Instance'}</DialogTitle>
       <DialogContent dividers sx={{ maxHeight: '80vh', overflow: 'auto' }}>
         <Stack spacing={3}>
           {/* Basic Information */}
           <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom>
-              Thông tin cơ bản
+              Basic Information
             </Typography>
             <Grid container spacing={2}>
               <Grid sx={{ xs: 12, sm: 6 }}>
@@ -103,7 +103,7 @@ export default function PlantInstanceFormDialog({
                   render={({ field }) => (
                     <TextField
                       {...field}
-                      label="ID Cây"
+                      label="Plant ID"
                       fullWidth
                       type="number"
                       required
@@ -128,7 +128,7 @@ export default function PlantInstanceFormDialog({
                   render={({ field }) => (
                     <TextField
                       {...field}
-                      label="ID Vườn ươm"
+                      label="Nursery ID"
                       fullWidth
                       type="number"
                       onChange={(e) => field.onChange(parseInt(e.target.value))}
@@ -143,7 +143,7 @@ export default function PlantInstanceFormDialog({
                   render={({ field }) => (
                     <TextField
                       {...field}
-                      label="Trạng thái (1=Có sẵn, 2=Đã bán, etc.)"
+                      label="Status (1=Available, 2=Sold, etc.)"
                       fullWidth
                       type="number"
                       onChange={(e) => field.onChange(parseInt(e.target.value))}
@@ -156,7 +156,7 @@ export default function PlantInstanceFormDialog({
                   name="description"
                   control={control}
                   render={({ field }) => (
-                    <TextField {...field} label="Mô tả" fullWidth multiline rows={2} />
+                    <TextField {...field} label="Description" fullWidth multiline rows={2} />
                   )}
                 />
               </Grid>
@@ -166,7 +166,7 @@ export default function PlantInstanceFormDialog({
           {/* Physical Specifications */}
           <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom>
-              Thông số vật lý
+              Physical Specifications
             </Typography>
             <Grid container spacing={2}>
               <Grid sx={{ xs: 12, sm: 6 }}>
@@ -176,7 +176,7 @@ export default function PlantInstanceFormDialog({
                   render={({ field }) => (
                     <TextField
                       {...field}
-                      label="Chiều cao (cm)"
+                      label="Height (cm)"
                       fullWidth
                       type="number"
                       onChange={(e) => field.onChange(parseFloat(e.target.value))}
@@ -191,7 +191,7 @@ export default function PlantInstanceFormDialog({
                   render={({ field }) => (
                     <TextField
                       {...field}
-                      label="Đường kính thân (cm)"
+                      label="Trunk Diameter (cm)"
                       fullWidth
                       type="number"
                       onChange={(e) => field.onChange(parseFloat(e.target.value))}
@@ -206,7 +206,7 @@ export default function PlantInstanceFormDialog({
                   render={({ field }) => (
                     <TextField
                       {...field}
-                      label="Tuổi (năm)"
+                      label="Age (years)"
                       fullWidth
                       type="number"
                       onChange={(e) => field.onChange(parseInt(e.target.value))}
@@ -219,7 +219,7 @@ export default function PlantInstanceFormDialog({
                   name="healthStatus"
                   control={control}
                   render={({ field }) => (
-                    <TextField {...field} label="Tình trạng sức khỏe" fullWidth />
+                    <TextField {...field} label="Health Status" fullWidth />
                   )}
                 />
               </Grid>
@@ -229,7 +229,7 @@ export default function PlantInstanceFormDialog({
           {/* Pricing */}
           <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom>
-              Giá
+              Price
             </Typography>
             <Controller
               name="specificPrice"
@@ -238,7 +238,7 @@ export default function PlantInstanceFormDialog({
                 <TextField
                   {...field}
                   value={formatCurrencyInput(field.value ?? 0, 'vi')}
-                  label="Giá cụ thể"
+                  label="Specific Price (VND)"
                   fullWidth
                   type="text"
                   inputProps={{ inputMode: 'numeric' }}
@@ -254,19 +254,19 @@ export default function PlantInstanceFormDialog({
           <ImageUpload
             images={images}
             onImagesChange={setImages}
-            label="Hình ảnh mẫu cây"
+            label="Plant Sample Images"
             maxImages={10}
           />
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Hủy</Button>
+        <Button onClick={onClose}>Cancel</Button>
         <Button
           onClick={handleSubmit(handleFormSubmit)}
           variant="contained"
           disabled={isLoading}
         >
-          {isLoading ? 'Đang lưu...' : 'Lưu'}
+          {isLoading ? 'Saving...' : 'Save'}
         </Button>
       </DialogActions>
     </Dialog>

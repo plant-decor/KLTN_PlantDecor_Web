@@ -112,7 +112,7 @@ export default function PlantGuideDetailDialog({ open, guide, loading = false, o
 
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, sm: 6 }}>
-                <DetailField label="Ngày tạo" value={formatDateTime(guide.createdAt)} />
+                <DetailField label="Created At" value={formatDateTime(guide.createdAt)} />
               </Grid>
             </Grid>
           </Stack>

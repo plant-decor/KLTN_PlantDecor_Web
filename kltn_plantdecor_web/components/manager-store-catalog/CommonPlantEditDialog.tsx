@@ -111,7 +111,7 @@ export default function CommonPlantEditDialog({
           disabled={!canSubmit}
           sx={{ backgroundColor: 'var(--primary!)', color: 'var(--primary-foreground)' }}
         >
-          Lưu
+          {submitting ? 'Saving...' : 'Save Changes'}
         </Button>
       </DialogActions>
     </Dialog>

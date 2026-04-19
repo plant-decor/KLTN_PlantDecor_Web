@@ -73,8 +73,8 @@ export const AdminCarePackagePageClient: React.FC = () => {
       const result = method === 'PUT'
         ? await put<CareServicePackage>(url, data, false)
         : await post<CareServicePackage>(url, data, false);
-      const message = selectedPackage ? "Cập nhật gói thành công" : "Tạo gói thành công";
-      
+      const message = selectedPackage ? "Update package successfully" : "Create package successfully";
+
       setSuccess(message);
       setFormOpen(false);
       setSelectedPackage(null);
@@ -102,7 +102,7 @@ export const AdminCarePackagePageClient: React.FC = () => {
       await del(`/api/services/packages/${packageId}`, false);
 
       setPackages((prev) => prev.filter((p) => p.id !== packageId));
-      setSuccess("Xoá gói thành công");
+      setSuccess("Package deleted successfully");
       
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
@@ -136,7 +136,7 @@ export const AdminCarePackagePageClient: React.FC = () => {
           startIcon={<AddIcon />}
           onClick={() => handleOpenForm()}
         >
-          Tạo Gói Mới
+          Create Package
         </Button>
       </Box>
 

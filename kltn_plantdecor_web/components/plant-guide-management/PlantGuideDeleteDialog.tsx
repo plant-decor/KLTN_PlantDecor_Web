@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material';
@@ -21,18 +21,18 @@ export default function PlantGuideDeleteDialog({
 }: PlantGuideDeleteDialogProps) {
   return (
     <Dialog open={open} onClose={onClose}>
-      <DialogTitle>Xác nhận xóa Plant Guide</DialogTitle>
+      <DialogTitle>Confirm Delete Plant Guide</DialogTitle>
       <DialogContent>
         <Typography>
           {guide
-            ? `Bạn có chắc muốn xóa Plant Guide của "${guide.plantName}" không?`
-            : 'Bạn có chắc muốn xóa Plant Guide này không?'}
+            ? `Are you sure you want to delete the Plant Guide for "${guide.plantName}"?`
+            : 'Are you sure you want to delete this Plant Guide?'}
         </Typography>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Hủy</Button>
+        <Button onClick={onClose}>Cancel</Button>
         <Button onClick={onConfirm} color="error" variant="contained" disabled={isLoading}>
-          Xóa
+          Delete
         </Button>
       </DialogActions>
     </Dialog>

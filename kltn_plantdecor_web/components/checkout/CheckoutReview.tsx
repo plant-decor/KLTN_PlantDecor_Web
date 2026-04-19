@@ -14,9 +14,8 @@ import {
   TableRow,
   Divider,
   Grid,
-  Button,
 } from '@mui/material';
-import { Edit as EditIcon } from '@mui/icons-material';
+// import { Edit as EditIcon } from '@mui/icons-material';
 import type { CheckoutData } from '@/types/cart.types';
 import type { OrderCreatePayload } from '@/types/order.types';
 
@@ -71,13 +70,13 @@ export default function CheckoutReview({
               <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                 Shipping Details
               </Typography>
-              <Button
+              {/* <Button
                 size="small"
                 startIcon={<EditIcon />}
                 sx={{ textTransform: 'none', color: '#4CAF50' }}
               >
                 Edit
-              </Button>
+              </Button> */}
             </Box>
 
             <Divider sx={{ mb: 2 }} />
@@ -120,13 +119,13 @@ export default function CheckoutReview({
               <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                 Payment Method
               </Typography>
-              <Button
+              {/* <Button
                 size="small"
                 startIcon={<EditIcon />}
                 sx={{ textTransform: 'none', color: '#4CAF50' }}
               >
                 Edit
-              </Button>
+              </Button> */}
             </Box>
 
             <Divider sx={{ mb: 2 }} />

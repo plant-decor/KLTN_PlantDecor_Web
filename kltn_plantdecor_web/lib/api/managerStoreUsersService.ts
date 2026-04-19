@@ -333,7 +333,7 @@ export const createNurseryStaff = async (
 
   const result = unwrapPayloadData(response);
   if (!result || !result.user) {
-    throw new Error("Không thể tạo nhân viên");
+    throw new Error("Can not create staff");
   }
 
   return result;
@@ -352,7 +352,7 @@ export const createNurseryCareaker = async (
 
   const result = unwrapPayloadData(response);
   if (!result) {
-    throw new Error("Không thể tạo nhân viên chăm sóc");
+    throw new Error("Can not create caretaker");
   }
 
   return result;

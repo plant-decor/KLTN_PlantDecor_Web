@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect } from 'react';
 import {
@@ -72,7 +72,7 @@ export default function NurseryFormDialog({
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>{editingData ? 'Cập nhật vựa' : 'Tạo vựa mới'}</DialogTitle>
+      <DialogTitle>{editingData ? 'Update Nursery' : 'Create New Nursery'}</DialogTitle>
       <DialogContent dividers>
         <Stack spacing={2}>
           <Grid container spacing={2}>
@@ -81,7 +81,7 @@ export default function NurseryFormDialog({
                 name="name"
                 control={control}
                 rules={{ required: true }}
-                render={({ field }) => <TextField {...field} label="Tên vựa" required fullWidth />}
+                render={({ field }) => <TextField {...field} label="Nursery Name" required fullWidth />}
               />
             </Grid>
 
@@ -90,7 +90,7 @@ export default function NurseryFormDialog({
                 name="address"
                 control={control}
                 rules={{ required: true }}
-                render={({ field }) => <TextField {...field} label="Địa chỉ" required fullWidth />}
+                render={({ field }) => <TextField {...field} label="Address" required fullWidth />}
               />
             </Grid>
 
@@ -99,7 +99,7 @@ export default function NurseryFormDialog({
                 name="phone"
                 control={control}
                 rules={{ required: true }}
-                render={({ field }) => <TextField {...field} label="Số điện thoại" required fullWidth />}
+                render={({ field }) => <TextField {...field} label="Phone Number" required fullWidth />}
               />
             </Grid>
 
@@ -108,7 +108,7 @@ export default function NurseryFormDialog({
                 name="area"
                 control={control}
                 render={({ field }) => (
-                  <TextField {...field} label="Diện tích (m2)" fullWidth type="number" inputProps={numberInputProps} />
+                  <TextField {...field} label="Area (m2)" fullWidth type="number" inputProps={numberInputProps} />
                 )}
               />
             </Grid>
@@ -145,21 +145,21 @@ export default function NurseryFormDialog({
                     onChange={(event) => field.onChange(event.target.checked)}
                   />
                 }
-                label="Đang hoạt động"
+                label="Active"
               />
             )}
           />
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Hủy</Button>
+        <Button onClick={onClose}>Cancel</Button>
         <Button
           onClick={handleSubmit(onSubmit)}
           variant="contained"
           disabled={isLoading}
           className="bg-primary!"
         >
-          {isLoading ? 'Đang lưu...' : 'Lưu'}
+          {isLoading ? 'Saving...' : 'Save'}
         </Button>
       </DialogActions>
     </Dialog>

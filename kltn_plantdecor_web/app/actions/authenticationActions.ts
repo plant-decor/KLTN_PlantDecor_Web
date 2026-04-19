@@ -562,7 +562,7 @@ export async function createManagerAction(
   try {
     const data = await callAuthenticationApi<ApiMessageResponse>(
       '/Authentication/create-manager',
-      'Tạo tài khoản quản lý thất bại.',
+      'Create manager account failed.',
       {
         auth: 'required',
         body: payload,
@@ -571,12 +571,12 @@ export async function createManagerAction(
 
     return {
       success: true,
-      message: data.message || 'Tạo tài khoản quản lý thành công.',
+      message: data.message || 'Create manager account successful.',
     };
   } catch (error) {
     return {
       success: false,
-      message: error instanceof Error ? error.message : 'Tạo tài khoản quản lý thất bại.',
+      message: error instanceof Error ? error.message : 'Create manager account failed.',
     };
   }
 }

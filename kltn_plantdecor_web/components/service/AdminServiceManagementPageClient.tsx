@@ -198,7 +198,7 @@ export default function AdminServiceManagementPageClient() {
         };
 
         await createAdminCareServicePackage(payload, false);
-        toast.success("Tạo gói dịch vụ thành công");
+        // toast.success("Tạo gói dịch vụ thành công");
       } else if (modalMode === "edit" && selectedId !== null) {
         const payload: AdminCareServicePackageUpdateRequest = {
           name: formValue.name.trim(),
@@ -213,13 +213,13 @@ export default function AdminServiceManagementPageClient() {
         };
 
         await updateAdminCareServicePackage(selectedId, payload, false);
-        toast.success("Cập nhật gói dịch vụ thành công");
+        // toast.success("Cập nhật gói dịch vụ thành công");
       }
 
       await loadPackages();
       closeModal();
     } catch (error) {
-      const message = getErrorMessage(error, "Không thể lưu gói dịch vụ");
+      const message = getErrorMessage(error, "Can not save package");
       toast.error(message);
     } finally {
       setSubmitting(false);
@@ -229,12 +229,12 @@ export default function AdminServiceManagementPageClient() {
   const handleDelete = async (id: number) => {
     try {
       await deleteAdminCareServicePackage(id, false);
-      toast.success("Đã vô hiệu hóa gói dịch vụ");
+      toast.success("Package deactivated successfully");
 
       // Keep inactive rows visible by always syncing back to the server's /all response.
       await loadPackages();
     } catch (error) {
-      const message = getErrorMessage(error, "Không thể vô hiệu hóa gói dịch vụ");
+      const message = getErrorMessage(error, "Can not deactivate package");
       toast.error(message);
     }
   };
@@ -242,11 +242,11 @@ export default function AdminServiceManagementPageClient() {
   return (
     <Box sx={{ bgcolor: "var(--background)", minHeight: "100vh", p: { xs: 2, md: 4 } }}>
       <ManagementHeader
-        title="Quản lý gói dịch vụ"
-        description="Quản trị toàn bộ gói dịch vụ chăm sóc, bao gồm xem chi tiết, tạo mới, cập nhật và vô hiệu hóa."
-        entityLabel="gói"
+        title="Service Package Management"
+        description="Manage all care service packages, including viewing details, creating, updating, and deactivating."
+        entityLabel="package"
         count={packages.length}
-        actionLabel="Tạo gói mới"
+        actionLabel="Create Package"
         onAction={openCreateModal}
       />
 

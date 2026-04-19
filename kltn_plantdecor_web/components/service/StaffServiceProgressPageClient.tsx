@@ -171,8 +171,8 @@ export const StaffServiceProgressPageClient: React.FC = () => {
       {view === "timeline" && (
         <>
           <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)} sx={{ mb: 3 }}>
-            <Tab label={`Đang Thực Hiện (${inProgressServices.length})`} />
-            <Tab label="Hướng Dẫn" />
+            <Tab label={`In Progress (${inProgressServices.length})`} />
+            <Tab label="Instructions" />
           </Tabs>
 
           <TabPanel value={tabValue} index={0}>
@@ -182,7 +182,7 @@ export const StaffServiceProgressPageClient: React.FC = () => {
               </Box>
             ) : inProgressServices.length === 0 ? (
               <Box sx={{ p: 3, textAlign: "center" }}>
-                <p>Không có dịch vụ nào đang thực hiện</p>
+                <p>No services in progress</p>
               </Box>
             ) : (
               <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
@@ -201,12 +201,12 @@ export const StaffServiceProgressPageClient: React.FC = () => {
 
           <TabPanel value={tabValue} index={1}>
             <Box sx={{ p: 3 }}>
-              <h3>Hướng Dẫn Theo Dõi Tiến Độ</h3>
+              <h3>Instructions for Tracking Progress</h3>
               <ul>
-                <li>Click &quot;Xem Chi Tiết&quot; để xem chi tiết từng dịch vụ</li>
-                <li>Xem các update tiến độ từ nhân viên chăm sóc</li>
-                <li>Duyệt hoặc từ chối dịch vụ phát sinh</li>
-                <li>Tạo hóa đơn khi hoàn thành</li>
+                <li>Click &quot;View Details&quot; to see the details of each service</li>
+                <li>View progress updates from care staff</li>
+                <li>Approve or reject additional services</li>
+                <li>Generate invoice upon completion</li>
               </ul>
             </Box>
           </TabPanel>

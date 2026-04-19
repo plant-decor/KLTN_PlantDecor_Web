@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material';
 import type { ManagerServiceRegistration } from '@/types/care-service.types';
@@ -24,25 +24,25 @@ export default function ServiceOrderRejectDialog({
 }: ServiceOrderRejectDialogProps) {
   return (
     <Dialog open={open} onClose={submitting ? undefined : onClose} fullWidth maxWidth="sm">
-      <DialogTitle>{target ? `Từ chối đơn dịch vụ #${target.id}` : 'Từ chối đơn dịch vụ'}</DialogTitle>
+      <DialogTitle>{target ? `Reject service order #${target.id}` : 'Reject service order'}</DialogTitle>
       <DialogContent dividers>
         <TextField
-          label="Lý do từ chối"
+          label="Rejection reason"
           fullWidth
           multiline
           minRows={3}
           value={reason}
           onChange={(event) => onReasonChange(event.target.value)}
           disabled={submitting}
-          placeholder="Nhập lý do từ chối"
+          placeholder="Enter rejection reason"
         />
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={submitting}>
-          Hủy
+          Cancel
         </Button>
         <Button onClick={onConfirm} disabled={submitting} variant="contained" color="error">
-          {submitting ? 'Đang xử lý...' : 'Xác nhận từ chối'}
+          {submitting ? 'Processing...' : 'Confirm rejection'}
         </Button>
       </DialogActions>
     </Dialog>

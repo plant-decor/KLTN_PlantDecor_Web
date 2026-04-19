@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -122,10 +122,10 @@ export default function StoreCatalogPage() {
     <Box sx={{ py: 3, minHeight: '100%' }}>
       <Stack spacing={2} sx={{ mb: 4 }}>
         <Typography variant="h4" fontWeight="700" color="primary">
-          Quản Lý Hàng Hóa
+          Catalog Management
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Quản lý dữ liệu chính của cây, combo, mẫu cây và vật tư tiêu hao
+          Manage core data for plants, combos, plant instances, and consumable materials
         </Typography>
       </Stack>
       <Stack spacing={2} sx={{ mb: 3 }}>
@@ -215,3 +215,4 @@ export default function StoreCatalogPage() {
     </Box>
   );
 }
+

@@ -167,7 +167,7 @@ export default function PlantGuideFormDialog({
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-      <DialogTitle>{editingData ? 'Cập nhật Plant Guide' : 'Tạo Plant Guide mới'}</DialogTitle>
+      <DialogTitle>{editingData ? 'Update Plant Guide' : 'Create New Plant Guide'}</DialogTitle>
       <DialogContent dividers>
         <Stack spacing={2.5}>
           {enumError && <Alert severity="error">{enumError}</Alert>}
@@ -186,7 +186,7 @@ export default function PlantGuideFormDialog({
                         required
                         fullWidth
                         value={plantKeyword}
-                        placeholder="Tìm và chọn cây"
+                        placeholder="Search plant by name or ID"
                         onFocus={() => {
                           if (hasKeyword) {
                             setSearchOpen(true);
@@ -271,7 +271,7 @@ export default function PlantGuideFormDialog({
                             {plantsLoading && (
                               <Box className="px-3 py-2">
                                 <Typography variant="body2" color="text.secondary">
-                                  Đang tìm cây...
+                                  Searching for plants...
                                 </Typography>
                               </Box>
                             )}
@@ -279,7 +279,7 @@ export default function PlantGuideFormDialog({
                             {noResults && (
                               <Box className="px-3 py-2">
                                 <Typography variant="body2" color="text.secondary">
-                                  Không tìm thấy cây phù hợp
+                                  No matching plants found
                                 </Typography>
                               </Box>
                             )}
@@ -299,10 +299,10 @@ export default function PlantGuideFormDialog({
                 rules={{ required: true }}
                 render={({ field }) => (
                   <FormControl fullWidth required>
-                    <InputLabel>Ánh sáng</InputLabel>
-                    <Select {...field} label="Ánh sáng">
+                    <InputLabel>Light Requirement</InputLabel>
+                    <Select {...field} label="Light Requirement">
                       <MenuItem value="" disabled>
-                        Chọn ánh sáng
+                        Select light requirement
                       </MenuItem>
                       {lightRequirementOptions.map((item) => (
                         <MenuItem key={item.value} value={item.name}>
@@ -320,7 +320,7 @@ export default function PlantGuideFormDialog({
                 name="watering"
                 control={control}
                 rules={{ required: true }}
-                render={({ field }) => <TextField {...field} label="Tưới nước" required fullWidth />}
+                render={({ field }) => <TextField {...field} label="Watering" required fullWidth />}
               />
             </Grid>
 
@@ -329,7 +329,7 @@ export default function PlantGuideFormDialog({
                 name="fertilizing"
                 control={control}
                 rules={{ required: true }}
-                render={({ field }) => <TextField {...field} label="Bón phân" required fullWidth />}
+                render={({ field }) => <TextField {...field} label="Fertilizing" required fullWidth />}
               />
             </Grid>
 
@@ -338,7 +338,7 @@ export default function PlantGuideFormDialog({
                 name="pruning"
                 control={control}
                 rules={{ required: true }}
-                render={({ field }) => <TextField {...field} label="Cắt tỉa" required fullWidth />}
+                render={({ field }) => <TextField {...field} label="Pruning" required fullWidth />}
               />
             </Grid>
 
@@ -347,7 +347,7 @@ export default function PlantGuideFormDialog({
                 name="temperature"
                 control={control}
                 rules={{ required: true }}
-                render={({ field }) => <TextField {...field} label="Nhiệt độ" required fullWidth />}
+                render={({ field }) => <TextField {...field} label="Temperature" required fullWidth />}
               />
             </Grid>
 
@@ -356,7 +356,7 @@ export default function PlantGuideFormDialog({
                 name="humidity"
                 control={control}
                 rules={{ required: true }}
-                render={({ field }) => <TextField {...field} label="Độ ẩm" required fullWidth />}
+                render={({ field }) => <TextField {...field} label="Humidity" required fullWidth />}
               />
             </Grid>
 
@@ -365,7 +365,7 @@ export default function PlantGuideFormDialog({
                 name="soil"
                 control={control}
                 rules={{ required: true }}
-                render={({ field }) => <TextField {...field} label="Đất trồng" required fullWidth />}
+                render={({ field }) => <TextField {...field} label="Soil" required fullWidth />}
               />
             </Grid>
 
@@ -375,7 +375,7 @@ export default function PlantGuideFormDialog({
                 control={control}
                 rules={{ required: true }}
                 render={({ field }) => (
-                  <TextField {...field} label="Ghi chú chăm sóc" required fullWidth multiline minRows={4} />
+                  <TextField {...field} label="Care Notes" required fullWidth multiline minRows={4} />
                 )}
               />
             </Grid>
@@ -383,9 +383,9 @@ export default function PlantGuideFormDialog({
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Hủy</Button>
+        <Button onClick={onClose}>Cancel</Button>
         <Button onClick={handleSubmit(onSubmit)} variant="contained" disabled={isDisabled} className="bg-primary!">
-          {isLoading ? 'Đang lưu...' : 'Lưu'}
+          {isLoading ? 'Saving...' : 'Save Changes'}
         </Button>
       </DialogActions>
     </Dialog>

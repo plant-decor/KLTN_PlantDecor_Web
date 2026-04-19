@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import {
   Box,
@@ -50,7 +50,7 @@ export default function ManagerSalesOrderDetailDialog({
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle>
-        {detailItem ? `Chi tiết đơn hàng #${detailItem.id}` : 'Chi tiết đơn hàng'}
+        {detailItem ? `Order Details #${detailItem.id}` : 'Order Details'}
       </DialogTitle>
       <DialogContent dividers>
         {loading ? (
@@ -58,16 +58,16 @@ export default function ManagerSalesOrderDetailDialog({
             <CircularProgress />
           </Box>
         ) : !detailItem ? (
-          <Typography color="text.secondary">Không có dữ liệu chi tiết.</Typography>
+          <Typography color="text.secondary">No detail data available.</Typography>
         ) : (
           <Stack spacing={2}>
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} justifyContent="space-between">
               <Stack spacing={1}>
-                <DetailLine label="Mã đơn vườn" value={`#${detailItem.id}`} />
-                <DetailLine label="Mã đơn tổng" value={`#${detailItem.orderId}`} />
-                <DetailLine label="Vườn" value={detailItem.nurseryName} />
+                <DetailLine label="Nursery Order ID" value={`#${detailItem.id}`} />
+                <DetailLine label="Master Order ID" value={`#${detailItem.orderId}`} />
+                <DetailLine label="Nursery" value={detailItem.nurseryName} />
                 <Box>
-                  <strong>Trạng thái:</strong>{' '}
+                  <strong>Status:</strong>{' '}
                   <Chip
                     size="small"
                     color={
@@ -86,10 +86,10 @@ export default function ManagerSalesOrderDetailDialog({
 
               <Stack spacing={1}>
                 <Typography variant="body2" textAlign={{ md: 'right' }}>
-                  <strong>Tạm tính:</strong> {formatCurrency(detailItem.subTotalAmount)}
+                  <strong>Subtotal:</strong> {formatCurrency(detailItem.subTotalAmount)}
                 </Typography>
                 <Typography variant="caption" color="text.secondary" textAlign={{ md: 'right' }}>
-                  Tổng sản phẩm: {detailItem.items.length}
+                  Total items: {detailItem.items.length}
                 </Typography>
               </Stack>
             </Stack>
@@ -99,28 +99,28 @@ export default function ManagerSalesOrderDetailDialog({
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={3}>
               <Box sx={{ flex: 1 }}>
                 <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
-                  Thông tin khách hàng
+                  Customer Information
                 </Typography>
                 <Stack spacing={0.5}>
-                  <DetailLine label="Tên" value={detailItem.customerName} />
+                  <DetailLine label="Name" value={detailItem.customerName} />
                   <DetailLine label="Email" value={detailItem.customerEmail || '-'} />
-                  <DetailLine label="Số điện thoại" value={detailItem.customerPhone || '-'} />
+                  <DetailLine label="Phone" value={detailItem.customerPhone || '-'} />
                   <Typography variant="body2" sx={{ whiteSpace: 'pre-line' }}>
-                    <strong>Địa chỉ:</strong> {normalizeMultilineText(detailItem.customerAddress)}
+                    <strong>Address:</strong> {normalizeMultilineText(detailItem.customerAddress)}
                   </Typography>
                 </Stack>
               </Box>
 
               <Box sx={{ flex: 1 }}>
                 <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
-                  Thông tin shipper
+                  Shipper Information
                 </Typography>
                 <Stack spacing={0.5}>
-                  <DetailLine label="Tên" value={detailItem.shipperName || '-'} />
+                  <DetailLine label="Name" value={detailItem.shipperName || '-'} />
                   <DetailLine label="Email" value={detailItem.shipperEmail || '-'} />
-                  <DetailLine label="Số điện thoại" value={detailItem.shipperPhone || '-'} />
-                  <DetailLine label="Ghi chú shipper" value={detailItem.shipperNote || '-'} />
-                  <DetailLine label="Ghi chú giao hàng" value={detailItem.deliveryNote || '-'} />
+                  <DetailLine label="Phone" value={detailItem.shipperPhone || '-'} />
+                  <DetailLine label="Shipper note" value={detailItem.shipperNote || '-'} />
+                  <DetailLine label="Delivery note" value={detailItem.deliveryNote || '-'} />
                 </Stack>
               </Box>
             </Stack>
@@ -129,20 +129,20 @@ export default function ManagerSalesOrderDetailDialog({
 
             <Box>
               <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
-                Danh sách sản phẩm
+                Product List
               </Typography>
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 700 }}>Tên sản phẩm</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Product Name</TableCell>
                     <TableCell sx={{ fontWeight: 700 }} align="right">
-                      Đơn giá
+                      Unit Price
                     </TableCell>
                     <TableCell sx={{ fontWeight: 700 }} align="center">
-                      Số lượng
+                      Quantity
                     </TableCell>
                     <TableCell sx={{ fontWeight: 700 }} align="right">
-                      Thành tiền
+                      Amount
                     </TableCell>
                   </TableRow>
                 </TableHead>
@@ -150,7 +150,7 @@ export default function ManagerSalesOrderDetailDialog({
                   {detailItem.items.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={4} align="center">
-                        <Typography color="text.secondary">Không có sản phẩm trong đơn.</Typography>
+                        <Typography color="text.secondary">No products in this order.</Typography>
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -177,13 +177,13 @@ export default function ManagerSalesOrderDetailDialog({
             <Divider />
 
             <Typography variant="body2" sx={{ whiteSpace: 'pre-line' }}>
-              <strong>Ghi chú đơn:</strong> {normalizeMultilineText(detailItem.note)}
+              <strong>Order note:</strong> {normalizeMultilineText(detailItem.note)}
             </Typography>
           </Stack>
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Đóng</Button>
+        <Button onClick={onClose}>Close</Button>
       </DialogActions>
     </Dialog>
   );

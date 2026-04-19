@@ -290,14 +290,14 @@ export default function CommonPlantTab({ nurseryId }: CommonPlantTabProps) {
         </Stack>
 
         <Stack direction="row" spacing={1}>
-          <Button
+          {/* <Button
             startIcon={<AutorenewIcon />}
             variant="outlined"
             onClick={() => void fetchCommonPlants()}
             disabled={loading}
           >
             Refresh
-          </Button>
+          </Button> */}
           <Button
             startIcon={<AddIcon />}
             variant="contained"

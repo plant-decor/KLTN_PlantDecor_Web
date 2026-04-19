@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import {
   Box,
@@ -59,7 +59,7 @@ export default function ServiceOrderDetailDialog({
       maxWidth="md"
     >
       <DialogTitle>
-        {detailItem ? `Chi tiết đơn dịch vụ #${detailItem.id}` : 'Chi tiết đơn dịch vụ'}
+        {detailItem ? `Service Order Details #${detailItem.id}` : 'Service Order Details'}
       </DialogTitle>
       <DialogContent dividers>
         {loading ? (
@@ -67,11 +67,11 @@ export default function ServiceOrderDetailDialog({
             <CircularProgress />
           </Box>
         ) : !detailItem ? (
-          <Typography color="text.secondary">Không có dữ liệu chi tiết.</Typography>
+          <Typography color="text.secondary">No detail data available.</Typography>
         ) : (
           <Stack spacing={1.5}>
             <Box>
-              <strong>Trạng thái:</strong>{' '}
+              <strong>Status:</strong>{' '}
               <Chip
                 size="small"
                 color={STATUS_CHIP_COLOR[detailItem.status as ServiceRegistrationStatusEnum] || 'default'}
@@ -83,51 +83,51 @@ export default function ServiceOrderDetailDialog({
               />
             </Box>
             <Typography>
-              <strong>Khách hàng:</strong> {detailItem.customer?.fullName || '-'} ({detailItem.customer?.email || '-'})
+              <strong>Customer:</strong> {detailItem.customer?.fullName || '-'} ({detailItem.customer?.email || '-'})
             </Typography>
             <Typography>
-              <strong>Số điện thoại:</strong> {detailItem.phone || '-'}
+              <strong>Phone:</strong> {detailItem.phone || '-'}
             </Typography>
             <Typography>
-              <strong>Địa chỉ:</strong> {detailItem.address || '-'}
+              <strong>Address:</strong> {detailItem.address || '-'}
             </Typography>
             <Typography>
-              <strong>Ngày dịch vụ:</strong> {formatDate(detailItem.serviceDate)}
+              <strong>Service date:</strong> {formatDate(detailItem.serviceDate)}
             </Typography>
             <Typography>
-              <strong>Ca mong muốn:</strong>{' '}
+              <strong>Preferred shift:</strong>{' '}
               {detailItem.prefferedShift
                 ? `${detailItem.prefferedShift.shiftName} (${detailItem.prefferedShift.startTime} - ${detailItem.prefferedShift.endTime})`
                 : '-'}
             </Typography>
             <Typography>
-              <strong>Gói dịch vụ:</strong> {detailItem.nurseryCareService.careServicePackage.name}
+              <strong>Service package:</strong> {detailItem.nurseryCareService.careServicePackage.name}
             </Typography>
             <Typography>
-              <strong>Đơn giá:</strong> {formatCurrency(detailItem.nurseryCareService.careServicePackage.unitPrice)}
+              <strong>Unit price:</strong> {formatCurrency(detailItem.nurseryCareService.careServicePackage.unitPrice)}
             </Typography>
             <Typography>
-              <strong>Số buổi:</strong> {detailItem.totalSessions}
+              <strong>Total sessions:</strong> {detailItem.totalSessions}
             </Typography>
             <Typography>
               <strong>Order ID:</strong> {detailItem.orderId ? `#${detailItem.orderId}` : '-'}
             </Typography>
             <Typography>
-              <strong>Caretaker chính:</strong> {detailItem.mainCaretaker?.fullName || '-'}
+              <strong>Primary caretaker:</strong> {detailItem.mainCaretaker?.fullName || '-'}
             </Typography>
             <Typography>
-              <strong>Ghi chú:</strong> {detailItem.note || '-'}
+              <strong>Note:</strong> {detailItem.note || '-'}
             </Typography>
             {detailItem.cancelReason ? (
               <Typography>
-                <strong>Lý do từ chối/hủy:</strong> {detailItem.cancelReason}
+                <strong>Reject/Cancel reason:</strong> {detailItem.cancelReason}
               </Typography>
             ) : null}
             <Typography>
-              <strong>Tạo lúc:</strong> {formatDate(detailItem.createdAt)}
+              <strong>Created at:</strong> {formatDate(detailItem.createdAt)}
             </Typography>
             <Typography>
-              <strong>Duyệt lúc:</strong> {formatDate(detailItem.approvedAt)}
+              <strong>Approved at:</strong> {formatDate(detailItem.approvedAt)}
             </Typography>
           </Stack>
         )}
@@ -141,7 +141,7 @@ export default function ServiceOrderDetailDialog({
               onClick={() => onApprove(detailItem)}
               disabled={submitting}
             >
-              Duyệt đơn
+              Approve Order
             </Button>
           )}
           {detailItem && canApproveOrReject(detailItem.status) && (
@@ -151,7 +151,7 @@ export default function ServiceOrderDetailDialog({
               onClick={() => onReject(detailItem)}
               disabled={submitting}
             >
-              Từ chối
+              Reject
             </Button>
           )}
           {detailItem && canManagerCancel(detailItem.status) && (
@@ -161,7 +161,7 @@ export default function ServiceOrderDetailDialog({
               onClick={() => onCancel(detailItem)}
               disabled={submitting}
             >
-              Hủy đơn
+              Cancel Order
             </Button>
           )}
           {detailItem && canAssignCaretaker(detailItem.status) && (
@@ -170,12 +170,12 @@ export default function ServiceOrderDetailDialog({
               onClick={() => onAssignCaretaker(detailItem)}
               disabled={submitting}
             >
-              Giao caretaker
+              Assign caretaker
             </Button>
           )}
         </Stack>
         <Button onClick={onClose} disabled={submitting || loading}>
-          Đóng
+          Close
         </Button>
       </DialogActions>
     </Dialog>

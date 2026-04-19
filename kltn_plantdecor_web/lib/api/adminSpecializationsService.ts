@@ -15,8 +15,8 @@ const QUERY_CONFIG = {
 };
 
 const MUTATION_CONFIG = {
-  showToast: false,
-  showErrorToast: false,
+  showToast: true,
+  showErrorToast: true,
 };
 
 type WrappedResponse<T> = ResponseModel<T> | T;

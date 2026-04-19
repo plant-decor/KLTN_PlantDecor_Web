@@ -150,15 +150,15 @@ export default function MaterialCard({
 
   return (
     <>
-      <article className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow min-h-115 h-full flex flex-col">
-        <Link href={`/${locale}/materials/${material.id}`} className="block basis-[50%] shrink-0">
+      <article className="bg-white rounded-3xl overflow-hidden shadow-md hover:shadow-lg transition-shadow min-h-115 h-full flex flex-col">
+        <Link href={`/${locale}/materials/${material.id}`} className="block basis-[60%] shrink-0">
           <div className="relative w-full h-full">
             <Image
               src={material.primaryImageUrl || '/img/fallbackplant.avif'}
               alt={material.name}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              className="object-cover"
+              className="object-contain"
               loading="eager"
             />
             {showNewBadge ? (
@@ -169,7 +169,7 @@ export default function MaterialCard({
           </div>
         </Link>
 
-        <div className="basis-[25%] min-h-0 p-2 sm:p-2 md:p-4 lg:p-5 overflow-hidden ">
+        <div className="basis-[15%] min-h-0 p-2 sm:p-2 md:p-4 lg:p-5 overflow-hidden ">
           <Link href={`/${locale}/materials/${material.id}`} className="block">
             <h3 className="font-semibold text-gray-900 line-clamp-2">{material.name}</h3>
             <p className="text-sm text-gray-600 mt-2 line-clamp-3">{materialDescription}</p>

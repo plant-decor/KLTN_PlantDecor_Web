@@ -4,6 +4,8 @@ import { getTranslations } from 'next-intl/server';
 import type { Metadata } from 'next';
 import { getPlantById, type PlantDetailResponse } from '@/lib/api/plantsService';
 import {
+  getPlantEnums,
+  getRoomDesignEnums,
   getShopPlantInstanceById,
   type ShopPlantInstanceDetail,
   type ShopPlantInstanceImage,
@@ -15,6 +17,7 @@ import ProductDetailPurchasePanel from '@/components/product/ProductDetailPurcha
 import ClickableImageViewer from '@/components/image-view/ClickableImageViewer';
 import { getFengShuiColors, getFengShuiElementLabel } from '@/lib/utils/fengShui';
 import { formatCurrency } from '@/lib/utils/formatUtil';
+import { localizeRoomDesignEnumLabel } from '@/lib/utils/roomDesignEnumI18n';
 import { get } from '@/lib/api/apiService.server';
 import { ResponseModel } from '@/types/api.types';
 
@@ -53,6 +56,80 @@ const parsePositiveInt = (value: string | undefined): number | null => {
 };
 
 const serializeJsonLd = (data: unknown): string => JSON.stringify(data).replace(/</g, '\\u003c');
+
+const getRoomDesignLabelMaps = (
+  rawEnums: unknown,
+  tRoomDesignEnum: (key: string) => string
+) => {
+  const roomTypeById = new Map<number, string>();
+  const roomStyleById = new Map<number, string>();
+
+  const groups = Array.isArray(rawEnums) ? rawEnums : [];
+  groups.forEach((group) => {
+    if (!group || typeof group !== 'object') {
+      return;
+    }
+
+    const candidate = group as { enumName?: unknown; values?: unknown };
+    if (typeof candidate.enumName !== 'string' || !Array.isArray(candidate.values)) {
+      return;
+    }
+
+    candidate.values.forEach((valueItem) => {
+      if (!valueItem || typeof valueItem !== 'object') {
+        return;
+      }
+
+      const option = valueItem as { value?: unknown; name?: unknown };
+      const value = Number(option.value);
+      if (!Number.isInteger(value) || typeof option.name !== 'string') {
+        return;
+      }
+
+      if (candidate.enumName === 'RoomType') {
+        roomTypeById.set(value, localizeRoomDesignEnumLabel(option.name, tRoomDesignEnum, 'RoomType'));
+      }
+
+      if (candidate.enumName === 'RoomStyle') {
+        roomStyleById.set(value, localizeRoomDesignEnumLabel(option.name, tRoomDesignEnum, 'RoomStyle'));
+      }
+    });
+  });
+
+  return { roomTypeById, roomStyleById };
+};
+
+const getPlantEnumLabelMap = (rawEnums: unknown, enumName: string): Map<number, string> => {
+  const labelById = new Map<number, string>();
+
+  const groups = Array.isArray(rawEnums) ? rawEnums : [];
+  groups.forEach((group) => {
+    if (!group || typeof group !== 'object') {
+      return;
+    }
+
+    const candidate = group as { enumName?: unknown; values?: unknown };
+    if (candidate.enumName !== enumName || !Array.isArray(candidate.values)) {
+      return;
+    }
+
+    candidate.values.forEach((valueItem) => {
+      if (!valueItem || typeof valueItem !== 'object') {
+        return;
+      }
+
+      const option = valueItem as { value?: unknown; name?: unknown };
+      const value = Number(option.value);
+      if (!Number.isInteger(value) || typeof option.name !== 'string') {
+        return;
+      }
+
+      labelById.set(value, option.name);
+    });
+  });
+
+  return labelById;
+};
 
 const toImageUrls = (images: PlantDetailResponse['images']): string[] => {
   if (!images || !Array.isArray(images)) {
@@ -119,10 +196,10 @@ const getTotalAvailableStock = (plant: PlantDetailResponse): number => {
 
 const buildProductTitle = (plant: PlantDetailResponse, locale: string): string => {
   if (locale === 'en') {
-    return `${plant.name} - ${plant.size || 'Unknown size'} - Care ${plant.careLevel || 'Unknown'} | ${SITE_NAME}`;
+    return `${plant.name} - ${plant.size || 'Unknown size'} - Care ${plant.careLevelTypeName || 'Unknown'} | ${SITE_NAME}`;
   }
 
-  return `${plant.name} - ${plant.size || 'Kích thước chưa rõ'} - Chăm sóc ${plant.careLevel || 'chưa rõ'} | ${SITE_NAME}`;
+  return `${plant.name} - ${plant.size || 'Kích thước chưa rõ'} - Chăm sóc ${plant.careLevelTypeName || 'chưa rõ'} | ${SITE_NAME}`;
 };
 
 const buildProductDescription = (plant: PlantDetailResponse, locale: string): string => {
@@ -200,7 +277,7 @@ const mapPlantDetailToSamplePlant = (plant: PlantDetailResponse, imageUrl: strin
     name: plant.name,
     basePrice: plant.basePrice ?? 0,
     size: plant.size || 'Unknown',
-    careLevel: plant.careLevel || 'Unknown',
+    careLevel: plant.careLevelTypeName || 'Unknown',
     isActive: Boolean(plant.isActive),
     primaryImageUrl: imageUrl || null,
     totalInstances: plant.totalInstances ?? 0,
@@ -233,6 +310,7 @@ const getNurseryCommonOrInstance = async (plant: PlantDetailResponse): Promise<N
 export default async function ProductDetailPage({ params, searchParams }: PageProps) {
   const [{ plantid, locale }, query] = await Promise.all([params, searchParams]);
   const t = await getTranslations({ locale, namespace: 'productDetail' });
+  const tRoomDesignEnum = await getTranslations({ locale, namespace: 'roomDesignEnums' });
   const booleanLabel = (value: boolean | null | undefined) => (value ? t('yes') : t('no'));
 
   const plantId = Number(plantid);
@@ -242,11 +320,18 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
 
   const selectedInstanceId = parsePositiveInt(toSingle(query.instanceId));
 
-  const response = await getPlantById(plantId, true, false);
+  const [response, roomDesignEnumsResponse, plantEnumsResponse] = await Promise.all([
+    getPlantById(plantId, true, false),
+    getRoomDesignEnums(true, false).catch(() => null),
+    getPlantEnums(true, false).catch(() => null),
+  ]);
   const plant = getPayload<PlantDetailResponse>(response);
   if (!plant) {
     notFound();
   }
+  const roomDesignEnums = getPayload(roomDesignEnumsResponse) ?? [];
+  const { roomTypeById, roomStyleById } = getRoomDesignLabelMaps(roomDesignEnums, tRoomDesignEnum);
+  const growthRateById = getPlantEnumLabelMap(getPayload(plantEnumsResponse) ?? [], 'GrowthRate');
 
   let selectedInstanceDetail: ShopPlantInstanceDetail | null = null;
   if (selectedInstanceId && plant.totalInstances > 0) {
@@ -271,6 +356,10 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
   const plantForActions = mapPlantDetailToSamplePlant(plant, mainImage);
   const isNurseryAvailable = await getNurseryCommonOrInstance(plant);
   const totalAvailableStock = getTotalAvailableStock(plant);
+  const roomTypeLabels = (plant.roomType ?? []).map((item) => roomTypeById.get(Number(item)) || String(item));
+  const roomStyleLabels = (plant.roomStyle ?? []).map((item) => roomStyleById.get(Number(item)) || String(item));
+  const growthRateLabel =
+    typeof plant.growthRate === 'number' ? growthRateById.get(plant.growthRate) ?? String(plant.growthRate) : null;
   const productJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -368,6 +457,23 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                 </div>
               </div>
             )}
+            <div className="my-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('safetyAndTraits')}</h3>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="bg-gray-50 rounded-lg px-3 py-2">{t('traits.toxicity')}: {booleanLabel(plant.toxicity)}</div>
+                <div className="bg-gray-50 rounded-lg px-3 py-2">{t('traits.airPurifying')}: {booleanLabel(plant.airPurifying)}</div>
+                <div className="bg-gray-50 rounded-lg px-3 py-2">{t('traits.hasFlower')}: {booleanLabel(plant.hasFlower)}</div>
+                <div className="bg-gray-50 rounded-lg px-3 py-2">{t('traits.petSafe')}: {booleanLabel(plant.petSafe)}</div>
+                <div className="bg-gray-50 rounded-lg px-3 py-2">{t('traits.childSafe')}: {booleanLabel(plant.childSafe)}</div>
+                <div className="bg-gray-50 rounded-lg px-3 py-2">{t('traits.potIncluded')}: {booleanLabel(plant.potIncluded)}</div>
+              </div>
+            </div>
+            {plant.description && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('description')}</h3>
+                <p className="text-gray-600 leading-relaxed">{plant.description}</p>
+              </div>
+            )}
           </div>
 
           <div>
@@ -386,24 +492,8 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
               />
             </div>
 
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('safetyAndTraits')}</h3>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="bg-gray-50 rounded-lg px-3 py-2">{t('traits.toxicity')}: {booleanLabel(plant.toxicity)}</div>
-                <div className="bg-gray-50 rounded-lg px-3 py-2">{t('traits.airPurifying')}: {booleanLabel(plant.airPurifying)}</div>
-                <div className="bg-gray-50 rounded-lg px-3 py-2">{t('traits.hasFlower')}: {booleanLabel(plant.hasFlower)}</div>
-                <div className="bg-gray-50 rounded-lg px-3 py-2">{t('traits.petSafe')}: {booleanLabel(plant.petSafe)}</div>
-                <div className="bg-gray-50 rounded-lg px-3 py-2">{t('traits.childSafe')}: {booleanLabel(plant.childSafe)}</div>
-                <div className="bg-gray-50 rounded-lg px-3 py-2">{t('traits.potIncluded')}: {booleanLabel(plant.potIncluded)}</div>
-              </div>
-            </div>
 
-            {plant.description && (
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('description')}</h3>
-                <p className="text-gray-600 leading-relaxed">{plant.description}</p>
-              </div>
-            )}
+            
 
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div className="bg-gray-50 rounded-lg p-4">
@@ -420,15 +510,27 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
               </div>
               <div className="bg-gray-50 rounded-lg p-4">
                 <p className="text-sm text-gray-500 mb-1">{t('careLevel')}</p>
-                <p className="font-semibold text-gray-900">{plant.careLevel || t('notAvailable')}</p>
+                <p className="font-semibold text-gray-900">{plant.careLevelTypeName || t('notAvailable')}</p>
               </div>
               <div className="bg-gray-50 rounded-lg p-4">
                 <p className="text-sm text-gray-500 mb-1">{t('growthRate')}</p>
-                <p className="font-semibold text-gray-900">{plant.growthRate || t('notAvailable')}</p>
+                <p className="font-semibold text-gray-900">{growthRateLabel || t('notAvailable')}</p>
               </div>
               <div className="bg-gray-50 rounded-lg p-4">
                 <p className="text-sm text-gray-500 mb-1">{t('uniqueInstance')}</p>
                 <p className="font-semibold text-gray-900">{booleanLabel(plant.isUniqueInstance)}</p>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-4 col-span-2">
+                <p className="text-sm text-gray-500 mb-1">{t('roomType')}</p>
+                <p className="font-semibold text-gray-900">
+                  {roomTypeLabels.length > 0 ? roomTypeLabels.join(', ') : t('notAvailable')}
+                </p>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-4 col-span-2">
+                <p className="text-sm text-gray-500 mb-1">{t('roomStyle')}</p>
+                <p className="font-semibold text-gray-900">
+                  {roomStyleLabels.length > 0 ? roomStyleLabels.join(', ') : t('notAvailable')}
+                </p>
               </div>
             </div>
           </div>

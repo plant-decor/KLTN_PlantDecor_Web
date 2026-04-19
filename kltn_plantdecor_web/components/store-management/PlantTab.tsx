@@ -105,7 +105,6 @@ export default function PlantTab({}: PlantTabProps) {
     loadEnums,
     clearError,
   } = useAdminPlants();
-
   const {
     categoryTree,
     error: categoryError,
@@ -123,8 +122,8 @@ export default function PlantTab({}: PlantTabProps) {
     void fetchPlants({
       pagination: { pageNumber: 1, pageSize: 10 },
       keyword: '',
-      sortBy: 'name',
-      sortDirection: 'asc',
+      sortBy: '',
+      sortDirection: '',
     });
     void fetchCategoryTree();
     void fetchTags({ pageNumber: 1, pageSize: 1000 });
@@ -214,12 +213,13 @@ export default function PlantTab({}: PlantTabProps) {
   }, [togglePlantActive, toggleTarget]);
 
   const handleFormSubmit = useCallback(async (data: PlantFormData, images: ImageUploadData[]) => {
+    console.log('Form submit', { data });
     const success = await savePlant({
       formData: data,
       images,
       editingPlantId: editingData?.id,
-      currentCategoryIds: editingData?.categories.map((item) => item.id) ?? [],
-      currentTagIds: editingData?.tags.map((item) => item.id) ?? [],
+      currentCategoryIds: editingData?.categories?.map((item) => item.id) ?? [],
+      currentTagIds: editingData?.tags?.map((item) => item.id) ?? [],
     });
 
     if (success) {
@@ -240,7 +240,7 @@ export default function PlantTab({}: PlantTabProps) {
           Plant list ({pagination.totalCount})
         </Typography>
         <Button variant="contained" startIcon={<Add />} onClick={handleCreate} sx={{ ...hoverLiftStyle }} className="bg-primary!">
-          TẠO CÂY MỚI
+          Create Plant
         </Button>
       </Stack>
 

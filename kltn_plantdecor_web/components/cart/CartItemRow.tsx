@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import {
   Box,
   TableCell,
@@ -26,6 +26,33 @@ interface CartItemRowProps {
   onRemove: (cartItemId: number) => void;
 }
 
+const toPositiveId = (value: number | null | undefined): number | null => {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
+    return null;
+  }
+
+  return Math.floor(value);
+};
+
+const resolveCartItemHref = (item: CartItem): string | null => {
+  const plantId = toPositiveId(item.plantId ?? item.commonPlantId ?? null);
+  if (plantId) {
+    return `/products/${plantId}`;
+  }
+
+  const materialId = toPositiveId(item.materialId ?? item.nurseryMaterialId ?? null);
+  if (materialId) {
+    return `/materials/${materialId}`;
+  }
+
+  const comboId = toPositiveId(item.plantComboId ?? item.nurseryPlantComboId ?? null);
+  if (comboId) {
+    return `/combo/${comboId}`;
+  }
+
+  return null;
+};
+
 export default function CartItemRow({
   item,
   isUpdating,
@@ -33,6 +60,7 @@ export default function CartItemRow({
   onRemove,
 }: CartItemRowProps) {
   console.log('Rendering CartItemRow for item:', item);
+  const itemHref = resolveCartItemHref(item);
 
   return (
     <TableRow sx={{ '&:hover': { backgroundColor: '#fafafa' } }}>
@@ -49,18 +77,29 @@ export default function CartItemRow({
             />
           </Box>
           <Box>
-            <Link href={`/products/${item.id}`}>
+            {itemHref ? (
+              <Link href={itemHref}>
+                <Typography
+                  sx={{
+                    fontWeight: 500,
+                    color: '#1976d2',
+                    textDecoration: 'none',
+                    '&:hover': { textDecoration: 'underline' },
+                  }}
+                >
+                  {item.productName}
+                </Typography>
+              </Link>
+            ) : (
               <Typography
                 sx={{
                   fontWeight: 500,
-                  color: '#1976d2',
-                  textDecoration: 'none',
-                  '&:hover': { textDecoration: 'underline' },
+                  color: 'text.primary',
                 }}
               >
                 {item.productName}
               </Typography>
-            </Link>
+            )}
             {item.nurseryName && (
               <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.25 }}>
                 Nursery: {item.nurseryName}

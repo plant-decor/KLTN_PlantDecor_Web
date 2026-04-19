@@ -3,13 +3,19 @@ import { Add } from "@mui/icons-material";
 import { Box, Button, Stack, Typography } from "@mui/material";
 import { hoverLiftStyle } from "@/lib/styles/buttonStyles";
 
+interface ActionItem {
+  label: string;
+  onClick: () => void;
+}
+
 interface ManagementHeaderProps {
   title: string;
   description?: string;
   entityLabel: string;
   count?: number;
-  actionLabel: string;
+  actionLabel?: string;
   onAction?: () => void;
+  actions?: ActionItem[];
 }
 
 export default function ManagementHeader({
@@ -19,6 +25,7 @@ export default function ManagementHeader({
   count,
   actionLabel,
   onAction,
+  actions,
 }: ManagementHeaderProps) {
   return (
     <>
@@ -44,19 +51,41 @@ export default function ManagementHeader({
           }}
         >
           <Typography variant="h6" fontWeight={600}>
-            Danh sách {entityLabel} ({count})
+            List {entityLabel} ({count})
           </Typography>
-          {onAction && (
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              sx={{ ...hoverLiftStyle }}
-              className="bg-primary!"
-              onClick={onAction}
-            >
-              {actionLabel}
-            </Button>
-          )}
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            gap={2}
+            sx={{ alignItems: { xs: "stretch", sm: "center" } }}
+          >
+            {actionLabel && onAction && (
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                sx={{ ...hoverLiftStyle }}
+                className="bg-primary!"
+                onClick={onAction}
+              >
+                {actionLabel}
+              </Button>
+            )}
+            {actions && actions.length > 0 && (
+              <>
+                {actions.map((action, index) => (
+                  <Button
+                    key={index}
+                    variant="contained"
+                    startIcon={<Add />}
+                    sx={{ ...hoverLiftStyle }}
+                    className="bg-primary!"
+                    onClick={action.onClick}
+                  >
+                    {action.label}
+                  </Button>
+                ))}
+              </>
+            )}
+          </Stack>
         </Box>
       )}
     </>

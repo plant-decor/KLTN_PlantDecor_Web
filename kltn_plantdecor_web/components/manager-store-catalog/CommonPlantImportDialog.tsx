@@ -92,15 +92,24 @@ export default function CommonPlantImportDialog({
               label="Select Plant"
               value={form.plantId || ''}
               onChange={(event) =>
-                onFormChange({ ...form, plantId: Number(event.target.value) })
+              onFormChange({ ...form, plantId: Number(event.target.value) })
               }
               disabled={loadingAvailable || submitting}
               fullWidth
+              SelectProps={{
+              MenuProps: {
+                PaperProps: {
+                style: {
+                  maxHeight: 48 * 5 + 8,
+                },
+                },
+              },
+              }}
             >
               {availablePlants.map((plant) => (
-                <MenuItem key={plant.id} value={plant.id}>
-                  {plant.name}
-                </MenuItem>
+              <MenuItem key={plant.id} value={plant.id}>
+                {plant.name}
+              </MenuItem>
               ))}
             </TextField>
 

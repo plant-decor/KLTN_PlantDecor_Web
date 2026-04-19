@@ -1,16 +1,24 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/authStore';
 import CartBadge from '@/components/cart/CartBadge';
 // import { NotificationBell } from '@/components/notifications/NotificationBell';
 import Navigation from './Navigation';
-import LanguageSwitcher from './LanguageSwitcher';
+// import LanguageSwitcher from './LanguageSwitcher';
 import { Link } from '@/i18n/navigation';
 import { GUEST_ACTIONS, USER_MENU_ITEMS } from '@/lib/constants/header';
 import { logoutAction } from '@/app/actions/loginAction';
 import { ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+} from '@mui/material';
 import { useTranslations } from 'next-intl';
 import type { CategoryResponse } from '@/lib/api/categoriesService';
 import Image from 'next/image';
@@ -54,22 +62,18 @@ export default function Header({ initialStoreCategories = [] }: HeaderProps) {
   const userId = user?.id || null;
   const avatarImageSrc = user?.avatar?.trim() || null;
   const avatarLabel = user?.name ? user.name.charAt(0).toUpperCase() : 'U';
-  const [hasAvatarImageError, setHasAvatarImageError] = useState(false);
+  const [failedAvatarSrc, setFailedAvatarSrc] = useState<string | null>(null);
+  const hasAvatarImageError = Boolean(avatarImageSrc && failedAvatarSrc === avatarImageSrc);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const tAuth = useTranslations('auth');
   const tUserMenu = useTranslations('headerUserMenu');
-
-  useEffect(() => {
-    setHasAvatarImageError(false);
-  }, [avatarImageSrc]);
+  const tSidebar = useTranslations('sidebar');
 
   const getUserMenuLabel = (href: string) => {
     const key = USER_MENU_LABEL_KEYS[href];
     return key ? tUserMenu(key) : href;
   };
-
-  // Check if user has notification access (staff, manager, admin, shipper, caretaker)
-  const hasNotificationAccess = user && ['ADMIN', 'MANAGER', 'STAFF', 'SHIPPER', 'CARETAKER'].includes(user.role?.toUpperCase() || '');
 
   const handleLogout = async () => {
     try {
@@ -87,6 +91,20 @@ export default function Header({ initialStoreCategories = [] }: HeaderProps) {
     } catch (error) {
       console.error('Logout error:', error);
     }
+  };
+
+  const openLogoutConfirm = () => {
+    setIsUserMenuOpen(false);
+    setIsLogoutConfirmOpen(true);
+  };
+
+  const closeLogoutConfirm = () => {
+    setIsLogoutConfirmOpen(false);
+  };
+
+  const handleConfirmLogout = async () => {
+    closeLogoutConfirm();
+    await handleLogout();
   };
 
   return (
@@ -113,7 +131,7 @@ export default function Header({ initialStoreCategories = [] }: HeaderProps) {
               <HeaderUnifiedSearch />
 
               {/* Language Switcher */}
-              <LanguageSwitcher />
+              {/* <LanguageSwitcher /> */}
 
               {/* Cart Badge */}
               <CartBadge />
@@ -153,7 +171,7 @@ export default function Header({ initialStoreCategories = [] }: HeaderProps) {
                           height={32}
                           alt={user?.name || 'User avatar'}
                           className="h-8 w-8 rounded-full object-cover"
-                          onError={() => setHasAvatarImageError(true)}
+                          onError={() => setFailedAvatarSrc(avatarImageSrc)}
                         />
                       ) : (
                         <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-green-600 text-sm font-semibold text-white">
@@ -170,7 +188,7 @@ export default function Header({ initialStoreCategories = [] }: HeaderProps) {
                               key={item.label}
                               type="button"
                               className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
-                              onClick={handleLogout}
+                              onClick={openLogoutConfirm}
                             >
                               {getUserMenuLabel(item.href)}
                             </button>
@@ -194,6 +212,28 @@ export default function Header({ initialStoreCategories = [] }: HeaderProps) {
           </div>
         </div>
       </header>
+
+      <Dialog
+        open={isLogoutConfirmOpen}
+        onClose={closeLogoutConfirm}
+        aria-labelledby="header-logout-confirm-dialog-title"
+        aria-describedby="header-logout-confirm-dialog-description"
+      >
+        <DialogTitle id="header-logout-confirm-dialog-title">{tSidebar('logoutConfirmTitle')}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="header-logout-confirm-dialog-description">
+            {tSidebar('logoutConfirmMessage')}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={closeLogoutConfirm} color="inherit" variant="text">
+            {tSidebar('cancel')}
+          </Button>
+          <Button onClick={handleConfirmLogout} color="error" variant="contained" autoFocus>
+            {tSidebar('confirmLogout')}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Navigation Section */}
       <Navigation initialStoreCategories={initialStoreCategories} />

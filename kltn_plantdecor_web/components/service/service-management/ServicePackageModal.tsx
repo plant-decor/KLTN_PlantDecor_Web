@@ -61,10 +61,10 @@ export default function ServicePackageModal({
   const isCreate = mode === "create";
 
   const title = isCreate
-    ? "Tạo gói dịch vụ mới"
+    ? "Create New Service Package"
     : mode === "edit"
-      ? `Cập nhật gói #${packageId ?? ""}`
-      : `Chi tiết gói #${packageId ?? ""}`;
+      ? `Update Package #${packageId ?? ""}`
+      : `Package Details #${packageId ?? ""}`;
 
   const handleChangeField = <K extends keyof ServicePackageFormValue>(
     field: K,
@@ -88,7 +88,7 @@ export default function ServicePackageModal({
         ) : (
           <Stack spacing={2} sx={{ pt: 1 }}>
             <TextField
-              label="Tên gói"
+              label="Package Name"
               value={formValue.name}
               onChange={(event) => handleChangeField("name", event.target.value)}
               disabled={isView || submitting}
@@ -97,7 +97,7 @@ export default function ServicePackageModal({
             />
 
             <TextField
-              label="Mô tả"
+              label="Description"
               value={formValue.description}
               onChange={(event) => handleChangeField("description", event.target.value)}
               disabled={isView || submitting}
@@ -108,7 +108,7 @@ export default function ServicePackageModal({
             />
 
             <TextField
-              label="Nội dung công việc"
+              label="Job Content"
               value={formValue.features}
               onChange={(event) => handleChangeField("features", event.target.value)}
               disabled={isView || submitting}
@@ -120,10 +120,10 @@ export default function ServicePackageModal({
 
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
               <FormControl fullWidth>
-                <InputLabel id="service-type-label">Loại dịch vụ</InputLabel>
+                <InputLabel id="service-type-label">Service Type</InputLabel>
                 <Select
                   labelId="service-type-label"
-                  label="Loại dịch vụ"
+                  label="Service Type"
                   value={formValue.serviceType}
                   disabled={isView || submitting}
                   onChange={(event) => handleChangeField("serviceType", Number(event.target.value))}
@@ -137,7 +137,7 @@ export default function ServicePackageModal({
               </FormControl>
 
               <TextField
-                label="Số lần/tuần"
+                label="Visits Per Week"
                 type="number"
                 value={formValue.visitPerWeek ?? ""}
                 onChange={(event) => {
@@ -152,7 +152,7 @@ export default function ServicePackageModal({
 
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
               <TextField
-                label="Thời lượng (ngày)"
+                label="Duration (days)"
                 type="number"
                 value={formValue.durationDays}
                 onChange={(event) => handleChangeField("durationDays", Number(event.target.value))}
@@ -162,7 +162,7 @@ export default function ServicePackageModal({
               />
 
               <TextField
-                label="Giới hạn diện tích (m2)"
+                label="Area Limit (m2)"
                 type="number"
                 value={formValue.areaLimit}
                 onChange={(event) => handleChangeField("areaLimit", Number(event.target.value))}
@@ -172,7 +172,7 @@ export default function ServicePackageModal({
               />
 
               <TextField
-                label="Đơn giá"
+                label="Unit Price"
                 type="number"
                 value={formValue.unitPrice}
                 onChange={(event) => handleChangeField("unitPrice", Number(event.target.value))}
@@ -183,27 +183,27 @@ export default function ServicePackageModal({
             </Stack>
 
             <FormControl fullWidth>
-              <InputLabel id="active-label">Trạng thái</InputLabel>
+              <InputLabel id="active-label">Status</InputLabel>
               <Select
                 labelId="active-label"
-                label="Trạng thái"
+                label="Status"
                 value={formValue.isActive ? 1 : 0}
                 disabled={isView || submitting}
                 onChange={(event) => handleChangeField("isActive", Number(event.target.value) === 1)}
               >
-                <MenuItem value={1}>Đang hoạt động</MenuItem>
-                <MenuItem value={0}>Đã vô hiệu hóa</MenuItem>
+                <MenuItem value={1}>Active</MenuItem>
+                <MenuItem value={0}>Inactive</MenuItem>
               </Select>
             </FormControl>
 
             {isCreate ? (
               <FormControl fullWidth>
-                <InputLabel id="specialization-label">Chuyên môn áp dụng</InputLabel>
+                <InputLabel id="specialization-label">Specializations</InputLabel>
                 <Select
                   labelId="specialization-label"
                   multiple
                   value={formValue.specializationIds}
-                  label="Chuyên môn áp dụng"
+                  label="Specializations"
                   disabled={isView || submitting}
                   onChange={(event) =>
                     handleChangeField("specializationIds", event.target.value as number[])
@@ -225,7 +225,7 @@ export default function ServicePackageModal({
             ) : (
               <Box>
                 <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                  Chuyên môn
+                  Specializations
                 </Typography>
                 <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
                   {readonlySpecializations.length > 0 ? (
@@ -234,13 +234,13 @@ export default function ServicePackageModal({
                     ))
                   ) : (
                     <Typography variant="body2" color="text.secondary">
-                      Không có dữ liệu chuyên môn
+                      No specialization data available
                     </Typography>
                   )}
                 </Stack>
                 {mode === "edit" && (
                   <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
-                    Chuyên môn chỉ đọc ở chế độ cập nhật.
+                    Specializations are read-only in update mode.
                   </Typography>
                 )}
               </Box>
@@ -254,7 +254,7 @@ export default function ServicePackageModal({
         </Button>
         {!isView && (
           <Button onClick={() => void onSubmit()} variant="contained" disabled={submitting || detailLoading}>
-            {submitting ? "Đang xử lý..." : isCreate ? "Tạo mới" : "Lưu thay đổi"}
+            {submitting ? "Processing..." : isCreate ? "Create" : "Save Changes"}
           </Button>
         )}
       </DialogActions>

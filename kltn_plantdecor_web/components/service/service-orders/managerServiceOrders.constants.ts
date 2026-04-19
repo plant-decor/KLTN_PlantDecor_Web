@@ -1,14 +1,14 @@
-import type { ServiceRegistrationStatusEnum } from '@/types/care-service.types';
+﻿import type { ServiceRegistrationStatusEnum } from '@/types/care-service.types';
 
 export const ALL_STATUS_FILTER = 'ALL';
 
 export const STATUS_LABELS: Record<ServiceRegistrationStatusEnum, string> = {
-  1: 'Chờ duyệt',
-  2: 'Chờ thanh toán',
-  3: 'Đang hoạt động',
-  4: 'Hoàn thành',
-  5: 'Đã hủy',
-  6: 'Đã từ chối',
+  1: 'Pending Approval',
+  2: 'Awaiting Payment',
+  3: 'Active',
+  4: 'Completed',
+  5: 'Cancelled',
+  6: 'Rejected',
 };
 
 export const STATUS_CHIP_COLOR: Record<
@@ -27,7 +27,7 @@ export const SERVICE_STATUS_OPTIONS: Array<{
   value: typeof ALL_STATUS_FILTER | ServiceRegistrationStatusEnum;
   label: string;
 }> = [
-  { value: ALL_STATUS_FILTER, label: 'Tất cả trạng thái' },
+  { value: ALL_STATUS_FILTER, label: 'All Statuses' },
   { value: 1, label: STATUS_LABELS[1] },
   { value: 2, label: STATUS_LABELS[2] },
   { value: 3, label: STATUS_LABELS[3] },

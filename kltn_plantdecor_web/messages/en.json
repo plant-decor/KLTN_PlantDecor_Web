@@ -30,6 +30,7 @@
     "password": "Password",
     "confirmPassword": "Confirm password",
     "fullName": "Full name",
+    "username": "Username",
     "phone": "Phone number",
     "address": "Address",
     "loginTitle": "Welcome back",
@@ -116,7 +117,11 @@
     "careHistory": "Care History",
     "assignDelivery": "Assign Delivery",
     "deliveryHistory": "Delivery History",
-    "logout": "Log out"
+    "logout": "Log out",
+    "logoutConfirmTitle": "Confirm log out",
+    "logoutConfirmMessage": "Are you sure you want to log out of the system?",
+    "cancel": "Cancel",
+    "confirmLogout": "Confirm"
   },
   "home": {
     "heroTitle": "Elevate your living space with",
@@ -317,6 +322,8 @@
     }
   },
   "services": {
+    "orderIdError": "The service order did not confirm.",
+    "scheduleDaysError": "The service order did not confirm.",
     "title": "Services",
     "subtitle": "We provide a variety of plant care services",
     "careService": "Care Service",
@@ -427,6 +434,11 @@
     "periodicSundayNotAllowed": "Periodic package cannot include Sunday",
     "periodicVisitPerWeekInvalid": "This package has invalid visits-per-week configuration",
     "serviceTypeLabel": "Type",
+    "visitFrequency": "Visit frequency",
+    "timesPerWeek": "times/week",
+    "visitFrequencyNotDefined": "Not defined",
+    "duration": "Total duration",
+    "days": "days",
     "totalSessions": "Total sessions",
     "serviceTasks": "Tasks",
     "oneTime": "One-time",
@@ -435,7 +447,7 @@
     "useCurrentLocation": "Use current location",
     "searchingNurseries": "Searching nurseries...",
     "searchMatchingNurseries": "Find matching nurseries",
-    "radiusWithLocation": "Search radius: 10km (coordinates available)",
+    "radiusWithLocation": "Search radius: 20km (coordinates available)",
     "radiusWithoutLocation": "Search radius: global area (coordinates unavailable)",
     "providerNursery": "Service provider nursery",
     "selectProviderNursery": "Select service provider nursery",
@@ -483,21 +495,81 @@
     "viewDetails": "View details",
     "noOrders": "You have no orders yet"
   },
+  "myPlantPage": {
+    "title": "My Plants",
+    "description": "A list of plants you purchased with detailed care guides for each one.",
+    "errors": {
+      "loadPlants": "Unable to load your plants list."
+    },
+    "empty": {
+      "title": "You do not have any plants yet",
+      "description": "Explore the store to choose suitable plants and start caring for them today.",
+      "visitStore": "Visit store"
+    }
+  },
+  "myPlantClient": {
+    "common": {
+      "notUpdated": "Not updated yet",
+      "noScientificName": "No scientific name"
+    },
+    "units": {
+      "year": " year(s)",
+      "cm": " cm"
+    },
+    "plantCode": "Plant #{id}",
+    "fields": {
+      "purchaseDate": "Purchase date",
+      "location": "Location",
+      "age": "Plant age",
+      "trunkDiameter": "Trunk diameter",
+      "height": "Height",
+      "lastWatered": "Last watered",
+      "lastFertilized": "Last fertilized",
+      "lastPruned": "Last pruned"
+    },
+    "guide": {
+      "title": "Care guide for {plantName}",
+      "subtitle": "Detailed care instructions for {plantName}",
+      "fields": {
+        "light": "Light",
+        "watering": "Watering",
+        "fertilizing": "Fertilizing",
+        "pruning": "Pruning",
+        "temperature": "Temperature",
+        "humidity": "Humidity",
+        "soil": "Soil",
+        "careNotes": "Care notes"
+      },
+      "missing": "This plant does not have a guide yet. Please check back later or contact support for detailed instructions."
+    }
+  },
   "orderHistory": {
     "title": "Order history",
+    "allOrdersTab": "All orders",
+    "pendingPaymentTab": "Pending payment",
     "noOrdersFound": "No orders found",
+    "noPendingOrdersFound": "No pending-payment orders found",
     "orderType": {
       "uniquePlant": "Unique plant",
       "buyNow": "Buy now",
-      "product": "Product"
+      "product": "Product",
+      "service": "Service"
     },
     "orderedAt": "Ordered at",
     "moreItems": "more item(s)",
     "total": "Total",
     "viewDetail": "View detail",
+    "payNow": "Pay now",
     "retryPayment": "Retry payment",
     "retryingPayment": "Retrying...",
-    "retryPaymentFailed": "Failed to retry payment. Please try again."
+    "retryPaymentFailed": "Failed to retry payment. Please try again.",
+    "cancelOrder": "Cancel order",
+    "cancelling": "Cancelling...",
+    "cancelOrderFailed": "Failed to cancel order. Please try again.",
+    "cancelConfirmTitle": "Cancel order",
+    "cancelConfirmMessage": "Are you sure you want to cancel this order?",
+    "keepOrder": "Keep order",
+    "confirmCancel": "Confirm cancel"
   },
   "chatWidget": {
     "title": "Plant Care Support Chat",
@@ -524,27 +596,46 @@
     "personalInfo": "Personal information",
     "security": "Security",
     "changePassword": "Change password",
+    "saveAndLogoutAll": "Save & logout all",
+    "logoutAllConfirmation": "This will change your password and log out all devices. Continue?",
+    "setPassword": "Set Password",
+    "setPasswordTitle": "Set Password",
+    "setPasswordDescription": "Set a password for your Google-authenticated account to secure your account",
+    "passwordSetSuccess": "Password set successfully",
+    "setPasswordFailed": "Failed to set password",
+    "setPasswordError": "Error setting password",
     "avatar": "Avatar",
     "bio": "Bio",
     "saveChanges": "Save changes",
+    "saving": "Saving...",
     "cancelChanges": "Cancel changes",
     "gender": "Gender",
     "male": "Male",
     "female": "Female",
     "other": "Other",
+    "unknown": "Unknown",
     "birthYear": "Birth year",
+    "username": "Username",
     "shippingAddress": "Shipping address",
     "detailedAddress": "Detailed address",
     "addressPlaceholder": "House number, street, ward, district, province/city",
+    "latitude": "Latitude",
+    "longitude": "Longitude",
+    "phoneReadOnly": "Phone number is read-only",
+    "phoneNumberInvalid": "Phone number must contain exactly 10 digits",
     "notificationSettings": "Notification settings",
     "receiveNotifications": "Receive notifications",
     "notificationDescription": "Receive care reminders, promotions and new updates",
     "unsupportedFormat": "Unsupported format. Please choose JPEG, JPG, PNG or HEIF",
     "fileSizeExceeded": "File size must not exceed 5MB",
+    "errorLoadingProfile": "Error loading profile",
+    "errorSavingProfile": "Error saving profile",
+    "errorUploadingAvatar": "Error uploading avatar",
     "currentPassword": "Current password",
     "newPassword": "New password",
     "confirmNewPassword": "Confirm new password",
     "passwordMinLength": "At least 6 characters",
+    "passwordRequirements": "Password Requirements:",
     "changePasswordTitle": "Change password",
     "tooManyFailedAttempts": "Too many failed attempts",
     "recaptchaRequiredForPassword": "For security reasons, please complete the reCAPTCHA verification.",
@@ -585,6 +676,7 @@
         "Other": "Other"
       }
     },
+      "phoneNumberInvalid": "Phone number must contain exactly 10 digits",
     "nurserySection": {
       "title": "Nursery Profile",
       "id": "Nursery ID",
@@ -656,6 +748,8 @@
     "careInstructions": "Care instructions",
     "origin": "Origin",
     "placement": "Placement",
+    "roomType": "Room type",
+    "roomStyle": "Room style",
     "growthRate": "Growth rate",
     "uniqueInstance": "Unique instance",
     "categories": "Categories",
@@ -897,6 +991,120 @@
     "map": {
       "title": "Office/Nursery Map",
       "placeholder": "Google Maps integration will be added in a future release (Coming soon)."
+    }
+  },
+  "roomDesignEnums": {
+    "roomType": {
+      "livingRoom": "Living room",
+      "bedroom": "Bedroom",
+      "kitchen": "Kitchen",
+      "bathroom": "Bathroom",
+      "homeOffice": "Home office",
+      "office": "Office",
+      "balcony": "Balcony",
+      "corridor": "Corridor",
+      "diningRoom": "Dining room",
+      "outdoor": "Outdoor",
+      "garden": "Garden"
+    },
+    "roomStyle": {
+      "minimalist": "Minimalist",
+      "scandinavian": "Scandinavian",
+      "tropical": "Tropical",
+      "industrial": "Industrial",
+      "bohemian": "Bohemian",
+      "modern": "Modern",
+      "japanese": "Japanese",
+      "mediterranean": "Mediterranean",
+      "rustic": "Rustic",
+      "classic": "Classic",
+      "contemporary": "Contemporary"
+    },
+    "lightRequirement": {
+      "lowLight": "Low light",
+      "mediumLight": "Medium light",
+      "highLight": "High light",
+      "directSunlight": "Direct sunlight",
+      "indirectLight": "Indirect light",
+      "brightIndirectLight": "Bright indirect light",
+      "partialShade": "Partial shade",
+      "shade": "Shade",
+      "fullSun": "Full sun"
+    }
+  },
+  "aiRecommendation": {
+    "title": "AI Plant Recommendation",
+    "steps": {
+      "roomInput": "Room Input",
+      "roomAnalysis": "Room Analysis",
+      "results": "Results"
+    },
+    "roomInput": {
+      "title": "1) Room input and preferences",
+      "uploadImageButtonLabel": "Upload room image",
+      "fengShuiElement": "Feng Shui element",
+      "roomType": "Room type",
+      "roomStyle": "Room style",
+      "minBudget": "Min budget",
+      "maxBudget": "Max budget",
+      "careLevel": "Care level",
+      "nurseries": "Preferred nurseries (optional)",
+      "nurseriesPlaceholder": "Select one or more nurseries",
+      "hasAllergy": "Has allergy",
+      "petSafe": "Pet safe",
+      "childSafe": "Child safe",
+      "allergyPlantsTitle": "Allergy plants",
+      "allergySearchPlaceholder": "Search allergy plants",
+      "allergyNote": "Allergy note",
+      "allergyNotePlaceholder": "Describe allergy details (optional)",
+      "noAllergyResults": "No matching plants",
+      "analyzeButton": "Analyze and recommend",
+      "analyzingButton": "Analyzing room...",
+      "errors": {
+        "selectImage": "Please upload a room image before analyzing.",
+        "unsupportedFormat": "Unsupported image format. Please select JPEG, JPG, PNG or HEIF.",
+        "fileTooLarge": "File size must be less than or equal to 10MB."
+      }
+    },
+    "roomAnalysis": {
+      "title": "2) Room analysis"
+    },
+    "recommendations": {
+      "title": "Recommended plants",
+      "titleWithCount": "Recommended plants ({count})",
+      "reason": "Reason:",
+      "placement": "Placement:",
+      "addToCartButton": "Add to cart",
+      "buyNowButton": "Buy now",
+      "errors": {
+        "addToCartFailed": "Failed to add item to cart.",
+        "missingCommonPlantId": "Cannot add this recommendation to cart because plant id is missing.",
+        "checkoutFailed": "Cannot buy now because plant instance id is missing.",
+        "addedToCart": "Added {name} to cart."
+      }
+    },
+    "generatedImages": {
+      "title": "Generated room images",
+      "generatingLabel": "Generating AI room images...",
+      "imageFailed": "Image generation failed for this recommendation.",
+      "placementLabel": "Placement:",
+      "priceLabel": "Price:",
+      "plantFallbackName": "Recommended plant",
+      "plantDescriptionFallback": "No description available.",
+      "plantInfoPending": "Plant details are not available yet for this image.",
+      "addingToCartButton": "Adding to cart...",
+      "successCount": "Generated {success}/{total} image(s). Failed: {failed}",
+      "retryButton": "Retry generate images",
+      "errors": {
+        "generateFailed": "Failed to generate AI images."
+      }
+    },
+    "errors": {
+      "analyzeRoomFailed": "Failed to analyze room image.",
+      "noAnalysisResult": "No analysis result returned from server."
+    },
+    "validation": {
+      "roomImageRequired": "Please upload a room image"
     }
   }
 }

@@ -17,7 +17,7 @@ export interface Filterable {
   careLevel?: string;
   size?: string;
   price: number;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export function useProductFilter<T extends Filterable>(items: T[]) {

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import {
   Dialog,
   DialogTitle,
@@ -11,7 +12,11 @@ import {
   Alert,
   CircularProgress,
 } from '@mui/material';
-import { changePasswordAction } from '@/app/actions/changePasswordAction';
+import { changePassword } from '@/lib/api/userProfileService';
+import { logoutAllAction } from '@/app/actions/authenticationActions';
+import { useAuthStore } from '@/lib/store/authStore';
+import { clearClientAccessToken, getClientAccessToken, getClientRefreshToken } from '@/lib/axios/tokenStorage';
+import { getDeviceId } from '@/lib/utils/deviceId';
 import { hoverGlowStyle, hoverLiftStyle } from '@/lib/styles/buttonStyles';
 import { useTranslations } from 'next-intl';
 
@@ -23,6 +28,9 @@ interface ChangePasswordModalProps {
 export default function ChangePasswordModal({ open, onClose }: ChangePasswordModalProps) {
   const t = useTranslations('profile');
   const tCommon = useTranslations('common');
+  const router = useRouter();
+  const params = useParams<{ locale?: string }>();
+  const { clearAll } = useAuthStore();
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -39,8 +47,20 @@ export default function ChangePasswordModal({ open, onClose }: ChangePasswordMod
     onClose();
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const redirectToLogin = () => {
+    const locale = Array.isArray(params?.locale) ? params.locale[0] : params?.locale;
+    const loginPath = locale ? `/${locale}/login` : '/login';
+    router.replace(loginPath);
+    router.refresh();
+  };
+
+  const clearSessionAndRedirect = () => {
+    clearAll();
+    clearClientAccessToken();
+    redirectToLogin();
+  };
+
+  const handleSubmit = async (logoutAll = false) => {
     setError('');
     setMessage('');
 
@@ -69,25 +89,48 @@ export default function ChangePasswordModal({ open, onClose }: ChangePasswordMod
       setError(t('newPasswordMustDiffer'));
       return;
     }
-    setIsLoading(true);
-    try {
-      const result = await changePasswordAction(
-        oldPassword,
-        newPassword,
+
+    if (logoutAll) {
+      const shouldContinue = window.confirm(
+        t('logoutAllConfirmation') || 'Password will be changed and all sessions will be logged out. Continue?'
       );
 
-      if (!result.success) {
-        setError(result.message || t('changePasswordFailed'));
+      if (!shouldContinue) {
         return;
+      }
+    }
+
+    setIsLoading(true);
+    try {
+      // Call client-side API to change password
+      const response = await changePassword(oldPassword, newPassword, confirmPassword, false);
+
+      if (!response.success) {
+        setError(response.message || t('changePasswordFailed'));
+        return;
+      }
+
+      if (logoutAll) {
+        const logoutResult = await logoutAllAction({
+          accessToken: getClientAccessToken() || '',
+          refreshToken: getClientRefreshToken() || '',
+          deviceId: getDeviceId(),
+        });
+
+        if (!logoutResult.success) {
+          setError(logoutResult.message || t('logoutAllFailed') || 'Logout all devices failed');
+          return;
+        }
       }
 
       setMessage(t('changePasswordSuccess'));
       setTimeout(() => {
-        handleClose();
-      }, 1500);
+        clearSessionAndRedirect();
+      }, 1000);
     } catch (err) {
       console.error('Change password error:', err);
-      setError(t('changePasswordError'));
+      const errorMessage = err instanceof Error ? err.message : t('changePasswordError');
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -112,7 +155,13 @@ export default function ChangePasswordModal({ open, onClose }: ChangePasswordMod
           </Alert>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4! pt-2">
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            void handleSubmit(false);
+          }}
+          className="space-y-4! pt-2"
+        >
           {/* Old Password */}
           <TextField
             label={t('currentPassword')}
@@ -154,13 +203,21 @@ export default function ChangePasswordModal({ open, onClose }: ChangePasswordMod
           {tCommon('cancel')}
         </Button>
         <Button
-          onClick={handleSubmit}
+          onClick={() => void handleSubmit(false)}
           variant="contained"
           disabled={isLoading}
           sx={{background: "var(--primary)", ...hoverLiftStyle}}
           startIcon={isLoading ? <CircularProgress size={20} /> : undefined}
         >
           {isLoading ? t('processing') : t('changePassword')}
+        </Button>
+        <Button
+          onClick={() => void handleSubmit(true)}
+          variant="outlined"
+          disabled={isLoading}
+          sx={hoverGlowStyle}
+        >
+          {t('saveAndLogoutAll')}
         </Button>
       </DialogActions>
     </Dialog>

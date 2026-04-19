@@ -28,7 +28,7 @@ export interface PlantDetailResponse {
   placementType: number;
   placementTypeName: string;
   size: string;
-  growthRate: string | null;
+  growthRate: number | null;
   toxicity: boolean | null;
   airPurifying: boolean | null;
   hasFlower: boolean | null;
@@ -38,7 +38,9 @@ export interface PlantDetailResponse {
   fengShuiMeaning: string | null;
   potIncluded: boolean | null;
   potSize: string | null;
-  careLevel: string;
+  careLevelTypeName: string;
+  roomType?: number[];
+  roomStyle?: number[];
   isActive: boolean;
   isUniqueInstance: boolean;
   createdAt: string;

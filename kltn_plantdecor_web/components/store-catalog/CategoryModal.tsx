@@ -146,7 +146,7 @@ export default function CategoryModal({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{category ? 'Edit Category' : 'Add New Category'}</DialogTitle>
+      <DialogTitle>{category ? 'Update Category' : 'Add New Category'}</DialogTitle>
       <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
         <TextField
           label="Category Name"
@@ -203,8 +203,10 @@ export default function CategoryModal({
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={saving}>Cancel</Button>
-        <Button onClick={handleSave} variant="contained" disabled={saving}>
-          {category ? 'Update' : 'Add'}
+        <Button onClick={handleSave} variant="contained" disabled={saving}
+        sx={{backgroundColor: 'var(--primary)'}}
+        >
+          {category ? 'Update' : 'Add Category'}
         </Button>
       </DialogActions>
     </Dialog>

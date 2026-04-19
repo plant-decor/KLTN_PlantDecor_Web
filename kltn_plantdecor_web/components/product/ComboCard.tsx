@@ -44,7 +44,7 @@ export default function ComboCard({
   useEffect(() => {
     setIsWishlisted(initialWishlisted);
   }, [initialWishlisted]);
-
+  
   useEffect(() => {
     if (!isDrawerOpen) return;
     let mounted = true;
@@ -134,15 +134,15 @@ export default function ComboCard({
 
   return (
     <>
-      <article className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow min-h-115 h-full flex flex-col">
-        <Link href={`/combo/${combo.id}`} className="block basis-[50%] shrink-0">
+      <article className="bg-white rounded-3xl overflow-hidden shadow-md hover:shadow-lg transition-shadow min-h-115 h-full flex flex-col">
+        <Link href={`/combo/${combo.id}`} className="block basis-[60%] shrink-0">
           <div className="relative w-full h-full">
             <Image
-              src={combo.imageUrl || '/img/fallbackplant.avif'}
+              src={combo.primaryImageUrl || '/img/fallbackplant.avif'}
               alt={combo.name}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              className="object-cover"
+              className="object-contain"
               loading="eager"
             />
             {showNewBadge ? (
@@ -153,7 +153,7 @@ export default function ComboCard({
           </div>
         </Link>
 
-        <div className="basis-[25%] min-h-0 p-2 sm:p-2 md:p-4 lg:p-5 overflow-hidden">
+        <div className="basis-[15%] min-h-0 p-2 sm:p-2 md:p-4 lg:p-5 overflow-hidden">
           <div className="flex items-start justify-between gap-2">
             <Link href={`/combo/${combo.id}`} className="block min-w-0">
               <h3 className="font-semibold text-gray-900 line-clamp-2">{combo.name}</h3>

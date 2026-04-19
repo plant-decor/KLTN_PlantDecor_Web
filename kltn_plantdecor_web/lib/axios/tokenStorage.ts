@@ -17,6 +17,41 @@ import { useAuthStore } from '@/lib/store/authStore';
  * - Fallback đảm bảo không bị lỗi khi Zustand chưa hydrate
  */
 
+const parseJwtExpiration = (token: string): number | null => {
+  try {
+    const parts = token.split('.');
+    if (parts.length < 2) return null;
+
+    const base64Url = parts[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const padding = '='.repeat((4 - (base64.length % 4)) % 4);
+    const payload = JSON.parse(atob(base64 + padding)) as { exp?: unknown };
+
+    if (typeof payload.exp === 'number' && Number.isFinite(payload.exp)) {
+      return payload.exp * 1000;
+    }
+
+    if (typeof payload.exp === 'string' && payload.exp.trim()) {
+      const parsed = Number(payload.exp);
+      if (Number.isFinite(parsed)) {
+        return parsed * 1000;
+      }
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+};
+
+const resolveAccessTokenExpiresAt = (token: string, expiresInSeconds?: number): number | null => {
+  if (typeof expiresInSeconds === 'number' && Number.isFinite(expiresInSeconds) && expiresInSeconds > 0) {
+    return Date.now() + expiresInSeconds * 1000;
+  }
+
+  return parseJwtExpiration(token);
+};
+
 /**
  * Get access token from Zustand store
  * @returns Access token hoặc null
@@ -29,8 +64,10 @@ export const getClientAccessToken = (): string | null => {
  * Set access token to Zustand store
  * @param token - Access token cần lưu
  */
-export const setClientAccessToken = (token: string): void => {
+export const setClientAccessToken = (token: string, expiresInSeconds?: number): void => {
+  const expiresAt = resolveAccessTokenExpiresAt(token, expiresInSeconds);
   useAuthStore.getState().setAccessToken(token);
+  useAuthStore.getState().setAccessTokenExpiresAt(expiresAt);
 };
 
 /**
@@ -75,5 +112,14 @@ export const setClientRefreshToken = (token: string): void => {
  */
 export const clearClientAccessToken = (): void => {
   useAuthStore.getState().clearTokens();
+};
+
+/**
+ * Clear only short-lived access token state.
+ * Keep refresh token persisted so silent refresh still works after reload/day change.
+ */
+export const clearClientAccessTokenState = (): void => {
+  useAuthStore.getState().setAccessToken('');
+  useAuthStore.getState().setAccessTokenExpiresAt(null);
 };
 

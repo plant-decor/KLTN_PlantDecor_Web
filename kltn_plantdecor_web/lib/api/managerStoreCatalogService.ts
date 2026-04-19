@@ -25,6 +25,7 @@ import type {
   UpdatePlantInstanceStatusRequest,
   UpdateCommonPlantRequest,
 } from '@/types/manager-store-catalog.types';
+import { PlantComboListPayload } from '@/types/store-management.types';
 
 const buildPaginationParams = (query?: PaginationQuery) => {
   if (!query) {
@@ -49,9 +50,14 @@ export const updateMyManagerNursery = async (
   request: UpdateMyManagerNurseryRequest,
   loading = true
 ): Promise<ResponseModel<ManagerNursery>> => {
-  return apiClient.patch('/admin/my-nursery', request, loading);
+  return apiClient.patch('/manager/my-nursery', request, loading);
 };
-
+export const getCompatiblePlantCombosForNursery = async (
+  loading: false): Promise<ResponseModel<PlantComboListPayload>> => {
+  const response: ResponseModel<PlantComboListPayload> = await apiClient.get('/manager/plant-combos/compatible', undefined, loading);
+  console.log('Raw response for compatible combos:', response);
+  return response;
+};
 export const getManagerCommonPlants = async (
   nurseryId: number,
   query?: PaginationQuery,

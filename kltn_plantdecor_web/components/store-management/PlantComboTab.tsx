@@ -44,14 +44,17 @@ export default function PlantComboTab({}: PlantComboTabProps) {
   const {
     combos,
     comboPlants,
+    enums,
+    enumLoading,
+    enumError,
     saving,
-    detailLoading,
     plantsLoading,
     error,
     pagination,
     fetchCombos,
     fetchComboById,
     fetchComboPlants,
+    loadEnums,
     savePlantCombo,
     toggleComboActive,
     setPage,
@@ -66,10 +69,11 @@ export default function PlantComboTab({}: PlantComboTabProps) {
   } = useAdminTags();
 
   useEffect(() => {
+    void loadEnums();
     void fetchCombos({ pageNumber: 1, pageSize: 10 });
     void fetchComboPlants();
     void fetchTags({ pageNumber: 1, pageSize: 1000 });
-  }, [fetchComboPlants, fetchCombos, fetchTags]);
+  }, [fetchComboPlants, fetchCombos, fetchTags, loadEnums]);
 
   const tagOptions = useMemo<OptionItem[]>(() => {
     return tags.map((tag) => ({ id: tag.id, name: tag.tagName }));
@@ -125,7 +129,7 @@ export default function PlantComboTab({}: PlantComboTabProps) {
       return;
     }
 
-    const success = await toggleComboActive(toggleTarget.id);
+    await toggleComboActive(toggleTarget.id);
 
     setToggleOpen(false);
     setToggleTarget(null);
@@ -161,16 +165,16 @@ export default function PlantComboTab({}: PlantComboTabProps) {
     <Box>
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
         <Typography variant="h6" fontWeight="600">
-          Danh sách combo ({pagination.totalCount})
+          Plant Combos ({pagination.totalCount})
         </Typography>
         <Button variant="contained" startIcon={<Add />} onClick={handleCreate} sx={{ ...hoverLiftStyle }} className="bg-primary!">
-          Thêm combo mới
+          Add Combo
         </Button>
       </Stack>
 
-      {(error || tagError) && (
+      {(error || tagError || enumError) && (
         <Alert severity="error" onClose={clearError} sx={{ mb: 2 }}>
-          {error || tagError}
+          {error || tagError || enumError}
         </Alert>
       )}
 
@@ -192,6 +196,10 @@ export default function PlantComboTab({}: PlantComboTabProps) {
         plants={comboPlants}
         plantsLoading={plantsLoading}
         tags={tagOptions}
+        lightRequirementOptions={enums.lightRequirements}
+        roomTypeOptions={enums.roomTypes}
+        enumLoading={enumLoading}
+        enumError={enumError}
         onPlantSearch={handlePlantSearch}
         onClose={() => {
           setFormOpen(false);
@@ -203,6 +211,8 @@ export default function PlantComboTab({}: PlantComboTabProps) {
       <PlantComboViewDialog
         open={viewOpen}
         combo={viewingData}
+        lightRequirementOptions={enums.lightRequirements}
+        roomTypeOptions={enums.roomTypes}
         nurseries={viewNurseries}
         nurseriesLoading={nurseriesLoading}
         onClose={() => {
@@ -213,18 +223,18 @@ export default function PlantComboTab({}: PlantComboTabProps) {
       />
 
       <Dialog open={toggleOpen} onClose={() => setToggleOpen(false)}>
-        <DialogTitle>Xác nhận cập nhật trạng thái</DialogTitle>
+        <DialogTitle>Status update confirmation</DialogTitle>
         <DialogContent>
           <Typography>
             {toggleTarget
-              ? `Bạn có chắc muốn ${toggleTarget.isActive ? 'vô hiệu' : 'kích hoạt'} combo này?`
-              : 'Bạn có chắc muốn cập nhật trạng thái combo này?'}
+              ? `Do you want to ${toggleTarget.isActive ? 'deactivate' : 'activate'} this combo?`
+              : 'Are you sure you want to update the status of this combo?'}
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setToggleOpen(false)}>Hủy</Button>
+          <Button onClick={() => setToggleOpen(false)}>Cancel</Button>
           <Button onClick={confirmToggle} color="primary" variant="contained" disabled={saving}>
-            Xác nhận
+            Confirm
           </Button>
         </DialogActions>
       </Dialog>

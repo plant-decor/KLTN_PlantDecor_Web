@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { Box, Tabs, Tab } from '@mui/material';
@@ -24,8 +24,7 @@ export default function ManagerDashboardPage() {
           px: 2,
         }}
       >
-        <Tab label="Thống Kê Chi Nhánh" />
-        <Tab label="Vận Hành" />
+        <Tab label="Store Metrics" />`r`n        <Tab label="Operations" />
       </Tabs>
       <Box>
         {currentTab === 0 && <ManagerStoreMetricsDashboard />}
@@ -34,3 +33,4 @@ export default function ManagerDashboardPage() {
     </Box>
   );
 }
+

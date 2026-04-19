@@ -148,7 +148,7 @@ export default function MaterialFormDialog({
               Basic information
             </Typography>
             <Grid container spacing={2}>
-              <Grid size={{ xs: 12, sm: 6 }}>
+              {/* <Grid size={{ xs: 12, sm: 6 }}>
                 <Controller
                   name="materialCode"
                   control={control}
@@ -163,8 +163,8 @@ export default function MaterialFormDialog({
                     />
                   )}
                 />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
+              </Grid> */}
+              <Grid size={{ xs: 24, sm: 12 }}>
                 <Controller
                   name="name"
                   control={control}
@@ -323,7 +323,7 @@ export default function MaterialFormDialog({
 
           <Divider />
 
-          <Box>
+          {/* <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom>
               Specifications (JSON)
             </Typography>
@@ -343,9 +343,9 @@ export default function MaterialFormDialog({
                 />
               )}
             />
-          </Box>
+          </Box> */}
 
-          <Divider />
+          {/* <Divider /> */}
 
           <ImageUpload images={images} onImagesChange={setImages} label="Material images" maxImages={10} />
 
@@ -367,8 +367,8 @@ export default function MaterialFormDialog({
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSubmit(handleFormSubmit)} variant="contained" disabled={isLoading}>
-          {isLoading ? 'Saving...' : 'Save'}
+        <Button onClick={handleSubmit(handleFormSubmit)} variant="contained" disabled={isLoading} className='bg-primary'>
+          {isLoading ? 'Processing...' : 'Add Material'}
         </Button>
       </DialogActions>
     </Dialog>

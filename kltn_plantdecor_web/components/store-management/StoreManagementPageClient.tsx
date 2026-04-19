@@ -3,17 +3,13 @@
 import React, { useState } from 'react';
 import {
   Box,
-  Container,
   Tabs,
   Tab,
   Paper,
-  Typography,
-  Stack,
 } from '@mui/material';
-import { LocalFlorist, DonutSmall, Inventory2, Spa } from '@mui/icons-material';
+import { LocalFlorist, DonutSmall, Inventory2 } from '@mui/icons-material';
 import PlantTab from './PlantTab';
 import PlantComboTab from './PlantComboTab';
-import PlantInstanceTab from './PlantInstanceTab';
 import MaterialTab from './MaterialTab';
 import type { Plant, PlantCombo, PlantInstance, Material } from '@/types/store-management.types';
 import ManagementHeader from '../layout/ManagementHeader';
@@ -70,11 +66,11 @@ export default function StoreManagementPageClient({
     <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', p: 4 }}>
         {/* Header */}
         <ManagementHeader
-          title="Quản Lý Cửa Hàng"
-          description="Quản lý dữ liệu chính của cây, combo, mẫu cây và vật tư tiêu hao."
-          entityLabel="gói"
+          title="Store Management"
+          description="Manage the main data of plants, combos, plant instances, and consumable materials."
+          entityLabel="packages"
                 // count={packages.length}
-                actionLabel="Tạo gói mới"
+                actionLabel="Create New"
                 // onAction={openCreateModal}
               />
 
@@ -97,13 +93,13 @@ export default function StoreManagementPageClient({
             }}
           >
             <Tab
-              label="Cây"
+              label="Plants"
               icon={<LocalFlorist sx={{ mr: 1 }} />}
               iconPosition="start"
               {...a11yProps(0)}
             />
             <Tab
-              label="Combo"
+              label="Combos"
               icon={<DonutSmall sx={{ mr: 1 }} />}
               iconPosition="start"
               {...a11yProps(1)}
@@ -115,7 +111,7 @@ export default function StoreManagementPageClient({
               {...a11yProps(2)}
             /> */}
             <Tab
-              label="Vật Tư"
+              label="Materials"
               value={3}
               icon={<Inventory2 sx={{ mr: 1 }} />}
               iconPosition="start"

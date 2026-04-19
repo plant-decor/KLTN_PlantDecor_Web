@@ -65,8 +65,15 @@ export const useAdminCategories = (): UseAdminCategoriesReturn => {
     return response.payload ?? response.data;
   };
 
-  const handleError = (err: any) => {
-    const errorMessage = err?.response?.data?.message || err?.message || 'An error occurred';
+  const handleError = (err: unknown) => {
+    const errorMessage =
+      typeof err === 'object' && err !== null && 'response' in err
+        ? ((err as { response?: { data?: { message?: string } }; message?: string }).response?.data?.message ??
+            (err as { message?: string }).message ??
+            'An error occurred')
+        : err instanceof Error
+          ? err.message
+          : 'An error occurred';
     setError(errorMessage);
     console.error('Admin categories error:', err);
   };

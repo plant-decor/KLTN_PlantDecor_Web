@@ -5,8 +5,18 @@ import type { ResponseModel } from '@/types/api.types';
 
 // ============ Types ============
 export interface TagCreateUpdateRequest {
+  tagName: string;
+  tagType: number;
+}
+
+export interface TagEnumValue {
+  value: number;
   name: string;
-  color: string;
+}
+
+export interface TagEnumGroup {
+  enumName: string;
+  values: TagEnumValue[];
 }
 
 
@@ -38,6 +48,14 @@ export const getTags = async (
   loading = true
 ): Promise<ResponseModel<TagsListResponse>> => {
   return apiClient.get('/admin/Tags', params, loading);
+};
+
+/**
+ * GET /api/system/enums/tags
+ * Get tag enum values
+ */
+export const getTagEnums = async (loading = true): Promise<ResponseModel<TagEnumGroup[]>> => {
+  return apiClient.get('/system/enums/tags', undefined, loading);
 };
 
 /**

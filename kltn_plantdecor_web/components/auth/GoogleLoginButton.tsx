@@ -33,7 +33,7 @@ export default function GoogleLoginButton() {
                 }
                 toast.success(result.message);
                 if (result.token) {
-                    setClientAccessToken(result.token);
+                    setClientAccessToken(result.token, result.expiresIn);
                 }
                 if (result.refreshToken) {
                     setClientRefreshToken(result.refreshToken);

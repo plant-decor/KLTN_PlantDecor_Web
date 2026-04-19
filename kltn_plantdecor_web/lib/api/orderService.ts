@@ -9,6 +9,7 @@ import type {
   OrderCreatePayload,
   OrderCreateRequest,
   OrderInvoice,
+  PendingInvoicesResponse,
   PaymentCreateResponse,
   OrderStatusName,
 } from '@/types/order.types';
@@ -48,6 +49,16 @@ export async function getInvoicesByOrderId(
     false
   );
   return response.payload ?? [];
+}
+
+export async function getPendingInvoicesForCurrentUser(): Promise<OrderInvoice[]> {
+  const response = await get<PendingInvoicesResponse & ApiResponseFallback<OrderInvoice[]>>(
+    '/User/pending-invoices',
+    undefined,
+    false,
+    false
+  );
+  return getPayloadFromResponse(response) ?? [];
 }
 
 export async function getMyOrders(orderStatus?: OrderStatusName): Promise<Order[]> {

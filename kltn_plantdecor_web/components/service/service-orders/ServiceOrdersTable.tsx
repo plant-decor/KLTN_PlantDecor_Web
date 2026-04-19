@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import {
   Button,
@@ -49,19 +49,19 @@ export default function ServiceOrdersTable({
     <Table size="small">
       <TableHead sx={{ backgroundColor: 'var(--primary)' }}>
         <TableRow>
-          <TableCell sx={{ fontWeight: 700 }}>Mã đơn</TableCell>
-          <TableCell sx={{ fontWeight: 700 }}>Khách hàng</TableCell>
-          <TableCell sx={{ fontWeight: 700 }}>Gói dịch vụ</TableCell>
-          <TableCell sx={{ fontWeight: 700 }}>Ngày dịch vụ</TableCell>
-          <TableCell sx={{ fontWeight: 700 }}>Liên hệ</TableCell>
+          <TableCell sx={{ fontWeight: 700 }}>Order ID</TableCell>
+          <TableCell sx={{ fontWeight: 700 }}>Customer</TableCell>
+          <TableCell sx={{ fontWeight: 700 }}>Service Package</TableCell>
+          <TableCell sx={{ fontWeight: 700 }}>Service Date</TableCell>
+          <TableCell sx={{ fontWeight: 700 }}>Contact</TableCell>
           <TableCell sx={{ fontWeight: 700 }} align="center">
-            Trạng thái
+            Status
           </TableCell>
           <TableCell sx={{ fontWeight: 700 }} align="center">
-            Caretaker chính
+            Primary Caretaker
           </TableCell>
           <TableCell sx={{ fontWeight: 700 }} align="center">
-            Hành động
+            Actions
           </TableCell>
         </TableRow>
       </TableHead>
@@ -69,7 +69,7 @@ export default function ServiceOrdersTable({
         {items.length === 0 ? (
           <TableRow>
             <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
-              Không có đơn dịch vụ nào.
+              No service orders found.
             </TableCell>
           </TableRow>
         ) : (
@@ -112,11 +112,7 @@ export default function ServiceOrdersTable({
                 <TableCell align="center">{item.mainCaretaker?.fullName || '-'}</TableCell>
                 <TableCell align="center">
                   <Stack direction="row" spacing={1} justifyContent="center" useFlexGap flexWrap="wrap">
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      onClick={() => onViewDetail(item.id)}
-                    >
+                    <Button size="small" variant="outlined" onClick={() => onViewDetail(item.id)}>
                       <VisibilityIcon />
                     </Button>
                     {canApproveOrReject(item.status) && (
@@ -138,7 +134,7 @@ export default function ServiceOrdersTable({
                         onClick={() => onReject(item)}
                         disabled={submitting}
                       >
-                            <CancelOutlinedIcon />
+                        <CancelOutlinedIcon />
                       </Button>
                     )}
                     {canManagerCancel(item.status) && (
@@ -150,7 +146,6 @@ export default function ServiceOrdersTable({
                         disabled={submitting}
                       >
                         <CancelOutlinedIcon />
-
                       </Button>
                     )}
                     {canAssignCaretaker(item.status) && (

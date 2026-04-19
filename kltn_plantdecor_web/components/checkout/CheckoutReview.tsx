@@ -14,22 +14,19 @@ import {
   TableRow,
   Divider,
   Grid,
-  Button,
 } from '@mui/material';
-import { Edit as EditIcon } from '@mui/icons-material';
+// import { Edit as EditIcon } from '@mui/icons-material';
 import type { CheckoutData } from '@/types/cart.types';
 import type { OrderCreatePayload } from '@/types/order.types';
 
 interface CheckoutReviewProps {
   checkoutData: CheckoutData;
-  userId: string;
   cartId: string;
   createdOrder?: OrderCreatePayload | null;
 }
 
 export default function CheckoutReview({
   checkoutData,
-  userId,
   cartId,
   createdOrder,
 }: CheckoutReviewProps) {
@@ -73,13 +70,13 @@ export default function CheckoutReview({
               <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                 Shipping Details
               </Typography>
-              <Button
+              {/* <Button
                 size="small"
                 startIcon={<EditIcon />}
                 sx={{ textTransform: 'none', color: '#4CAF50' }}
               >
                 Edit
-              </Button>
+              </Button> */}
             </Box>
 
             <Divider sx={{ mb: 2 }} />
@@ -122,13 +119,13 @@ export default function CheckoutReview({
               <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                 Payment Method
               </Typography>
-              <Button
+              {/* <Button
                 size="small"
                 startIcon={<EditIcon />}
                 sx={{ textTransform: 'none', color: '#4CAF50' }}
               >
                 Edit
-              </Button>
+              </Button> */}
             </Box>
 
             <Divider sx={{ mb: 2 }} />
@@ -239,9 +236,9 @@ export default function CheckoutReview({
             </Box>
 
             <Box sx={{ mt: 3, p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
-              <Typography variant="caption" sx={{ color: '#666' }}>
+              {/* <Typography variant="caption" sx={{ color: '#666' }}>
                 User ID: {userId}
-              </Typography>
+              </Typography> */}
               <Typography variant="caption" sx={{ display: 'block', color: '#666' }}>
                 Cart ID: {cartId}
               </Typography>

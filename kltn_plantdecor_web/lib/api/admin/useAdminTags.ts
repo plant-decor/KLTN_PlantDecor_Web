@@ -48,19 +48,26 @@ export const useAdminTags = (): UseAdminTagsReturn => {
   const [error, setError] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState(0);
   const [pageNumber, setPageNumber] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(20);
   const [totalPages, setTotalPages] = useState(1);
   const [hasPrevious, setHasPrevious] = useState(false);
   const [hasNext, setHasNext] = useState(false);
-  const lastFetchParamsRef = useRef<GetTagsParams>({ pageNumber: 1, pageSize: 10 });
+  const lastFetchParamsRef = useRef<GetTagsParams>({ pageNumber: 1, pageSize: 20 });
 
   // ============ Helper Functions ============
   const getResponsePayload = <T,>(response: { data?: T; payload?: T }): T | undefined => {
     return response.payload ?? response.data;
   };
 
-  const handleError = (err: any) => {
-    const errorMessage = err?.response?.data?.message || err?.message || 'An error occurred';
+  const handleError = (err: unknown) => {
+    const errorMessage =
+      typeof err === 'object' && err !== null && 'response' in err
+        ? ((err as { response?: { data?: { message?: string } }; message?: string }).response?.data?.message ??
+            (err as { message?: string }).message ??
+            'An error occurred')
+        : err instanceof Error
+          ? err.message
+          : 'An error occurred';
     setError(errorMessage);
     console.error('Admin tags error:', err);
   };
@@ -71,13 +78,12 @@ export const useAdminTags = (): UseAdminTagsReturn => {
    * Fetch tags with pagination
    */
   const fetchTagsList = useCallback(async (params?: GetTagsParams) => {
-    setLoading(true);
     setError(null);
 
     try {
       const effectiveParams: GetTagsParams = {
         pageNumber: params?.pageNumber ?? lastFetchParamsRef.current.pageNumber ?? 1,
-        pageSize: params?.pageSize ?? lastFetchParamsRef.current.pageSize ?? 10,
+        pageSize: params?.pageSize ?? lastFetchParamsRef.current.pageSize ?? 20,
         skip: params?.skip,
         take: params?.take,
       };
@@ -93,7 +99,7 @@ export const useAdminTags = (): UseAdminTagsReturn => {
       setTags(payload.items || []);
       setTotalCount(payload.totalCount || 0);
       setPageNumber(payload.pageNumber || 1);
-      setPageSize(payload.pageSize || 10);
+      setPageSize(payload.pageSize || 20);
       setTotalPages(payload.totalPages || 1);
       setHasPrevious(payload.hasPrevious || false);
       setHasNext(payload.hasNext || false);
@@ -144,8 +150,6 @@ export const useAdminTags = (): UseAdminTagsReturn => {
     } catch (err) {
       handleError(err);
       return null;
-    } finally {
-      setLoading(false);
     }
   }, [fetchTagsList]);
 
@@ -154,7 +158,6 @@ export const useAdminTags = (): UseAdminTagsReturn => {
    */
   const updateTagItem = useCallback(
     async (id: number, data: TagCreateUpdateRequest) => {
-      setLoading(true);
       setError(null);
 
       try {

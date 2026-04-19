@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   Box,
   Button,
@@ -62,17 +62,13 @@ export default function PlantInstanceCreateDialog({
 
   const hasValidPlant = useMemo(() => plants.some((plant) => plant.id === form.plantId), [plants, form.plantId]);
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
+  const handleDialogEnter = useCallback(() => {
     setForm({
       ...DEFAULT_FORM,
       plantId: plants[0]?.id ?? 0,
     });
     setImages([]);
-  }, [open, plants]);
+  }, [plants]);
 
   const handleNumberChange = <K extends keyof CreatePlantInstanceInput>(key: K, value: string) => {
     const parsedValue = parseNumericValue(value);
@@ -90,12 +86,12 @@ export default function PlantInstanceCreateDialog({
     form.healthStatus.trim().length > 0;
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>Create Plant Instance</DialogTitle>
+    <Dialog open={open} onClose={onClose} TransitionProps={{ onEnter: handleDialogEnter }} maxWidth="md" fullWidth>
+      <DialogTitle>Create New Plant Instance</DialogTitle>
       <DialogContent dividers>
         <Stack spacing={2.5}>
           <Typography variant="body2" color="text.secondary">
-            Create one plant instance per request. If you upload images, the first image marked as thumbnail will be used for thumbnail upload.
+            Please fill in all required information to create a new unique plant instance. Fields marked with * are required.
           </Typography>
 
           <Grid container spacing={2}>
@@ -206,7 +202,7 @@ export default function PlantInstanceCreateDialog({
           disabled={!canSubmit || submitting}
           sx={{ backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)' }}
         >
-          {submitting ? 'Creating...' : 'Create'}
+          {submitting ? 'Creating...' : 'Create Instance'}
         </Button>
       </DialogActions>
     </Dialog>

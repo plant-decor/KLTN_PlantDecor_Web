@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import {
   Alert,
@@ -43,21 +43,21 @@ export default function ServiceOrderAssignDialog({
 }: ServiceOrderAssignDialogProps) {
   return (
     <Dialog open={open} onClose={submitting || loading ? undefined : onClose} fullWidth maxWidth="md">
-      <DialogTitle>Giao caretaker cho đơn #{target?.id}</DialogTitle>
+      <DialogTitle>Assign caretaker to order #{target?.id}</DialogTitle>
       <DialogContent dividers>
         {loading ? (
           <Box sx={{ py: 3, display: 'flex', justifyContent: 'center' }}>
             <CircularProgress />
           </Box>
         ) : eligibleCaretakers.length === 0 ? (
-          <Alert severity="warning">Không có caretaker đủ điều kiện cho đơn này.</Alert>
+          <Alert severity="warning">No eligible caretakers found for this order.</Alert>
         ) : (
           <Stack spacing={2}>
             <FormControl fullWidth>
-              <InputLabel id="eligible-caretaker-select">Caretaker phù hợp</InputLabel>
+              <InputLabel id="eligible-caretaker-select">Eligible Caretaker</InputLabel>
               <Select
                 labelId="eligible-caretaker-select"
-                label="Caretaker phù hợp"
+                label="Eligible Caretaker"
                 value={selectedCaretakerId || ''}
                 onChange={(event) => onSelectedCaretakerIdChange(Number(event.target.value))}
               >
@@ -69,21 +69,21 @@ export default function ServiceOrderAssignDialog({
               </Select>
             </FormControl>
             <Typography variant="body2" color="text.secondary">
-              Đơn sẽ được giao cho caretaker đang có kỹ năng phù hợp với gói dịch vụ.
+              The order will be assigned to a caretaker whose skills match the selected service package.
             </Typography>
           </Stack>
         )}
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={submitting || loading}>
-          Hủy
+          Cancel
         </Button>
         <Button
           onClick={onConfirm}
           disabled={submitting || loading || eligibleCaretakers.length === 0 || !selectedCaretakerId}
           variant="contained"
         >
-          {submitting ? 'Đang xử lý...' : 'Xác nhận giao'}
+          {submitting ? 'Processing...' : 'Confirm assignment'}
         </Button>
       </DialogActions>
     </Dialog>

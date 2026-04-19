@@ -80,7 +80,7 @@ export default function AuthFormContainer() {
       }
       const resolvedUser = result.user;
       if (result.token) {
-        setClientAccessToken(result.token);
+        setClientAccessToken(result.token, result.expiresIn);
       }
       if (result.refreshToken) {
         setClientRefreshToken(result.refreshToken);
@@ -188,11 +188,11 @@ export default function AuthFormContainer() {
       });
 
       if (!result.success) {
-        setError(result.message || 'Lỗi khi tạo tài khoản');
+        setError(result.message || 'Error during sign up');
         return;
       }
 
-      const successMessage = result.message || 'Tạo tài khoản thành công! Vui lòng kiểm tra email để xác thực.';
+      const successMessage = result.message || 'Sign up successful! Please check your email to verify your account.';
       toast.success(successMessage);
       setMessage(successMessage);
       setTimeout(() => {
@@ -201,7 +201,7 @@ export default function AuthFormContainer() {
       }, 2000);
     } catch (err) {
       console.error('Sign up error:', err);
-      setError('Lỗi khi tạo tài khoản');
+      setError('Error during sign up');
     } finally {
       endSubmit();
     }
@@ -240,7 +240,6 @@ export default function AuthFormContainer() {
       {currentForm === 'forgot' && (
         <div className="lg:w-4/5 lg:h-4/5 w-full h-5/6 flex border border-black rounded-[30px] bg-white z-10 overflow-hidden">
           <ForgotPasswordForm
-            isVisible={true}
             onBack={handleBackToLogin}
             onSubmit={handleForgotPasswordSubmit}
             isLoading={isSubmitting}

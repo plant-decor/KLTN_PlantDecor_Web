@@ -117,7 +117,11 @@
     "careHistory": "Lịch sử chăm sóc",
     "assignDelivery": "Giao hàng",
     "deliveryHistory": "Lịch sử giao hàng",
-    "logout": "Đăng xuất"
+    "logout": "Đăng xuất",
+    "logoutConfirmTitle": "Xác nhận đăng xuất",
+    "logoutConfirmMessage": "Bạn có chắc chắn muốn đăng xuất khỏi hệ thống không?",
+    "cancel": "Hủy",
+    "confirmLogout": "Xác nhận"
   },
   "home": {
     "heroTitle": "Nâng tầm không gian sống với",
@@ -318,6 +322,8 @@
     }
   },
   "services": {
+    "orderIdError": "Đơn dịch vụ chưa được xác nhận.",
+    "scheduleDaysError": "Đơn dịch vụ chưa được xác nhận.",
     "title": "Dịch vụ",
     "subtitle": "Chúng tôi cung cấp đa dạng dịch vụ chăm sóc cây cảnh",
     "careService": "Dịch vụ chăm sóc",
@@ -428,6 +434,11 @@
     "periodicSundayNotAllowed": "Gói định kỳ không được chọn Chủ nhật",
     "periodicVisitPerWeekInvalid": "Gói dịch vụ cấu hình số buổi/tuần không hợp lệ",
     "serviceTypeLabel": "Loại",
+    "visitFrequency": "Tần suất",
+    "timesPerWeek": "buổi/tuần",
+    "visitFrequencyNotDefined": "Chưa xác định",
+    "duration": "Tổng thời gian",
+    "days": "ngày",
     "totalSessions": "Tổng số buổi",
     "serviceTasks": "Công việc",
     "oneTime": "Một lần",
@@ -436,7 +447,7 @@
     "useCurrentLocation": "Dùng vị trí hiện tại",
     "searchingNurseries": "Đang tìm vựa...",
     "searchMatchingNurseries": "Tìm vựa phù hợp",
-    "radiusWithLocation": "Bán kính tìm vựa: 10km (đã có tọa độ)",
+    "radiusWithLocation": "Bán kính tìm vựa: 20km (đã có tọa độ)",
     "radiusWithoutLocation": "Bán kính tìm vựa: toàn khu vực (chưa có tọa độ)",
     "serviceDatePast": "Ngày dịch vụ không được nhỏ hơn hôm nay",
     "providerNursery": "Vựa cung cấp dịch vụ",
@@ -484,21 +495,81 @@
     "viewDetails": "Xem chi tiết",
     "noOrders": "Bạn chưa có đơn hàng nào"
   },
+  "myPlantPage": {
+    "title": "Cây của tôi",
+    "description": "Danh sách cây bạn đã mua cùng với hướng dẫn chăm sóc chi tiết cho từng loại.",
+    "errors": {
+      "loadPlants": "Không thể tải danh sách cây của bạn."
+    },
+    "empty": {
+      "title": "Bạn chưa có cây nào",
+      "description": "Khám phá cửa hàng để chọn những cây phù hợp và bắt đầu chăm sóc chúng ngay hôm nay.",
+      "visitStore": "Thăm cửa hàng"
+    }
+  },
+  "myPlantClient": {
+    "common": {
+      "notUpdated": "Chưa cập nhật",
+      "noScientificName": "Không có tên khoa học"
+    },
+    "units": {
+      "year": "năm",
+      "cm": " cm"
+    },
+    "plantCode": "Cây #{id}",
+    "fields": {
+      "purchaseDate": "Ngày mua",
+      "location": "Vị trí",
+      "age": "Tuổi cây",
+      "trunkDiameter": "Đường kính thân",
+      "height": "Chiều cao",
+      "lastWatered": "Lần tưới cuối cùng",
+      "lastFertilized": "Lần phân bón cuối cùng",
+      "lastPruned": "Lần tỉa cành cuối cùng"
+    },
+    "guide": {
+      "title": "Hướng dẫn chăm sóc cho {plantName}",
+      "subtitle": "Hướng dẫn chăm sóc chi tiết cho {plantName}",
+      "fields": {
+        "light": "Ánh sáng",
+        "watering": "Tưới nước",
+        "fertilizing": "Phân bón",
+        "pruning": "Tỉa cành",
+        "temperature": "Nhiệt độ",
+        "humidity": "Độ ẩm",
+        "soil": "Đất",
+        "careNotes": "Ghi chú chăm sóc"
+      },
+      "missing": "Không có hướng dẫn chăm sóc nào cho cây này. Vui lòng liên hệ bộ phận hỗ trợ để được giúp đỡ."
+    }
+  },
   "orderHistory": {
     "title": "Lịch sử đơn hàng",
+    "allOrdersTab": "Tất cả đơn hàng",
+    "pendingPaymentTab": "Chưa thanh toán",
     "noOrdersFound": "Không tìm thấy đơn hàng",
+    "noPendingOrdersFound": "Không có đơn hàng chưa thanh toán",
     "orderType": {
       "uniquePlant": "Cây độc bản",
       "buyNow": "Mua ngay",
-      "product": "Sản phẩm"
+      "product": "Sản phẩm",
+      "service": "Dịch vụ"
     },
     "orderedAt": "Đặt lúc",
     "moreItems": "sản phẩm khác",
     "total": "Tổng cộng",
     "viewDetail": "Xem chi tiết",
+    "payNow": "Thanh toán",
     "retryPayment": "Thanh toán lại",
     "retryingPayment": "Đang tạo lại thanh toán...",
-    "retryPaymentFailed": "Không thể thanh toán lại. Vui lòng thử lại."
+    "retryPaymentFailed": "Không thể thanh toán lại. Vui lòng thử lại.",
+    "cancelOrder": "Hủy đơn hàng",
+    "cancelling": "Đang hủy...",
+    "cancelOrderFailed": "Không thể hủy đơn hàng. Vui lòng thử lại.",
+    "cancelConfirmTitle": "Xác nhận hủy đơn",
+    "cancelConfirmMessage": "Bạn có chắc muốn hủy đơn hàng này không?",
+    "keepOrder": "Giữ đơn hàng",
+    "confirmCancel": "Xác nhận hủy"
   },
   "chatWidget": {
     "title": "Tin nhắn hỗ trợ Plant Care",
@@ -525,27 +596,46 @@
     "personalInfo": "Thông tin cá nhân",
     "security": "Bảo mật",
     "changePassword": "Đổi mật khẩu",
+    "saveAndLogoutAll": "Lưu và đăng xuất tất cả",
+    "logoutAllConfirmation": "Thao tác này sẽ đổi mật khẩu và đăng xuất tất cả thiết bị. Bạn có muốn tiếp tục không?",
+    "setPassword": "Đặt mật khẩu",
+    "setPasswordTitle": "Đặt mật khẩu",
+    "setPasswordDescription": "Đặt mật khẩu cho tài khoản được xác thực bằng Google của bạn để bảo mật tài khoản",
+    "passwordSetSuccess": "Mật khẩu đã được đặt thành công",
+    "setPasswordFailed": "Không thể đặt mật khẩu",
+    "setPasswordError": "Lỗi khi đặt mật khẩu",
     "avatar": "Ảnh đại diện",
     "bio": "Giới thiệu",
     "saveChanges": "Lưu thay đổi",
+    "saving": "Đang lưu...",
     "cancelChanges": "Hủy thay đổi",
     "gender": "Giới tính",
     "male": "Nam",
     "female": "Nữ",
     "other": "Khác",
+    "unknown": "Không xác định",
     "birthYear": "Năm sinh",
+    "username": "Tên người dùng",
     "shippingAddress": "Địa chỉ giao hàng",
     "detailedAddress": "Địa chỉ chi tiết",
     "addressPlaceholder": "Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố",
+    "latitude": "Vĩ độ",
+    "longitude": "Kinh độ",
+    "phoneReadOnly": "Số điện thoại là chỉ đọc",
+    "phoneNumberInvalid": "Số điện thoại phải gồm đúng 10 chữ số",
     "notificationSettings": "Cài đặt thông báo",
     "receiveNotifications": "Nhận thông báo",
     "notificationDescription": "Nhận nhắc nhở chăm sóc cây, thông tin khuyến mãi và cập nhật mới",
     "unsupportedFormat": "Định dạng không được hỗ trợ. Vui lòng chọn JPEG, JPG, PNG hoặc HEIF",
     "fileSizeExceeded": "Kích thước file không được vượt quá 5MB",
+    "errorLoadingProfile": "Lỗi tải hồ sơ",
+    "errorSavingProfile": "Lỗi lưu hồ sơ",
+    "errorUploadingAvatar": "Lỗi tải ảnh đại diện",
     "currentPassword": "Mật khẩu hiện tại",
     "newPassword": "Mật khẩu mới",
     "confirmNewPassword": "Xác nhận mật khẩu mới",
     "passwordMinLength": "Ít nhất 6 ký tự",
+    "passwordRequirements": "Yêu cầu mật khẩu:",
     "changePasswordTitle": "Đổi mật khẩu",
     "tooManyFailedAttempts": "Quá nhiều lần thất bại",
     "recaptchaRequiredForPassword": "Vì lý do bảo mật, vui lòng hoàn thành xác thực reCAPTCHA.",
@@ -573,7 +663,7 @@
       "uploadingAvatar": "Đang tải ảnh đại diện...",
       "role": "Vai trò",
       "nurseryName": "Tên nhà vườn",
-      "userName": "Username",
+      "userName": "Tên quản lý",
       "birthYear": "Năm sinh",
       "gender": "Giới tính",
       "latitude": "Vĩ độ",
@@ -604,7 +694,8 @@
       "fetchProfile": "Không thể tải hồ sơ quản lý",
       "fetchNursery": "Không thể tải thông tin nhà vườn",
       "updateProfile": "Không thể cập nhật hồ sơ quản lý",
-      "updateNursery": "Không thể cập nhật thông tin nhà vườn"
+      "updateNursery": "Không thể cập nhật thông tin nhà vườn",
+      "phoneNumberInvalid": "Số điện thoại phải gồm đúng 10 chữ số"
     }
   },
   "wishlist": {
@@ -660,6 +751,8 @@
     "careInstructions": "Hướng dẫn chăm sóc",
     "origin": "Nguồn gốc",
     "placement": "Vị trí",
+    "roomType": "Loại phòng",
+    "roomStyle": "Phong cách phòng",
     "growthRate": "Tốc độ phát triển",
     "uniqueInstance": "Cây đặc biệt",
     "categories": "Danh mục",
@@ -901,6 +994,120 @@
     "map": {
       "title": "Bản Đồ Văn Phòng/Vườn Ươm",
       "placeholder": "Bản đồ Google Maps sẽ được cập nhật trong phiên bản tiếp theo."
+    }
+  },
+  "roomDesignEnums": {
+    "roomType": {
+      "livingRoom": "Phòng khách",
+      "bedroom": "Phòng ngủ",
+      "kitchen": "Nhà bếp",
+      "bathroom": "Phòng tắm",
+      "homeOffice": "Phòng làm việc tại nhà",
+      "office": "Văn phòng",
+      "balcony": "Ban công",
+      "corridor": "Hành lang",
+      "diningRoom": "Phòng ăn",
+      "outdoor": "Ngoài trời",
+      "garden": "Sân vườn"
+    },
+    "roomStyle": {
+      "minimalist": "Tối giản",
+      "scandinavian": "Bắc u",
+      "tropical": "Nhiệt đới",
+      "industrial": "Công nghiệp",
+      "bohemian": "Bohemian",
+      "modern": "Hiện đại",
+      "japanese": "Nhật Bản",
+      "mediterranean": "Địa Trung Hải",
+      "rustic": "Mộc mạc",
+      "classic": "Cổ điển",
+      "contemporary": "Đương đại"
+    },
+    "lightRequirement": {
+      "lowLight": "Ánh sáng yếu",
+      "mediumLight": "Ánh sáng trung bình",
+      "highLight": "Ánh sáng mạnh",
+      "directSunlight": "Nắng trực tiếp",
+      "indirectLight": "Ánh sáng gián tiếp",
+      "brightIndirectLight": "Ánh sáng gián tiếp mạnh",
+      "partialShade": "Bóng râm một phần",
+      "shade": "Bóng râm",
+      "fullSun": "Nắng toàn phần"
+    }
+  },
+  "aiRecommendation": {
+    "title": "Đề xuất cây cảnh bằng AI",
+    "steps": {
+      "roomInput": "Thông tin phòng và sở thích",
+      "roomAnalysis": "Phân tích phòng",
+      "results": "Kết quả"
+    },
+    "roomInput": {
+      "title": "1) Thông tin phòng và sở thích",
+      "uploadImageButtonLabel": "Tải lên ảnh phòng",
+      "fengShuiElement": "Phong thủy mệnh",
+      "roomType": "Loại phòng",
+      "roomStyle": "Phong cách phòng",
+      "minBudget": "Ngân sách tối thiểu",
+      "maxBudget": "Ngân sách tối đa",
+      "careLevel": "Mức độ chăm sóc",
+      "nurseries": "Vườn ươm/cửa hàng (tùy chọn)",
+      "nurseriesPlaceholder": "Chọn vườn ươm/cửa hàng để ưu tiên (nếu có)",
+      "hasAllergy": "Dị ứng cây",
+      "petSafe": "An toàn với thú cưng",
+      "childSafe": "An toàn với trẻ em",
+      "allergyPlantsTitle": "Cây gây dị ứng",
+      "allergySearchPlaceholder": "Tìm kiếm cây gây dị ứng",
+      "allergyNote": "Ghi chú dị ứng",
+      "allergyNotePlaceholder": "Mô tả chi tiết dị ứng (tùy chọn)",
+      "noAllergyResults": "Không có cây phù hợp",
+      "analyzeButton": "Phân tích và đề xuất",
+      "analyzingButton": "Đang phân tích phòng...",
+      "errors": {
+        "selectImage": "Vui lòng tải lên ảnh phòng trước khi phân tích.",
+        "unsupportedFormat": "Định dạng ảnh không được hỗ trợ. Vui lòng chọn JPEG, JPG hoặc PNG.",
+        "fileTooLarge": "Kích thước tệp phải nhỏ hơn hoặc bằng 10MB."
+      }
+    },
+    "roomAnalysis": {
+      "title": "2) Phân tích phòng"
+    },
+    "recommendations": {
+      "title": "Đề xuất cây cảnh",
+      "titleWithCount": "Cây cảnh được đề xuất ({count})",
+      "reason": "Lý do:",
+      "placement": "Vị trí:",
+      "addToCartButton": "Thêm vào giỏ hàng",
+      "buyNowButton": "Mua ngay",
+      "errors": {
+        "addToCartFailed": "Không thể thêm sản phẩm vào giỏ hàng.",
+        "missingCommonPlantId": "Không thể thêm sản phẩm vào giỏ hàng vì ID cây cảnh không tồn tại.",
+        "checkoutFailed": "Không thể mua ngay vì ID phiên bản cây cảnh không tồn tại.",
+        "addedToCart": "Đã thêm {name} vào giỏ hàng."
+      }
+    },
+    "generatedImages": {
+      "title": "Hình ảnh phòng được tạo ra",
+      "generatingLabel": "Đang tạo hình ảnh AI...",
+      "imageFailed": "Tạo hình ảnh thất bại cho đề xuất này.",
+      "placementLabel": "Vị trí:",
+      "priceLabel": "Giá:",
+      "plantFallbackName": "Cây đề xuất",
+      "plantDescriptionFallback": "Chưa có mô tả.",
+      "plantInfoPending": "Chưa có thông tin cây cho hình ảnh này.",
+      "addingToCartButton": "Đang thêm vào giỏ...",
+      "successCount": "Đã tạo {success}/{total} hình ảnh. Thất bại: {failed}",
+      "retryButton": "Thử lại tạo hình ảnh",
+      "errors": {
+        "generateFailed": "Tạo hình ảnh thất bại."
+      }
+    },
+    "errors": {
+      "analyzeRoomFailed": "Phân tích ảnh phòng thất bại.",
+      "noAnalysisResult": "Không có kết quả phân tích nào được trả về từ máy chủ."
+    },
+    "validation": {
+      "roomImageRequired": "Vui lòng tải lên ảnh phòng"
     }
   }
 }

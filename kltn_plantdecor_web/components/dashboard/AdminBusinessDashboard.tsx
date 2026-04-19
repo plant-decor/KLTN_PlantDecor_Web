@@ -41,9 +41,9 @@ function StatCard({ title, value, icon, color, subtitle }: StatCardProps) {
             <Typography color="text.secondary" variant="body2" gutterBottom>
               {title}
             </Typography>
-            {/* <Typography variant="h4" component="div" fontWeight="bold">
-              {formatCurrency(value, 'vi-VN')}
-            </Typography> */}
+            <Typography variant="h4" component="div" fontWeight="bold">
+              {value}
+            </Typography>
             {subtitle && (
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                 {subtitle}

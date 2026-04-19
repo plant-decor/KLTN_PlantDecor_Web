@@ -47,10 +47,10 @@ export default function SpecializationModal({
   const isCreate = mode === "create";
 
   const title = isCreate
-    ? "Tạo chuyên môn mới"
+    ? "Create New Specialization"
     : mode === "edit"
-      ? `Cập nhật chuyên môn #${specializationId ?? ""}`
-      : `Chi tiết chuyên môn #${specializationId ?? ""}`;
+      ? `Edit Specialization #${specializationId ?? ""}`
+      : `View Specialization #${specializationId ?? ""}`;
 
   const handleChangeField = <K extends keyof SpecializationFormValue>(
     field: K,
@@ -72,7 +72,7 @@ export default function SpecializationModal({
         ) : (
           <Stack spacing={2} sx={{ pt: 1 }}>
             <TextField
-              label="Tên chuyên môn"
+              label="Specialization Name"
               value={formValue.name}
               onChange={(event) => handleChangeField("name", event.target.value)}
               disabled={isView || submitting}
@@ -81,7 +81,7 @@ export default function SpecializationModal({
             />
 
             <TextField
-              label="Mô tả"
+              label="Description"
               value={formValue.description}
               onChange={(event) => handleChangeField("description", event.target.value)}
               disabled={isView || submitting}
@@ -94,10 +94,10 @@ export default function SpecializationModal({
             <Box className="flex items-center justify-between rounded-xl border border-(--card-border) px-4 py-3">
               <Box>
                 <Typography variant="subtitle2" fontWeight={700}>
-                  Trạng thái hoạt động
+                  Active Status
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Bật để hiển thị chuyên môn trong hệ thống.
+                  Turn on to display the specialization in the system.
                 </Typography>
               </Box>
               <Switch
@@ -110,10 +110,10 @@ export default function SpecializationModal({
             {isView && detail && (
               <Box className="rounded-xl border border-(--card-border) bg-(--surface) px-4 py-3">
                 <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
-                  Thông tin đã lưu
+                  Saved Information
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {detail.isActive ? "Đang hoạt động" : "Đã vô hiệu hóa"}
+                  {detail.isActive ? "Active" : "Inactive"}
                 </Typography>
               </Box>
             )}
@@ -122,11 +122,11 @@ export default function SpecializationModal({
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={submitting}>
-          Đóng
+          Close
         </Button>
         {!isView && (
           <Button onClick={() => void onSubmit()} variant="contained" disabled={submitting || detailLoading}>
-            {submitting ? "Đang xử lý..." : isCreate ? "Tạo mới" : "Lưu thay đổi"}
+            {submitting ? "Processing..." : isCreate ? "Create New" : "Save Changes"}
           </Button>
         )}
       </DialogActions>

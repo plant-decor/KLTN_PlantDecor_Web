@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -16,6 +16,7 @@ import {
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
 import type { Category, Tag } from '@/data/storeCatalogData';
+import { getTagEnums, type TagEnumValue } from '@/lib/api/tagService';
 import CategoryModal from './CategoryModal';
 import TagModal from './TagModal';
 
@@ -48,6 +49,17 @@ export default function CategoryTagManager({
   const [deleteTarget, setDeleteTarget] = useState<{ type: 'category' | 'tag'; id: number } | null>(
     null
   );
+  const [tagTypeOptions, setTagTypeOptions] = useState<TagEnumValue[]>([]);
+
+  // Load tag type enums on mount
+  useEffect(() => {
+    void (async () => {
+      const response = await getTagEnums(false);
+      const groups = response?.payload ?? response?.data ?? [];
+      const tagTypeGroup = groups.find((group) => group.enumName === 'TagType');
+      setTagTypeOptions(tagTypeGroup?.values ?? []);
+    })();
+  }, []);
 
   const handleDeleteConfirm = () => {
     if (!deleteTarget) return;
@@ -259,6 +271,7 @@ export default function CategoryTagManager({
           return true;
         }}
         tag={editingTag}
+        tagTypeOptions={tagTypeOptions}
       />
 
       {/* Delete Confirmation Dialog */}

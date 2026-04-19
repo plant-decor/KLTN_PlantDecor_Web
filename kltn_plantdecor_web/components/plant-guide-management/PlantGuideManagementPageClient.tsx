@@ -1,10 +1,9 @@
-'use client';
+﻿'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Box } from '@mui/material';
 import { toast } from 'react-toastify';
 import ManagementHeader from '@/components/layout/ManagementHeader';
-import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 import PlantGuideTable from './PlantGuideTable';
 import PlantGuideFormDialog from './PlantGuideFormDialog';
 import PlantGuideDetailDialog from './PlantGuideDetailDialog';
@@ -63,7 +62,7 @@ export default function PlantGuideManagementPageClient() {
   const handleEdit = useCallback(async (guide: AdminPlantGuideDetail) => {
     const detail = await fetchPlantGuideById(guide.id);
     if (!detail) {
-      toast.error('Không thể tải chi tiết Plant Guide');
+      toast.error('Failed to load Plant Guide details');
       return;
     }
 
@@ -74,7 +73,7 @@ export default function PlantGuideManagementPageClient() {
   const handleView = useCallback(async (guide: AdminPlantGuideDetail) => {
     const detail = await fetchPlantGuideById(guide.id);
     if (!detail) {
-      toast.error('Không thể tải chi tiết Plant Guide');
+      toast.error('Failed to load Plant Guide details');
       return;
     }
 
@@ -102,13 +101,13 @@ export default function PlantGuideManagementPageClient() {
     });
 
     if (success) {
-      toast.success(editingData ? 'Cập nhật Plant Guide thành công' : 'Tạo Plant Guide thành công');
+      // toast.success(editingData ? 'Plant Guide updated successfully' : 'Plant Guide created successfully');
       setFormOpen(false);
       setEditingData(undefined);
       return;
     }
 
-    toast.error('Không thể lưu Plant Guide');
+    // toast.error('Failed to save Plant Guide');
   }, [editingData, savePlantGuide]);
 
   const confirmDelete = useCallback(async () => {
@@ -118,13 +117,13 @@ export default function PlantGuideManagementPageClient() {
 
     const success = await deletePlantGuide(deleteTarget.id);
     if (success) {
-      toast.success('Xóa Plant Guide thành công');
+      toast.success('Plant Guide deleted successfully');
       setDeleteOpen(false);
       setDeleteTarget(null);
       return;
     }
 
-    toast.error('Không thể xóa Plant Guide');
+    toast.error('Failed to delete Plant Guide');
   }, [deletePlantGuide, deleteTarget]);
 
   const handlePlantSearch = useCallback(async (keyword: string) => {
@@ -152,11 +151,11 @@ export default function PlantGuideManagementPageClient() {
   return (
     <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', p: 4 }}>
       <ManagementHeader
-        title="Quản Lý thông tin chăm sóc cây trồng"
-        description="Quản lý danh sách các gợi ý chăm sóc cây do admin tạo ra."
+        title="Plant Care Guide Management"
+        description="Manage the list of plant care recommendations created by admins."
         entityLabel="Plant Guide"
         count={pagination.totalCount}
-        actionLabel="Tạo hướng dẫn mới"
+        actionLabel="Create New Guide"
         onAction={handleCreate}
       />
 

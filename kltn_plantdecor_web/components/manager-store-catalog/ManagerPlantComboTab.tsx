@@ -41,8 +41,9 @@ import {
   assembleManagerPlantCombo,
   decomposeManagerPlantCombo,
   getManagerPlantCombos,
+  getCompatiblePlantCombosForNursery,
 } from '@/lib/api/managerStoreCatalogService';
-import { getAdminPlantCombos } from '@/lib/api/adminPlantCombosService';
+// import { getAdminPlantCombos } from '@/lib/api/adminPlantCombosService';
 import { formatCurrency } from '@/lib/utils/formatUtil';
 
 interface PaginationState {
@@ -163,11 +164,10 @@ export default function ManagerPlantComboTab() {
     setImportOptionsLoading(true);
 
     try {
-      const response = await getAdminPlantCombos({
-        PageNumber: 1,
-        PageSize: 1000,
-      }, true);
+      const response = await getCompatiblePlantCombosForNursery(false);
+      console.log('Raw response for compatible combos:', response);
       const payload = getPayload<PlantComboListPayload>(response);
+      console.log('Fetched compatible combos for import:', payload);
       const activeItems = (payload?.items ?? []).filter((combo) => combo.isActive);
       setImportOptions(activeItems);
       return activeItems;
@@ -265,21 +265,21 @@ export default function ManagerPlantComboTab() {
         </Stack>
 
         <Stack direction="row" spacing={1}>
-          <Button
+          {/* <Button
             startIcon={<AutorenewIcon />}
             variant="outlined"
             onClick={() => void fetchCombos()}
             disabled={loading}
           >
             Refresh
-          </Button>
+          </Button> */}
           <Button
             startIcon={<AddIcon />}
             variant="contained"
             onClick={() => void handleOpenImportDialog()}
             sx={{ backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)' }}
           >
-            Nhap combo
+            Import Combo
           </Button>
         </Stack>
       </Stack>
@@ -295,7 +295,7 @@ export default function ManagerPlantComboTab() {
           <TableHead sx={{ backgroundColor: '#f4fff8' }}>
             <TableRow>
               <TableCell sx={{ fontWeight: 700 }}>ID</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Combo Code</TableCell>
+              {/* <TableCell sx={{ fontWeight: 700 }}>Combo Code</TableCell> */}
               <TableCell sx={{ fontWeight: 700 }}>Combo Name</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>Combo Type</TableCell>
               <TableCell sx={{ fontWeight: 700 }} align="right">
@@ -330,7 +330,7 @@ export default function ManagerPlantComboTab() {
               items.map((item) => (
                 <TableRow key={item.id} hover>
                   <TableCell>{item.id}</TableCell>
-                  <TableCell>{item.comboCode}</TableCell>
+                  {/* <TableCell>{item.comboCode}</TableCell> */}
                   <TableCell>{item.comboName}</TableCell>
                   <TableCell>{item.comboTypeName}</TableCell>
                   <TableCell align="right">{formatCurrency(item.price, 'vi')}</TableCell>
@@ -352,7 +352,7 @@ export default function ManagerPlantComboTab() {
                       onClick={() => handleOpenDecomposeDialog(item)}
                       disabled={item.quantity <= 0}
                     >
-                      Phan ra
+                      Decompose
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -373,7 +373,7 @@ export default function ManagerPlantComboTab() {
       </TableContainer>
 
       <Dialog open={importOpen} onClose={() => setImportOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>Nhap combo vao ton kho</DialogTitle>
+        <DialogTitle>Import Combo</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <FormControl fullWidth size="small">
@@ -436,7 +436,7 @@ export default function ManagerPlantComboTab() {
       </Dialog>
 
       <Dialog open={decomposeOpen} onClose={() => setDecomposeOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>Phan ra combo ton kho</DialogTitle>
+        <DialogTitle>Decompose Combo</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <Typography variant="body2" color="text.secondary">

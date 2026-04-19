@@ -11,7 +11,6 @@ import {
 import {
   Assignment,
   Chat,
-  CheckCircle,
   Star,
 } from '@mui/icons-material';
 import { PieChart } from '@mui/x-charts/PieChart';
@@ -143,10 +142,10 @@ export default function StaffTasksDashboard() {
         {/* Service Status Pie Chart */}
           <Paper sx={{ p: 3, height: '100%' }}>
             <Typography variant="h6" fontWeight="bold" gutterBottom>
-              Trạng Thái Đơn Dịch Vụ
+              Status Service Order
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Phân bổ trạng thái đơn đăng ký dịch vụ
+              Distribution of service orders by status
             </Typography>
             <Box
               sx={{

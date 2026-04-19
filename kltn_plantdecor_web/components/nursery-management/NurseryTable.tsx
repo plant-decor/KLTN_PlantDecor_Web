@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import {
@@ -59,16 +59,16 @@ export default function NurseryTable({
           <TableHead sx={{ backgroundColor: 'var(--primary)' }}>
             <TableRow>
               <TableCell sx={{ fontWeight: 600 }}>ID</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Tên vựa</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Quản lý</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Địa chỉ</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>SĐT</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Nursery Name</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Manager</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Address</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Phone</TableCell>
               <TableCell sx={{ fontWeight: 600 }} align="center">
-                Trạng thái
+                Status
               </TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Ngày tạo</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Created At</TableCell>
               <TableCell sx={{ fontWeight: 600 }} align="center">
-                Hành động
+                Actions
               </TableCell>
             </TableRow>
           </TableHead>
@@ -76,13 +76,13 @@ export default function NurseryTable({
             {loading ? (
               <TableRow>
                 <TableCell colSpan={8} align="center" sx={{ py: 3 }}>
-                  <Typography color="text.secondary">Đang tải dữ liệu...</Typography>
+                  <Typography color="text.secondary">Loading data...</Typography>
                 </TableCell>
               </TableRow>
             ) : nurseries.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} align="center" sx={{ py: 3 }}>
-                  <Typography color="text.secondary">Không có dữ liệu vựa</Typography>
+                  <Typography color="text.secondary">No nursery data available</Typography>
                 </TableCell>
               </TableRow>
             ) : (
@@ -104,12 +104,12 @@ export default function NurseryTable({
                   <TableCell>{formatDateTime(nursery.createdAt)}</TableCell>
                   <TableCell align="center">
                     <Stack direction="row" spacing={0.5} justifyContent="center">
-                      <Tooltip title="Chỉnh sửa vựa">
+                      <Tooltip title="Edit nursery">
                         <IconButton size="small" color="primary" onClick={() => onEdit(nursery)}>
                           <Edit fontSize="small" />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title={nursery.isActive ? 'Ngưng hoạt động' : 'Kích hoạt'}>
+                      <Tooltip title={nursery.isActive ? 'Deactivate' : 'Activate'}>
                         <IconButton
                           size="small"
                           color={nursery.isActive ? 'success' : 'default'}

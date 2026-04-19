@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -9,12 +9,9 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Stack,
   Typography,
 } from '@mui/material';
-import { Add } from '@mui/icons-material';
 import { toast } from 'react-toastify';
-import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 import NurseryTable from './NurseryTable';
 import NurseryFormDialog from './NurseryFormDialog';
 import { useAdminNurseries } from '@/lib/api/admin/useAdminNurseries';
@@ -113,19 +110,17 @@ export default function NurseryManagementPageClient() {
 
   return (
     <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', p: 4 }}>
-      {/* Header */}
       <ManagementHeader
-        title="Quản Lý Vựa Cây"
-        description="Quản lý dữ liệu vựa cây, bao gồm tạo mới, chỉnh sửa và thay đổi trạng thái hoạt động của vựa."
-        entityLabel="vựa"
+        title="Nursery Management"
+        description="Manage nursery data, including creating, editing, and changing nursery activity status."
+        entityLabel="nursery"
         count={pagination.totalCount}
-        actionLabel="Tạo vựa mới"
+        actionLabel="Create New Nursery"
         onAction={handleCreate}
       />
 
       {error && (
         <Alert severity="error" onClose={clearError} sx={{ mb: 2 }}>
-          {error}
           {error}
         </Alert>
       )}
@@ -154,18 +149,18 @@ export default function NurseryManagementPageClient() {
       />
 
       <Dialog open={toggleOpen} onClose={() => setToggleOpen(false)}>
-        <DialogTitle>Xác nhận đổi trạng thái</DialogTitle>
+        <DialogTitle>Confirm Status Change</DialogTitle>
         <DialogContent>
           <Typography>
             {toggleTarget
-              ? `Bạn có muốn ${toggleTarget.isActive ? 'ngưng hoạt động' : 'kích hoạt'} vựa này không?`
-              : 'Bạn có muốn đổi trạng thái vựa này không?'}
+              ? `Do you want to ${toggleTarget.isActive ? 'deactivate' : 'activate'} this nursery?`
+              : 'Do you want to change this nursery status?'}
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setToggleOpen(false)}>Hủy</Button>
+          <Button onClick={() => setToggleOpen(false)}>Cancel</Button>
           <Button onClick={confirmToggle} variant="contained" disabled={saving} className="bg-primary!">
-            Xác nhận
+            Confirm
           </Button>
         </DialogActions>
       </Dialog>

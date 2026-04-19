@@ -19,7 +19,6 @@ import {
   Chip,
 } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
-import StarIcon from "@mui/icons-material/Star";
 import { CaretakerInfo } from "@/types/service.types";
 import { get } from '@/lib/api/apiService';
 

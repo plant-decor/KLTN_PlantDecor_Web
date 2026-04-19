@@ -1,6 +1,7 @@
 'use client';
 
 import { Chip } from '@mui/material';
+import type { ChipProps } from '@mui/material';
 import { ServiceRegistrationStatus } from '@/types/service.types';
 import { useTranslations } from 'next-intl';
 
@@ -10,9 +11,11 @@ interface ServiceStatusChipProps {
   variant?: 'outlined' | 'filled';
 }
 
+type TranslationFunction = (key: string) => string;
+
 export const getStatusColor = (status: ServiceRegistrationStatus | number) => {
   if (typeof status === 'number') {
-    const colors: Record<number, any> = {
+    const colors: Record<number, ChipProps['color']> = {
       1: 'warning',
       2: 'info',
       3: 'primary',
@@ -24,7 +27,7 @@ export const getStatusColor = (status: ServiceRegistrationStatus | number) => {
     return colors[status] || 'default';
   }
 
-  const colors: Record<ServiceRegistrationStatus, any> = {
+  const colors: Record<ServiceRegistrationStatus, ChipProps['color']> = {
     [ServiceRegistrationStatus.PENDING_CONFIRMATION]: 'warning',
     [ServiceRegistrationStatus.CONFIRMED]: 'info',
     [ServiceRegistrationStatus.REJECTED]: 'error',
@@ -35,7 +38,7 @@ export const getStatusColor = (status: ServiceRegistrationStatus | number) => {
   return colors[status] || 'default';
 };
 
-export const getStatusLabel = (status: ServiceRegistrationStatus | number, t: any) => {
+export const getStatusLabel = (status: ServiceRegistrationStatus | number, t: TranslationFunction) => {
   if (typeof status === 'number') {
     const labels: Record<number, string> = {
       1: t('pendingApproval'),

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import {
   Box,
@@ -27,7 +27,6 @@ import {
   managerTopSellingPlants,
 } from '@/data/dashboardMockData';
 
-// Helper function to format currency
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('vi-VN', {
     style: 'currency',
@@ -35,13 +34,11 @@ const formatCurrency = (value: number) => {
   }).format(value);
 };
 
-// Helper function to format date
 const formatDate = (dateStr: string) => {
   const date = new Date(dateStr);
   return `${date.getDate()}/${date.getMonth() + 1}`;
 };
 
-// KPI Card Component
 const StatCard = ({
   title,
   value,
@@ -88,31 +85,26 @@ const StatCard = ({
 );
 
 export default function StoreMetricsPage() {
-  // Prepare data for Revenue Line Chart
   const revenueDates = managerRevenueByDate.map((item) => formatDate(item.date));
-  const revenueValues = managerRevenueByDate.map((item) => item.revenue / 1000000); // Convert to millions
+  const revenueValues = managerRevenueByDate.map((item) => item.revenue / 1000000);
 
-  // Prepare data for Order Status Pie Chart
   const orderStatusData = [
-    { id: 'pending', value: orderStatusDistribution.pending, label: 'Chờ xử lý' },
-    { id: 'processing', value: orderStatusDistribution.processing, label: 'Đang xử lý' },
-    { id: 'shipping', value: orderStatusDistribution.shipping, label: 'Đang giao' },
-    { id: 'completed', value: orderStatusDistribution.completed, label: 'Hoàn thành' },
-    { id: 'cancelled', value: orderStatusDistribution.cancelled, label: 'Đã hủy' },
+    { id: 'pending', value: orderStatusDistribution.pending, label: 'Pending' },
+    { id: 'processing', value: orderStatusDistribution.processing, label: 'Processing' },
+    { id: 'shipping', value: orderStatusDistribution.shipping, label: 'Shipping' },
+    { id: 'completed', value: orderStatusDistribution.completed, label: 'Completed' },
+    { id: 'cancelled', value: orderStatusDistribution.cancelled, label: 'Cancelled' },
   ];
 
-  // Prepare data for Top Selling Plants Bar Chart
   const plantNames = managerTopSellingPlants.map((item) => item.name);
   const plantQuantities = managerTopSellingPlants.map((item) => item.quantity);
 
   return (
     <Box sx={{ p: 3 }}>
-      {/* Page Title */}
       <Typography variant="h4" fontWeight="bold" gutterBottom sx={{ mb: 3 }}>
-        Thống Kê Cửa Hàng
+        Store Metrics
       </Typography>
 
-      {/* Row 1: KPI Cards */}
       <Box
         sx={{
           display: 'grid',
@@ -126,56 +118,55 @@ export default function StoreMetricsPage() {
         }}
       >
         <StatCard
-          title="Tổng Doanh Thu"
+          title="Total Revenue"
           value={formatCurrency(managerStoreStats.totalRevenue)}
           icon={<AttachMoneyIcon sx={{ color: '#2e7d32', fontSize: 32 }} />}
           color="#2e7d32"
-          subtitle="Tháng này"
+          subtitle="This month"
         />
         <StatCard
-          title="Tổng Đơn Hàng"
+          title="Total Orders"
           value={managerStoreStats.totalOrders.toLocaleString()}
           icon={<ShoppingCartIcon sx={{ color: '#1976d2', fontSize: 32 }} />}
           color="#1976d2"
-          subtitle="Đơn hàng"
+          subtitle="Orders"
         />
         <StatCard
-          title="Giá Trị Trung Bình"
+          title="Average Order Value"
           value={formatCurrency(managerStoreStats.averageOrderValue)}
           icon={<ShowChartIcon sx={{ color: '#ed6c02', fontSize: 32 }} />}
           color="#ed6c02"
-          subtitle="Mỗi đơn hàng"
+          subtitle="Per order"
         />
         <StatCard
-          title="Tốc Độ Tăng Trưởng"
+          title="Growth Rate"
           value={`+${managerStoreStats.growthRate}%`}
           icon={<TrendingUpIcon sx={{ color: '#9c27b0', fontSize: 32 }} />}
           color="#9c27b0"
-          subtitle="So với tháng trước"
+          subtitle="Compared to last month"
         />
       </Box>
 
-      {/* Row 2: Revenue Line Chart - Full Width */}
       <Card sx={{ mb: 3, boxShadow: 2 }}>
         <CardContent>
           <Typography variant="h6" fontWeight="bold" gutterBottom>
-            Doanh Thu Theo Thời Gian (30 ngày gần nhất)
+            Revenue Over Time (Last 30 Days)
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Biểu đồ xu hướng doanh thu hàng ngày (đơn vị: triệu VNĐ)
+            Daily revenue trend (unit: million VND)
           </Typography>
           <LineChart
             xAxis={[
               {
                 data: revenueDates,
                 scaleType: 'point',
-                label: 'Ngày',
+                label: 'Day',
               },
             ]}
             series={[
               {
                 data: revenueValues,
-                label: 'Doanh thu (triệu VNĐ)',
+                label: 'Revenue (million VND)',
                 color: '#2e7d32',
                 area: true,
                 showMark: true,
@@ -188,7 +179,6 @@ export default function StoreMetricsPage() {
         </CardContent>
       </Card>
 
-      {/* Row 3: Order Status Donut Chart (50%) + Top Plants Bar Chart (50%) */}
       <Box
         sx={{
           display: 'grid',
@@ -200,14 +190,13 @@ export default function StoreMetricsPage() {
           mb: 3,
         }}
       >
-        {/* Order Status Donut Chart */}
         <Card sx={{ boxShadow: 2 }}>
           <CardContent>
             <Typography variant="h6" fontWeight="bold" gutterBottom>
-              Tỷ Lệ Trạng Thái Đơn Hàng
+              Order Status Distribution
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Phân bổ đơn hàng theo trạng thái xử lý
+              Distribution of orders by processing status
             </Typography>
             <PieChart
               series={[
@@ -231,14 +220,13 @@ export default function StoreMetricsPage() {
           </CardContent>
         </Card>
 
-        {/* Top Selling Plants Bar Chart */}
         <Card sx={{ boxShadow: 2 }}>
           <CardContent>
             <Typography variant="h6" fontWeight="bold" gutterBottom>
-              Top 10 Cây Bán Chạy Nhất
+              Top 10 Best-Selling Plants
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Sản phẩm có số lượng bán cao nhất
+              Products with the highest sales volume
             </Typography>
             <BarChart
               yAxis={[
@@ -250,7 +238,7 @@ export default function StoreMetricsPage() {
               series={[
                 {
                   data: plantQuantities,
-                  label: 'Số lượng đã bán',
+                  label: 'Quantity sold',
                   color: '#1976d2',
                 },
               ]}
@@ -263,27 +251,26 @@ export default function StoreMetricsPage() {
         </Card>
       </Box>
 
-      {/* Additional: Detailed Table for Top Selling Plants */}
       <Card sx={{ boxShadow: 2 }}>
         <CardContent>
           <Typography variant="h6" fontWeight="bold" gutterBottom>
-            Chi Tiết Top Cây Bán Chạy
+            Best-Selling Plants Details
           </Typography>
           <TableContainer component={Paper} elevation={0}>
             <Table>
               <TableHead>
                 <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
                   <TableCell>
-                    <strong>Tên Cây</strong>
+                    <strong>Plant Name</strong>
                   </TableCell>
                   <TableCell align="right">
-                    <strong>Số Lượng Bán</strong>
+                    <strong>Quantity Sold</strong>
                   </TableCell>
                   <TableCell align="right">
-                    <strong>Doanh Thu</strong>
+                    <strong>Revenue</strong>
                   </TableCell>
                   <TableCell align="right">
-                    <strong>Giá Trung Bình</strong>
+                    <strong>Average Price</strong>
                   </TableCell>
                 </TableRow>
               </TableHead>
@@ -299,9 +286,7 @@ export default function StoreMetricsPage() {
                     <TableCell>{plant.name}</TableCell>
                     <TableCell align="right">{plant.quantity.toLocaleString()}</TableCell>
                     <TableCell align="right">{formatCurrency(plant.revenue)}</TableCell>
-                    <TableCell align="right">
-                      {formatCurrency(plant.revenue / plant.quantity)}
-                    </TableCell>
+                    <TableCell align="right">{formatCurrency(plant.revenue / plant.quantity)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

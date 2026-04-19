@@ -34,7 +34,7 @@ export default function LoginForm({
     e.preventDefault();
     setErrors({});
 
-    const result = await onSubmit(email, password);
+    await onSubmit(email, password);
   };
 
   return (
@@ -53,13 +53,13 @@ export default function LoginForm({
 
       {/* Form Container */}
       <div className="lg:w-[35%] w-full h-full relative flex flex-col justify-center items-center space-y-4 lg:space-y-5">
-        <Link href="/">
+        <Link href="/" className="border-none! block w-32 lg:w-44 h-10 lg:h-12 overflow-hidden absolute top-18 right-18">
           <Image
             src="/logo/logo-landscape.png"
             alt="Logo"
             width={160}
             height={160}
-            className="absolute scale-x-200 top-8 right-18 w-32 h-32 object-contain"
+            className="w-full h-full object-cover scale-[1.25] lg:scale-[1.35] border-none!"
           />
         </Link>
 
@@ -86,6 +86,7 @@ export default function LoginForm({
                 {t('email')}
               </span>
               <input
+              required
                 id="email"
                 type="email"
                 value={email}
@@ -116,6 +117,7 @@ export default function LoginForm({
               </span>
               <input
                 id="password"
+                required
                 type={isPasswordVisible ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

@@ -18,6 +18,7 @@ import CheckoutPayment from '@/components/checkout/CheckoutPayment';
 import CheckoutReview from '@/components/checkout/CheckoutReview';
 import CheckoutComplete from '@/components/checkout/CheckoutComplete';
 import { get } from '@/lib/api/apiService';
+import { isValidPhoneNumber10Digits } from '@/lib/utils/phoneNumber';
 import {
   fetchCartItems,
   type CartApiItem,
@@ -39,15 +40,18 @@ interface CheckoutPageClientProps {
 
 const toCartItem = (item: CartApiItem): CartItem => ({
   cartId: item.cartId,
-  commonPlantId: item.commonPlantId,
+  commonPlantId: item.commonPlantId ?? item.plantId ?? null,
+  plantId: item.plantId ?? item.commonPlantId ?? null,
+  materialId: item.materialId ?? item.nurseryMaterialId ?? null,
+  plantComboId: item.plantComboId ?? item.nurseryPlantComboId ?? null,
   createdAt: item.createAt,
   id: item.id,
-  // nurseryMaterialId: null,
-  // nurseryPlantComboId: null,
+  nurseryMaterialId: item.nurseryMaterialId ?? item.materialId ?? null,
+  nurseryPlantComboId: item.nurseryPlantComboId ?? item.plantComboId ?? null,
   price: item.price,
   productName: item.productName,
   quantity: item.quantity,
-  subtotal: item.subtotal,
+  subtotal: item.subTotal ?? item.subtotal,
   imageUrl: item.imageUrl,
 });
 
@@ -79,6 +83,7 @@ export default function CheckoutPageClient({
   const searchParams = useSearchParams();
   const locale = useLocale();
   const tCheckout = useTranslations('checkout');
+  const tError = useTranslations('profile');
   const tCommon = useTranslations('common');
   const STEPS = [
     tCheckout('shipping'),
@@ -283,6 +288,11 @@ export default function CheckoutPageClient({
         return;
       }
 
+      if (!isValidPhoneNumber10Digits(phone)) {
+        setError(tError('phoneNumberInvalid'));
+        return;
+      }
+
       const basePayload = {
         address,
         phone,
@@ -440,7 +450,6 @@ export default function CheckoutPageClient({
         {activeStep === 1 && (
           <CheckoutReview
             checkoutData={checkoutData}
-            userId={userId}
             cartId={cartId}
             createdOrder={createdOrder}
           />

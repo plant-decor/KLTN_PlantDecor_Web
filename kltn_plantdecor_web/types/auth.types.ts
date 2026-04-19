@@ -118,6 +118,7 @@ export interface UserProfile extends CustomerProfile {
 
 export interface UpdateUserProfileRequest {
   userName: string;
+  phoneNumber: string;
   fullName: string;
   address: string;
   birthYear: number;
@@ -125,4 +126,55 @@ export interface UpdateUserProfileRequest {
   latitude: number;
   longitude: number;
   receiveNotifications: boolean;
+}
+
+export interface CreateStaffRequest {
+  email: string;
+  password: string;
+  confirmPassword: string;
+  username: string;
+  fullName: string;
+  phoneNumber: string;
+}
+
+export interface CreateStaffResponse {
+  user: {
+    id: number;
+    email: string;
+    username: string;
+    phoneNumber: string;
+    createdAt: string;
+    updatedAt: string;
+    status: string;
+    isVerified: boolean;
+    role: string;
+    nurseryId: number;
+    nurseryName: string;
+    fullName: string;
+    receiveNotifications: boolean;
+  };
+}
+
+export interface CreateCaretakerRequest {
+  email: string;
+  password: string;
+  confirmPassword: string;
+  username: string;
+  fullName: string;
+  phoneNumber: string;
+  specializationIds: number[];
+}
+
+export interface CreateCaretakerResponse {
+  id: number;
+  username: string;
+  email: string;
+  phoneNumber: string;
+  avatarUrl: string | null;
+  status: number;
+  specializations: Array<{
+    id: number;
+    name: string;
+    description: string;
+  }>;
 }

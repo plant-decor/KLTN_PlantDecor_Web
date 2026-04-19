@@ -37,10 +37,10 @@ export default function FullscreenImageModal({
   const [zoom, setZoom] = useState(1);
   const maxSteps = images.length;
 
-  useEffect(() => {
+  const handleDialogEnter = useCallback(() => {
     setActiveStep(initialIndex);
     setZoom(1);
-  }, [initialIndex, isOpen]);
+  }, [initialIndex]);
 
   const handleNext = useCallback(() => {
     setActiveStep((prevActiveStep) => (prevActiveStep + 1) % maxSteps);
@@ -95,6 +95,7 @@ export default function FullscreenImageModal({
     <Dialog
       open={isOpen}
       onClose={onClose}
+      TransitionProps={{ onEnter: handleDialogEnter }}
       maxWidth="xl"
       fullWidth
       fullScreen={false}
@@ -171,15 +172,14 @@ export default function FullscreenImageModal({
               <Image
                 src={images[activeStep]}
                 alt={`${alt} ${activeStep + 1}`}
-                layout="fill"
-                loading='eager'
+                fill
+                sizes="100vw"
                 className="object-contain"
                 style={{
                   transform: `scale(${zoom})`,
                   transition: 'transform 0.2s ease-in-out',
                   cursor: zoom > 1 ? 'grab' : 'pointer',
                 }}
-                priority
                 quality={90}
               />
             </div>

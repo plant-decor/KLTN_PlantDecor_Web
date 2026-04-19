@@ -11,6 +11,22 @@ import type {
   AdminPlantGuideUpsertRequest,
 } from '@/types/admin-plant-guide.types';
 
+export interface SystemEnumOption {
+  value: number;
+  name: string;
+}
+
+export interface SystemEnumGroup {
+  enumName: string;
+  values: SystemEnumOption[];
+}
+
+interface RoomDesignEnumPayload {
+  roomTypes: SystemEnumOption[];
+  roomStyles: SystemEnumOption[];
+  lightRequirements: SystemEnumOption[];
+}
+
 type WrappedResponse<T> = ResponseModel<T> | T;
 
 const getResponsePayload = <T,>(response: WrappedResponse<T>): T | undefined => {
@@ -55,7 +71,7 @@ export const createAdminPlantGuide = async (
   data: AdminPlantGuideUpsertRequest,
   loading = true
 ): Promise<ResponseModel<AdminPlantGuideDetail>> => {
-  return apiClient.post('/admin/PlantGuides', data, loading, { showToast: false, showErrorToast: false });
+  return apiClient.post('/admin/PlantGuides', data, loading, { showToast: true, showErrorToast: true });
 };
 
 export const updateAdminPlantGuide = async (
@@ -63,7 +79,7 @@ export const updateAdminPlantGuide = async (
   data: AdminPlantGuideUpsertRequest,
   loading = true
 ): Promise<ResponseModel<AdminPlantGuideDetail>> => {
-  return apiClient.patch(`/admin/PlantGuides/${id}`, data, loading, { showToast: false, showErrorToast: false });
+  return apiClient.patch(`/admin/PlantGuides/${id}`, data, loading, { showToast: true, showErrorToast: true });
 };
 
 export const deleteAdminPlantGuide = async (
@@ -81,6 +97,65 @@ export const getLightRequirementOptions = async (
 
 const normalizeLightRequirementGroup = (group?: AdminLightRequirementGroup | null): AdminLightRequirementOption[] => {
   return group?.values ?? [];
+};
+
+const normalizeSystemEnumOptions = (raw: unknown): SystemEnumOption[] => {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+
+  return raw
+    .map((item) => {
+      if (!item || typeof item !== 'object') {
+        return null;
+      }
+
+      const option = item as { value?: unknown; name?: unknown };
+      const value = Number(option.value);
+      if (!Number.isFinite(value) || typeof option.name !== 'string') {
+        return null;
+      }
+
+      return {
+        value,
+        name: option.name,
+      };
+    })
+    .filter((item): item is SystemEnumOption => Boolean(item));
+};
+
+export const getRoomDesignEnums = async (loading = true): Promise<ResponseModel<SystemEnumGroup[]>> => {
+  return apiClient.get('/system/enums/room-design', undefined, loading, {
+    showToast: false,
+    showErrorToast: false,
+  });
+};
+
+export const fetchRoomDesignEnumOptions = async (loading = true): Promise<RoomDesignEnumPayload> => {
+  const response = await getRoomDesignEnums(loading);
+  const payload = getResponsePayload(response) ?? [];
+
+  const groups = Array.isArray(payload) ? payload : [];
+  const groupMap = new Map<string, SystemEnumOption[]>();
+
+  groups.forEach((group) => {
+    if (!group || typeof group !== 'object') {
+      return;
+    }
+
+    const candidate = group as { enumName?: unknown; values?: unknown };
+    if (typeof candidate.enumName !== 'string') {
+      return;
+    }
+
+    groupMap.set(candidate.enumName, normalizeSystemEnumOptions(candidate.values));
+  });
+
+  return {
+    roomTypes: groupMap.get('RoomType') ?? [],
+    roomStyles: groupMap.get('RoomStyle') ?? [],
+    lightRequirements: groupMap.get('LightRequirement') ?? [],
+  };
 };
 
 export const fetchLightRequirementOptions = async (loading = true): Promise<AdminLightRequirementOption[]> => {

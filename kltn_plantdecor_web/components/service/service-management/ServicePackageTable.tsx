@@ -17,6 +17,7 @@ import {
 } from "@mui/material";
 import type { AdminCareServicePackageListItem } from "@/types/admin-service-package.types";
 import { toCurrency } from "./types";
+import { hoverGlowStyle } from "@/lib/styles/buttonStyles";
 
 interface ServicePackageTableProps {
   packages: AdminCareServicePackageListItem[];
@@ -47,25 +48,25 @@ export default function ServicePackageTable({
             <TableHead sx={{ backgroundColor: "var(--primary)" }}>
               <TableRow>
                 <TableCell sx={{ fontWeight: 700 }}>ID</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Tên gói</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Loại dịch vụ</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Package Name</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Service Type</TableCell>
                 <TableCell sx={{ fontWeight: 700 }} align="right">
-                  Số lần/tuần
+                  Visits/Week
                 </TableCell>
                 <TableCell sx={{ fontWeight: 700 }} align="right">
-                  Thời lượng (ngày)
+                  Duration (Days)
                 </TableCell>
                 <TableCell sx={{ fontWeight: 700 }} align="right">
-                  Diện tích
+                  Area Limit (m²)
                 </TableCell>
                 <TableCell sx={{ fontWeight: 700 }} align="right">
-                  Đơn giá
+                  Unit Price
                 </TableCell>
                 <TableCell sx={{ fontWeight: 700 }} align="center">
-                  Trạng thái
+                  Status
                 </TableCell>
                 <TableCell sx={{ fontWeight: 700 }} align="center">
-                  Hành động
+                  Actions
                 </TableCell>
               </TableRow>
             </TableHead>
@@ -73,12 +74,12 @@ export default function ServicePackageTable({
               {packages.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={9} align="center" sx={{ py: 5 }}>
-                    Không có gói dịch vụ nào.
+                    No service packages available.
                   </TableCell>
                 </TableRow>
               ) : (
                 packages.map((item) => (
-                  <TableRow key={item.id} hover sx={{ opacity: item.isActive ? 1 : 0.65 }}>
+                  <TableRow key={item.id} hover sx={{ opacity: item.isActive ? 1 : 0.65, ...hoverGlowStyle }}>
                     <TableCell>{item.id}</TableCell>
                     <TableCell>
                       <Typography variant="body2" fontWeight={600}>
@@ -101,21 +102,21 @@ export default function ServicePackageTable({
                       <Chip
                         size="small"
                         color={item.isActive ? "success" : "default"}
-                        label={item.isActive ? "Đang hoạt động" : "Đã vô hiệu hóa"}
+                        label={item.isActive ? "Active" : "Inactive"}
                       />
                     </TableCell>
                     <TableCell align="center">
-                      <Tooltip title="Xem">
+                      <Tooltip title="View Details">
                         <IconButton size="small" color="info" onClick={() => onView(item.id)}>
                           <VisibilityOutlined fontSize="small" />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title="Sửa">
+                      <Tooltip title="Edit">
                         <IconButton size="small" color="primary" onClick={() => onEdit(item.id)}>
                           <EditOutlined fontSize="small" />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title={item.isActive ? "Vô hiệu hóa" : "Đã inactive"}>
+                      <Tooltip title={item.isActive ? "Deactivate" : "Activate"}>
                         <span>
                           <IconButton
                             size="small"

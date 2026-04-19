@@ -17,7 +17,6 @@ import {
   TextField,
   Divider,
   Alert,
-  CircularProgress,
   Grid,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
@@ -29,6 +28,7 @@ import {
   AddOnService,
   ServiceProgress,
 } from "@/types/service.types";
+import { formatCurrency } from "@/lib/utils/formatUtil";
 
 interface ServiceProgressDetailProps {
   registration: ServiceRegistration | null;
@@ -45,7 +45,6 @@ export const ServiceProgressDetail: React.FC<ServiceProgressDetailProps> = ({
   registration,
   progressLogs,
   addOns,
-  loading = false,
   onApproveAddOn,
   onRejectAddOn,
   onGenerateInvoice,
@@ -163,33 +162,33 @@ export const ServiceProgressDetail: React.FC<ServiceProgressDetailProps> = ({
 
         {/* Add-ons Section */}
         <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
-          ➕ Dịch Vụ Phát Sinh ({pendingAddOns.length} chờ duyệt)
+          Add-ons ({pendingAddOns.length} pending approval)
         </Typography>
 
         {addOns.length === 0 ? (
           <Alert severity="info" sx={{ mb: 3 }}>
-            Không có dịch vụ phát sinh
+            No add-ons available
           </Alert>
         ) : (
           <TableContainer component={Paper} sx={{ mb: 3 }}>
             <Table>
               <TableHead sx={{ backgroundColor: "#f5f5f5" }}>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: "bold" }}>Tên Dịch Vụ</TableCell>
+                  <TableCell sx={{ fontWeight: "bold" }}>Service Name</TableCell>
                   <TableCell align="center" sx={{ fontWeight: "bold" }}>
-                    Số Lượng
+                    Quantity
                   </TableCell>
                   <TableCell align="right" sx={{ fontWeight: "bold" }}>
-                    Giá (₫)
+                    Price (₫)
                   </TableCell>
                   <TableCell align="right" sx={{ fontWeight: "bold" }}>
-                    Tổng (₫)
+                    Total (₫)
                   </TableCell>
                   <TableCell align="center" sx={{ fontWeight: "bold" }}>
-                    Trạng Thái
+                    Status
                   </TableCell>
                   <TableCell align="center" sx={{ fontWeight: "bold" }}>
-                    Hành Động
+                    Actions
                   </TableCell>
                 </TableRow>
               </TableHead>
@@ -217,10 +216,10 @@ export const ServiceProgressDetail: React.FC<ServiceProgressDetailProps> = ({
                       <Chip
                         label={
                           addon.status === "PROPOSED"
-                            ? "Chờ Duyệt"
+                            ? "Pending Approval"
                             : addon.status === "APPROVED"
-                            ? "Đã Duyệt"
-                            : "Từ Chối"
+                            ? "Approved"
+                            : "Rejected"
                         }
                         color={
                           addon.status === "PROPOSED"
@@ -265,14 +264,14 @@ export const ServiceProgressDetail: React.FC<ServiceProgressDetailProps> = ({
 
         {/* Invoice Summary */}
         <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
-          💵 Tóm Tắt Hóa Đơn
+          Invoice Summary
         </Typography>
 
         <Grid container spacing={2} sx={{ mb: 3 }}>
           <Grid size={{ xs: 12, sm: 6 }}>
             <Box sx={{ p: 2, bgcolor: "#f5f5f5", borderRadius: 1 }}>
               <Typography variant="caption" color="textSecondary">
-                Giá Cơ Bản (Gói Dịch Vụ)
+                Base Price (Service Package)
               </Typography>
               <Typography variant="h6" sx={{ fontWeight: "bold" }}>
                 {totalBaseAmount.toLocaleString("vi-VN")} ₫
@@ -283,7 +282,7 @@ export const ServiceProgressDetail: React.FC<ServiceProgressDetailProps> = ({
           <Grid size={{ xs: 12, sm: 6 }}>
             <Box sx={{ p: 2, bgcolor: "#e8f5e9", borderRadius: 1 }}>
               <Typography variant="caption" color="textSecondary">
-                Dịch Vụ Phát Sinh (Đã Duyệt)
+                Add-ons (Approved)
               </Typography>
               <Typography variant="h6" sx={{ fontWeight: "bold", color: "success.main" }}>
                 {totalAddOnAmount.toLocaleString("vi-VN")} ₫
@@ -294,10 +293,10 @@ export const ServiceProgressDetail: React.FC<ServiceProgressDetailProps> = ({
           <Grid size={{ xs: 12 }}>
             <Box sx={{ p: 2, bgcolor: "primary.lighter", borderRadius: 1 }}>
               <Typography variant="caption" color="textSecondary">
-                Tổng Cộng
+                Total Amount Due
               </Typography>
               <Typography variant="h5" sx={{ fontWeight: "bold", color: "primary.main" }}>
-                {totalAmount.toLocaleString("vi-VN")} ₫
+                {formatCurrency(totalAmount, "vi-VN")}
               </Typography>
             </Box>
           </Grid>
@@ -313,7 +312,7 @@ export const ServiceProgressDetail: React.FC<ServiceProgressDetailProps> = ({
           onClick={handleGenerateInvoice}
           disabled={actionLoading}
         >
-          {actionLoading ? "Đang Tạo..." : "Xuất Hóa Đơn"}
+          {actionLoading ? "Creating..." : "Generate Invoice"}
         </Button>
       </Paper>
 
@@ -330,7 +329,7 @@ export const ServiceProgressDetail: React.FC<ServiceProgressDetailProps> = ({
         <Box sx={{ p: 3 }}>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
             <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-              Từ Chối Dịch Vụ Phát Sinh
+              Reject Add-on
             </Typography>
             <IconButton
               onClick={() => {
@@ -343,14 +342,14 @@ export const ServiceProgressDetail: React.FC<ServiceProgressDetailProps> = ({
           </Box>
 
           <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-            Vui lòng nhập lý do từ chối để thông báo cho khách hàng.
+            Please enter a reason for rejection to notify the customer.
           </Typography>
 
           <TextField
             fullWidth
             multiline
             rows={3}
-            placeholder="Ví dụ: Không phù hợp với nhu cầu hiện tại, giá quá cao..."
+            placeholder="e.g., Not suitable for current needs, price too high..."
             value={rejectReason}
             onChange={(e) => setRejectReason(e.target.value)}
             sx={{ mb: 2 }}
@@ -366,7 +365,7 @@ export const ServiceProgressDetail: React.FC<ServiceProgressDetailProps> = ({
               }}
               disabled={actionLoading}
             >
-              Huỷ
+              Cancel
             </Button>
             <Button
               fullWidth
@@ -375,7 +374,7 @@ export const ServiceProgressDetail: React.FC<ServiceProgressDetailProps> = ({
               onClick={handleRejectSubmit}
               disabled={actionLoading || !rejectReason.trim()}
             >
-              {actionLoading ? "Đang Xử Lý..." : "Xác Nhận"}
+              {actionLoading ? "Processing..." : "Confirm Rejection"}
             </Button>
           </Box>
         </Box>

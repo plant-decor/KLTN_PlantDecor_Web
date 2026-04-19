@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import {
   Dialog,
   DialogTitle,
@@ -13,6 +14,7 @@ import {
   Select,
   MenuItem,
   Box,
+  type SelectChangeEvent,
 } from '@mui/material';
 import { CloudUpload as CloudUploadIcon } from '@mui/icons-material';
 import type { PlantInstance } from '@/data/storeCatalogData';
@@ -30,46 +32,44 @@ export default function InstanceModal({
   onSave,
   instance,
 }: InstanceModalProps) {
+  const createEmptyInstance = (): PlantInstance => ({
+    id: '',
+    sku: '',
+    quantity: 0,
+    price: 0,
+    condition: 'good',
+    location: '',
+    dateAdded: new Date().toISOString().split('T')[0],
+    imageUrl: '',
+  });
+
   const [formData, setFormData] = useState<PlantInstance>(
-    instance || {
-      id: Math.random().toString(36).substr(2, 9),
-      sku: '',
-      quantity: 0,
-      price: 0,
-      condition: 'good',
-      location: '',
-      dateAdded: new Date().toISOString().split('T')[0],
-      imageUrl: '',
-    }
+    instance || createEmptyInstance()
   );
-  const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>(instance?.imageUrl || '');
 
   useEffect(() => {
     if (instance) {
-      setFormData(instance);
-      setImagePreview(instance.imageUrl || '');
-      setImageFile(null);
-    } else {
-      setFormData({
-        id: Math.random().toString(36).substr(2, 9),
-        sku: '',
-        quantity: 0,
-        price: 0,
-        condition: 'good',
-        location: '',
-        dateAdded: new Date().toISOString().split('T')[0],
-        imageUrl: '',
+      queueMicrotask(() => {
+        setFormData(instance);
+        setImagePreview(instance.imageUrl || '');
       });
-      setImagePreview('');
-      setImageFile(null);
+    } else {
+      queueMicrotask(() => {
+        setFormData(createEmptyInstance());
+        setImagePreview('');
+      });
     }
   }, [instance, open]);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | any
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent<string>
   ) => {
-    const { name, value } = e.target;
+    const { name, value } = e.target as { name?: string; value: string };
+    if (!name) {
+      return;
+    }
+
     setFormData((prev) => ({
       ...prev,
       [name]: name === 'quantity' || name === 'price' ? Number(value) : value,
@@ -79,7 +79,6 @@ export default function InstanceModal({
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setImageFile(file);
       // Create preview URL
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -95,7 +94,10 @@ export default function InstanceModal({
 
   const handleSave = () => {
     if (formData.sku && formData.location) {
-      onSave(formData);
+      onSave({
+        ...formData,
+        id: formData.id || `instance-${Date.now()}`,
+      });
     }
   };
 
@@ -176,9 +178,11 @@ export default function InstanceModal({
           </Button>
           {imagePreview && (
             <Box sx={{ mt: 2, textAlign: 'center' }}>
-              <img
+              <Image
                 src={imagePreview}
                 alt="Preview"
+                width={400}
+                height={200}
                 style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 8 }}
               />
             </Box>
@@ -187,8 +191,10 @@ export default function InstanceModal({
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSave} variant="contained">
-          {instance ? 'Update' : 'Add'}
+        <Button onClick={handleSave} variant="contained"
+        sx={{backgroundColor: 'var(--primary)'}}
+        >
+          {instance ? 'Cập nhật' : 'Thêm'}
         </Button>
       </DialogActions>
     </Dialog>

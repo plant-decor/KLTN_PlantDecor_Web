@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { EmailOutlined } from '@mui/icons-material';
 import Image from 'next/image';
+import Link from 'next/link';
 
 interface ForgotPasswordFormProps {
-  isVisible: boolean;
   onBack: () => void;
   onSubmit: (email: string) => Promise<void>;
   isLoading?: boolean;
@@ -15,7 +15,6 @@ interface ForgotPasswordFormProps {
 }
 
 export default function ForgotPasswordForm({
-  isVisible,
   onBack,
   onSubmit,
   isLoading = false,
@@ -51,13 +50,15 @@ export default function ForgotPasswordForm({
 
       {/* Form Container */}
       <div className="lg:w-[35%] w-full h-full relative flex flex-col justify-center items-center px-8 animate-fade-in-up">
+        <Link href="/" className="border-none! block w-32 lg:w-44 h-10 lg:h-12 overflow-hidden absolute top-18 right-18">
         <Image
           src="/logo/logo-landscape.png"
-          alt="Logo"
+          alt="Logo"  
           width={160}
           height={160}
-          className="absolute scale-x-200 top-8 right-18 w-32 h-32 object-contain"
+          className="w-full h-full object-cover scale-[1.25] lg:scale-[1.35] border-none!"
         />
+        </Link>
 
         <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-6">
           <h1 className="text-3xl font-semibold text-center mb-8">

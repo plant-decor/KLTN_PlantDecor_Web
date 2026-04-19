@@ -205,34 +205,27 @@ export default async function PlantStorePage({ params, searchParams }: PageProps
           <p className="text-xl text-gray-600">{t('subtitle')}</p>
         </div>
 
-        <div className="mb-6 md:hidden">
-          <details className="rounded-lg border border-gray-200 bg-white shadow-sm">
-            <summary className="cursor-pointer px-4 py-3 font-semibold text-gray-900">
-              {filterTexts.title}
-            </summary>
-            <div className="border-t border-gray-200 p-3">
-              <PlantStoreFilters
-                locale={locale}
-                pageSize={sharedPageSize}
-                requestBody={unifiedRequestBody}
-                categoryOptions={categoryOptions}
-                selectedCategories={selectedCategories}
-                sizeOptions={sizeOptions}
-                selectedSizes={selectedSizes}
-                placementTypeOptions={placementTypeOptions}
-                careLevelTypeOptions={careLevelTypeOptions}
-                seasonOptions={seasonOptions}
-                fengShuiElementOptions={fengShuiElementOptions}
-                nurseriesPayload={nurseriesPayload}
-                texts={filterTexts}
-                mobileMode
-              />
-            </div>
-          </details>
+        <div className="mb-6 lg:hidden">
+          <PlantStoreFilters
+            locale={locale}
+            pageSize={sharedPageSize}
+            requestBody={unifiedRequestBody}
+            categoryOptions={categoryOptions}
+            selectedCategories={selectedCategories}
+            sizeOptions={sizeOptions}
+            selectedSizes={selectedSizes}
+            placementTypeOptions={placementTypeOptions}
+            careLevelTypeOptions={careLevelTypeOptions}
+            seasonOptions={seasonOptions}
+            fengShuiElementOptions={fengShuiElementOptions}
+            nurseriesPayload={nurseriesPayload}
+            texts={filterTexts}
+            mobileMode
+          />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
-          <div className="hidden md:block md:col-span-1">
+        <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-8">
+          <div className="hidden lg:block lg:col-span-1">
             <PlantStoreFilters
               locale={locale}
               pageSize={sharedPageSize}

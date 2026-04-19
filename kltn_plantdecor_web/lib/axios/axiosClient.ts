@@ -2,12 +2,14 @@ import axios, { AxiosHeaders, type InternalAxiosRequestConfig } from "axios";
 import { useLoadingStore } from "@/lib/store/zustand";
 import { toast } from "react-toastify";
 import {
-  clearClientAccessToken,
+  clearClientAccessTokenState,
   getClientAccessToken,
   getClientRefreshToken,
   setClientAccessToken,
   setClientRefreshToken,
 } from "@/lib/axios/tokenStorage";
+import { refreshTokenAction } from "@/app/actions/authenticationActions";
+import { useAuthStore } from "@/lib/store/authStore";
 
 type AuthAwareRequestConfig = InternalAxiosRequestConfig & {
   showLoading?: boolean;
@@ -48,40 +50,6 @@ const redirectToLogin = () => {
   if (typeof window === "undefined" || isRedirectingToLogin) return;
   isRedirectingToLogin = true;
   window.location.replace(getLoginPath());
-};
-
-const resolveAccessToken = (raw: unknown): string | null => {
-  if (!raw || typeof raw !== "object") {
-    return null;
-  }
-
-  const candidate = raw as {
-    accessToken?: string;
-    token?: string;
-    payload?: { accessToken?: string; token?: string };
-  };
-
-  const token =
-    candidate.payload?.accessToken ||
-    candidate.payload?.token ||
-    candidate.accessToken ||
-    candidate.token;
-
-  return typeof token === "string" && token.trim() ? token : null;
-};
-
-const resolveRefreshToken = (raw: unknown): string | null => {
-  if (!raw || typeof raw !== "object") {
-    return null;
-  }
-
-  const candidate = raw as {
-    refreshToken?: string;
-    payload?: { refreshToken?: string };
-  };
-
-  const token = candidate.payload?.refreshToken || candidate.refreshToken;
-  return typeof token === "string" && token.trim() ? token : null;
 };
 
 const extractMessage = (raw: unknown): string | null => {
@@ -163,8 +131,10 @@ const tryRefreshAccessToken = async (forceRefresh = false): Promise<string | nul
     return existingToken;
   }
 
+  const authState = useAuthStore.getState();
+  const hasAuthContext = authState.isAuthenticated || !!authState.user;
   const refreshToken = getClientRefreshToken();
-  if (!refreshToken) {
+  if (!refreshToken && !hasAuthContext) {
     return null;
   }
 
@@ -182,35 +152,26 @@ const tryRefreshAccessToken = async (forceRefresh = false): Promise<string | nul
   isRefreshing = true;
 
   try {
-    const requestBody = { refreshToken };
+    // Use server action so refresh rotates HttpOnly cookies as well.
+    const refreshed = refreshToken
+      ? await refreshTokenAction({ refreshToken })
+      : await refreshTokenAction();
 
-    const refreshResponse = await axios.post(
-      `${process.env.NEXT_PUBLIC_API_URL}/Authentication/refreshToken`,
-      requestBody,
-      { withCredentials: true }
-    );
-
-    const refreshedToken = resolveAccessToken(refreshResponse.data);
-    if (!refreshedToken) {
-      throw new Error("Unable to resolve refreshed access token");
+    if (!refreshed.success || !refreshed.token) {
+      throw new Error(refreshed.message || "Unable to refresh access token");
     }
 
-    setClientAccessToken(refreshedToken);
+    setClientAccessToken(refreshed.token, refreshed.expiresIn);
 
-    const refreshedRefreshToken = resolveRefreshToken(refreshResponse.data);
-    if (refreshedRefreshToken) {
-      setClientRefreshToken(refreshedRefreshToken);
+    if (refreshed.refreshToken) {
+      setClientRefreshToken(refreshed.refreshToken);
     }
 
     processQueue(null);
-    return refreshedToken;
+    return refreshed.token;
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      const refreshStatus = error.response?.status;
-      if (refreshStatus === 400 || refreshStatus === 401) {
-        clearClientAccessToken();
-      }
-    }
+    // Keep refresh token state to survive transient failures/network blips.
+    clearClientAccessTokenState();
 
     processQueue(error);
     return null;
@@ -297,7 +258,7 @@ axiosClient.interceptors.response.use(
 
         return axiosClient(originalRequest);
       } catch (err) {
-        clearClientAccessToken();
+        clearClientAccessTokenState();
         if (originalRequest.redirectOnAuthFailure) {
           redirectToLogin();
         }

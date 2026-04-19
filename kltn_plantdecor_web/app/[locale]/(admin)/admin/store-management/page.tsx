@@ -2,7 +2,7 @@
 
 import React from 'react';
 import StoreManagementPageClient from '@/components/store-management/StoreManagementPageClient';
-import type { Plant, PlantCombo, PlantInstance, Material } from '@/types/store-management.types';
+import type { Plant, PlantCombo, Material } from '@/types/store-management.types';
 
 const samplePlants: Plant[] = [];
 const sampleCombos: PlantCombo[] = [];

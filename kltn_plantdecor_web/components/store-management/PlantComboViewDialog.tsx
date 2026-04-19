@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Box,
   Chip,
@@ -19,11 +20,15 @@ import {
 import type { PlantCombo } from '@/types/store-management.types';
 import { getFengShuiColors, getFengShuiElementLabel } from '@/lib/utils/fengShui';
 import { formatCurrency } from '@/lib/utils/formatUtil';
+import { localizeRoomDesignEnumLabel } from '@/lib/utils/roomDesignEnumI18n';
 import type { ShopNurseryListItem } from '@/lib/api/shopPlantsService';
+import { formatDateTime } from '@/lib/utils/dateUtils';
 
 interface PlantComboViewDialogProps {
   open: boolean;
   combo?: PlantCombo;
+  lightRequirementOptions?: Array<{ value: number; name: string }>;
+  roomTypeOptions?: Array<{ value: number; name: string }>;
   nurseries?: ShopNurseryListItem[];
   nurseriesLoading?: boolean;
   onClose: () => void;
@@ -32,26 +37,43 @@ interface PlantComboViewDialogProps {
 export default function PlantComboViewDialog({
   open,
   combo,
+  lightRequirementOptions = [],
+  roomTypeOptions = [],
   nurseries = [],
   nurseriesLoading = false,
   onClose,
 }: PlantComboViewDialogProps) {
+  const tRoomDesignEnum = useTranslations('roomDesignEnums');
   if (!combo) {
     return null;
   }
 
   const fengShuiColors = getFengShuiColors(combo.fengShuiElement);
   const fengShuiLabel = getFengShuiElementLabel(combo.fengShuiElement);
+  const suitableSpaceLabel =
+    localizeRoomDesignEnumLabel(
+      lightRequirementOptions.find((item) => item.value === Number(combo.suitableSpace))?.name,
+      tRoomDesignEnum,
+      'LightRequirement'
+    ) ||
+    (combo.suitableSpace ? String(combo.suitableSpace) : '-');
+  const suitableRoomLabels = (combo.suitableRooms || []).map((id) => {
+    return localizeRoomDesignEnumLabel(
+      roomTypeOptions.find((item) => item.value === Number(id))?.name ?? String(id),
+      tRoomDesignEnum,
+      'RoomType'
+    );
+  });
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
-      <DialogTitle>Chi tiết combo cây</DialogTitle>
+      <DialogTitle>Plant Combo Detail</DialogTitle>
       <DialogContent dividers sx={{ maxHeight: '80vh', overflow: 'auto' }}>
         <Stack spacing={3}>
           {combo.images && combo.images.length > 0 && (
             <Box>
               <Typography variant="subtitle1" fontWeight="600" gutterBottom>
-                Hình ảnh
+                Images
               </Typography>
               <Grid container spacing={2}>
                 {combo.images.map((img) => (
@@ -65,7 +87,7 @@ export default function PlantComboViewDialog({
                       />
                       {img.isPrimary && (
                         <Chip
-                          label="Ảnh chính"
+                          label="Thumbnail Image"
                           size="small"
                           color="primary"
                           sx={{ position: 'absolute', top: 8, right: 8 }}
@@ -82,27 +104,27 @@ export default function PlantComboViewDialog({
 
           <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom>
-              Thông tin cơ bản
+              Basic Information
             </Typography>
             <Grid container spacing={2}>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary">Mã combo</Typography>
+              {/* <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="body2" color="text.secondary">Combo Code</Typography>
                 <Typography variant="body1" fontWeight="600">{combo.comboCode}</Typography>
-              </Grid>
+              </Grid> */}
               <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary">Tên combo</Typography>
+                <Typography variant="body2" color="text.secondary">Combo Name</Typography>
                 <Typography variant="body1" fontWeight="600">{combo.comboName}</Typography>
               </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary">Loại combo</Typography>
+              <Grid size={{ xs: 6, sm: 3 }}>
+                <Typography variant="body2" color="text.secondary">Combo Type</Typography>
                 <Typography variant="body1">{combo.comboTypeName || combo.comboType}</Typography>
               </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary">Mùa</Typography>
+              <Grid size={{ xs: 6, sm: 3 }}>
+                <Typography variant="body2" color="text.secondary">Season</Typography>
                 <Typography variant="body1">{combo.seasonName || combo.season}</Typography>
               </Grid>
               <Grid size={{ xs: 12 }}>
-                <Typography variant="body2" color="text.secondary">Mô tả</Typography>
+                <Typography variant="body2" color="text.secondary">Description</Typography>
                 <Typography variant="body1">{combo.description || '-'}</Typography>
               </Grid>
             </Grid>
@@ -112,20 +134,22 @@ export default function PlantComboViewDialog({
 
           <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom>
-              Điều kiện phù hợp
+              Condition Information 
             </Typography>
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary">Không gian phù hợp</Typography>
-                <Typography variant="body1">{combo.suitableSpace || '-'}</Typography>
+                <Typography variant="body2" color="text.secondary">Suitable Space</Typography>
+                <Typography variant="body1">{suitableSpaceLabel}</Typography>
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary">Phòng phù hợp</Typography>
+                <Typography variant="body2" color="text.secondary">Suitable Rooms</Typography>
                 <Stack direction="row" spacing={1} flexWrap="wrap">
                   {(combo.suitableRooms || []).length === 0 ? (
                     <Typography variant="body1">-</Typography>
                   ) : (
-                    combo.suitableRooms.map((room) => <Chip key={room} size="small" label={room} sx={{ mb: 0.5 }} />)
+                    suitableRoomLabels.map((roomLabel, index) => (
+                      <Chip key={`${roomLabel}-${index}`} size="small" label={roomLabel} sx={{ mb: 0.5 }} />
+                    ))
                   )}
                 </Stack>
               </Grid>
@@ -136,11 +160,11 @@ export default function PlantComboViewDialog({
 
           <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom>
-              Phong thủy và chủ đề
+              Feng Shui & Theme Information
             </Typography>
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary">Yếu tố phong thủy</Typography>
+                <Typography variant="body2" color="text.secondary">Feng Shui Element</Typography>
                 <Chip
                   label={combo.fengShuiElement ? fengShuiLabel : '-'}
                   size="small"
@@ -155,15 +179,15 @@ export default function PlantComboViewDialog({
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary">Mục đích phong thủy</Typography>
+                <Typography variant="body2" color="text.secondary">Feng Shui Purpose</Typography>
                 <Typography variant="body1">{combo.fengShuiPurpose || '-'}</Typography>
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary">Tên chủ đề</Typography>
+                <Typography variant="body2" color="text.secondary">Theme Name</Typography>
                 <Typography variant="body1">{combo.themeName || '-'}</Typography>
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary">Mô tả chủ đề</Typography>
+                <Typography variant="body2" color="text.secondary">Theme Description</Typography>
                 <Typography variant="body1">{combo.themeDescription || '-'}</Typography>
               </Grid>
               <Grid size={{ xs: 12 }}>
@@ -185,24 +209,28 @@ export default function PlantComboViewDialog({
 
           <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom>
-              Giá và trạng thái
+              Price and Status
             </Typography>
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, sm: 4 }}>
-                <Typography variant="body2" color="text.secondary">Giá combo</Typography>
+                <Typography variant="body2" color="text.secondary">Combo Price</Typography>
                 <Typography variant="body1" fontWeight="600">{formatCurrency(combo.comboPrice, 'vi-VN')}</Typography>
               </Grid>
+              {combo.createdAt && (
               <Grid size={{ xs: 12, sm: 4 }}>
-                <Typography variant="body2" color="text.secondary">Lượt xem</Typography>
-                <Typography variant="body1" fontWeight="600">{combo.viewCount}</Typography>
+                <Typography variant="body2" color="text.secondary">Create At</Typography>
+                <Typography variant="body1" fontWeight="600">{formatDateTime(combo.createdAt)}</Typography>
               </Grid>
+              )}
+              {combo.updatedAt && (
               <Grid size={{ xs: 12, sm: 4 }}>
-                <Typography variant="body2" color="text.secondary">Lượt mua</Typography>
-                <Typography variant="body1" fontWeight="600">{combo.purchaseCount ?? 0}</Typography>
+                <Typography variant="body2" color="text.secondary">Updated At</Typography>
+                <Typography variant="body1" fontWeight="600">{formatDateTime(combo.updatedAt ?? 0)}</Typography>
               </Grid>
+              )}
               <Grid size={{ xs: 12 }}>
                 <Chip
-                  label={combo.isActive ? 'Kích hoạt' : 'Vô hiệu'}
+                  label={combo.isActive ? 'Active' : 'Inactive'}
                   color={combo.isActive ? 'success' : 'default'}
                   variant="outlined"
                 />
@@ -218,7 +246,7 @@ export default function PlantComboViewDialog({
             </Typography>
             {(combo.comboItems || []).length === 0 ? (
               <Typography variant="body2" color="text.secondary">
-                Combo chưa có cây.
+                Combo does not contain any plants.
               </Typography>
             ) : (
               <Stack spacing={1}>

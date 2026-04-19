@@ -1,61 +1,45 @@
-'use client';
+﻿'use client';
 
 import { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Box,
-  Button,
-  Container,
   Tabs,
   Tab,
-  Typography,
-  Card,
-  CardContent,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Chip,
-  Alert,
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  ToggleOn as ToggleOnIcon,
-  ToggleOff as ToggleOffIcon,
-  ExpandMore as ExpandMoreIcon,
-  ChevronRight as ChevronRightIcon,
-  Delete as DeleteIcon,
-} from '@mui/icons-material';
 import type { Category, Tag } from '@/data/storeCatalogData';
 import { useAdminCategories } from '@/lib/api/admin/useAdminCategories';
 import { useAdminTags } from '@/lib/api/admin/useAdminTags';
-import type { CategoryCreateUpdateRequest, CategoryResponse } from '@/lib/api/categoriesService';
-import type { TagCreateUpdateRequest } from '@/lib/api/tagService';
+import type { CategoryCreateUpdateRequest, CategoryResponse, CategoryTreeNode } from '@/lib/api/categoriesService';
+import { getTagEnums, type TagCreateUpdateRequest, type TagEnumValue } from '@/lib/api/tagService';
 import CategoryModal from '@/components/store-catalog/CategoryModal';
 import TagModal from '@/components/store-catalog/TagModal';
-import { toast } from 'react-toastify';
+import ManagementHeader from '@/components/layout/ManagementHeader';
+import CategorySection, { type HierarchicalCategoryRow } from '@/components/admin/categories-tags/CategorySection';
+import TagsSection from '@/components/admin/categories-tags/TagsSection';
+import TabPanel from '@/components/admin/categories-tags/TabPanel';
+import ConfirmActionDialog from '@/components/admin/categories-tags/ConfirmActionDialog';
 
-interface HierarchicalCategoryRow {
-  category: CategoryResponse;
-  level: number;
-  hasChildren: boolean;
+type CategoryNode = CategoryResponse | CategoryTreeNode;
+
+interface CategoryFormInput {
+  name: string;
+  parentCategoryId?: number | null;
+  isActive?: boolean;
+  categoryType?: number;
 }
 
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
+interface TagFormInput {
+  tagName: string;
+  tagType: number;
 }
 
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index } = props;
-  return (
-    <div hidden={value !== index} style={{ width: '100%' }}>
-      {value === index && <Box sx={{ pt: 3 }}>{children}</Box>}
-    </div>
-  );
-}
+const isObjectRecord = (value: unknown): value is Record<string, unknown> => {
+  return typeof value === 'object' && value !== null;
+};
+
+const hasChildren = (node: CategoryNode): node is CategoryTreeNode & { children: CategoryTreeNode[] } => {
+  return Array.isArray((node as CategoryTreeNode).children);
+};
 
 export default function CategoriesTagsPage() {
   const [tabValue, setTabValue] = useState(0);
@@ -68,6 +52,7 @@ export default function CategoriesTagsPage() {
   const [toggleTarget, setToggleTarget] = useState<CategoryResponse | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ type: 'category' | 'tag'; id: number; name: string } | null>(null);
+  const [tagTypeOptions, setTagTypeOptions] = useState<TagEnumValue[]>([]);
   const initialFetchDoneRef = useRef(false);
 
   // Use Categories Hook
@@ -75,7 +60,6 @@ export default function CategoriesTagsPage() {
     categoryTree,
     loading: categoriesLoading,
     error: categoriesError,
-    totalCount: categoriesCount,
     fetchCategoryTree,
     addCategory,
     updateCategoryItem,
@@ -89,7 +73,6 @@ export default function CategoriesTagsPage() {
     tags,
     loading: tagsLoading,
     error: tagsError,
-    totalCount: tagsCount,
     pageNumber: tagPageNumber,
     pageSize: tagPageSize,
     totalPages: tagTotalPages,
@@ -105,43 +88,49 @@ export default function CategoriesTagsPage() {
   } = useAdminTags();
 
   const loading = categoriesLoading || tagsLoading;
-
-  const getNodeChildren = (node: any): any[] => {
-    if (Array.isArray(node?.subCategories)) {
+  const getNodeChildren = (node: CategoryNode): CategoryNode[] => {
+    if (Array.isArray(node.subCategories)) {
       return node.subCategories;
     }
 
-    if (Array.isArray(node?.children)) {
+    if (hasChildren(node)) {
       return node.children;
     }
 
     return [];
   };
 
-  const normalizeNode = (node: any): CategoryResponse => {
+  const normalizeNode = (node: unknown): CategoryResponse => {
+    if (!isObjectRecord(node)) {
+      return {
+        id: 0,
+        name: '',
+        isActive: false,
+        categoryType: 0,
+      };
+    }
+
     return {
       id: Number(node.id),
       name: String(node.name ?? ''),
-      parentCategoryId: node.parentCategoryId ?? null,
+      parentCategoryId: (node.parentCategoryId as number | null | undefined) ?? null,
       isActive: Boolean(node.isActive),
       categoryType: Number(node.categoryType ?? 0),
-      parentCategoryName: node.parentCategoryName ?? null,
-      categoryTypeName: node.categoryTypeName,
-      createdAt: node.createdAt,
-      updatedAt: node.updatedAt,
-      subCategories: node.subCategories,
+      parentCategoryName: (node.parentCategoryName as string | null | undefined) ?? null,
+      categoryTypeName: node.categoryTypeName as string | undefined,
+      createdAt: node.createdAt as string | undefined,
+      updatedAt: node.updatedAt as string | undefined,
+      subCategories: Array.isArray(node.subCategories)
+        ? (node.subCategories as CategoryResponse[])
+        : undefined,
     };
   };
 
   const parentCategoryOptions = useMemo(() => {
-    const flattenTree = (nodes: any[]): CategoryResponse[] => {
+    const flattenTree = (nodes: CategoryNode[]): CategoryResponse[] => {
       const flattened: CategoryResponse[] = [];
 
       nodes.forEach((node) => {
-        if (!node || typeof node !== 'object') {
-          return;
-        }
-
         const normalizedNode = normalizeNode(node);
         flattened.push(normalizedNode);
 
@@ -189,12 +178,8 @@ export default function CategoriesTagsPage() {
   const hierarchicalCategories = useMemo(() => {
     const flattened: HierarchicalCategoryRow[] = [];
 
-    const walk = (nodes: any[], level: number) => {
+    const walk = (nodes: CategoryNode[], level: number) => {
       nodes.forEach((node) => {
-        if (!node || typeof node !== 'object') {
-          return;
-        }
-
         const normalizedNode = normalizeNode(node);
         const children = getNodeChildren(node);
         const hasChildren = children.length > 0;
@@ -236,7 +221,14 @@ export default function CategoriesTagsPage() {
 
     initialFetchDoneRef.current = true;
     void fetchCategoryTree();
-    void fetchTags({ pageNumber: 1, pageSize: 10 });
+    void fetchTags({ pageNumber: 1, pageSize: 20 });
+
+    void (async () => {
+      const response = await getTagEnums(false);
+      const groups = response?.payload ?? response?.data ?? [];
+      const tagTypeGroup = groups.find((group) => group.enumName === 'TagType');
+      setTagTypeOptions(tagTypeGroup?.values ?? []);
+    })();
   }, [fetchCategoryTree, fetchTags]);
 
   const convertToModalCategory = (cat: CategoryResponse | undefined): Category | undefined => {
@@ -267,7 +259,7 @@ export default function CategoriesTagsPage() {
   };
 
   // ============ Categories Handlers ============
-  const handleSaveCategory = async (category: any): Promise<boolean> => {
+  const handleSaveCategory = async (category: CategoryFormInput): Promise<boolean> => {
     if (editingCategory) {
       const updateData: CategoryCreateUpdateRequest = {
         name: category.name,
@@ -278,11 +270,8 @@ export default function CategoriesTagsPage() {
       const updated = await updateCategoryItem(editingCategory.id, updateData);
 
       if (!updated) {
-        toast.error('Update category failed. Please try again.');
         return false;
       }
-
-      toast.success('Category updated successfully');
       setEditingCategory(undefined);
       return true;
     }
@@ -296,18 +285,15 @@ export default function CategoriesTagsPage() {
 
     const created = await addCategory(createData);
     if (!created) {
-      toast.error('Create category failed. Please try again.');
       return false;
     }
 
-    toast.success('Category created successfully');
     setEditingCategory(undefined);
     return true;
   };
 
   const handleToggleCategoryActive = async (category: CategoryResponse) => {
     if (Array.isArray(category.subCategories) && category.subCategories.length > 0) {
-      toast.info('Cannot toggle category with subcategories');
       return;
     }
 
@@ -321,19 +307,15 @@ export default function CategoriesTagsPage() {
     }
 
     const result = await toggleActive(toggleTarget.id);
-    if (result) {
-      toast.success(`Category ${toggleTarget.isActive ? 'deactivated' : 'activated'} successfully`);
-    } else {
-      toast.error('Toggle category status failed. Please try again.');
-    }
-
+    if (result!) {
+      return;
+    } 
     setToggleConfirmOpen(false);
     setToggleTarget(null);
   };
 
   const handleDeleteCategory = (category: CategoryResponse) => {
     if (Array.isArray(category.subCategories) && category.subCategories.length > 0) {
-      toast.info('Cannot delete category with subcategories');
       return;
     }
 
@@ -342,36 +324,27 @@ export default function CategoriesTagsPage() {
   };
 
   // ============ Tags Handlers ============
-  const handleSaveTag = async (tag: any): Promise<boolean> => {
+  const handleSaveTag = async (tag: TagFormInput): Promise<boolean> => {
+    const payload: TagCreateUpdateRequest = {
+      tagName: String(tag?.tagName ?? '').trim(),
+      tagType: Number(tag?.tagType ?? 0),
+    };
+
     if (editingTag) {
-      const updateData: TagCreateUpdateRequest = {
-        name: tag.name,
-        color: tag.color,
-      };
-      const updated = await updateTagItem(editingTag.id, updateData);
+      const updated = await updateTagItem(editingTag.id, payload);
 
       if (!updated) {
-        toast.error('Update tag failed. Please try again.');
         return false;
       }
-
-      toast.success('Tag updated successfully');
       setEditingTag(undefined);
       return true;
     }
 
-    const createData: TagCreateUpdateRequest = {
-      name: tag.name,
-      color: tag.color,
-    };
-
-    const created = await addTag(createData);
+    const created = await addTag(payload);
     if (!created) {
-      toast.error('Create tag failed. Please try again.');
       return false;
     }
 
-    toast.success('Tag created successfully');
     setEditingTag(undefined);
     return true;
   };
@@ -387,24 +360,11 @@ export default function CategoriesTagsPage() {
       return;
     }
 
-    let success = false;
-
     if (deleteTarget.type === 'category') {
-      success = await deleteCategory(deleteTarget.id);
-      if (success) {
-        toast.success('Category deleted successfully');
-      } else {
-        toast.error('Delete category failed. Please try again.');
-      }
+      await deleteCategory(deleteTarget.id);
     } else if (deleteTarget.type === 'tag') {
-      success = await deleteTag(deleteTarget.id);
-      if (success) {
-        toast.success('Tag deleted successfully');
-      } else {
-        toast.error('Delete tag failed. Please try again.');
-      }
+      await deleteTag(deleteTarget.id);
     }
-
     setDeleteConfirmOpen(false);
     setDeleteTarget(null);
   };
@@ -415,56 +375,14 @@ export default function CategoriesTagsPage() {
   };
 
   return (
-    <Container maxWidth="lg">
+    <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', p: 4 }}>
       {/* Header */}
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 1 }}>
-          Categories & Tags Management
-        </Typography>
-        <Typography variant="body2" sx={{ color: '#666' }}>
-          Manage product categories and tags for your store catalog
-        </Typography>
-      </Box>
-
-      {/* Statistics */}
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-          gap: 2,
-          mb: 4,
-        }}
-      >
-        <Box
-          sx={{
-            p: 2,
-            backgroundColor: '#e8f5e9',
-            borderRadius: 1,
-            border: '1px solid #4caf50',
-          }}
-        >
-          <Typography variant="body2" sx={{ color: '#666' }}>
-            Total Categories
-          </Typography>
-          <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#2e7d32' }}>
-            {categoriesCount}
-          </Typography>
-        </Box>
-        <Box
-          sx={{
-            p: 2,
-            backgroundColor: '#e3f2fd',
-            borderRadius: 1,
-            border: '1px solid #2196f3',
-          }}
-        >
-          <Typography variant="body2" sx={{ color: '#666' }}>
-            Total Tags
-          </Typography>
-          <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#1565c0' }}>
-            {tagsCount}
-          </Typography>
-        </Box>
+        <ManagementHeader
+          title="Categories & Tags"
+          description="Manage store product categories and tags. You can create, edit, activate, or delete categories and tags here."
+          entityLabel="Categories & Tags"
+        />
       </Box>
 
       {/* Tabs */}
@@ -477,219 +395,52 @@ export default function CategoriesTagsPage() {
 
       {/* Categories Tab */}
       <TabPanel value={tabValue} index={0}>
-        {/* Error Alert */}
-        {categoriesError && (
-          <Alert severity="error" onClose={clearError} sx={{ mb: 2 }}>
-            {categoriesError}
-          </Alert>
-        )}
-
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            mb: 3,
+        <CategorySection
+          categoriesError={categoriesError}
+          categoriesLoading={categoriesLoading}
+          loading={loading}
+          hierarchicalCategories={hierarchicalCategories}
+          expandedCategoryIds={effectiveExpandedCategoryIds}
+          onClearError={clearError}
+          onOpenCreate={() => {
+            setEditingCategory(undefined);
+            setCategoryModalOpen(true);
           }}
-        >
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => {
-              setEditingCategory(undefined);
-              setCategoryModalOpen(true);
-            }}
-          >
-            Add New Category
-          </Button>
-        </Box>
-
-        {/* Categories Grid */}
-        {!categoriesLoading && (
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 2 }}>
-            {hierarchicalCategories.length > 0 ? (
-              hierarchicalCategories.map(({ category, level, hasChildren }) => {
-                const hasSubCategories = Array.isArray(category.subCategories) && category.subCategories.length > 0;
-                const toggleTitle = hasSubCategories
-                  ? 'Cannot toggle category with subcategories'
-                  : category.isActive
-                    ? 'Deactivate category'
-                    : 'Activate category';
-                const isExpanded = effectiveExpandedCategoryIds.has(category.id);
-
-                return (
-                  <Card
-                    key={category.id}
-                    sx={{
-                      transition: 'box-shadow 0.3s',
-                      '&:hover': { boxShadow: 3 },
-                      ml: { xs: 0, md: Math.min(level, 4) * 2 },
-                      borderLeft: level ? '3px solid rgba(25, 118, 210, 0.25)' : '3px solid transparent',
-                    }}
-                  >
-                    <CardContent>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                        <Box style={{ flex: 1 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, pl: `${level * 16}px` }}>
-                            {hasChildren ? (
-                              <IconButton
-                                size="small"
-                                onClick={() => handleToggleExpand(category.id)}
-                                title={isExpanded ? 'Collapse subcategories' : 'Expand subcategories'}
-                                sx={{ mr: 0.5 }}
-                              >
-                                {isExpanded ? <ExpandMoreIcon fontSize="small" /> : <ChevronRightIcon fontSize="small" />}
-                              </IconButton>
-                            ) : (
-                              <Box sx={{ width: 32, height: 32, mr: 0.5 }} />
-                            )}
-
-                            <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                              {category.name}
-                            </Typography>
-                          </Box>
-                          <Typography variant="caption" sx={{ color: '#777', display: 'block', mb: 1 }}>
-                            Level {level}
-                          </Typography>
-                          <Typography variant="body2" sx={{ color: '#666', lineHeight: 1.5, mb: 1 }}>
-                            {category.parentCategoryName ? `Parent: ${category.parentCategoryName}` : 'Root Category'}
-                          </Typography>
-                          <Typography variant="body2" sx={{ color: '#666', lineHeight: 1.5, mb: 1 }}>
-                            Type: {category.categoryTypeName || category.categoryType}
-                          </Typography>
-                          <Chip label={category.isActive ? 'Active' : 'Inactive'} color={category.isActive ? 'success' : 'default'} size="small" />
-                        </Box>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleToggleCategoryActive(category)}
-                            color={category.isActive ? 'success' : 'default'}
-                            title={toggleTitle}
-                            disabled={loading || hasSubCategories}
-                          >
-                            {category.isActive ? <ToggleOnIcon /> : <ToggleOffIcon />}
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            onClick={() => {
-                              setEditingCategory(category);
-                              setCategoryModalOpen(true);
-                            }}
-                            color="primary"
-                          >
-                            <EditIcon />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleDeleteCategory(category)}
-                            color="error"
-                            title="Delete category"
-                            disabled={loading || hasSubCategories}
-                          >
-                            <DeleteIcon />
-                          </IconButton>
-                        </Box>
-                      </Box>
-                    </CardContent>
-                  </Card>
-                );
-              })
-            ) : (
-              <Typography variant="body2" sx={{ color: '#999', gridColumn: '1 / -1', textAlign: 'center', py: 4 }}>
-                No categories yet. Create one to get started!
-              </Typography>
-            )}
-          </Box>
-        )}
+          onToggleExpand={handleToggleExpand}
+          onToggleActive={handleToggleCategoryActive}
+          onEdit={(category) => {
+            setEditingCategory(category);
+            setCategoryModalOpen(true);
+          }}
+          onDelete={handleDeleteCategory}
+        />
       </TabPanel>
 
       {/* Tags Tab */}
       <TabPanel value={tabValue} index={1}>
-        {/* Error Alert */}
-        {tagsError && (
-          <Alert severity="error" onClose={clearError} sx={{ mb: 2 }}>
-            {tagsError}
-          </Alert>
-        )}
-
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Button size="small" variant="outlined" disabled={!tagHasPrevious || tagsLoading} onClick={() => setTagPage(tagPageNumber - 1)}>
-              Previous
-            </Button>
-
-            <Typography variant="body2" sx={{ color: '#666' }}>
-              Page {tagPageNumber} / {Math.max(tagTotalPages, 1)}
-            </Typography>
-
-            <Button size="small" variant="outlined" disabled={!tagHasNext || tagsLoading} onClick={() => setTagPage(tagPageNumber + 1)}>
-              Next
-            </Button>
-          </Box>
-
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => {
-              setEditingTag(undefined);
-              setTagModalOpen(true);
-            }}
-          >
-            Add New Tag
-          </Button>
-        </Box>
-
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)' }, gap: 2 }}>
-          {tags.length > 0 ? (
-            tags.map((tag) => (
-              <Card
-                key={tag.id}
-                sx={{
-                  transition: 'all 0.3s',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: 3,
-                  },
-                }}
-              >
-                <CardContent sx={{ p: 2, textAlign: 'center' }}>
-                  <Box
-                    sx={{
-                      width: 60,
-                      height: 60,
-                      borderRadius: '50%',
-                      backgroundColor: '#e0f7fa',
-                      margin: '0 auto 1rem',
-                    }}
-                  />
-
-                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
-                    {tag.tagName}
-                  </Typography>
-
-                  <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5 }}>
-                    <IconButton
-                      size="small"
-                      onClick={() => {
-                        setEditingTag(tag);
-                        setTagModalOpen(true);
-                      }}
-                      color="primary"
-                    >
-                      <EditIcon sx={{ fontSize: 18 }} />
-                    </IconButton>
-                    <IconButton size="small" onClick={() => handleDeleteTag(tag)} color="error">
-                      <DeleteIcon sx={{ fontSize: 18 }} />
-                    </IconButton>
-                  </Box>
-                </CardContent>
-              </Card>
-            ))
-          ) : (
-            <Typography variant="body2" sx={{ color: '#999', gridColumn: '1 / -1', textAlign: 'center', py: 4 }}>
-              No tags yet. Create one to get started!
-            </Typography>
-          )}
-        </Box>
+        <TagsSection
+          tagsError={tagsError}
+          tagsLoading={tagsLoading}
+          tags={tags}
+          tagPageNumber={tagPageNumber}
+          tagPageSize={tagPageSize}
+          tagTotalPages={tagTotalPages}
+          tagHasPrevious={tagHasPrevious}
+          tagHasNext={tagHasNext}
+          onClearError={clearError}
+          onChangePageSize={setTagPageSize}
+          onPrevPage={() => setTagPage(tagPageNumber - 1)}
+          onNextPage={() => setTagPage(tagPageNumber + 1)}
+          onOpenCreate={() => {
+            setEditingTag(undefined);
+            setTagModalOpen(true);
+          }}
+          onEditTag={(tag) => {
+            setEditingTag(tag);
+            setTagModalOpen(true);
+          }}
+          onDeleteTag={handleDeleteTag}
+        />
       </TabPanel>
 
       {/* Category Modal */}
@@ -713,67 +464,44 @@ export default function CategoriesTagsPage() {
         }}
         onSave={handleSaveTag}
         tag={editingTag}
+        tagTypeOptions={tagTypeOptions}
       />
 
-      {/* Toggle Confirm Dialog */}
-      <Dialog
+      <ConfirmActionDialog
         open={toggleConfirmOpen}
+        title="Confirm Toggle Category Status"
+        message={
+          toggleTarget
+            ? `Are you sure you want to ${toggleTarget.isActive ? 'deactivate' : 'activate'} "${toggleTarget.name}"?`
+            : 'Are you sure you want to update this category status?'
+        }
+        confirmLabel="Confirm"
+        loading={loading}
         onClose={() => {
           setToggleConfirmOpen(false);
           setToggleTarget(null);
         }}
-      >
-        <DialogTitle>Confirm Toggle Category Status</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2">
-            {toggleTarget ? `Are you sure you want to ${toggleTarget.isActive ? 'deactivate' : 'activate'} "${toggleTarget.name}"?` : 'Are you sure you want to update this category status?'}
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={() => {
-              setToggleConfirmOpen(false);
-              setToggleTarget(null);
-            }}
-            color="inherit"
-          >
-            Cancel
-          </Button>
-          <Button onClick={handleConfirmToggleCategoryActive} variant="contained" disabled={loading}>
-            Confirm
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onConfirm={handleConfirmToggleCategoryActive}
+      />
 
-      {/* Delete Confirm Dialog */}
-      <Dialog
+      <ConfirmActionDialog
         open={deleteConfirmOpen}
+        title={`Confirm Delete ${deleteTarget?.type === 'category' ? 'Category' : 'Tag'}`}
+        message={
+          deleteTarget
+            ? `Are you sure you want to delete "${deleteTarget.name}"? This action cannot be undone.`
+            : 'Are you sure you want to delete this item?'
+        }
+        confirmLabel="Delete"
+        confirmColor="error"
+        loading={loading}
         onClose={() => {
           setDeleteConfirmOpen(false);
           setDeleteTarget(null);
         }}
-      >
-        <DialogTitle>Confirm Delete {deleteTarget?.type === 'category' ? 'Category' : 'Tag'}</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2">
-            {deleteTarget ? `Are you sure you want to delete "${deleteTarget.name}"? This action cannot be undone.` : 'Are you sure you want to delete this item?'}
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={() => {
-              setDeleteConfirmOpen(false);
-              setDeleteTarget(null);
-            }}
-            color="inherit"
-          >
-            Cancel
-          </Button>
-          <Button onClick={handleConfirmDelete} variant="contained" color="error" disabled={loading}>
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Container>
+        onConfirm={handleConfirmDelete}
+      />
+    </Box>
   );
 }
+

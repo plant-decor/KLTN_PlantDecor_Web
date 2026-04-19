@@ -10,6 +10,7 @@ import {
   removePlantCategory,
   removePlantTag,
   searchAdminPlants,
+  setAdminPlantPrimaryImage,
   toggleAdminPlantActive,
   updateAdminPlant,
   uploadAdminPlantImages,
@@ -18,7 +19,7 @@ import {
 } from '@/lib/api/adminPlantsService';
 import {
   createAdminPlantGuide,
-  fetchLightRequirementOptions,
+  fetchRoomDesignEnumOptions,
   getAdminPlantGuideByPlantId,
   updateAdminPlantGuide,
 } from '@/lib/api/adminPlantGuidesService';
@@ -83,14 +84,17 @@ interface UseAdminPlantsReturn {
 const EMPTY_ENUMS: PlantEnumPayload = {
   placementTypes: [],
   sizes: [],
+  growthRates: [],
   careLevelTypes: [],
   lightRequirements: [],
+  roomTypes: [],
+  roomStyles: [],
 };
 
 const defaultFilters: PlantFilters = {
   keyword: '',
-  sortBy: 'name',
-  sortDirection: 'asc',
+  sortBy: '',
+  sortDirection: '',
 };
 
 const defaultPagination: PaginationState = {
@@ -120,7 +124,16 @@ const normalizeError = (err: unknown): string => {
 };
 
 const toUpsertPayload = (data: PlantFormData): PlantUpsertRequest => {
-  const normalizeText = (value: string) => value.trim();
+  const normalizeText = (value?: string | null) => (value ?? '').trim();
+  const normalizeNumberArray = (values?: number[]) => {
+    if (!Array.isArray(values)) {
+      return [];
+    }
+
+    return Array.from(
+      new Set(values.map((item) => Number(item)).filter((item) => Number.isInteger(item) && item > 0))
+    );
+  };
 
   return {
     name: normalizeText(data.name),
@@ -130,7 +143,7 @@ const toUpsertPayload = (data: PlantFormData): PlantUpsertRequest => {
     basePrice: data.basePrice,
     placementType: data.placementType,
     size: data.size,
-    growthRate: normalizeText(data.growthRate),
+    growthRate: Number.isFinite(data.growthRate) ? data.growthRate : 0,
     toxicity: data.toxicity,
     airPurifying: data.airPurifying,
     hasFlower: data.hasFlower,
@@ -142,6 +155,8 @@ const toUpsertPayload = (data: PlantFormData): PlantUpsertRequest => {
     potSize: normalizeText(data.potSize),
     careLevelType: data.careLevelType,
     careLevel: normalizeText(data.careLevel),
+    roomType: normalizeNumberArray(data.roomType),
+    roomStyle: normalizeNumberArray(data.roomStyle),
     isActive: data.isActive,
     isUniqueInstance: data.isUniqueInstance,
   };
@@ -173,8 +188,11 @@ const normalizeEnums = (groups: PlantEnumGroup[]): PlantEnumPayload => {
   return {
     placementTypes: byName.get('PlacementType')?.values ?? [],
     sizes: byName.get('PlantSize')?.values ?? [],
+    growthRates: byName.get('GrowthRate')?.values ?? [],
     careLevelTypes: byName.get('CareLevelType')?.values ?? [],
     lightRequirements: [],
+    roomTypes: [],
+    roomStyles: [],
   };
 };
 
@@ -316,18 +334,58 @@ export const useAdminPlants = (): UseAdminPlantsReturn => {
       setError(null);
 
       try {
+        // console.log('[savePlant] START', {
+        //   mode: editingPlantId ? 'UPDATE' : 'CREATE',
+        //   editingPlantId,
+        //   formDataKeys: Object.keys(formData),
+        // });
+
+        // console.log('[savePlant] Converting form data to upsert payload...');
         const payload = toUpsertPayload(formData);
+        // console.log('[savePlant] Upsert payload created', payload);
 
-        const response = editingPlantId
-          ? await updateAdminPlant(editingPlantId, payload, true)
-          : await createAdminPlant(payload, true);
+        let response;
 
+        if (editingPlantId && editingPlantId > 0) {
+          // console.log('[savePlant] UPDATE MODE: editingPlantId =', editingPlantId);
+          // console.log('[savePlant] Calling updateAdminPlant with:', {
+            // plantId: editingPlantId,
+            // payload,
+          // });
+
+          try {
+            response = await updateAdminPlant(editingPlantId, payload, true);
+            // console.log('[savePlant] updateAdminPlant response received:', response);
+          } catch (apiError) {
+            // console.error('[savePlant] ERROR in updateAdminPlant call:', apiError);
+            throw apiError;
+          }
+        } else {
+          // console.log('[savePlant] CREATE MODE: no editingPlantId or value <= 0');
+          // console.log('[savePlant] Calling createAdminPlant with payload:', payload);
+
+          try {
+            response = await createAdminPlant(payload, true);
+            // console.log('[savePlant] createAdminPlant response received:', response);
+          } catch (apiError) {
+            // console.error('[savePlant] ERROR in createAdminPlant call:', apiError);
+            throw apiError;
+          }
+        }
+
+        // console.log('[savePlant] Extracting plant ID from response...');
         const upsertPayload = getResponsePayload(response);
+        // console.log('[savePlant] upsertPayload extracted:', upsertPayload);
         const plantId = editingPlantId ?? toPlantId(upsertPayload);
+        // console.log('[savePlant] Final plantId determined:', plantId);
 
         if (!plantId) {
+          // console.error('[savePlant] FATAL: Cannot resolve plant ID after save');
           throw new Error('Cannot resolve plant ID after save');
         }
+
+        // console.log('[savePlant] Plant ID confirmed:', plantId);
+        // console.log('[savePlant] Processing images...');
 
         const selectedThumbnail = images.find((image) => image.isThumbnail && image.file);
         const regularFiles = images
@@ -335,15 +393,30 @@ export const useAdminPlants = (): UseAdminPlantsReturn => {
           .map((image) => image.file)
           .filter((file): file is File => Boolean(file));
 
+        // console.log('[savePlant] Image processing:', {
+        //   hasThumbnail: !!selectedThumbnail,
+        //   regularFileCount: regularFiles.length,
+        // });
+
         if (regularFiles.length > 0) {
+          // console.log('[savePlant] Uploading regular images...');
           await uploadAdminPlantImages(plantId, regularFiles, true);
+          // console.log('[savePlant] Regular images uploaded');
         }
 
         if (selectedThumbnail?.file) {
+          // console.log('[savePlant] Uploading thumbnail from file...');
           await uploadAdminPlantThumbnail(plantId, selectedThumbnail.file, true);
+          // console.log('[savePlant] Thumbnail uploaded');
+        } else if (selectedThumbnail?.existingImageId) {
+          // console.log('[savePlant] Setting existing image as primary:', selectedThumbnail.existingImageId);
+          await setAdminPlantPrimaryImage(plantId, selectedThumbnail.existingImageId, true);
+          // console.log('[savePlant] Primary image set');
         }
 
+        // console.log('[savePlant] Checking plant guide...');
         if (hasPlantGuideValues(formData.plantGuide)) {
+          // console.log('[savePlant] Plant guide has values, processing...');
           const guidePayload = toPlantGuidePayload(
             formData.plantGuide ?? {
               lightRequirement: '',
@@ -357,23 +430,45 @@ export const useAdminPlants = (): UseAdminPlantsReturn => {
             },
             plantId
           );
+          // console.log('[savePlant] Guide payload created:', guidePayload);
 
-          const existingGuideResponse = await getAdminPlantGuideByPlantId(plantId, true).catch(() => null);
+          const existingGuideResponse = await getAdminPlantGuideByPlantId(plantId, true).catch((err) => {
+            // console.warn('[savePlant] Could not fetch existing guide:', err);
+            return null;
+          });
           const existingGuide = existingGuideResponse ? getResponsePayload(existingGuideResponse) : null;
+          // console.log('[savePlant] Existing guide check:', { hasExisting: !!existingGuide, guideId: existingGuide?.id });
 
           if (existingGuide?.id) {
+            // console.log('[savePlant] Updating existing guide:', existingGuide.id);
             await updateAdminPlantGuide(existingGuide.id, guidePayload, true);
+            // console.log('[savePlant] Guide updated');
           } else {
+            // console.log('[savePlant] Creating new guide...');
             await createAdminPlantGuide(guidePayload, true);
+            // console.log('[savePlant] Guide created');
           }
+        } else {
+          // console.log('[savePlant] No plant guide values to save');
         }
 
+        // console.log('[savePlant] Syncing categories and tags...');
         await syncCategories(plantId, currentCategoryIds, formData.categoryIds);
-        await syncTags(plantId, currentTagIds, formData.tagIds);
+        // console.log('[savePlant] Categories synced');
 
+        await syncTags(plantId, currentTagIds, formData.tagIds);
+        // console.log('[savePlant] Tags synced');
+
+        // console.log('[savePlant] Refreshing plants list...');
         await fetchPlants();
+        // console.log('[savePlant] SUCCESS - Plants list refreshed');
         return true;
       } catch (err) {
+        console.error('[savePlant] EXCEPTION CAUGHT:', err);
+        console.error('[savePlant] Error details:', {
+          message: err instanceof Error ? err.message : String(err),
+          stack: err instanceof Error ? err.stack : undefined,
+        });
         setError(normalizeError(err));
         return false;
       } finally {
@@ -432,15 +527,17 @@ export const useAdminPlants = (): UseAdminPlantsReturn => {
     setEnumError(null);
 
     try {
-      const [plantEnumResponse, lightRequirementOptions] = await Promise.all([
+      const [plantEnumResponse, roomDesignOptions] = await Promise.all([
         getPlantEnums(true),
-        fetchLightRequirementOptions(true),
+        fetchRoomDesignEnumOptions(true),
       ]);
 
       const payload = getResponsePayload(plantEnumResponse) ?? [];
       setEnums({
         ...normalizeEnums(payload),
-        lightRequirements: lightRequirementOptions,
+        lightRequirements: roomDesignOptions.lightRequirements,
+        roomTypes: roomDesignOptions.roomTypes,
+        roomStyles: roomDesignOptions.roomStyles,
       });
     } catch (err) {
       setEnumError(normalizeError(err));

@@ -9,7 +9,6 @@ import {
   Chip,
   Alert,
   Dialog,
-  CircularProgress,
   Divider,
   Avatar,
   Card,
@@ -47,7 +46,6 @@ interface AddOnProposal {
 
 export const CaretakerJobDetail: React.FC<CaretakerJobDetailProps> = ({
   task,
-  loading = false,
   onCheckIn,
   onCheckOut,
   onUploadEvidence,
@@ -68,10 +66,10 @@ export const CaretakerJobDetail: React.FC<CaretakerJobDetailProps> = ({
     return (
       <Container maxWidth="md" sx={{ py: 5, textAlign: "center" }}>
         <Typography variant="h6" color="error">
-          Không tìm thấy công việc
+          Can not load job details. Please try again later.
         </Typography>
         <Button variant="outlined" onClick={onBack} sx={{ mt: 2 }}>
-          Quay Lại
+          Back to List
         </Button>
       </Container>
     );
@@ -155,7 +153,7 @@ export const CaretakerJobDetail: React.FC<CaretakerJobDetailProps> = ({
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
       <Button variant="text" onClick={onBack} sx={{ mb: 3 }}>
-        ← Quay Lại Danh Sách Công Việc
+        ← Back to List
       </Button>
 
       <Paper elevation={3} sx={{ p: 4 }}>
@@ -170,7 +168,7 @@ export const CaretakerJobDetail: React.FC<CaretakerJobDetailProps> = ({
                 {task.customer?.name}
               </Typography>
               <Typography variant="caption" color="textSecondary">
-                Công việc #{task.id}
+                Job #{task.id}
               </Typography>
             </Box>
           </Box>
@@ -185,7 +183,7 @@ export const CaretakerJobDetail: React.FC<CaretakerJobDetailProps> = ({
               <PhoneIcon color="primary" />
               <Box>
                 <Typography variant="caption" color="textSecondary">
-                  Số Điện Thoại
+                  Phone Number
                 </Typography>
                 <Typography
                   variant="body2"
@@ -202,7 +200,7 @@ export const CaretakerJobDetail: React.FC<CaretakerJobDetailProps> = ({
               <AccessTimeIcon color="primary" />
               <Box>
                 <Typography variant="caption" color="textSecondary">
-                  Giờ Hẹn
+                  Scheduled Time
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: "bold" }}>
                   {new Date(task.serviceDate).toLocaleTimeString("vi-VN")}
@@ -216,7 +214,7 @@ export const CaretakerJobDetail: React.FC<CaretakerJobDetailProps> = ({
               <LocationOnIcon color="primary" sx={{ mt: 0.5 }} />
               <Box flex={1}>
                 <Typography variant="caption" color="textSecondary">
-                  Địa Chỉ
+                  Address
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: "bold" }}>
                   {task.address}
@@ -228,7 +226,7 @@ export const CaretakerJobDetail: React.FC<CaretakerJobDetailProps> = ({
                   target="_blank"
                   sx={{ mt: 1 }}
                 >
-                  Xem Bản Đồ
+                  View Map
                 </Button>
               </Box>
             </Box>
@@ -239,7 +237,7 @@ export const CaretakerJobDetail: React.FC<CaretakerJobDetailProps> = ({
 
         {/* Service Package Info */}
         <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
-          📦 Thông Tin Gói Dịch Vụ
+          Service Package Information
         </Typography>
 
         <Card sx={{ mb: 3 }}>
@@ -248,7 +246,7 @@ export const CaretakerJobDetail: React.FC<CaretakerJobDetailProps> = ({
               {task.servicePackage?.name}
             </Typography>
             <Typography variant="caption" color="textSecondary" display="block" mt={1}>
-              Các công việc cần làm:
+              Services to be performed:
             </Typography>
             <Box display="flex" gap={1} mt={1} flexWrap="wrap">
               {task.servicePackage?.features.map((feature, idx) => (
@@ -258,7 +256,7 @@ export const CaretakerJobDetail: React.FC<CaretakerJobDetailProps> = ({
             {task.note && (
               <Box sx={{ mt: 2, p: 1.5, bgcolor: "#fff3e0", borderRadius: 1 }}>
                 <Typography variant="caption" sx={{ fontWeight: "bold" }}>
-                  📝 Ghi chú khách hàng:
+                  Customer Notes:
                 </Typography>
                 <Typography variant="body2" sx={{ mt: 0.5 }}>
                   {task.note}
@@ -272,7 +270,7 @@ export const CaretakerJobDetail: React.FC<CaretakerJobDetailProps> = ({
 
         {/* Check-in/out Buttons */}
         <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
-          ✓ Bắt Đầu Công Việc
+          Start Job
         </Typography>
 
         <Box display="flex" gap={2} sx={{ mb: 3 }}>
@@ -286,7 +284,7 @@ export const CaretakerJobDetail: React.FC<CaretakerJobDetailProps> = ({
               onClick={handleCheckIn}
               disabled={actionLoading}
             >
-              {actionLoading ? "Đang Xử Lý..." : "Check-in / Bắt Đầu"}
+              {actionLoading ? "Processing..." : "Check-in/ Start Job"}
             </Button>
           ) : (
             <Button
@@ -298,7 +296,7 @@ export const CaretakerJobDetail: React.FC<CaretakerJobDetailProps> = ({
               onClick={handleCheckOut}
               disabled={actionLoading}
             >
-              {actionLoading ? "Đang Xử Lý..." : "Check-out / Kết Thúc"}
+              {actionLoading ? "Processing..." : "Check-out / End Job"}
             </Button>
           )}
         </Box>
@@ -306,14 +304,14 @@ export const CaretakerJobDetail: React.FC<CaretakerJobDetailProps> = ({
         {isCheckedIn && (
           <>
             <Alert severity="info" sx={{ mb: 3 }}>
-              ✓ Bạn đã check-in. Nhấn "Check-out" khi hoàn thành công việc.
+              You have checked in. Please click &quot;Check-out&quot; when you finish the job.
             </Alert>
 
             <Divider sx={{ mb: 3 }} />
 
             {/* Photo Upload Section */}
             <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
-              📸 Chụp Ảnh Bằng Chứng
+              Photo Upload
             </Typography>
 
             <Box sx={{ mb: 3 }}>
@@ -332,7 +330,7 @@ export const CaretakerJobDetail: React.FC<CaretakerJobDetailProps> = ({
                   variant="outlined"
                   startIcon={<ImageIcon />}
                 >
-                  Chọn Ảnh
+                  Select Photos
                 </Button>
               </label>
 
@@ -374,26 +372,26 @@ export const CaretakerJobDetail: React.FC<CaretakerJobDetailProps> = ({
       <Dialog open={surveyOpen} onClose={() => setSurveyOpen(false)} maxWidth="sm" fullWidth>
         <Box sx={{ p: 3 }}>
           <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
-            📋 Khảo Sát & Đề Xuất Phát Sinh
+            Survey & Additional Services
           </Typography>
 
           <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-            Vui lòng mô tả tình trạng cây hiện tại và đề xuất các dịch vụ phát sinh nếu có.
+            Please describe the current state of the plant and suggest any additional services if applicable.
           </Typography>
 
           <TextField
             fullWidth
             multiline
             rows={4}
-            label="Mô Tả Tình Trạng Cây & Công Việc Đã Làm"
-            placeholder="Ví dụ: Cây được tưới nước, vệ sinh lá, kiểm tra sâu bệnh, khuyến nghị thay chậu..."
+            label="Description of Plant Condition & Work Completed"
+            placeholder="Example: Plant is watered, leaves are cleaned, pest inspection done, recommended pot change..."
             value={surveyDescription}
             onChange={(e) => setSurveyDescription(e.target.value)}
             sx={{ mb: 3 }}
           />
 
           <Typography variant="subtitle2" sx={{ fontWeight: "bold", mb: 2 }}>
-            ➕ Đề Xuất Phát Sinh (Tùy Chọn)
+            Additional Services (Optional)
           </Typography>
 
           {addOns.map((addon, idx) => (
@@ -402,7 +400,7 @@ export const CaretakerJobDetail: React.FC<CaretakerJobDetailProps> = ({
                 <Grid size={{ xs: 12 }}>
                   <TextField
                     fullWidth
-                    placeholder="Tên dịch vụ phát sinh"
+                    placeholder="Service Name"
                     value={addon.name}
                     onChange={(e) =>
                       handleAddOnChange(idx, "name", e.target.value)
@@ -413,7 +411,7 @@ export const CaretakerJobDetail: React.FC<CaretakerJobDetailProps> = ({
                 <Grid size={{ xs: 12 }}>
                   <TextField
                     fullWidth
-                    placeholder="Mô tả"
+                    placeholder="Description"
                     value={addon.description}
                     onChange={(e) =>
                       handleAddOnChange(idx, "description", e.target.value)
@@ -425,7 +423,7 @@ export const CaretakerJobDetail: React.FC<CaretakerJobDetailProps> = ({
                   <TextField
                     fullWidth
                     type="number"
-                    placeholder="Giá dự kiến"
+                    placeholder="Estimated Price (VND)"
                     value={addon.estimatedPrice}
                     onChange={(e) =>
                       handleAddOnChange(idx, "estimatedPrice", parseInt(e.target.value) || 0)
@@ -449,7 +447,7 @@ export const CaretakerJobDetail: React.FC<CaretakerJobDetailProps> = ({
             }
             sx={{ mb: 3 }}
           >
-            + Thêm Phát Sinh
+            + Add Additional Services
           </Button>
 
           <Box display="flex" gap={2}>
@@ -459,7 +457,7 @@ export const CaretakerJobDetail: React.FC<CaretakerJobDetailProps> = ({
               onClick={() => setSurveyOpen(false)}
               disabled={actionLoading}
             >
-              Huỷ
+              Cancel
             </Button>
             <Button
               fullWidth
@@ -469,7 +467,7 @@ export const CaretakerJobDetail: React.FC<CaretakerJobDetailProps> = ({
               onClick={handleSubmitSurvey}
               disabled={actionLoading || !surveyDescription.trim()}
             >
-              {actionLoading ? "Đang Gửi..." : "Gửi Báo Cáo"}
+              {actionLoading ? "Sending..." : "Submit Report"}
             </Button>
           </Box>
         </Box>

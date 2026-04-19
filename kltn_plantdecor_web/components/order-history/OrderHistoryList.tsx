@@ -11,11 +11,43 @@ import {
   Divider,
   Typography,
 } from '@mui/material';
+import MiscellaneousServicesIcon from '@mui/icons-material/MiscellaneousServices';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { useTranslations } from 'next-intl';
-import type { Order } from '@/types/order.types';
+import type { Order, OrderInvoiceDetail } from '@/types/order.types';
 import { formatCurrency, formatDate, getStatusInfo } from './orderHistoryUtils';
+import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
+import Image from 'next/image';
+
+const SERVICE_ORDER_TYPE = 4;
+const ORDER_ITEM_FALLBACK_IMAGE = '/img/fallbackplant.avif';
+
+type OrderDisplayItem = {
+  id: number;
+  itemName: string;
+  imageUrl?: string | null;
+  quantity: number;
+  price: number;
+};
+
+function mapInvoiceDetailToDisplayItem(detail: OrderInvoiceDetail): OrderDisplayItem {
+  return {
+    id: detail.id,
+    itemName: detail.itemName,
+    quantity: detail.quantity,
+    price: detail.unitPrice,
+  };
+}
+
+function getDisplayItems(order: Order): OrderDisplayItem[] {
+  if (order.orderType !== SERVICE_ORDER_TYPE) {
+    return order.items;
+  }
+
+  const invoiceWithDetails = order.invoices.find((invoice) => invoice.details.length > 0);
+  return invoiceWithDetails ? invoiceWithDetails.details.map(mapInvoiceDetailToDisplayItem) : [];
+}
 
 interface OrderHistoryListProps {
   orders: Order[];
@@ -25,6 +57,7 @@ interface OrderHistoryListProps {
   onViewDetail: (orderId: number) => void;
   onRetryPayment: (orderId: number) => Promise<void>;
   onCancelOrder: (orderId: number) => Promise<void>;
+  emptyMessage?: string;
 }
 
 export default function OrderHistoryList({
@@ -35,8 +68,30 @@ export default function OrderHistoryList({
   onViewDetail,
   onRetryPayment,
   onCancelOrder,
+  emptyMessage,
 }: OrderHistoryListProps) {
   const tOrderHistory = useTranslations('orderHistory');
+
+  const getOrderTypeLabel = (orderType: number) => {
+    switch (orderType) {
+      case 2:
+        return tOrderHistory('orderType.uniquePlant');
+      case 3:
+        return tOrderHistory('orderType.buyNow');
+      case SERVICE_ORDER_TYPE:
+        return tOrderHistory('orderType.service');
+      default:
+        return tOrderHistory('orderType.product');
+    }
+  };
+
+  const getOrderItemIcon = (orderType: number) => {
+    if (orderType === SERVICE_ORDER_TYPE) {
+      return <MiscellaneousServicesIcon />;
+    }
+
+    return <ShoppingCartIcon />;
+  };
 
   if (loading) {
     return (
@@ -45,7 +100,7 @@ export default function OrderHistoryList({
       </Box>
     );
   }
-
+  console.log('orders', orders);
   if (orders.length === 0) {
     return (
       <Card sx={{ boxShadow: 2 }}>
@@ -53,7 +108,7 @@ export default function OrderHistoryList({
           <Box sx={{ textAlign: 'center', py: 8 }}>
             <ShoppingCartIcon sx={{ fontSize: 80, color: 'text.secondary', mb: 2 }} />
             <Typography variant="h6" color="text.secondary">
-              {tOrderHistory('noOrdersFound')}
+              {emptyMessage ?? tOrderHistory('noOrdersFound')}
             </Typography>
           </Box>
         </CardContent>
@@ -65,13 +120,14 @@ export default function OrderHistoryList({
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       {orders.map((order) => {
         const statusInfo = getStatusInfo(order.statusName);
-        const displayItems = order.items.slice(0, 2);
-        const remainingItems = order.items.length - displayItems.length;
+        const displayItems = getDisplayItems(order).slice(0, 2);
+        const totalDisplayItems = getDisplayItems(order).length;
+        const remainingItems = totalDisplayItems - displayItems.length;
         const retryOrderId = order.statusName === 'Pending' ? order.id : null;
         const isRetrying = retryOrderId !== null && retryLoadingOrderId === retryOrderId;
-        const canCancelOrder = order.statusName === 'Pending' || order.statusName === 'DepositPaid';
+        const canCancelOrder = order.statusName === 'Pending' || order.statusName === 'DepositPaid' || order.statusName === 'Paid';
         const isCancelling = canCancelOrder && cancelLoadingOrderId === order.id;
-
+        console.log('items', displayItems.map((item) => item.imageUrl));
         return (
           <Card key={order.id} sx={{ boxShadow: 2, '&:hover': { boxShadow: 4 } }}>
             <CardContent>
@@ -90,13 +146,7 @@ export default function OrderHistoryList({
                     #{order.id}
                   </Typography>
                   <Chip
-                    label={
-                      order.orderType === 2
-                        ? tOrderHistory('orderType.uniquePlant')
-                        : order.orderType === 3
-                          ? tOrderHistory('orderType.buyNow')
-                          : tOrderHistory('orderType.product')
-                    }
+                    label={getOrderTypeLabel(order.orderType)}
                     size="small"
                     variant="outlined"
                   />
@@ -126,9 +176,20 @@ export default function OrderHistoryList({
                       mb: index < displayItems.length - 1 ? 1.5 : 0,
                     }}
                   >
-                    <Avatar variant="rounded" sx={{ width: 60, height: 60, bgcolor: 'grey.200' }}>
-                      <ShoppingCartIcon />
-                    </Avatar>
+                    {order.orderType === SERVICE_ORDER_TYPE ? (
+                      <Avatar variant="rounded" sx={{ width: 60, height: 60, bgcolor: 'grey.200' }}>
+                        {getOrderItemIcon(order.orderType)}
+                      </Avatar>
+                    ) : (
+                      <Image
+                        src={item.imageUrl || ORDER_ITEM_FALLBACK_IMAGE}
+                        alt={item.itemName}
+                        width={60}
+                        height={60}
+                        className='aspect-square rounded-2xl'
+                        loading="lazy"
+                      />
+                    )}
                     <Box sx={{ flex: 1 }}>
                       <Typography variant="body1" fontWeight="medium">
                         {item.itemName}
@@ -171,6 +232,7 @@ export default function OrderHistoryList({
                   size="small"
                   startIcon={<VisibilityIcon />}
                   onClick={() => onViewDetail(order.id)}
+                  sx={{...hoverLiftStyle}}
                 >
                   {tOrderHistory('viewDetail')}
                 </Button>
@@ -178,6 +240,7 @@ export default function OrderHistoryList({
                   <Button
                     variant="contained"
                     size="small"
+                    sx={{ backgroundColor: 'var(--primary)', ...hoverLiftStyle }}
                     onClick={() => void onRetryPayment(retryOrderId)}
                     disabled={isRetrying || isCancelling}
                   >
@@ -189,10 +252,11 @@ export default function OrderHistoryList({
                     variant="outlined"
                     color="error"
                     size="small"
+                    sx={{...hoverLiftStyle}}
                     onClick={() => void onCancelOrder(order.id)}
                     disabled={isCancelling || isRetrying}
                   >
-                    {isCancelling ? 'Cancelling...' : 'Cancel order'}
+                    {isCancelling ? tOrderHistory('cancelling') : tOrderHistory('cancelOrder')}
                   </Button>
                 ) : null}
                 </Box>
@@ -204,4 +268,3 @@ export default function OrderHistoryList({
     </Box>
   );
 }
-

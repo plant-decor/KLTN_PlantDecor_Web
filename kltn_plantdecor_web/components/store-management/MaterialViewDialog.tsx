@@ -42,7 +42,7 @@ export default function MaterialViewDialog({ open, material, onClose }: Material
   }
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
       <DialogTitle>Material Detail</DialogTitle>
       <DialogContent dividers sx={{ maxHeight: '80vh', overflow: 'auto' }}>
         <Stack spacing={3}>
@@ -83,14 +83,14 @@ export default function MaterialViewDialog({ open, material, onClose }: Material
               Basic information
             </Typography>
             <Grid container spacing={2}>
-              <Grid size={{ xs: 12, sm: 6 }}>
+              {/* <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="body2" color="text.secondary">
                   Material code
                 </Typography>
                 <Typography variant="body1" fontWeight="600">
                   {material.materialCode}
                 </Typography>
-              </Grid>
+              </Grid> */}
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="body2" color="text.secondary">
                   Name
@@ -99,7 +99,7 @@ export default function MaterialViewDialog({ open, material, onClose }: Material
                   {material.name}
                 </Typography>
               </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 6, sm: 3 }}>
                 <Typography variant="body2" color="text.secondary">
                   Brand
                 </Typography>
@@ -107,7 +107,7 @@ export default function MaterialViewDialog({ open, material, onClose }: Material
                   {material.brand || '-'}
                 </Typography>
               </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 6, sm: 3 }}>
                 <Typography variant="body2" color="text.secondary">
                   Unit
                 </Typography>
@@ -200,7 +200,7 @@ export default function MaterialViewDialog({ open, material, onClose }: Material
 
           <Divider />
 
-          <Box>
+          {/* <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom>
               Specifications
             </Typography>
@@ -216,9 +216,9 @@ export default function MaterialViewDialog({ open, material, onClose }: Material
             >
               <pre>{JSON.stringify(material.specifications ?? {}, null, 2)}</pre>
             </Box>
-          </Box>
+          </Box> */}
 
-          <Divider />
+          {/* <Divider /> */}
 
           <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom>

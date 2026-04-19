@@ -7,15 +7,18 @@ export interface PlantEnumValue {
 }
 
 export interface PlantEnumGroup {
-  enumName: 'PlacementType' | 'PlantSize' | 'CareLevelType' | string;
+  enumName: 'PlacementType' | 'PlantSize' | 'GrowthRate' | 'CareLevelType' | string;
   values: PlantEnumValue[];
 }
 
 export interface PlantEnumPayload {
   placementTypes: PlantEnumValue[];
   sizes: PlantEnumValue[];
+  growthRates: PlantEnumValue[];
   careLevelTypes: PlantEnumValue[];
   lightRequirements: PlantEnumValue[];
+  roomTypes: PlantEnumValue[];
+  roomStyles: PlantEnumValue[];
 }
 
 export interface Plant {
@@ -33,6 +36,8 @@ export interface Plant {
   availableInstances: number;
   availableCommonQuantity: number;
   totalAvailableStock: number;
+  roomType?: number[];
+  roomStyle?: number[];
   categoryNames: string[];
   tagNames: string[];
 }
@@ -73,7 +78,7 @@ export interface PlantDetail {
   placementTypeName?: string;
   size: number;
   sizeName?: string;
-  growthRate: string | null;
+  growthRate: number | null;
   toxicity: boolean;
   airPurifying: boolean;
   hasFlower: boolean;
@@ -95,6 +100,8 @@ export interface PlantDetail {
   images: PlantDetailImage[];
   totalInstances?: number;
   availableInstances?: number;
+  roomType?: number[];
+  roomStyle?: number[];
 }
 
 export interface PlantUpsertRequest {
@@ -105,7 +112,7 @@ export interface PlantUpsertRequest {
   basePrice: number;
   placementType: number;
   size: number;
-  growthRate: string;
+  growthRate: number;
   toxicity: boolean;
   airPurifying: boolean;
   hasFlower: boolean;
@@ -117,6 +124,8 @@ export interface PlantUpsertRequest {
   potSize: string;
   careLevelType: number;
   careLevel: string;
+  roomType?: number[];
+  roomStyle?: number[];
   isActive: boolean;
   isUniqueInstance: boolean;
 }
@@ -135,8 +144,8 @@ export interface PlantCombo {
   comboType: number;
   comboTypeName?: string;
   description: string;
-  suitableSpace: string;
-  suitableRooms: string[];
+  suitableSpace: number;
+  suitableRooms: number[];
   fengShuiElement: number | null;
   fengShuiPurpose: string;
   petSafe?: boolean;
@@ -196,8 +205,8 @@ export interface PlantComboCreateRequest {
   comboName: string;
   comboType: number;
   description: string;
-  suitableSpace: string;
-  suitableRooms: string[];
+  suitableSpace: number;
+  suitableRooms: number[];
   fengShuiElement: number;
   fengShuiPurpose: string;
   themeName: string;
@@ -216,8 +225,8 @@ export interface PlantComboUpdateRequest {
   comboName: string;
   comboType: number;
   description: string;
-  suitableSpace: string;
-  suitableRooms: string[];
+  suitableSpace: number;
+  suitableRooms: number[];
   fengShuiElement: number;
   fengShuiPurpose: string;
   themeName: string;
@@ -243,8 +252,8 @@ export interface PlantComboFormData {
   comboName: string;
   comboType: number;
   description: string;
-  suitableSpace: string;
-  suitableRooms: string[];
+  suitableSpace: number;
+  suitableRooms: number[];
   fengShuiElement: number;
   fengShuiPurpose: string;
   themeName: string;
@@ -386,4 +395,50 @@ export interface DialogState {
   open: boolean;
   editingId: number | null;
   editingData: unknown;
+}
+
+export interface StoreUserSpecialization {
+  id: number;
+  name: string;
+  description: string;
+}
+
+export interface StoreUserSpecializationOption {
+  id: number;
+  name: string;
+  description: string;
+  isActive: boolean;
+}
+
+export interface StoreUserItem {
+  id: number;
+  username: string;
+  email: string;
+  phoneNumber: string;
+  avatarUrl: string | null;
+  status: number;
+  specializations: StoreUserSpecialization[];
+}
+
+export interface StoreUserListPayload {
+  items: StoreUserItem[];
+  totalCount: number;
+  pageNumber: number;
+  pageSize: number;
+  totalPages: number;
+  hasPrevious: boolean;
+  hasNext: boolean;
+}
+
+export interface StoreUserListQuery {
+  pageNumber?: number;
+  pageSize?: number;
+}
+
+export interface AssignStoreUserSpecializationRequest {
+  specializationId: number;
+}
+
+export interface ReplaceStoreUserSpecializationsRequest {
+  specializationIds: number[];
 }

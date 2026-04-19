@@ -125,7 +125,12 @@ export interface PlantEnumValue {
 }
 
 export interface PlantEnumGroup {
-  enumName: 'PlacementType' | 'PlantSize' | 'CareLevelType' | string;
+  enumName: 'PlacementType' | 'PlantSize' | 'GrowthRate' | 'CareLevelType' | string;
+  values: PlantEnumValue[];
+}
+
+export interface RoomDesignEnumGroup {
+  enumName: 'RoomType' | 'RoomStyle' | 'LightRequirement' | string;
   values: PlantEnumValue[];
 }
 
@@ -175,12 +180,14 @@ export const searchShopPlants = async (
 export const searchNurseryPlantInstances = async (
   nurseryId: number,
   data: NurseryPlantInstanceSearchRequest,
-  loading = true
+  loading = true,
+  showToast = false
 ): Promise<ResponseModel<NurseryPlantInstanceSearchPayload>> => {
   return apiClient.post(
     `/shop/nurseries/${nurseryId}/plant-instances/search`,
     data,
-    loading
+    loading,
+    { showToast }
   );
 };
 
@@ -195,16 +202,28 @@ export const getPlantEnums = async (
   return apiClient.get('/system/enums/plants', undefined, loading);
 };
 
+export const getRoomDesignEnums = async (
+  isServer: boolean,
+  loading = true
+): Promise<ResponseModel<RoomDesignEnumGroup[]>> => {
+  if (isServer) {
+    return apiServer.get('/system/enums/room-design');
+  }
+
+  return apiClient.get('/system/enums/room-design', undefined, loading);
+};
+
 export const searchShopNurseries = async (
   data: ShopNurserySearchRequest,
   isServer: boolean,
-  loading = true
+  loading = true,
+  showToast=false
 ): Promise<ResponseModel<ShopNurserySearchPayload>> => {
   if (isServer) {
     return apiServer.post('/shop/nurseries/search', data);
   }
 
-  return apiClient.post('/shop/nurseries/search', data, loading);
+  return apiClient.post('/shop/nurseries/search', data, loading, {showToast});
 };
 
 export const getPlantComboNurseries = async (

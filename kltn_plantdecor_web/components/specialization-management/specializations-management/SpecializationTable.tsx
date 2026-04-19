@@ -44,13 +44,13 @@ export default function SpecializationTable({
             <TableHead sx={{ backgroundColor: "var(--primary)" }}>
               <TableRow>
                 <TableCell sx={{ fontWeight: 700 }}>ID</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Tên chuyên môn</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Mô tả</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Specialization</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Description</TableCell>
                 <TableCell sx={{ fontWeight: 700 }} align="center">
-                  Trạng thái
+                  Status
                 </TableCell>
                 <TableCell sx={{ fontWeight: 700 }} align="center">
-                  Hành động
+                  Actions
                 </TableCell>
               </TableRow>
             </TableHead>
@@ -58,7 +58,7 @@ export default function SpecializationTable({
               {specializations.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} align="center" sx={{ py: 5 }}>
-                    Không có chuyên môn nào.
+                    No specializations available.
                   </TableCell>
                 </TableRow>
               ) : (
@@ -79,21 +79,21 @@ export default function SpecializationTable({
                       <Chip
                         size="small"
                         color={item.isActive ? "success" : "default"}
-                        label={item.isActive ? "Đang hoạt động" : "Đã vô hiệu hóa"}
+                        label={item.isActive ? "Active" : "Inactive"}
                       />
                     </TableCell>
                     <TableCell align="center">
-                      <Tooltip title="Xem">
+                      <Tooltip title="View Details">
                         <IconButton size="small" color="info" onClick={() => onView(item.id)}>
                           <VisibilityOutlined fontSize="small" />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title="Sửa">
+                      <Tooltip title="Edit">
                         <IconButton size="small" color="primary" onClick={() => onEdit(item.id)}>
                           <EditOutlined fontSize="small" />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title={item.isActive ? "Xóa mềm" : "Đã vô hiệu hóa"}>
+                      <Tooltip title={item.isActive ? "Deactivate" : "Activate"}>
                         <span>
                           <IconButton
                             size="small"

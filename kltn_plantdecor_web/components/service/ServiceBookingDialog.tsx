@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Box,
@@ -18,19 +18,20 @@ import {
   InputLabel,
   MenuItem,
   Select,
-  Stack,
   TextField,
   Typography,
 } from '@mui/material';
 import { useTranslations } from 'next-intl';
 import { toast } from 'react-toastify';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
+import { isValidPhoneNumber10Digits } from '@/lib/utils/phoneNumber';
 import {
   getDayOfWeekEnums,
   getNearbyNurseries,
   getPublicCareServicePackages,
   getSystemEnumValues,
 } from '@/lib/api/careServiceService';
+import { getUserProfile } from '@/lib/api/userProfileService';
 import type { CareServicePackage, NearbyNursery } from '@/types/care-service.types';
 
 interface ServiceBookingDialogProps {
@@ -63,6 +64,7 @@ const getLocalDateInputValue = (date: Date = new Date()) => {
 
 export default function ServiceBookingDialog({ open, onClose, onSubmit }: ServiceBookingDialogProps) {
   const t = useTranslations('services');
+  const tError = useTranslations('profile');
   const tCommon = useTranslations('common');
 
   const [packages, setPackages] = useState<CareServicePackage[]>([]);
@@ -163,6 +165,49 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit }: Servic
   }, [open, t]);
 
   useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    let isMounted = true;
+
+    const initializeContactInfo = async () => {
+      try {
+        const response = await getUserProfile(false);
+        const rawProfile = response?.payload ?? response?.data;
+        const profile =
+          rawProfile && typeof rawProfile === 'object' && 'payload' in rawProfile
+            ? (rawProfile as { payload?: typeof rawProfile }).payload
+            : rawProfile;
+
+        if (!isMounted || !profile) {
+          return;
+        }
+
+        const profilePhone =
+          profile.phoneNumber ??
+          (profile as typeof profile & { phone?: string }).phone ??
+          '';
+        const profileAddress = profile.address ?? '';
+
+        setFormData((prev) => ({
+          ...prev,
+          phone: prev.phone || profilePhone,
+          address: prev.address || profileAddress,
+        }));
+      } catch (error) {
+        console.error('Failed to initialize booking contact info from user profile:', error);
+      }
+    };
+
+    void initializeContactInfo();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [open]);
+
+  useEffect(() => {
     if (!selectedPackage || selectedPackage.serviceType !== serviceTypePeriodicValue) {
       return;
     }
@@ -183,7 +228,7 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit }: Servic
     }
   };
 
-  const handleSearchNearbyNurseries = async (options?: { packageId?: number; latitude?: number; longitude?: number }) => {
+  const handleSearchNearbyNurseries = useCallback(async (options?: { packageId?: number; latitude?: number; longitude?: number }) => {
     const packageId = options?.packageId ?? selectedPackageId;
     const latitude = options?.latitude ?? formData.latitude;
     const longitude = options?.longitude ?? formData.longitude;
@@ -218,7 +263,7 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit }: Servic
     } finally {
       setLoadingNearby(false);
     }
-  };
+  }, [formData.latitude, formData.longitude, selectedPackageId, t]);
 
   useEffect(() => {
     if (!open || !selectedPackageId || !hasLatLng) {
@@ -236,7 +281,7 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit }: Servic
       latitude: formData.latitude,
       longitude: formData.longitude,
     });
-  }, [formData.latitude, formData.longitude, hasLatLng, open, selectedPackageId]);
+  }, [formData.latitude, formData.longitude, handleSearchNearbyNurseries, hasLatLng, open, selectedPackageId]);
 
   const handleUseCurrentLocation = () => {
     if (!navigator.geolocation) {
@@ -303,22 +348,19 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit }: Servic
         newErrors.address = t('addressRequired');
     }
     if (!formData.phone.trim()) {
-        newErrors.phone = t('phoneRequired');
-    } else if (!/^[0-9+\s-()]+$/.test(formData.phone)) {
-        newErrors.phone = t('phoneInvalid');
+      newErrors.phone = tError('phoneRequired');
+    } else if (!isValidPhoneNumber10Digits(formData.phone)) {
+      newErrors.phone = tError('phoneNumberInvalid');
     }
     if (!formData.serviceDate) {
         newErrors.serviceDate = t('serviceDateRequired');
     } else if (formData.serviceDate < today) {
       newErrors.serviceDate = t('serviceDatePast');
     }
-    if (formData.scheduleDaysOfWeek.length === 0) {
-        newErrors.scheduleDaysOfWeek = t('scheduleRequired');
-    }
-    if (selectedPackage?.serviceType === serviceTypeOneTimeValue && formData.scheduleDaysOfWeek.length !== 1) {
-        newErrors.scheduleDaysOfWeek = t('oneTimeScheduleRule');
-    }
     if (selectedPackage?.serviceType === serviceTypePeriodicValue) {
+      if (formData.scheduleDaysOfWeek.length === 0) {
+        newErrors.scheduleDaysOfWeek = t('scheduleRequired');
+      }
       if (selectedPackage.visitPerWeek > 6) {
         newErrors.scheduleDaysOfWeek = t('periodicVisitPerWeekInvalid');
       } else if (formData.scheduleDaysOfWeek.includes(DAY_OF_WEEK_SUNDAY)) {
@@ -409,6 +451,12 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit }: Servic
                   {t('serviceTypeLabel')}: {selectedPackage.serviceType === 1 ? t('oneTime') : t('periodic')} | {t('totalSessions')}: {selectedPackage.totalSessions ?? '-'}
                 </Typography>
                 <Typography variant="caption" display="block">
+                  {t('visitFrequency')}: {selectedPackage.visitPerWeek > 0 ? `${selectedPackage.visitPerWeek} ${t('timesPerWeek')}` : t('visitFrequencyNotDefined')}
+                </Typography>
+                <Typography variant="caption" display="block">
+                    {t('duration')}: {selectedPackage.durationDays > 0 ? `${selectedPackage.durationDays} ${t('days')}` : t('durationNotDefined')}
+                </Typography>
+                <Typography variant="caption" display="block">
                   {t('serviceTasks')}: {selectedPackage.features}
                 </Typography>
                 <Typography variant="body2" fontWeight="bold" sx={{ mt: 1 }}>
@@ -474,6 +522,7 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit }: Servic
             />
 
             <TextField
+              type='number'
               fullWidth
               label={t('phone')}
               placeholder={t('enterPhone')}
@@ -495,38 +544,33 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit }: Servic
               inputProps={{ min: getLocalDateInputValue() }}
             />
 
-            <FormControl component="fieldset" error={!!errors.scheduleDaysOfWeek}>
-              <FormLabel component="legend">{t('selectScheduleDays')}</FormLabel>
-              <FormGroup row>
-                {allowedDayOfWeeks.map((day) => (
-                  <FormControlLabel
-                    key={day.value}
-                    control={
-                      <Checkbox
-                        checked={formData.scheduleDaysOfWeek.includes(day.value)}
-                        onChange={(_, checked) => handleSelectDay(day.value, checked)}
-                      />
-                    }
-                    label={day.name}
-                  />
-                ))}
-              </FormGroup>
-              {errors.scheduleDaysOfWeek && (
-                <Typography variant="caption" color="error">
-                  {errors.scheduleDaysOfWeek}
-                </Typography>
-              )}
-              {selectedPackage?.serviceType === serviceTypeOneTimeValue && (
-                <Typography variant="caption" color="text.secondary">
-                  {t('oneTimeScheduleHint')}
-                </Typography>
-              )}
-              {isPeriodicPackage && (
+            {isPeriodicPackage && (
+              <FormControl component="fieldset" error={!!errors.scheduleDaysOfWeek}>
+                <FormLabel component="legend">{t('selectScheduleDays')}</FormLabel>
+                <FormGroup row>
+                  {allowedDayOfWeeks.map((day) => (
+                    <FormControlLabel
+                      key={day.value}
+                      control={
+                        <Checkbox
+                          checked={formData.scheduleDaysOfWeek.includes(day.value)}
+                          onChange={(_, checked) => handleSelectDay(day.value, checked)}
+                        />
+                      }
+                      label={day.name}
+                    />
+                  ))}
+                </FormGroup>
+                {errors.scheduleDaysOfWeek && (
+                  <Typography variant="caption" color="error">
+                    {errors.scheduleDaysOfWeek}
+                  </Typography>
+                )}
                 <Typography variant="caption" color="text.secondary">
                   {t('periodicScheduleHint', { count: selectedPackage?.visitPerWeek ?? 0 })}
                 </Typography>
-              )}
-            </FormControl>
+              </FormControl>
+            )}
 
             <TextField
               fullWidth

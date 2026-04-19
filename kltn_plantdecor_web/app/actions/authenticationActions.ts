@@ -26,6 +26,7 @@ interface AuthenticatedActionResult extends ActionResult {
   user?: User;
   token?: string;
   refreshToken?: string;
+  expiresIn?: number;
 }
 
 interface RefreshActionResult extends ActionResult {
@@ -54,6 +55,12 @@ interface RawAuthApiResponse {
 
 interface ApiMessageResponse {
   message?: string;
+}
+
+interface LogoutAllRequest {
+  accessToken: string;
+  refreshToken: string;
+  deviceId: string;
 }
 
 type ErrorWithCause = Error & {
@@ -244,6 +251,7 @@ export async function loginAction(email: string, password: string, deviceId?: st
       user: normalized.user, // ✅ lấy từ JWT
       token: normalized.token,
       refreshToken: normalized.refreshToken,
+      expiresIn: normalized.expiresIn,
     };
   } catch (err) {
     return {
@@ -278,6 +286,7 @@ export async function loginWithGoogleAction(
       user, // ✅ giờ đã có user
       token: normalized.token,
       refreshToken: normalized.refreshToken,
+      expiresIn: normalized.expiresIn,
     };
   } catch (error) {
     return {
@@ -374,13 +383,13 @@ export async function logoutAction(): Promise<{ success: boolean }> {
   return { success: true };
 }
 
-export async function logoutAllAction(): Promise<ActionResult> {
+export async function logoutAllAction(payload: LogoutAllRequest): Promise<ActionResult> {
   try {
     const data = await callAuthenticationApi<ApiMessageResponse>(
       '/Authentication/logout-all',
       'Đăng xuất tất cả phiên thất bại.',
       {
-        auth: 'required',
+        body: payload,
       }
     );
 
@@ -553,7 +562,7 @@ export async function createManagerAction(
   try {
     const data = await callAuthenticationApi<ApiMessageResponse>(
       '/Authentication/create-manager',
-      'Tạo tài khoản quản lý thất bại.',
+      'Create manager account failed.',
       {
         auth: 'required',
         body: payload,
@@ -562,12 +571,12 @@ export async function createManagerAction(
 
     return {
       success: true,
-      message: data.message || 'Tạo tài khoản quản lý thành công.',
+      message: data.message || 'Create manager account successful.',
     };
   } catch (error) {
     return {
       success: false,
-      message: error instanceof Error ? error.message : 'Tạo tài khoản quản lý thất bại.',
+      message: error instanceof Error ? error.message : 'Create manager account failed.',
     };
   }
 }

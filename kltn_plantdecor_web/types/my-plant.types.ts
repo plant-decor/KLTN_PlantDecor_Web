@@ -5,6 +5,7 @@ export interface MyPlantItem {
   plantName: string;
   plantSpecificName: string | null;
   imageUrl: string | null;
+  primaryImageUrl: string | null;
   purchaseDate: string;
   lastWateredDate: string | null;
   lastFertilizedDate: string | null;

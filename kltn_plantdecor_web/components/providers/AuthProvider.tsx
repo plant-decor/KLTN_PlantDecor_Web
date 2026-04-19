@@ -12,6 +12,10 @@ import {
   setClientRefreshToken,
 } from '@/lib/axios/tokenStorage';
 
+// Global flag to track if bootstrap refresh is already in progress.
+// Prevents duplicate refresh attempts between bootstrap and other components.
+let isBootstrapRefreshing = false;
+
 /**
  * Auth Provider
  *
@@ -84,25 +88,32 @@ export function AuthProvider({ children, initialUser }: { children: React.ReactN
           !!state.user ||
           !!getClientRefreshToken();
 
-        if (!getClientAccessToken() && hasRecoverableSession) {
-          const refreshed = await refreshTokenAction();
+        if (!getClientAccessToken() && hasRecoverableSession && !isBootstrapRefreshing) {
+          isBootstrapRefreshing = true;
 
-          if (!active) {
-            return;
-          }
+          try {
+            const refreshed = await refreshTokenAction();
 
-          if (refreshed.success && refreshed.token) {
-            setClientAccessToken(refreshed.token, refreshed.expiresIn);
-
-            if (refreshed.refreshToken) {
-              setClientRefreshToken(refreshed.refreshToken);
+            if (!active) {
+              return;
             }
+
+            if (refreshed.success && refreshed.token) {
+              setClientAccessToken(refreshed.token, refreshed.expiresIn);
+
+              if (refreshed.refreshToken) {
+                setClientRefreshToken(refreshed.refreshToken);
+              }
+            }
+          } finally {
+            isBootstrapRefreshing = false;
           }
         }
       } catch (error) {
         console.error('Failed to initialize auth:', error);
       } finally {
         if (active) {
+          isBootstrapRefreshing = false;
           setAuthBootstrapCompleted(true);
         }
       }

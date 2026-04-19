@@ -16,6 +16,7 @@ export interface ReturnTicketEnumGroup {
 
 export interface ReturnTicketItem {
   id: number;
+  productImageUrl: string | null;
   nurseryOrderDetailId: number;
   itemName: string;
   requestedQuantity: number;

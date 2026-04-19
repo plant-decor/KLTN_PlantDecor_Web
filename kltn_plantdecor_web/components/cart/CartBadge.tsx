@@ -10,13 +10,13 @@ import { subscribeCartUpdated } from '@/lib/utils/cartEvents';
 
 export default function CartBadge() {
   const [itemCount, setItemCount] = useState(0);
-  const { user, accessToken } = useAuthStore();
+  const { user } = useAuthStore();
 
   useEffect(() => {
     let mounted = true;
 
     const loadCartCount = async () => {
-      if (!user?.id || !accessToken) {
+      if (!user?.id) {
         if (mounted) {
           setItemCount(0);
         }
@@ -48,7 +48,7 @@ export default function CartBadge() {
       mounted = false;
       unsubscribe();
     };
-  }, [accessToken, user?.id]);
+  }, [user?.id]);
 
   const cartHref = user?.id ? `/cart/${user.id}` : '/login';
   const displayCount = user?.id ? itemCount : 0;

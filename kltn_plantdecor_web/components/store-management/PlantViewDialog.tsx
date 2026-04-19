@@ -24,7 +24,7 @@ import { getAdminPlantGuideByPlantId } from '@/lib/api/adminPlantGuidesService';
 import { getFengShuiColors, getFengShuiElementLabel } from '@/lib/utils/fengShui';
 import { formatCurrency } from '@/lib/utils/formatUtil';
 import { localizeRoomDesignEnumLabel } from '@/lib/utils/roomDesignEnumI18n';
-import { formatDate, formatDateTime } from '@/lib/utils/dateUtils';
+import { formatDateTime } from '@/lib/utils/dateUtils';
 
 interface PlantViewDialogProps {
   open: boolean;
@@ -203,7 +203,11 @@ export default function PlantViewDialog({ open, plant, enums, onClose }: PlantVi
               </Grid>
               <Grid size={{ xs: 12, sm: 4 }}>
                 <Typography variant="body2" color="text.secondary">Growth rate</Typography>
-                <Typography variant="body1" fontWeight="600">{plant.growthRate || '-'}</Typography>
+                <Typography variant="body1" fontWeight="600">
+                  {typeof plant.growthRate === 'number'
+                    ? getEnumLabel(enums.growthRates, plant.growthRate)
+                    : '-'}
+                </Typography>
               </Grid>
               <Grid size={{ xs: 12, sm: 4 }}>
                 <Typography variant="body2" color="text.secondary">Pot size</Typography>

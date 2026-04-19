@@ -76,15 +76,15 @@ export default function ManagerScheduleServicesTable({
       <Table size='small'>
         <TableHead sx={{ backgroundColor: 'var(--primary)' }}>
           <TableRow>
-            <TableCell sx={{ color: 'var(--primary-foreground)', fontWeight: 600 }}>Phiên</TableCell>
-            <TableCell sx={{ color: 'var(--primary-foreground)', fontWeight: 600 }}>Ngày</TableCell>
-            <TableCell sx={{ color: 'var(--primary-foreground)', fontWeight: 600 }}>Ca làm</TableCell>
-            <TableCell sx={{ color: 'var(--primary-foreground)', fontWeight: 600 }}>Khách hàng</TableCell>
-            <TableCell sx={{ color: 'var(--primary-foreground)', fontWeight: 600 }}>Gói dịch vụ</TableCell>
-            <TableCell sx={{ color: 'var(--primary-foreground)', fontWeight: 600 }}>Caretaker</TableCell>
-            <TableCell sx={{ color: 'var(--primary-foreground)', fontWeight: 600 }}>Trạng thái</TableCell>
-            <TableCell align='right' sx={{ color: 'var(--primary-foreground)', fontWeight: 600 }}>
-              Hành động
+            <TableCell sx={{ fontWeight: 700 }} align='center'>Session</TableCell>
+            <TableCell sx={{ fontWeight: 700 }} align='center'>Date</TableCell>
+            <TableCell sx={{ fontWeight: 700 }} align='center'>Shift</TableCell>
+            <TableCell sx={{ fontWeight: 700 }}align='center'>Customer</TableCell>
+            <TableCell sx={{ fontWeight: 700 }}align='center'>Service Package</TableCell>
+            <TableCell sx={{ fontWeight: 700 }}align='center'>Caretaker</TableCell>
+            <TableCell sx={{ fontWeight: 700 }}align='center'>Status</TableCell>
+            <TableCell align='center' sx={{ fontWeight: 700 }}>
+              Actions
             </TableCell>
           </TableRow>
         </TableHead>

@@ -60,17 +60,13 @@ export default function MaterialTable({
 
   return (
     <Box>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        Search is currently disabled for Material tab. List is loaded by server pagination.
-      </Typography>
-
       <TableContainer component={Paper}>
         <Table size="small">
           <TableHead sx={{ backgroundColor: 'var(--primary)' }}>
             <TableRow>
               <TableCell sx={{ fontWeight: 600 }}>ID</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Image</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Code</TableCell>
+              {/* <TableCell sx={{ fontWeight: 600 }}>Code</TableCell> */}
               <TableCell sx={{ fontWeight: 600 }}>Material Name</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Brand</TableCell>
               <TableCell sx={{ fontWeight: 600 }} align="right">
@@ -106,7 +102,7 @@ export default function MaterialTable({
                       style={{ objectFit: 'cover', borderRadius: 4 }}
                     />
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>{material.materialCode}</TableCell>
+                  {/* <TableCell sx={{ fontWeight: 600 }}>{material.materialCode}</TableCell> */}
                   <TableCell>{material.name}</TableCell>
                   <TableCell>{material.brand || '-'}</TableCell>
                   <TableCell align="right">

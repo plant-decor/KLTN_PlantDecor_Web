@@ -288,7 +288,7 @@ export default function ManagerMaterialMode() {
             <TableRow>
               <TableCell sx={{ fontWeight: 700 }}>ID</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>Material</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Code</TableCell>
+              {/* <TableCell sx={{ fontWeight: 700 }}>Code</TableCell> */}
               <TableCell sx={{ fontWeight: 700 }}>Unit</TableCell>
               <TableCell sx={{ fontWeight: 700 }} align="right">Quantity</TableCell>
               <TableCell sx={{ fontWeight: 700 }} align="right">Reserved</TableCell>
@@ -321,7 +321,7 @@ export default function ManagerMaterialMode() {
                     <Typography variant="body2" fontWeight={600}>{item.materialName}</Typography>
                     <Typography variant="caption" color="text.secondary">Material ID: {item.materialId}</Typography>
                   </TableCell>
-                  <TableCell>{item.materialCode}</TableCell>
+                  {/* <TableCell>{item.materialCode}</TableCell> */}
                   <TableCell>{item.unit}</TableCell>
                   <TableCell align="right">{item.quantity}</TableCell>
                   <TableCell align="right">{item.reservedQuantity}</TableCell>
@@ -476,7 +476,7 @@ export default function ManagerMaterialMode() {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseEdit} disabled={submitting}>Cancel</Button>
-          <Button onClick={() => void handleSubmitEdit()} variant="contained" disabled={submitting || editForm.quantity < 0}>
+          <Button sx={{backgroundColor: 'var(--primary)'}} onClick={() => void handleSubmitEdit()} variant="contained" disabled={submitting || editForm.quantity < 0}>
             Save Changes
           </Button>
         </DialogActions>

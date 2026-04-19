@@ -105,23 +105,23 @@ export default function TagModal({
   
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{tag ? 'Cập nhật thẻ' : 'Thêm thẻ Mới'}</DialogTitle>
+      <DialogTitle>{tag ? 'Update Tag' : 'Add New Tag'}</DialogTitle>
       <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
         <TextField
-          label="Tên thẻ"
+          label="Tag Name"
           name="tagName"
           value={formData.tagName}
           onChange={handleChange}
           fullWidth
         />
         <TextField
-          label="Loại thẻ"
+          label="Tag Type"
           name="tagType"
           select
           value={formData.tagType}
           onChange={handleChange}
           fullWidth
-          helperText={tagTypeOptions.length === 0 ? 'Không tải được danh sách loại tag' : undefined}
+          helperText={tagTypeOptions.length === 0 ? 'Cannot load tag type options' : undefined}
         >
           {tagTypeOptions.map((option) => (
             <MenuItem key={option.value} value={option.value}>
@@ -134,7 +134,7 @@ export default function TagModal({
         <Button onClick={onClose} disabled={saving}>Cancel</Button>
         <Button onClick={handleSave} variant="contained" disabled={saving || !formData.tagName.trim() || !formData.tagType}
                 sx={{backgroundColor: 'var(--primary)'}}>
-          {saving ? 'Saving...' : tag ? 'Cập nhật' : 'Thêm'}
+          {saving ? 'Saving...' : tag ? 'Update' : 'Add Tag'}
         </Button>
       </DialogActions>
     </Dialog>

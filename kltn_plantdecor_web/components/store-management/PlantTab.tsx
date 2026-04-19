@@ -105,7 +105,6 @@ export default function PlantTab({}: PlantTabProps) {
     loadEnums,
     clearError,
   } = useAdminPlants();
-  console.log('PlantTab render', { plants });
   const {
     categoryTree,
     error: categoryError,
@@ -214,12 +213,13 @@ export default function PlantTab({}: PlantTabProps) {
   }, [togglePlantActive, toggleTarget]);
 
   const handleFormSubmit = useCallback(async (data: PlantFormData, images: ImageUploadData[]) => {
+    console.log('Form submit', { data });
     const success = await savePlant({
       formData: data,
       images,
       editingPlantId: editingData?.id,
-      currentCategoryIds: editingData?.categories.map((item) => item.id) ?? [],
-      currentTagIds: editingData?.tags.map((item) => item.id) ?? [],
+      currentCategoryIds: editingData?.categories?.map((item) => item.id) ?? [],
+      currentTagIds: editingData?.tags?.map((item) => item.id) ?? [],
     });
 
     if (success) {

@@ -60,29 +60,25 @@ export default function PlantComboTable({
 
   return (
     <Box>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        Danh sách combo được tải theo phân trang từ server.
-      </Typography>
-
       <TableContainer component={Paper}>
         <Table size="small">
           <TableHead sx={{ backgroundColor: 'var(--primary)' }}>
             <TableRow>
               <TableCell sx={{ fontWeight: 600 }}>ID</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Ảnh</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Mã combo</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Tên combo</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Loại</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Mùa</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Image</TableCell>
+              {/* <TableCell sx={{ fontWeight: 600 }}>Mã combo</TableCell> */}
+              <TableCell sx={{ fontWeight: 600 }}>Combo name</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Type</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Season</TableCell>
               <TableCell sx={{ fontWeight: 600 }} align="right">
-                Giá combo
+                Combo Price
               </TableCell>
               <TableCell sx={{ fontWeight: 600 }} align="center">
-                Số cây
+                Total Items
               </TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Trạng thái</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
               <TableCell sx={{ fontWeight: 600 }} align="center">
-                Thao tác
+                Actions
               </TableCell>
             </TableRow>
           </TableHead>
@@ -90,7 +86,7 @@ export default function PlantComboTable({
             {combos.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={10} align="center" sx={{ py: 3 }}>
-                  <Typography color="text.secondary">Không có dữ liệu</Typography>
+                  <Typography color="text.secondary">No Data</Typography>
                 </TableCell>
               </TableRow>
             ) : (
@@ -106,7 +102,7 @@ export default function PlantComboTable({
                       style={{ objectFit: 'cover', borderRadius: 4 }}
                     />
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>{combo.comboCode}</TableCell>
+                  {/* <TableCell sx={{ fontWeight: 600 }}>{combo.comboCode}</TableCell> */}
                   <TableCell>{combo.comboName}</TableCell>
                   <TableCell>
                     <Chip label={combo.comboTypeName || combo.comboType} size="small" variant="outlined" />
@@ -122,7 +118,7 @@ export default function PlantComboTable({
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label={combo.isActive ? 'Kích hoạt' : 'Vô hiệu'}
+                      label={combo.isActive ? 'Active' : 'Inactive'}
                       color={combo.isActive ? 'success' : 'default'}
                       size="small"
                       variant="outlined"
@@ -140,7 +136,7 @@ export default function PlantComboTable({
                           <Edit fontSize="small" />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title={combo.isActive ? 'Vô hiệu combo' : 'Kích hoạt combo'}>
+                      <Tooltip title={combo.isActive ? 'Deactivate combo' : 'Activate combo'}>
                         <IconButton
                           size="small"
                           color={combo.isActive ? 'success' : 'default'}

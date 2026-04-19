@@ -109,6 +109,7 @@ export default function PlantFormDialog({
   isLoading = false,
 }: PlantFormDialogProps) {
   const tRoomDesignEnum = useTranslations('roomDesignEnums');
+  const isEditing = Boolean(editingData);
   const { control, handleSubmit, reset, setValue } = useForm<PlantFormData>({
     defaultValues: getDefaultPlant(),
   });
@@ -122,12 +123,27 @@ export default function PlantFormDialog({
       return;
     }
 
+    const ensureEnumDefault = (
+      fieldName: keyof PlantFormData,
+      currentValue: number | undefined,
+      options: Array<{ value: number }>
+    ) => {
+      if (options.length === 0) {
+        return;
+      }
+
+      const isValid = typeof currentValue === 'number' && options.some((option) => option.value === currentValue);
+      if (!isValid) {
+        setValue(fieldName, options[0].value);
+      }
+    };
+
     if (editingData) {
       reset(mapEditingDataToForm(editingData, plantGuideData));
       dispatchPlantGuide({ type: 'set', value: Boolean(plantGuideData) });
       dispatchImages({
         type: 'set',
-        images: editingData.images.map((image) => ({
+        images: (editingData.images ?? []).map((image) => ({
           id: image.id,
           existingImageId: image.id,
           preview: image.imageUrl,
@@ -135,32 +151,35 @@ export default function PlantFormDialog({
           isThumbnail: false,
         })),
       });
+
+      ensureEnumDefault('placementType', editingData.placementType, enums.placementTypes);
+      ensureEnumDefault('size', editingData.size, enums.sizes);
+      ensureEnumDefault('growthRate', editingData.growthRate ?? undefined, enums.growthRates);
+      ensureEnumDefault('careLevelType', editingData.careLevelType, enums.careLevelTypes);
+      ensureEnumDefault('fengShuiElement', editingData.fengShuiElement ?? undefined, FENG_SHUI_ELEMENT_OPTIONS);
       return;
     }
 
     reset(getDefaultPlant());
     dispatchPlantGuide({ type: 'clear' });
     dispatchImages({ type: 'clear' });
-  }, [editingData, open, plantGuideData, reset]);
+
+    ensureEnumDefault('placementType', undefined, enums.placementTypes);
+    ensureEnumDefault('size', undefined, enums.sizes);
+    ensureEnumDefault('growthRate', undefined, enums.growthRates);
+    ensureEnumDefault('careLevelType', undefined, enums.careLevelTypes);
+    ensureEnumDefault('fengShuiElement', undefined, FENG_SHUI_ELEMENT_OPTIONS);
+  }, [editingData, enums, open, plantGuideData, reset, setValue]);
 
   useEffect(() => {
     if (!open || editingData || !includePlantGuide) {
       return;
     }
 
-    if (enums.placementTypes[0]?.value !== undefined) {
-      setValue('placementType', enums.placementTypes[0].value);
-    }
-    if (enums.sizes[0]?.value !== undefined) {
-      setValue('size', enums.sizes[0].value);
-    }
-    if (enums.careLevelTypes[0]?.value !== undefined) {
-      setValue('careLevelType', enums.careLevelTypes[0].value);
-    }
     if (enums.lightRequirements[0]?.name && !editingData) {
       setValue('plantGuide.lightRequirement', enums.lightRequirements[0].name);
     }
-  }, [editingData, enums.careLevelTypes, enums.lightRequirements, enums.placementTypes, enums.sizes, includePlantGuide, open, setValue]);
+  }, [editingData, enums.careLevelTypes, enums.growthRates, enums.lightRequirements, enums.placementTypes, enums.sizes, includePlantGuide, open, setValue]);
 
   const handleFormSubmit = (data: PlantFormData) => {
     onSubmit(
@@ -177,13 +196,14 @@ export default function PlantFormDialog({
   const isEnumReady =
     enums.placementTypes.length > 0 &&
     enums.sizes.length > 0 &&
+    enums.growthRates.length > 0 &&
     enums.careLevelTypes.length > 0 &&
     enums.lightRequirements.length > 0;
   const disableSubmit = isLoading || enumLoading || Boolean(enumError) || !isEnumReady;
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>{editingData ? 'Edit Plant' : 'Create Plant'}</DialogTitle>
+      <DialogTitle>{isEditing ? 'Edit Plant' : 'Create Plant'}</DialogTitle>
       <DialogContent dividers sx={{ maxHeight: '80vh', overflow: 'auto' }}>
         <Stack spacing={3}>
           {enumError && <Alert severity="error">Failed to load plant enums. Please retry later.</Alert>}
@@ -388,16 +408,21 @@ export default function PlantFormDialog({
                 <Controller
                   name="growthRate"
                   control={control}
-                  rules={{ required: true }}
+                  rules={{ required: true, min: 1 }}
                   render={({ field, fieldState }) => (
-                    <TextField
-                      {...field}
-                      label="Growth rate"
-                      fullWidth
-                      required
-                      error={Boolean(fieldState.error)}
-                      helperText={getValidationMessage(fieldState.error)}
-                    />
+                    <FormControl fullWidth error={Boolean(fieldState.error)}>
+                      <InputLabel>Growth rate</InputLabel>
+                      <Select
+                        {...field}
+                        label="Growth rate"
+                        onChange={(event) => field.onChange(Number(event.target.value))}
+                      >
+                        {enums.growthRates.map((item) => (
+                          <MenuItem key={item.value} value={item.value}>{item.name}</MenuItem>
+                        ))}
+                      </Select>
+                      <FormHelperText>{getValidationMessage(fieldState.error)}</FormHelperText>
+                    </FormControl>
                   )}
                 />
               </Grid>
@@ -549,7 +574,7 @@ export default function PlantFormDialog({
                   render={({ field, fieldState }) => (
                     <TextField
                       {...field}
-                      label="Pot size"
+                      label="Pot size (cm)"
                       fullWidth
                       required={potIncluded}
                       error={Boolean(fieldState.error)}
@@ -848,7 +873,7 @@ export default function PlantFormDialog({
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
         <Button onClick={handleSubmit(handleFormSubmit)} variant="contained" disabled={disableSubmit}>
-          {isLoading ? 'Processing...' : 'Save'}
+          {isLoading ? 'Processing...' : isEditing ? 'Update' : 'Save'}
         </Button>
       </DialogActions>
     </Dialog>

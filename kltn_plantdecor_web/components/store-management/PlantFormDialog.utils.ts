@@ -34,7 +34,7 @@ const defaultPlant: PlantFormData = {
   basePrice: 0,
   placementType: 0,
   size: 0,
-  growthRate: '',
+  growthRate: 0,
   toxicity: false,
   airPurifying: false,
   hasFlower: false,
@@ -78,7 +78,7 @@ export const mapEditingDataToForm = (
   basePrice: editingData.basePrice,
   placementType: editingData.placementType,
   size: editingData.size,
-  growthRate: editingData.growthRate || '',
+  growthRate: editingData.growthRate ?? 0,
   toxicity: editingData.toxicity,
   airPurifying: editingData.airPurifying,
   hasFlower: editingData.hasFlower,
@@ -94,8 +94,8 @@ export const mapEditingDataToForm = (
   roomStyle: editingData.roomStyle || [],
   isActive: editingData.isActive,
   isUniqueInstance: editingData.isUniqueInstance,
-  categoryIds: editingData.categories.map((item) => item.id),
-  tagIds: editingData.tags.map((item) => item.id),
+  categoryIds: (editingData.categories ?? []).map((item) => item.id),
+  tagIds: (editingData.tags ?? []).map((item) => item.id),
   plantGuide: plantGuideData || defaultPlant.plantGuide,
 });
 

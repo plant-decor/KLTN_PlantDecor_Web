@@ -15,8 +15,13 @@ import {
   Typography,
 } from '@mui/material';
 import { useTranslations } from 'next-intl';
+import { toast } from 'react-toastify';
+import MyReturnTicketsPanel from '@/components/order-history/MyReturnTicketsPanel';
 import OrderDetailModal from '@/components/order-history/OrderDetailModal';
 import OrderHistoryList from '@/components/order-history/OrderHistoryList';
+import ReturnTicketCreateDialog, {
+  type ReturnTicketEvidenceMap,
+} from '@/components/order-history/ReturnTicketCreateDialog';
 import {
   cancelOrder,
   continuePaymentByInvoice,
@@ -26,8 +31,15 @@ import {
   getMyOrders,
 } from '@/lib/api/orderService';
 import type { Order } from '@/types/order.types';
+import {
+  createReturnTicket,
+  getMyReturnTickets,
+  uploadReturnTicketItemImages,
+} from '@/lib/api/returnTicketService';
+import type { CreateReturnTicketRequest, ReturnTicket } from '@/types/return-ticket.types';
+import { useAuthStore } from '@/lib/store/authStore';
 
-type OrdersTab = 0 | 1;
+type OrdersTab = 0 | 1 | 2;
 
 function hasPendingInvoice(order: Order): boolean {
   return order.invoices.some((invoice) => invoice.statusName === 'Pending');
@@ -35,6 +47,7 @@ function hasPendingInvoice(order: Order): boolean {
 
 export default function OrdersPage() {
   const tOrderHistory = useTranslations('orderHistory');
+  const { user } = useAuthStore();
   const [currentTab, setCurrentTab] = useState<OrdersTab>(0);
   const [orders, setOrders] = useState<Order[]>([]);
   const [pendingOrders, setPendingOrders] = useState<Order[]>([]);
@@ -54,6 +67,14 @@ export default function OrdersPage() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState('');
   const [detailOpen, setDetailOpen] = useState(false);
+  const [myReturnTickets, setMyReturnTickets] = useState<ReturnTicket[]>([]);
+  const [myReturnTicketsLoading, setMyReturnTicketsLoading] = useState(true);
+  const [myReturnTicketsError, setMyReturnTicketsError] = useState('');
+  const [hasLoadedReturnTickets, setHasLoadedReturnTickets] = useState(false);
+  const [creatingReturnTicket, setCreatingReturnTicket] = useState(false);
+  const [returnDialogOpen, setReturnDialogOpen] = useState(false);
+  const [returnDialogOrder, setReturnDialogOrder] = useState<Order | null>(null);
+  const [returnSubmitError, setReturnSubmitError] = useState('');
 
   const fetchAllOrders = useCallback(async () => {
     const requestId = ++allOrdersRequestSequenceRef.current;
@@ -127,16 +148,45 @@ export default function OrdersPage() {
   }, []);
 
   useEffect(() => {
+    if (!user?.id) {
+      setOrders([]);
+      setLoadingAllOrders(false);
+      return;
+    }
+
     void fetchAllOrders();
-  }, [fetchAllOrders]);
+  }, [fetchAllOrders, user?.id]);
+
+  const fetchMyReturnTickets = useCallback(async () => {
+    try {
+      setMyReturnTicketsLoading(true);
+      setMyReturnTicketsError('');
+      const payload = await getMyReturnTickets(false);
+      setMyReturnTickets(Array.isArray(payload) ? payload : []);
+      setHasLoadedReturnTickets(true);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Cannot load your return tickets.';
+      setMyReturnTicketsError(message);
+    } finally {
+      setMyReturnTicketsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    if (currentTab !== 1) {
+    if (!user?.id || currentTab !== 1) {
       return;
     }
 
     void fetchPendingOrders();
-  }, [currentTab, fetchPendingOrders]);
+  }, [currentTab, fetchPendingOrders, user?.id]);
+
+  useEffect(() => {
+    if (!user?.id || currentTab !== 2 || hasLoadedReturnTickets) {
+      return;
+    }
+
+    void fetchMyReturnTickets();
+  }, [currentTab, fetchMyReturnTickets, hasLoadedReturnTickets, user?.id]);
 
   const handleViewDetail = useCallback(async (orderId: number) => {
     try {
@@ -252,6 +302,72 @@ export default function OrdersPage() {
     setCancelError('');
   }, []);
 
+  const handleOpenReturnDialog = useCallback(async (orderId: number) => {
+    try {
+      setCreatingReturnTicket(true);
+      setReturnSubmitError('');
+      const order = detailOrder?.id === orderId ? detailOrder : await getMyOrderById(orderId);
+
+      if (!order) {
+        setReturnSubmitError('Cannot load order to create return ticket.');
+        return;
+      }
+
+      setReturnDialogOrder(order);
+      setReturnDialogOpen(true);
+    } catch (err) {
+      setReturnSubmitError(err instanceof Error ? err.message : 'Cannot open return ticket form.');
+    } finally {
+      setCreatingReturnTicket(false);
+    }
+  }, [detailOrder]);
+
+  const handleCloseReturnDialog = useCallback(() => {
+    setReturnDialogOpen(false);
+    setReturnSubmitError('');
+    setReturnDialogOrder(null);
+  }, []);
+
+  const handleCreateReturnTicket = useCallback(async (
+    request: CreateReturnTicketRequest,
+    evidenceMap: ReturnTicketEvidenceMap
+  ) => {
+    try {
+      setCreatingReturnTicket(true);
+      setReturnSubmitError('');
+
+      const createdTicket = await createReturnTicket(request, true);
+
+      for (const ticketItem of createdTicket.items) {
+        const files = evidenceMap[ticketItem.nurseryOrderDetailId] || [];
+        if (files.length === 0) {
+          continue;
+        }
+
+        await uploadReturnTicketItemImages(createdTicket.id, ticketItem.id, files, true);
+      }
+
+      toast.success('Return ticket submitted successfully.');
+      setReturnDialogOpen(false);
+      setReturnDialogOrder(null);
+
+      if (detailOrder?.id === request.orderId) {
+        const refreshedOrder = await getMyOrderById(request.orderId);
+        if (refreshedOrder) {
+          setDetailOrder(refreshedOrder);
+        }
+      }
+
+      await Promise.all([fetchAllOrders(), fetchPendingOrders(), fetchMyReturnTickets()]);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to submit return ticket.';
+      setReturnSubmitError(message);
+      throw err;
+    } finally {
+      setCreatingReturnTicket(false);
+    }
+  }, [detailOrder, fetchAllOrders, fetchMyReturnTickets, fetchPendingOrders]);
+
   const closeCancelConfirmModal = useCallback(() => {
     if (cancelLoadingOrderId !== null) {
       return;
@@ -274,10 +390,12 @@ export default function OrdersPage() {
             borderBottom: 1,
             borderColor: 'divider',
             '& .MuiTab-root': { fontWeight: 600, textTransform: 'none', fontSize: '1rem' },
+            '& .Mui-selected': { backgroundColor: 'var(--primary) !important', color: '#fff !important' },
           }}
         >
           <Tab label={tOrderHistory('allOrdersTab')} />
           <Tab label={tOrderHistory('pendingPaymentTab')} />
+          <Tab label="My Return Tickets" />
         </Tabs>
       </Card>
 
@@ -292,18 +410,26 @@ export default function OrdersPage() {
         </Alert>
       ) : null}
 
-      <OrderHistoryList
-        orders={currentTab === 0 ? orders : pendingOrders}
-        loading={currentTab === 0 ? loadingAllOrders : loadingPendingOrders}
-        retryLoadingOrderId={retryLoadingOrderId}
-        cancelLoadingOrderId={cancelLoadingOrderId}
-        onViewDetail={handleViewDetail}
-        onRetryPayment={handleRetryPayment}
-        onCancelOrder={handleCancelOrder}
-        emptyMessage={
-          currentTab === 0 ? tOrderHistory('noOrdersFound') : tOrderHistory('noPendingOrdersFound')
-        }
-      />
+      {currentTab === 2 ? (
+        <MyReturnTicketsPanel
+          tickets={myReturnTickets}
+          loading={myReturnTicketsLoading}
+          error={myReturnTicketsError}
+        />
+      ) : (
+        <OrderHistoryList
+          orders={currentTab === 0 ? orders : pendingOrders}
+          loading={currentTab === 0 ? loadingAllOrders : loadingPendingOrders}
+          retryLoadingOrderId={retryLoadingOrderId}
+          cancelLoadingOrderId={cancelLoadingOrderId}
+          onViewDetail={handleViewDetail}
+          onRetryPayment={handleRetryPayment}
+          onCancelOrder={handleCancelOrder}
+          emptyMessage={
+            currentTab === 0 ? tOrderHistory('noOrdersFound') : tOrderHistory('noPendingOrdersFound')
+          }
+        />
+      )}
 
       <OrderDetailModal
         open={detailOpen}
@@ -313,10 +439,23 @@ export default function OrdersPage() {
         retryLoadingOrderId={retryLoadingOrderId}
         paymentLoadingInvoiceId={paymentLoadingInvoiceId}
         cancelLoadingOrderId={cancelLoadingOrderId}
+        creatingReturnTicket={creatingReturnTicket}
         onPayInvoice={handlePayInvoice}
         onCancelOrder={handleCancelOrder}
+        onCreateReturnTicket={handleOpenReturnDialog}
         onClose={closeDetailModal}
       />
+
+      {returnDialogOrder ? (
+        <ReturnTicketCreateDialog
+          open={returnDialogOpen}
+          order={returnDialogOrder}
+          submitting={creatingReturnTicket}
+          submitError={returnSubmitError}
+          onClose={handleCloseReturnDialog}
+          onSubmit={handleCreateReturnTicket}
+        />
+      ) : null}
 
       <Dialog open={cancelConfirmOrderId !== null} onClose={closeCancelConfirmModal} maxWidth="xs" fullWidth>
         <DialogTitle>{tOrderHistory('cancelConfirmTitle')}</DialogTitle>
@@ -341,6 +480,7 @@ export default function OrdersPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
     </Box>
   );
 }

@@ -7,6 +7,8 @@ import {
   setClientRefreshToken,
 } from '@/lib/axios/tokenStorage';
 
+const MIN_REFRESH_LEAD_TIME_MS = 10 * 1000;
+
 type RefreshActionResult = Awaited<ReturnType<typeof refreshTokenAction>>;
 
 interface UseTokenRefreshOptions {
@@ -51,6 +53,22 @@ export const useTokenRefresh = ({
     [clearTimer, enabled]
   );
 
+  const getRefreshLeadTime = useCallback(
+    (remainingMs: number) => {
+      if (!Number.isFinite(remainingMs) || remainingMs <= 0) {
+        return MIN_REFRESH_LEAD_TIME_MS;
+      }
+
+      // Keep refresh close enough to expiry, but avoid aggressive short loops
+      // when token TTL is smaller than the default threshold.
+      return Math.min(
+        refreshThreshold,
+        Math.max(MIN_REFRESH_LEAD_TIME_MS, Math.floor(remainingMs * 0.25))
+      );
+    },
+    [refreshThreshold]
+  );
+
   const checkAndRefreshToken = useCallback(async () => {
     if (!enabled || typeof window === 'undefined') {
       return;
@@ -69,9 +87,10 @@ export const useTokenRefresh = ({
     }
 
     const remainingMs = accessTokenExpiresAt - Date.now();
+    const refreshLeadTime = getRefreshLeadTime(remainingMs);
 
-    if (remainingMs > refreshThreshold) {
-      scheduleNextCheck(remainingMs - refreshThreshold);
+    if (remainingMs > refreshLeadTime) {
+      scheduleNextCheck(remainingMs - refreshLeadTime);
       return;
     }
 
@@ -105,7 +124,14 @@ export const useTokenRefresh = ({
 
         const nextExpiresAt = useAuthStore.getState().accessTokenExpiresAt;
         if (nextExpiresAt) {
-          scheduleNextCheck(Math.max(1000, nextExpiresAt - Date.now() - refreshThreshold));
+          const nextRemainingMs = nextExpiresAt - Date.now();
+          if (nextRemainingMs > 0) {
+            const nextRefreshLeadTime = getRefreshLeadTime(nextRemainingMs);
+            scheduleNextCheck(Math.max(1000, nextRemainingMs - nextRefreshLeadTime));
+            return;
+          }
+
+          scheduleNextCheck(checkInterval);
           return;
         }
 
@@ -123,7 +149,7 @@ export const useTokenRefresh = ({
     } finally {
       refreshInProgressRef.current = false;
     }
-  }, [checkInterval, enabled, onError, onRefresh, refreshThreshold, scheduleNextCheck]);
+  }, [checkInterval, enabled, getRefreshLeadTime, onError, onRefresh, scheduleNextCheck]);
 
   useEffect(() => {
     checkAndRefreshTokenRef.current = checkAndRefreshToken;

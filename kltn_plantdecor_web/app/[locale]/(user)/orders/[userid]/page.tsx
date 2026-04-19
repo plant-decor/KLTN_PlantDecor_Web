@@ -37,6 +37,7 @@ import {
   uploadReturnTicketItemImages,
 } from '@/lib/api/returnTicketService';
 import type { CreateReturnTicketRequest, ReturnTicket } from '@/types/return-ticket.types';
+import { useAuthStore } from '@/lib/store/authStore';
 
 type OrdersTab = 0 | 1 | 2;
 
@@ -46,6 +47,7 @@ function hasPendingInvoice(order: Order): boolean {
 
 export default function OrdersPage() {
   const tOrderHistory = useTranslations('orderHistory');
+  const { user } = useAuthStore();
   const [currentTab, setCurrentTab] = useState<OrdersTab>(0);
   const [orders, setOrders] = useState<Order[]>([]);
   const [pendingOrders, setPendingOrders] = useState<Order[]>([]);
@@ -146,8 +148,14 @@ export default function OrdersPage() {
   }, []);
 
   useEffect(() => {
+    if (!user?.id) {
+      setOrders([]);
+      setLoadingAllOrders(false);
+      return;
+    }
+
     void fetchAllOrders();
-  }, [fetchAllOrders]);
+  }, [fetchAllOrders, user?.id]);
 
   const fetchMyReturnTickets = useCallback(async () => {
     try {
@@ -165,20 +173,20 @@ export default function OrdersPage() {
   }, []);
 
   useEffect(() => {
-    if (currentTab !== 1) {
+    if (!user?.id || currentTab !== 1) {
       return;
     }
 
     void fetchPendingOrders();
-  }, [currentTab, fetchPendingOrders]);
+  }, [currentTab, fetchPendingOrders, user?.id]);
 
   useEffect(() => {
-    if (currentTab !== 2 || hasLoadedReturnTickets) {
+    if (!user?.id || currentTab !== 2 || hasLoadedReturnTickets) {
       return;
     }
 
     void fetchMyReturnTickets();
-  }, [currentTab, fetchMyReturnTickets, hasLoadedReturnTickets]);
+  }, [currentTab, fetchMyReturnTickets, hasLoadedReturnTickets, user?.id]);
 
   const handleViewDetail = useCallback(async (orderId: number) => {
     try {

@@ -11,8 +11,9 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import type { MyPlantItemWithGuide } from '@/types/my-plant.types';
+import { formatDate as formatDateUTC7 } from '@/lib/utils/dateUtils';
 import { localizeRoomDesignEnumLabel } from '@/lib/utils/roomDesignEnumI18n';
 import ClickableImageViewer from '../image-view/ClickableImageViewer';
 
@@ -20,7 +21,7 @@ interface MyPlantsClientProps {
   plants: MyPlantItemWithGuide[];
 }
 
-const formatDate = (value: string | null | undefined, locale: string, fallback: string) => {
+const formatDate = (value: string | null | undefined, fallback: string) => {
   if (!value) {
     return fallback;
   }
@@ -30,7 +31,7 @@ const formatDate = (value: string | null | undefined, locale: string, fallback: 
     return value;
   }
 
-  return date.toLocaleDateString(locale);
+  return formatDateUTC7(date);
 };
 
 const formatNumber = (value: number | null | undefined, fallback: string, suffix = '') => {
@@ -95,7 +96,6 @@ const GuideField = ({
 export default function MyPlantsClient({ plants }: MyPlantsClientProps) {
   const t = useTranslations('myPlantClient');
   const tRoomDesignEnum = useTranslations('roomDesignEnums');
-  const locale = useLocale();
 
   return (
     <Stack spacing={3}>
@@ -168,7 +168,7 @@ export default function MyPlantsClient({ plants }: MyPlantsClientProps) {
                           <Stack spacing={1.5}>
                             <GuideField
                               label={t('fields.purchaseDate')}
-                              value={formatDate(plant.purchaseDate, locale, notUpdated)}
+                              value={formatDate(plant.purchaseDate, notUpdated)}
                               fallback={notUpdated}
                             />
                             <GuideField label={t('fields.location')} value={plant.location || notUpdated} fallback={notUpdated} />
@@ -204,17 +204,17 @@ export default function MyPlantsClient({ plants }: MyPlantsClientProps) {
                             />
                             <GuideField
                               label={t('fields.lastWatered')}
-                              value={formatDate(plant.lastWateredDate, locale, notUpdated)}
+                              value={formatDate(plant.lastWateredDate, notUpdated)}
                               fallback={notUpdated}
                             />
                             <GuideField
                               label={t('fields.lastFertilized')}
-                              value={formatDate(plant.lastFertilizedDate, locale, notUpdated)}
+                              value={formatDate(plant.lastFertilizedDate, notUpdated)}
                               fallback={notUpdated}
                             />
                             <GuideField
                               label={t('fields.lastPruned')}
-                              value={formatDate(plant.lastPrunedDate, locale, notUpdated)}
+                              value={formatDate(plant.lastPrunedDate, notUpdated)}
                               fallback={notUpdated}
                             />
                           </Stack>

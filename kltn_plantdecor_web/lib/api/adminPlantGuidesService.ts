@@ -71,7 +71,7 @@ export const createAdminPlantGuide = async (
   data: AdminPlantGuideUpsertRequest,
   loading = true
 ): Promise<ResponseModel<AdminPlantGuideDetail>> => {
-  return apiClient.post('/admin/PlantGuides', data, loading, { showToast: false, showErrorToast: false });
+  return apiClient.post('/admin/PlantGuides', data, loading, { showToast: true, showErrorToast: true });
 };
 
 export const updateAdminPlantGuide = async (
@@ -79,7 +79,7 @@ export const updateAdminPlantGuide = async (
   data: AdminPlantGuideUpsertRequest,
   loading = true
 ): Promise<ResponseModel<AdminPlantGuideDetail>> => {
-  return apiClient.patch(`/admin/PlantGuides/${id}`, data, loading, { showToast: false, showErrorToast: false });
+  return apiClient.patch(`/admin/PlantGuides/${id}`, data, loading, { showToast: true, showErrorToast: true });
 };
 
 export const deleteAdminPlantGuide = async (

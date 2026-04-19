@@ -24,6 +24,7 @@ import { getAdminPlantGuideByPlantId } from '@/lib/api/adminPlantGuidesService';
 import { getFengShuiColors, getFengShuiElementLabel } from '@/lib/utils/fengShui';
 import { formatCurrency } from '@/lib/utils/formatUtil';
 import { localizeRoomDesignEnumLabel } from '@/lib/utils/roomDesignEnumI18n';
+import { formatDate, formatDateTime } from '@/lib/utils/dateUtils';
 
 interface PlantViewDialogProps {
   open: boolean;
@@ -36,18 +37,6 @@ const getEnumLabel = (items: { value: number; name: string }[], value: number) =
   return items.find((item) => item.value === value)?.name ?? String(value);
 };
 
-const formatDateTime = (value?: string) => {
-  if (!value) {
-    return '-';
-  }
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return date.toLocaleString('vi-VN');
-};
 
 const renderEnumChips = (ids: number[] | undefined, options: { value: number; name: string }[]) => {
   if (!Array.isArray(ids) || ids.length === 0) {
@@ -104,7 +93,7 @@ export default function PlantViewDialog({ open, plant, enums, onClose }: PlantVi
       } catch (error) {
         if (!cancelled) {
           setGuide(null);
-          setGuideError(error instanceof Error ? error.message : 'Không thể tải Plant Guide');
+          setGuideError(error instanceof Error ? error.message : 'Can not load plant guide');
         }
       } finally {
         if (!cancelled) {
@@ -288,14 +277,14 @@ export default function PlantViewDialog({ open, plant, enums, onClose }: PlantVi
               Plant Guide
             </Typography>
             {guideLoading ? (
-              <Typography color="text.secondary">Đang tải hướng dẫn chăm sóc...</Typography>
+              <Typography color="text.secondary">Loading plant guide...</Typography>
             ) : guideError ? (
               <Alert severity="error">{guideError}</Alert>
             ) : guide ? (
               <Grid container spacing={2.5}>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <GuideField
-                    label="Ánh sáng"
+                    label="Light Requirement"
                     value={localizeRoomDesignEnumLabel(
                       guide.lightRequirementName,
                       tRoomDesignEnum,
@@ -304,27 +293,27 @@ export default function PlantViewDialog({ open, plant, enums, onClose }: PlantVi
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <GuideField label="Tưới nước" value={guide.watering} />
+                  <GuideField label="Watering" value={guide.watering} />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <GuideField label="Bón phân" value={guide.fertilizing} />
+                  <GuideField label="Fertilizing" value={guide.fertilizing} />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <GuideField label="Cắt tỉa" value={guide.pruning} />
+                  <GuideField label="Pruning" value={guide.pruning} />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <GuideField label="Nhiệt độ" value={guide.temperature} />
+                  <GuideField label="Temperature" value={guide.temperature} />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <GuideField label="Độ ẩm" value={guide.humidity} />
+                  <GuideField label="Humidity" value={guide.humidity} />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <GuideField label="Đất trồng" value={guide.soil} />
+                  <GuideField label="Soil" value={guide.soil} />
                 </Grid>
                 <Grid size={{ xs: 12 }}>
                   <Box sx={{ p: 2, borderRadius: 2, bgcolor: 'rgba(25, 118, 210, 0.06)' }}>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                      Ghi chú chăm sóc
+                      Care Notes
                     </Typography>
                     <Typography variant="body1" fontWeight={600}>
                       {guide.careNotes}
@@ -333,7 +322,7 @@ export default function PlantViewDialog({ open, plant, enums, onClose }: PlantVi
                 </Grid>
               </Grid>
             ) : (
-              <Alert severity="info">Cây này chưa có Plant Guide.</Alert>
+              <Alert severity="info">This plant does not have a care guide available.</Alert>
             )}
           </Box>
 
@@ -383,14 +372,18 @@ export default function PlantViewDialog({ open, plant, enums, onClose }: PlantVi
               Metadata
             </Typography>
             <Grid container spacing={2}>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary">Created at</Typography>
-                <Typography variant="body1" fontWeight="600">{formatDateTime(plant.createdAt)}</Typography>
-              </Grid>
+              {plant.createdAt && (
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Typography variant="body2" color="text.secondary">Created at</Typography>
+                  <Typography variant="body1" fontWeight="600">{formatDateTime(plant.createdAt)}</Typography>
+                </Grid>
+              )}
+              {plant.updatedAt && (
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="body2" color="text.secondary">Updated at</Typography>
                 <Typography variant="body1" fontWeight="600">{formatDateTime(plant.updatedAt)}</Typography>
               </Grid>
+              )}
             </Grid>
           </Box>
         </Stack>

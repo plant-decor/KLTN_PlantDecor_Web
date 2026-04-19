@@ -375,7 +375,7 @@ export default function PlantGuideFormDialog({
                 control={control}
                 rules={{ required: true }}
                 render={({ field }) => (
-                  <TextField {...field} label="Care Notes" required fullWidth multiline minRows={4} />
+                  <TextField {...field} label="Ghi chú chăm sóc" required fullWidth multiline minRows={4} />
                 )}
               />
             </Grid>

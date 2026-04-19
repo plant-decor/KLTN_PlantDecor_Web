@@ -54,7 +54,7 @@ export const ServiceRequestDetail: React.FC<ServiceRequestDetailProps> = ({
 
   const handleReject = async () => {
     if (!rejectReason.trim()) {
-      alert("Vui lòng nhập lý do từ chối");
+      alert("Please enter a reason for rejection.");
       return;
     }
     setActionLoading(true);
@@ -78,10 +78,10 @@ export const ServiceRequestDetail: React.FC<ServiceRequestDetailProps> = ({
     return (
       <Container maxWidth="md" sx={{ py: 5, textAlign: "center" }}>
         <Typography variant="h6" color="error">
-          Không tìm thấy yêu cầu dịch vụ
+          Service request not found
         </Typography>
         <Button variant="outlined" onClick={onBack} sx={{ mt: 2 }}>
-          Quay Lại
+          Back to List
         </Button>
       </Container>
     );
@@ -90,14 +90,14 @@ export const ServiceRequestDetail: React.FC<ServiceRequestDetailProps> = ({
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
       <Button variant="text" onClick={onBack} sx={{ mb: 3 }}>
-        ← Quay Lại Danh Sách
+        Back to List
       </Button>
 
       <Paper elevation={3} sx={{ p: 4 }}>
         {/* Header */}
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
           <Typography variant="h5" sx={{ fontWeight: "bold" }}>
-            Chi Tiết Yêu Cầu Dịch Vụ #{request.id}
+            Service Request Detail #{request.id}
           </Typography>
         </Box>
 
@@ -105,14 +105,14 @@ export const ServiceRequestDetail: React.FC<ServiceRequestDetailProps> = ({
 
         {/* Customer Information */}
         <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
-          👤 Thông Tin Khách Hàng
+          Customer Information
         </Typography>
 
         <Grid container spacing={2} sx={{ mb: 3 }}>
           <Grid size={{ xs: 12, sm: 6 }}>
             <Box>
               <Typography variant="caption" color="textSecondary">
-                Tên Khách Hàng
+                Customer Name
               </Typography>
               <Typography variant="body2" sx={{ fontWeight: "bold" }}>
                 {request.customer?.name}
@@ -125,7 +125,7 @@ export const ServiceRequestDetail: React.FC<ServiceRequestDetailProps> = ({
               <PhoneIcon color="primary" />
               <Box>
                 <Typography variant="caption" color="textSecondary">
-                  Số Điện Thoại
+                  Phone Number
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: "bold" }}>
                   {request.phone}
@@ -139,7 +139,7 @@ export const ServiceRequestDetail: React.FC<ServiceRequestDetailProps> = ({
               <LocationOnIcon color="primary" sx={{ mt: 0.5 }} />
               <Box>
                 <Typography variant="caption" color="textSecondary">
-                  Địa Chỉ Thực Hiện
+                  Address
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: "bold" }}>
                   {request.address}
@@ -153,7 +153,7 @@ export const ServiceRequestDetail: React.FC<ServiceRequestDetailProps> = ({
 
         {/* Service Package Information */}
         <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
-          📦 Thông Tin Gói Dịch Vụ
+          Service Package Information
         </Typography>
 
         <Box
@@ -167,7 +167,7 @@ export const ServiceRequestDetail: React.FC<ServiceRequestDetailProps> = ({
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, sm: 6 }}>
               <Typography variant="caption" color="textSecondary">
-                Tên Gói
+                Package Name
               </Typography>
               <Typography variant="body2" sx={{ fontWeight: "bold" }}>
                 {request.servicePackage?.name}
@@ -176,7 +176,7 @@ export const ServiceRequestDetail: React.FC<ServiceRequestDetailProps> = ({
 
             <Grid size={{ xs: 12, sm: 6 }}>
               <Typography variant="caption" color="textSecondary">
-                Giá Cơ Bản
+                Price
               </Typography>
               <Typography variant="body2" sx={{ fontWeight: "bold", color: "success.main" }}>
                 {request.servicePackage?.unitPrice.toLocaleString('vi-VN')} ₫
@@ -185,7 +185,7 @@ export const ServiceRequestDetail: React.FC<ServiceRequestDetailProps> = ({
 
             <Grid size={{ xs: 12, sm: 6 }}>
               <Typography variant="caption" color="textSecondary">
-                Mô Tả
+                Description
               </Typography>
               <Typography variant="body2">
                 {request.servicePackage?.description}
@@ -194,7 +194,7 @@ export const ServiceRequestDetail: React.FC<ServiceRequestDetailProps> = ({
 
             <Grid size={{ xs: 12, sm: 6 }}>
               <Typography variant="caption" color="textSecondary">
-                Các Công Việc
+                Service Features
               </Typography>
               <Typography variant="body2">
                 {request.servicePackage?.features.join(", ")}
@@ -207,7 +207,7 @@ export const ServiceRequestDetail: React.FC<ServiceRequestDetailProps> = ({
 
         {/* Service Date & Notes */}
         <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
-          ⏰ Lịch Hẹn & Ghi Chú
+          Schedule & Notes
         </Typography>
 
         <Grid container spacing={2} sx={{ mb: 3 }}>
@@ -216,7 +216,7 @@ export const ServiceRequestDetail: React.FC<ServiceRequestDetailProps> = ({
               <AccessTimeIcon color="primary" />
               <Box>
                 <Typography variant="caption" color="textSecondary">
-                  Ngày & Giờ Mong Muốn
+                  Ngày Dịch Vụ
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: "bold" }}>
                   {new Date(request.serviceDate).toLocaleString('vi-VN')}
@@ -229,7 +229,7 @@ export const ServiceRequestDetail: React.FC<ServiceRequestDetailProps> = ({
         {request.note && (
           <Box sx={{ p: 2, bgcolor: "#fff3e0", borderRadius: 1, mb: 3 }}>
             <Typography variant="caption" sx={{ fontWeight: "bold" }}>
-              📝 Ghi Chú Tình Trạng Cây:
+              Note:
             </Typography>
             <Typography variant="body2" sx={{ mt: 1 }}>
               {request.note}
@@ -241,7 +241,7 @@ export const ServiceRequestDetail: React.FC<ServiceRequestDetailProps> = ({
 
         {/* Action Buttons */}
         <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
-          ✅ Xác Nhận Đơn Hàng
+          Confirm
         </Typography>
 
         <Box display="flex" gap={2} sx={{ mb: 3 }}>
@@ -254,7 +254,7 @@ export const ServiceRequestDetail: React.FC<ServiceRequestDetailProps> = ({
             size="large"
             sx={{ flex: 1 }}
           >
-            Xác Nhận & Phân Công
+            Confirm & Assign Caretaker
           </Button>
 
           <Button
@@ -266,7 +266,7 @@ export const ServiceRequestDetail: React.FC<ServiceRequestDetailProps> = ({
             size="large"
             sx={{ flex: 1 }}
           >
-            Từ Chối
+            Reject
           </Button>
         </Box>
 
@@ -274,17 +274,17 @@ export const ServiceRequestDetail: React.FC<ServiceRequestDetailProps> = ({
         <Dialog open={isRejecting} onClose={() => setIsRejecting(false)} maxWidth="sm" fullWidth>
           <Box sx={{ p: 3 }}>
             <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
-              Từ Chối Yêu Cầu Dịch Vụ
+              Reject Service Request
             </Typography>
 
             <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-              Vui lòng nhập lý do từ chối để thông báo cho khách hàng.
+              Please enter a reason for rejection to notify the customer.
             </Typography>
 
             <textarea
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
-              placeholder="Ví dụ: Quá tải công việc, không có caretaker khả dụng, v.v..."
+              placeholder="Example: Overloaded workload, no available caretaker, etc."
               style={{
                 width: "100%",
                 minHeight: 120,
@@ -302,7 +302,7 @@ export const ServiceRequestDetail: React.FC<ServiceRequestDetailProps> = ({
                 onClick={() => setIsRejecting(false)}
                 disabled={actionLoading}
               >
-                Huỷ
+                Cancel
               </Button>
               <Button
                 variant="contained"
@@ -311,7 +311,7 @@ export const ServiceRequestDetail: React.FC<ServiceRequestDetailProps> = ({
                 onClick={handleReject}
                 disabled={actionLoading || !rejectReason.trim()}
               >
-                {actionLoading ? "Đang Xử Lý..." : "Xác Nhận Từ Chối"}
+                {actionLoading ? "Processing..." : "Confirm Rejection"}
               </Button>
             </Box>
           </Box>

@@ -101,13 +101,13 @@ export default function PlantGuideManagementPageClient() {
     });
 
     if (success) {
-      toast.success(editingData ? 'Plant Guide updated successfully' : 'Plant Guide created successfully');
+      // toast.success(editingData ? 'Plant Guide updated successfully' : 'Plant Guide created successfully');
       setFormOpen(false);
       setEditingData(undefined);
       return;
     }
 
-    toast.error('Failed to save Plant Guide');
+    // toast.error('Failed to save Plant Guide');
   }, [editingData, savePlantGuide]);
 
   const confirmDelete = useCallback(async () => {

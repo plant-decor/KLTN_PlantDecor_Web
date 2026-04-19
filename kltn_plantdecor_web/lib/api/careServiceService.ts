@@ -14,10 +14,9 @@ import type {
   ManagerServiceRegistrationsQuery,
   MyServiceRegistration,
   NurseryServiceScheduleItem,
-  NearbyNursery,
-  NearbyNurseryQuery,
   NurseryCareService,
   PaginatedApiResponse,
+  PublicShift,
   ServiceProgressDetail,
   ServiceProgressReassignRequest,
   ServiceRegistrationsQuery,
@@ -167,58 +166,6 @@ const normalizeNurseryCareService = (item: unknown): NurseryCareService | null =
   };
 };
 
-const normalizeNearbyNursery = (item: unknown): NearbyNursery | null => {
-  if (!isRecord(item)) {
-    return null;
-  }
-
-  const id = toNumber(item.id, Number.NaN);
-  if (!Number.isFinite(id)) {
-    return null;
-  }
-
-  const availableServices = Array.isArray(item.availableServices)
-    ? item.availableServices
-        .map((service) => {
-          if (!isRecord(service) || !isRecord(service.careServicePackage)) {
-            return null;
-          }
-
-          const refId = toNumber(service.id, Number.NaN);
-          if (!Number.isFinite(refId)) {
-            return null;
-          }
-
-          return {
-            id: refId,
-            nurseryId: toNumber(service.nurseryId),
-            nurseryName: toText(service.nurseryName),
-            careServicePackage: {
-              id: toNumber(service.careServicePackage.id),
-              name: toText(service.careServicePackage.name),
-              description: toText(service.careServicePackage.description),
-              visitPerWeek: toNumber(service.careServicePackage.visitPerWeek),
-              durationDays: toNumber(service.careServicePackage.durationDays),
-              serviceType: toNumber(service.careServicePackage.serviceType),
-              unitPrice: toNumber(service.careServicePackage.unitPrice),
-            },
-          };
-        })
-        .filter((service): service is NearbyNursery["availableServices"][number] => Boolean(service))
-    : [];
-
-  return {
-    id,
-    name: toText(item.name),
-    address: toText(item.address),
-    phone: toText(item.phone),
-    latitude: toNumber(item.latitude),
-    longitude: toNumber(item.longitude),
-    distanceKm: toNumber(item.distanceKm),
-    availableServices,
-  };
-};
-
 const normalizeEnumOptions = (raw: unknown): EnumOption[] => {
   const unwrapped = unwrapPayloadData(raw as WrappedResponse<unknown>);
 
@@ -243,6 +190,24 @@ const normalizeEnumOptions = (raw: unknown): EnumOption[] => {
       };
     })
     .filter((item): item is EnumOption => Boolean(item));
+};
+
+const normalizePublicShift = (item: unknown): PublicShift | null => {
+  if (!isRecord(item)) {
+    return null;
+  }
+
+  const id = toNumber(item.id, Number.NaN);
+  if (!Number.isFinite(id)) {
+    return null;
+  }
+
+  return {
+    id,
+    shiftName: toText(item.shiftName),
+    startTime: toText(item.startTime),
+    endTime: toText(item.endTime),
+  };
 };
 
 const parseScheduleDaysOfWeek = (value: unknown): number[] => {
@@ -623,6 +588,27 @@ export const getPublicCareServicePackages = async (loading = true): Promise<Care
   return raw.map(normalizePackage).filter((item): item is CareServicePackage => Boolean(item));
 };
 
+export const getPublicNurseryCareServicesByPackage = async (
+  careServicePackageId: number,
+  loading = true
+): Promise<NurseryCareService[]> => {
+  const response = await apiClient.get<WrappedResponse<unknown>>(
+    "nursery-care-services/by-package",
+    { careServicePackageId },
+    loading,
+    QUERY_CONFIG
+  );
+
+  const payload = unwrapPayloadData(response);
+  if (!Array.isArray(payload)) {
+    return [];
+  }
+
+  return payload
+    .map((item) => normalizeNurseryCareService(item))
+    .filter((item): item is NurseryCareService => Boolean(item));
+};
+
 export const getCareServicePackageDetail = async (id: number, loading = true): Promise<CareServicePackage | null> => {
   const response = await apiClient.get<WrappedResponse<unknown>>(
     `care-service-packages/${id}`,
@@ -632,35 +618,6 @@ export const getCareServicePackageDetail = async (id: number, loading = true): P
   );
 
   return normalizePackage(unwrapPayloadData(response));
-};
-
-export const getNearbyNurseries = async (
-  query: NearbyNurseryQuery,
-  loading = true
-): Promise<NearbyNursery[]> => {
-  const params: Record<string, number> = {
-    packageId: query.packageId,
-    radiusKm: query.radiusKm,
-  };
-
-  if (typeof query.lat === "number" && typeof query.lng === "number") {
-    params.lat = query.lat;
-    params.lng = query.lng;
-  }
-
-  const response = await apiClient.get<WrappedResponse<unknown>>(
-    "nurseries/nearby",
-    params,
-    loading,
-    QUERY_CONFIG
-  );
-
-  const raw = unwrapPayloadData(response);
-  if (!Array.isArray(raw)) {
-    return [];
-  }
-
-  return raw.map(normalizeNearbyNursery).filter((item): item is NearbyNursery => Boolean(item));
 };
 
 export const createServiceRegistration = async (
@@ -713,6 +670,22 @@ export const getSystemEnumValues = async (enumName: string, loading = true): Pro
   );
 
   return normalizeEnumOptions(response);
+};
+
+export const getPublicShifts = async (loading = true): Promise<PublicShift[]> => {
+  const response = await apiClient.get<WrappedResponse<unknown>>(
+    "shifts",
+    undefined,
+    loading,
+    QUERY_CONFIG
+  );
+
+  const payload = unwrapPayloadData(response);
+  if (!Array.isArray(payload)) {
+    return [];
+  }
+
+  return payload.map((item) => normalizePublicShift(item)).filter((item): item is PublicShift => Boolean(item));
 };
 
 export const getMyServiceRegistrations = async (

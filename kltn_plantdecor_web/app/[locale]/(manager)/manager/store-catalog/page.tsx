@@ -170,25 +170,17 @@ export default function StoreCatalogPage() {
         {nurseryError && <Alert severity="error">{nurseryError}</Alert>}
       </Stack>
 
-      <Paper elevation={0} sx={{ border: '1px solid var(--card-border)', borderRadius: 2 }}>
+      <Box className="w-full flex-col" sx={{mx: 'auto' }}>
         <Tabs
           value={tabValue}
           onChange={(_, value) => setTabValue(value)}
           variant="scrollable"
           scrollButtons="auto"
           sx={{
-            borderBottom: '1px solid var(--card-border)',
-            '& .MuiTab-root': {
-              textTransform: 'none',
-              fontWeight: 600,
-              minHeight: 56,
-            },
-            '& .Mui-selected': {
-              color: 'var(--primary) !important',
-            },
-            '& .MuiTabs-indicator': {
-              backgroundColor: 'var(--primary)',
-            },
+            borderBottom: 1,
+            borderColor: 'divider',
+            '& .MuiTab-root': { fontWeight: 600, textTransform: 'none', fontSize: '1rem' },
+            '& .Mui-selected': { backgroundColor: 'var(--primary) !important', color: '#fff !important' },
           }}
         >
           <Tab icon={<ParkOutlinedIcon />} iconPosition="start" label="CommonPlant" />
@@ -211,7 +203,7 @@ export default function StoreCatalogPage() {
             <ManagerMaterialTab mode="manager" />
           </TabPanel>
         </Box>
-      </Paper>
+      </Box>
     </Box>
   );
 }

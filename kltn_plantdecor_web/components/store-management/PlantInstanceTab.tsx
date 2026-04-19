@@ -103,10 +103,10 @@ export default function PlantInstanceTab({ initialInstances = [] }: PlantInstanc
     <Box>
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
         <Typography variant="h6" fontWeight="600">
-          Danh sách mẫu cây ({instances.length})
+          Plant Instances ({instances.length})
         </Typography>
         <Button variant="contained" startIcon={<Add />} onClick={handleCreate}>
-          Thêm mẫu cây mới
+          Add New Plant Instance
         </Button>
       </Stack>
 
@@ -126,14 +126,14 @@ export default function PlantInstanceTab({ initialInstances = [] }: PlantInstanc
       <PlantInstanceViewDialog open={viewOpen} instance={viewingData} onClose={() => setViewOpen(false)} />
 
       <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)}>
-        <DialogTitle>Xác nhận xóa</DialogTitle>
+        <DialogTitle>Confirm Deletion</DialogTitle>
         <DialogContent>
-          <Typography>Bạn có chắc chắn muốn xóa mẫu cây này? Hành động này không thể hoàn tác.</Typography>
+          <Typography>Are you sure you want to delete this plant instance? This action cannot be undone.</Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteOpen(false)}>Hủy</Button>
+          <Button onClick={() => setDeleteOpen(false)}>Cancel</Button>
           <Button onClick={confirmDelete} color="error" variant="contained">
-            Xóa
+            Delete
           </Button>
         </DialogActions>
       </Dialog>

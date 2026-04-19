@@ -844,7 +844,7 @@ export const getManagerNurseryServiceRegistrationDetail = async (
 
   const normalized = normalizeServiceRegistration(unwrapPayloadData(response));
   if (!normalized) {
-    throw new Error("Không thể tải chi tiết đơn dịch vụ");
+    throw new Error("Can not load service registration detail");
   }
 
   return normalized;
@@ -863,7 +863,7 @@ export const approveManagerServiceRegistration = async (
 
   const normalized = normalizeServiceRegistration(unwrapPayloadData(response));
   if (!normalized) {
-    throw new Error("Không thể phê duyệt đơn dịch vụ");
+    throw new Error("Cannot approve service order");
   }
 
   return normalized;
@@ -886,7 +886,7 @@ export const rejectManagerServiceRegistration = async (
 
   const normalized = normalizeServiceRegistration(unwrapPayloadData(response));
   if (!normalized) {
-    throw new Error("Không thể từ chối đơn dịch vụ");
+    throw new Error("Cannot reject service order");
   }
 
   return normalized;
@@ -909,7 +909,7 @@ export const managerCancelServiceRegistration = async (
 
   const normalized = normalizeServiceRegistration(unwrapPayloadData(response));
   if (!normalized) {
-    throw new Error("Không thể hủy đơn dịch vụ");
+    throw new Error("Cannot cancel service order");
   }
 
   return normalized;
@@ -950,7 +950,7 @@ export const assignCaretakerToManagerServiceRegistration = async (
 
   const normalized = normalizeServiceRegistration(unwrapPayloadData(response));
   if (!normalized) {
-    throw new Error("Không thể giao caretaker cho đơn dịch vụ");
+    throw new Error("Cannot assign caretaker to service order");
   }
 
   return normalized;
@@ -987,7 +987,7 @@ export const getServiceProgressDetail = async (id: number, loading = true): Prom
 
   const normalized = normalizeNurseryServiceScheduleItem(unwrapPayloadData(response));
   if (!normalized) {
-    throw new Error("Không thể tải chi tiết phiên chăm sóc");
+    throw new Error("Cannot load service progress detail");
   }
 
   return normalized;
@@ -1007,7 +1007,7 @@ export const reassignServiceProgressCaretaker = async (
 
   const normalized = normalizeNurseryServiceScheduleItem(unwrapPayloadData(response));
   if (!normalized) {
-    throw new Error("Không thể chuyển caretaker cho phiên chăm sóc");
+    throw new Error("Cannot reassign caretaker for service progress");
   }
 
   return normalized;

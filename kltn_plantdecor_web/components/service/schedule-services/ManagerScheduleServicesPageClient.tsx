@@ -196,31 +196,23 @@ export default function ManagerScheduleServicesPageClient() {
     <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', p: { xs: 2, md: 4 } }}>
       <Paper elevation={0} sx={{ p: { xs: 2, md: 3 }, borderRadius: 2 }}>
         <ManagementHeader
-          title='Lịch chăm sóc dịch vụ'
-          description='Theo dõi lịch chăm sóc toàn vựa theo ngày và xử lý chuyển caretaker khi cần'
-          entityLabel='phiên chăm sóc'
+          title='Schedule Services Management'
+          description='View and manage scheduled care service sessions for the nursery.'
+          entityLabel='scheduled sessions'
           count={items.length}
         />
 
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} alignItems={{ xs: 'stretch', md: 'center' }} sx={{ mb: 2 }}>
           <TextField
-            label='Chọn ngày'
+            label='Select Date'
             type='date'
             size='small'
             value={selectedDate}
             onChange={(event) => setSelectedDate(event.target.value)}
             InputLabelProps={{ shrink: true }}
           />
-          <Button
-            variant='outlined'
-            startIcon={<RefreshIcon />}
-            onClick={() => void fetchSchedule(selectedDate)}
-            sx={{ width: { xs: '100%', md: 'fit-content' } }}
-          >
-            Tải lại
-          </Button>
           <Typography variant='body2' color='text.secondary'>
-            Mặc định hiển thị lịch của ngày hôm nay.
+            Default display schedule for today.
           </Typography>
         </Stack>
 

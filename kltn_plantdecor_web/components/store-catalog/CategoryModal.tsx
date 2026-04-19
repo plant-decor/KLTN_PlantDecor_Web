@@ -146,17 +146,17 @@ export default function CategoryModal({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{category ? 'Cập nhật danh mục' : 'Thêm danh mục mới'}</DialogTitle>
+      <DialogTitle>{category ? 'Update Category' : 'Add New Category'}</DialogTitle>
       <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
         <TextField
-          label="Tên danh mục"
+          label="Category Name"
           name="name"
           value={formData.name}
           onChange={handleChange}
           fullWidth
         />
         <TextField
-          label="Mô tả"
+          label="Description"
           name="description"
           value={formData.description || ''}
           onChange={handleChange}
@@ -165,10 +165,10 @@ export default function CategoryModal({
           rows={3}
         />
         <FormControl fullWidth>
-          <InputLabel id="category-parent-label">Danh mục cha</InputLabel>
+          <InputLabel id="category-parent-label">Parent Category</InputLabel>
           <Select
             labelId="category-parent-label"
-            label="Danh mục cha"
+            label="Parent Category"
             value={formData.parentCategoryId == null ? '' : String(formData.parentCategoryId)}
             onChange={handleParentCategoryChange}
           >
@@ -180,11 +180,11 @@ export default function CategoryModal({
             ))}
           </Select>
           <FormHelperText>
-            Danh mục cha phải có cùng loại danh mục.
+            Parent category must have the same category type.
           </FormHelperText>
         </FormControl>
         <TextField
-          label="Loại danh mục"
+          label="Category Type"
           name="categoryType"
           type="number"
           value={formData.categoryType || 0}
@@ -198,7 +198,7 @@ export default function CategoryModal({
               onChange={handleActiveChange}
             />
           }
-          label="Trạng thái hoạt động"
+          label="Active"
         />
       </DialogContent>
       <DialogActions>
@@ -206,7 +206,7 @@ export default function CategoryModal({
         <Button onClick={handleSave} variant="contained" disabled={saving}
         sx={{backgroundColor: 'var(--primary)'}}
         >
-          {category ? 'Cập nhật' : 'Thêm'}
+          {category ? 'Update' : 'Add Category'}
         </Button>
       </DialogActions>
     </Dialog>

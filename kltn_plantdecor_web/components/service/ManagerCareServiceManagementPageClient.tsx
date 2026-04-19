@@ -100,7 +100,7 @@ export default function ManagerCareServiceManagementPageClient() {
       setItems(myServices);
       setNotOfferedPackages(availablePackages.filter((item) => item.isActive));
     } catch (error) {
-      const message = getErrorMessage(error, "Không thể tải danh sách gói dịch vụ của vựa");
+      const message = getErrorMessage(error, "Cannot load the list of care service packages");
       setPageError(message);
       toast.error(message);
     } finally {
@@ -118,24 +118,24 @@ export default function ManagerCareServiceManagementPageClient() {
       setSelectedPackageId(0);
       setAddDialogOpen(true);
     } catch (error) {
-      toast.error(getErrorMessage(error, "Không thể tải danh sách gói chưa kinh doanh"));
+      toast.error(getErrorMessage(error, "Cannot load the list of available packages"));
     }
   };
 
   const handleAddPackage = async () => {
     if (!selectedPackageId) {
-      toast.error("Vui lòng chọn gói dịch vụ để thêm");
+      toast.error("Please select a care service package to add");
       return;
     }
 
     try {
       setSubmitting(true);
       await addManagerPackageToNursery(selectedPackageId, false);
-      toast.success("Đã thêm gói dịch vụ vào vựa");
+      toast.success("Added package to inventory successfully");
       setAddDialogOpen(false);
       await loadInitialData();
     } catch (error) {
-      toast.error(getErrorMessage(error, "Không thể thêm gói dịch vụ"));
+      toast.error(getErrorMessage(error, "Cannot add package to inventory"));
     } finally {
       setSubmitting(false);
     }
@@ -149,11 +149,11 @@ export default function ManagerCareServiceManagementPageClient() {
     try {
       setSubmitting(true);
       await toggleManagerNurseryCareService(targetToggleItem.id, false);
-      toast.success(targetToggleItem.isActive ? "Đã tắt gói dịch vụ" : "Đã bật gói dịch vụ");
+      toast.success(targetToggleItem.isActive ? "Package deactivated successfully" : "Package activated successfully");
       setTargetToggleItem(null);
       await loadItems();
     } catch (error) {
-      toast.error(getErrorMessage(error, "Không thể thay đổi trạng thái gói dịch vụ"));
+      toast.error(getErrorMessage(error, "Cannot change package status"));
     } finally {
       setSubmitting(false);
     }
@@ -167,11 +167,11 @@ export default function ManagerCareServiceManagementPageClient() {
     try {
       setSubmitting(true);
       await deleteManagerNurseryCareService(targetDeleteItem.id, false);
-      toast.success("Đã xóa gói dịch vụ khỏi vựa");
+      toast.success("Package deleted from inventory successfully");
       setTargetDeleteItem(null);
       await loadInitialData();
     } catch (error) {
-      toast.error(getErrorMessage(error, "Không thể xóa gói dịch vụ khỏi vựa"));
+      toast.error(getErrorMessage(error, "Cannot delete package from inventory"));
     } finally {
       setSubmitting(false);
     }
@@ -180,17 +180,17 @@ export default function ManagerCareServiceManagementPageClient() {
   return (
     <Box sx={{ bgcolor: "var(--background)", minHeight: "100vh", p: { xs: 2, md: 4 } }}>
       <ManagementHeader
-        title="Quản lý dịch vụ chăm sóc"
-        description="Quản lý các gói dịch vụ vựa đang kinh doanh: thêm mới từ hệ thống, bật/tắt và xóa khi chưa có đăng ký."
-        entityLabel="gói dịch vụ"
+        title="Care Service Packages Management"
+        description="Manage the care service packages currently being offered: add new ones from the system, enable/disable, and delete when there are no existing subscriptions."
+        entityLabel="care service package"
         count={items.length}
-        actionLabel="Thêm gói vào vựa"
+        actionLabel="Add Package to Inventory"
         onAction={() => void openAddDialog()}
       />
 
       <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
-        <Chip label={`Đang hoạt động: ${activeCount}`} color="success" variant="outlined" />
-        <Chip label={`Ngừng kinh doanh: ${items.length - activeCount}`} variant="outlined" />
+        <Chip label={`Active: ${activeCount}`} color="success" variant="outlined" />
+        <Chip label={`Inactive: ${items.length - activeCount}`} variant="outlined" />
         <Button
           size="small"
           variant="outlined"
@@ -198,7 +198,7 @@ export default function ManagerCareServiceManagementPageClient() {
           onClick={() => void loadInitialData()}
           disabled={loading}
         >
-          Tải lại
+          Reload
         </Button>
       </Stack>
 
@@ -219,22 +219,22 @@ export default function ManagerCareServiceManagementPageClient() {
               <TableHead sx={{ backgroundColor: "var(--primary)" }}>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 700 }}>ID NCS</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Tên gói</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Loại</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Package Name</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Type</TableCell>
                   <TableCell sx={{ fontWeight: 700 }} align="right">
-                    Số lần/tuần
+                    Visits/Week
                   </TableCell>
                   <TableCell sx={{ fontWeight: 700 }} align="right">
-                    Thời lượng (ngày)
+                    Duration (Days)
                   </TableCell>
                   <TableCell sx={{ fontWeight: 700 }} align="right">
-                    Đơn giá
+                    Unit Price
                   </TableCell>
                   <TableCell sx={{ fontWeight: 700 }} align="center">
-                    Trạng thái
+                    Status
                   </TableCell>
                   <TableCell sx={{ fontWeight: 700 }} align="center">
-                    Hành động
+                    Actions
                   </TableCell>
                 </TableRow>
               </TableHead>
@@ -242,7 +242,7 @@ export default function ManagerCareServiceManagementPageClient() {
                 {items.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={8} align="center" sx={{ py: 5 }}>
-                      Vựa chưa có gói dịch vụ chăm sóc nào.
+                      Inventory is currently empty.
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -268,11 +268,11 @@ export default function ManagerCareServiceManagementPageClient() {
                         <Chip
                           size="small"
                           color={item.isActive ? "success" : "default"}
-                          label={item.isActive ? "Đang kinh doanh" : "Ngừng kinh doanh"}
+                          label={item.isActive ? "Active" : "Inactive"}
                         />
                       </TableCell>
                       <TableCell align="center">
-                        <Tooltip title={item.isActive ? "Tắt gói" : "Bật gói"}>
+                        <Tooltip title={item.isActive ? "Deactivate Package" : "Activate Package"}>
                           <IconButton
                             size="small"
                             color={item.isActive ? "success" : "default"}
@@ -281,7 +281,7 @@ export default function ManagerCareServiceManagementPageClient() {
                             {item.isActive ? <ToggleOnIcon fontSize="small" /> : <ToggleOffIcon fontSize="small" />}
                           </IconButton>
                         </Tooltip>
-                        <Tooltip title="Xóa khỏi vựa">
+                        <Tooltip title="Delete from Inventory">
                           <IconButton
                             size="small"
                             color="error"
@@ -301,19 +301,19 @@ export default function ManagerCareServiceManagementPageClient() {
       </Paper>
 
       <Dialog open={addDialogOpen} onClose={() => (submitting ? null : setAddDialogOpen(false))} fullWidth maxWidth="sm">
-        <DialogTitle>Thêm gói dịch vụ vào vựa</DialogTitle>
+        <DialogTitle>Add Service Package</DialogTitle>
         <DialogContent dividers>
           <FormControl fullWidth>
-            <InputLabel id="care-package-select">Gói chưa kinh doanh</InputLabel>
+            <InputLabel id="care-package-select">Service Package not offered</InputLabel>
             <Select
               labelId="care-package-select"
-              label="Gói chưa kinh doanh"
+              label="Service Package not offered"
               value={selectedPackageId}
               onChange={(event) => setSelectedPackageId(Number(event.target.value))}
               disabled={submitting}
             >
               <MenuItem value={0} disabled>
-                Chọn một gói dịch vụ
+                Select a service package
               </MenuItem>
               {notOfferedPackages.map((item) => (
                 <MenuItem key={item.id} value={item.id}>
@@ -324,13 +324,13 @@ export default function ManagerCareServiceManagementPageClient() {
           </FormControl>
           {notOfferedPackages.length === 0 && (
             <Alert severity="info" sx={{ mt: 2 }}>
-              Hiện không còn gói active nào để thêm vào vựa.
+              Currently, there are no active service packages available to add to the inventory.
             </Alert>
           )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setAddDialogOpen(false)} disabled={submitting}>
-            Hủy
+            Cancel
           </Button>
           <Button
             variant="contained"
@@ -339,39 +339,39 @@ export default function ManagerCareServiceManagementPageClient() {
             disabled={submitting || notOfferedPackages.length === 0}
             sx={{backgroundColor: 'var(--primary)'}}
           > 
-            {submitting ? "Đang thêm..." : "Thêm gói"}
+            {submitting ? "Adding..." : "Add Package"}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={Boolean(targetToggleItem)} onClose={() => (submitting ? null : setTargetToggleItem(null))}>
-        <DialogTitle>Xác nhận thay đổi trạng thái</DialogTitle>
+        <DialogTitle>Confirm Status Change</DialogTitle>
         <DialogContent dividers>
-          Bạn có chắc muốn {targetToggleItem?.isActive ? "tắt" : "bật"} gói
-          <strong> {targetToggleItem?.careServicePackage.name}</strong> không?
+          Are you sure you want to {targetToggleItem?.isActive ? "disable" : "enable"} the package
+          <strong> {targetToggleItem?.careServicePackage.name}</strong>?
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setTargetToggleItem(null)} disabled={submitting}>
-            Hủy
+            Cancel
           </Button>
           <Button variant="contained" onClick={() => void handleConfirmToggle()} disabled={submitting}>
-            {submitting ? "Đang xử lý..." : "Xác nhận"}
+            {submitting ? "Processing..." : "Confirm"}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={Boolean(targetDeleteItem)} onClose={() => (submitting ? null : setTargetDeleteItem(null))}>
-        <DialogTitle>Xác nhận xóa khỏi vựa</DialogTitle>
+        <DialogTitle>Confirm Deletion</DialogTitle>
         <DialogContent dividers>
-          Hành động này chỉ thành công khi gói chưa có đăng ký nào. Bạn có chắc muốn xóa
-          <strong> {targetDeleteItem?.careServicePackage.name}</strong> khỏi vựa không?
+          This action will only succeed if the package has no existing subscriptions. Are you sure you want to delete
+          <strong> {targetDeleteItem?.careServicePackage.name}</strong> from the inventory?
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setTargetDeleteItem(null)} disabled={submitting}>
-            Hủy
+            Cancel
           </Button>
           <Button color="error" variant="contained" onClick={() => void handleConfirmDelete()} disabled={submitting}>
-            {submitting ? "Đang xóa..." : "Xóa khỏi vựa"}
+            {submitting ? "Deleting..." : "Delete from Inventory"}
           </Button>
         </DialogActions>
       </Dialog>

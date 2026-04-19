@@ -105,21 +105,21 @@ export const CarePackageManagementTable: React.FC<CarePackageManagementTableProp
         <Table sx={{ minWidth: 750 }}>
           <TableHead>
             <TableRow sx={{ backgroundColor: "#f5f5f5" }}>
-              <TableCell sx={{ fontWeight: "bold" }}>Tên Gói</TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>Package Name</TableCell>
               <TableCell align="center" sx={{ fontWeight: "bold" }}>
-                Loại
+                Type
               </TableCell>
               <TableCell align="center" sx={{ fontWeight: "bold" }}>
-                Mức Độ
+                Difficulty Level
               </TableCell>
               <TableCell align="right" sx={{ fontWeight: "bold" }}>
-                Giá (₫)
+                Price (₫)
               </TableCell>
               <TableCell align="center" sx={{ fontWeight: "bold" }}>
-                Trạng Thái
+                Status
               </TableCell>
               <TableCell align="center" sx={{ fontWeight: "bold" }}>
-                Hành Động
+                Actions
               </TableCell>
             </TableRow>
           </TableHead>
@@ -146,7 +146,7 @@ export const CarePackageManagementTable: React.FC<CarePackageManagementTableProp
                 <TableCell align="center">
                   <Chip
                     label={
-                      pkg.serviceType === ServiceType.ONETIME ? "1 Lần" : "Định Kỳ"
+                      pkg.serviceType === ServiceType.ONETIME ? "1 Time" : "Recurring"
                     }
                     size="small"
                     color={
@@ -171,7 +171,7 @@ export const CarePackageManagementTable: React.FC<CarePackageManagementTableProp
                 </TableCell>
                 <TableCell align="center">
                   <Chip
-                    label={pkg.isActive ? "Hoạt Động" : "Không Hoạt Động"}
+                    label={pkg.isActive ? "Active" : "Inactive"}
                     color={pkg.isActive ? "success" : "error"}
                     size="small"
                     onClick={() => handleStatusToggle(pkg)}
@@ -179,7 +179,7 @@ export const CarePackageManagementTable: React.FC<CarePackageManagementTableProp
                   />
                 </TableCell>
                 <TableCell align="center">
-                  <Tooltip title="Xem Chi Tiết">
+                  <Tooltip title="View Details">
                     <IconButton
                       size="small"
                       color="info"
@@ -188,7 +188,7 @@ export const CarePackageManagementTable: React.FC<CarePackageManagementTableProp
                       <VisibilityIcon />
                     </IconButton>
                   </Tooltip>
-                  <Tooltip title="Chỉnh Sửa">
+                  <Tooltip title="Edit">
                     <IconButton
                       size="small"
                       color="primary"
@@ -197,7 +197,7 @@ export const CarePackageManagementTable: React.FC<CarePackageManagementTableProp
                       <EditIcon />
                     </IconButton>
                   </Tooltip>
-                  <Tooltip title="Xoá">
+                  <Tooltip title="Delete">
                     <IconButton
                       size="small"
                       color="error"
@@ -215,16 +215,16 @@ export const CarePackageManagementTable: React.FC<CarePackageManagementTableProp
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)}>
-        <DialogTitle>Xác Nhận Xoá</DialogTitle>
+        <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>
-          <Typography>Bạn chắc chắn muốn xoá gói dịch vụ này?</Typography>
+          <Typography>Are you sure you want to delete this service package?</Typography>
         </DialogContent>
         <DialogActions>
           <Button
             onClick={() => setDeleteConfirmOpen(false)}
             disabled={deleting}
           >
-            Huỷ
+            Cancel
           </Button>
           <Button
             onClick={handleConfirmDelete}
@@ -232,7 +232,7 @@ export const CarePackageManagementTable: React.FC<CarePackageManagementTableProp
             variant="contained"
             disabled={deleting}
           >
-            {deleting ? "Đang Xoá..." : "Xoá"}
+            {deleting ? "Deleting..." : "Delete"}
           </Button>
         </DialogActions>
       </Dialog>

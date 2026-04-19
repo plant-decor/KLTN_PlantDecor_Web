@@ -22,6 +22,7 @@ import ServiceOrderRejectDialog from './ServiceOrderRejectDialog';
 import ServiceOrderCancelDialog from './ServiceOrderCancelDialog';
 import ServiceOrderAssignDialog from './ServiceOrderAssignDialog';
 import { SERVICE_STATUS_OPTIONS } from './managerServiceOrders.constants';
+import ManagementHeader from '@/components/layout/ManagementHeader';
 
 export default function ManagerServiceOrdersPageClient() {
   const [items, setItems] = useState<ManagerServiceRegistration[]>([]);
@@ -77,7 +78,7 @@ export default function ManagerServiceOrdersPageClient() {
 
       setItems(response.items);
     } catch (loadError) {
-      const message = getErrorMessage(loadError, 'Không thể tải danh sách đơn dịch vụ');
+      const message = getErrorMessage(loadError, 'Cannot load service orders');
       setError(message);
       toast.error(message);
     } finally {
@@ -112,7 +113,7 @@ export default function ManagerServiceOrdersPageClient() {
       const response = await getManagerNurseryServiceRegistrationDetail(id, false);
       setDetailItem(response);
     } catch (viewError) {
-      toast.error(getErrorMessage(viewError, 'Không thể tải chi tiết đơn dịch vụ'));
+      toast.error(getErrorMessage(viewError, 'Cannot load service order details'));
       setDetailOpen(false);
       setDetailItem(null);
     } finally {
@@ -128,11 +129,11 @@ export default function ManagerServiceOrdersPageClient() {
     try {
       setSubmitting(true);
       await approveManagerServiceRegistration(approveTarget.id, false);
-      toast.success('Phê duyệt đơn dịch vụ thành công');
+      toast.success('Service order approved successfully');
       setApproveTarget(null);
       await Promise.all([loadList(), refreshDetailIfNeeded(approveTarget.id)]);
     } catch (approveError) {
-      toast.error(getErrorMessage(approveError, 'Không thể phê duyệt đơn dịch vụ'));
+      toast.error(getErrorMessage(approveError, 'Cannot approve service order'));
     } finally {
       setSubmitting(false);
     }
@@ -145,19 +146,19 @@ export default function ManagerServiceOrdersPageClient() {
 
     const trimmedReason = rejectReason.trim();
     if (!trimmedReason) {
-      toast.error('Vui lòng nhập lý do từ chối');
+      toast.error('Please enter a reason for rejection');
       return;
     }
 
     try {
       setSubmitting(true);
       await rejectManagerServiceRegistration(rejectTarget.id, trimmedReason, false);
-      toast.success('Đã từ chối đơn dịch vụ');
+      toast.success('Service order rejected successfully');
       setRejectTarget(null);
       setRejectReason('');
       await Promise.all([loadList(), refreshDetailIfNeeded(rejectTarget.id)]);
     } catch (rejectError) {
-      toast.error(getErrorMessage(rejectError, 'Không thể từ chối đơn dịch vụ'));
+      toast.error(getErrorMessage(rejectError, 'Cannot reject service order'));
     } finally {
       setSubmitting(false);
     }
@@ -170,19 +171,19 @@ export default function ManagerServiceOrdersPageClient() {
 
     const trimmedReason = cancelReason.trim();
     if (!trimmedReason) {
-      toast.error('Vui lòng nhập lý do hủy');
+      toast.error('Please enter a reason for cancellation');
       return;
     }
 
     try {
       setSubmitting(true);
       await managerCancelServiceRegistration(cancelTarget.id, trimmedReason, false);
-      toast.success('Đã hủy đơn dịch vụ thành công');
+      toast.success('Service order cancelled successfully');
       setCancelTarget(null);
       setCancelReason('');
       await Promise.all([loadList(), refreshDetailIfNeeded(cancelTarget.id)]);
     } catch (cancelError) {
-      toast.error(getErrorMessage(cancelError, 'Không thể hủy đơn dịch vụ'));
+      toast.error(getErrorMessage(cancelError, 'Cannot cancel service order'));
     } finally {
       setSubmitting(false);
     }
@@ -199,7 +200,7 @@ export default function ManagerServiceOrdersPageClient() {
         setSelectedCaretakerId(caretakers[0].id);
       }
     } catch (assignError) {
-      toast.error(getErrorMessage(assignError, 'Không thể tải danh sách caretaker phù hợp'));
+      toast.error(getErrorMessage(assignError, 'Cannot load eligible caretakers'));
       setAssignTarget(null);
       setEligibleCaretakers([]);
     } finally {
@@ -209,20 +210,20 @@ export default function ManagerServiceOrdersPageClient() {
 
   const handleAssignCaretaker = async () => {
     if (!assignTarget || !selectedCaretakerId) {
-      toast.error('Vui lòng chọn caretaker');
+      toast.error('Please select a caretaker');
       return;
     }
 
     try {
       setSubmitting(true);
       await assignCaretakerToManagerServiceRegistration(assignTarget.id, { caretakerId: selectedCaretakerId }, false);
-      toast.success('Đã giao caretaker thành công');
+      toast.success('Caretaker assigned successfully');
       setAssignTarget(null);
       setEligibleCaretakers([]);
       setSelectedCaretakerId(0);
       await Promise.all([loadList(), refreshDetailIfNeeded(assignTarget.id)]);
     } catch (assignError) {
-      toast.error(getErrorMessage(assignError, 'Không thể giao caretaker'));
+      toast.error(getErrorMessage(assignError, 'Cannot assign caretaker'));
     } finally {
       setSubmitting(false);
     }
@@ -230,12 +231,12 @@ export default function ManagerServiceOrdersPageClient() {
 
   return (
     <Box sx={{ py: 4, px: { xs: 2, md: 4 }, mx: 'auto' }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" fontWeight={700} gutterBottom>
-          Đơn dịch vụ
-        </Typography>
-        <Typography color="text.secondary">Quản lý đăng ký dịch vụ thuộc vựa của bạn</Typography>
-      </Box>
+      <ManagementHeader 
+        title='Service Orders Management'
+        description='Manage service registration orders for your nursery, including approval, cancellation, and caretaker assignment.'
+        entityLabel='service orders'
+        count={items.length}
+      />
 
       <ServiceOrdersHeader
         statusFilter={statusFilter}

@@ -106,15 +106,15 @@ export default function StoreUsersTable({
     >
       <Table size="small">
         <TableHead sx={{ backgroundColor: "var(--primary)" }}>
-          <TableRow>
-            <TableCell sx={{ color: "var(--primary-foreground)", fontWeight: 600 }}>ID</TableCell>
-            <TableCell sx={{ color: "var(--primary-foreground)", fontWeight: 600 }}>Nhân viên</TableCell>
-            <TableCell sx={{ color: "var(--primary-foreground)", fontWeight: 600 }}>Email</TableCell>
-            <TableCell sx={{ color: "var(--primary-foreground)", fontWeight: 600 }}>Số điện thoại</TableCell>
-            <TableCell sx={{ color: "var(--primary-foreground)", fontWeight: 600 }}>Trạng thái</TableCell>
-            <TableCell sx={{ color: "var(--primary-foreground)", fontWeight: 600 }}>Chuyên môn</TableCell>
-            <TableCell align="right" sx={{ color: "var(--primary-foreground)", fontWeight: 600 }}>
-              Hành động
+          <TableRow className="font-bold">
+            <TableCell sx={{ fontWeight:700}} >ID</TableCell>
+            <TableCell sx={{ fontWeight:700}} >Staff Name</TableCell>
+            <TableCell sx={{ fontWeight:700}} >Email</TableCell>
+            <TableCell sx={{ fontWeight:700}} >Phone Number</TableCell>
+            <TableCell sx={{ fontWeight:700}} >Status</TableCell>
+            <TableCell sx={{ fontWeight:700}} >Specialization</TableCell>
+            <TableCell sx={{fontWeight: 700}} >
+              Actions 
             </TableCell>
           </TableRow>
         </TableHead>
@@ -132,7 +132,7 @@ export default function StoreUsersTable({
           {!loading && items.length === 0 && (
             <TableRow>
               <TableCell colSpan={7} align="center" sx={{ py: 4, color: "text.secondary" }}>
-                Chưa có nhân viên caretaker nào trong vựa.
+                No staff members found.
               </TableCell>
             </TableRow>
           )}
@@ -160,7 +160,7 @@ export default function StoreUsersTable({
                   />
                 </TableCell>
                 <TableCell>
-                  <Typography variant="body2">{staff.specializations.length} chuyên môn</Typography>
+                  <Typography variant="body2">{staff.specializations.length} specializations</Typography>
                 </TableCell>
                 <TableCell align="right">
                   <Stack direction="row" spacing={0.5} justifyContent="flex-end">
@@ -171,7 +171,7 @@ export default function StoreUsersTable({
                     </Tooltip>
 
                     {!readOnly && (
-                      <Tooltip title="Gán nhanh chuyên môn">
+                      <Tooltip title="Add Specialization">
                         <span>
                           <IconButton
                             color="secondary"
@@ -184,7 +184,7 @@ export default function StoreUsersTable({
                       </Tooltip>
                     )}
 
-                    <Tooltip title="Xem lịch công việc">
+                    <Tooltip title="View Schedule">
                       <IconButton color="info" onClick={() => onViewSchedule(staff.id)}>
                         <CalendarMonthIcon />
                       </IconButton>
@@ -212,7 +212,7 @@ export default function StoreUsersTable({
             </MenuItem>
           ))
         ) : (
-          <MenuItem disabled>Nhân viên đã có tất cả chuyên môn</MenuItem>
+          <MenuItem disabled>Staff already has all specializations</MenuItem>
         )}
       </Menu>
 
@@ -224,7 +224,7 @@ export default function StoreUsersTable({
         onPageChange={onChangePage}
         onRowsPerPageChange={(event) => onChangeRowsPerPage(Number(event.target.value))}
         rowsPerPageOptions={[10, 20, 50]}
-        labelRowsPerPage="Số dòng"
+        labelRowsPerPage="Rows per page"
       />
     </TableContainer>
   );

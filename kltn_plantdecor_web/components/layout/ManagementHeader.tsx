@@ -51,7 +51,7 @@ export default function ManagementHeader({
           }}
         >
           <Typography variant="h6" fontWeight={600}>
-            Danh sách {entityLabel} ({count})
+            List {entityLabel} ({count})
           </Typography>
           <Stack
             direction={{ xs: "column", sm: "row" }}

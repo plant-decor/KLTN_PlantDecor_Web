@@ -165,10 +165,10 @@ export default function PlantComboTab({}: PlantComboTabProps) {
     <Box>
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
         <Typography variant="h6" fontWeight="600">
-          Danh sách combo ({pagination.totalCount})
+          Plant Combos ({pagination.totalCount})
         </Typography>
         <Button variant="contained" startIcon={<Add />} onClick={handleCreate} sx={{ ...hoverLiftStyle }} className="bg-primary!">
-          Thêm combo mới
+          Add Combo
         </Button>
       </Stack>
 
@@ -223,18 +223,18 @@ export default function PlantComboTab({}: PlantComboTabProps) {
       />
 
       <Dialog open={toggleOpen} onClose={() => setToggleOpen(false)}>
-        <DialogTitle>Xác nhận cập nhật trạng thái</DialogTitle>
+        <DialogTitle>Status update confirmation</DialogTitle>
         <DialogContent>
           <Typography>
             {toggleTarget
-              ? `Bạn có chắc muốn ${toggleTarget.isActive ? 'vô hiệu' : 'kích hoạt'} combo này?`
-              : 'Bạn có chắc muốn cập nhật trạng thái combo này?'}
+              ? `Do you want to ${toggleTarget.isActive ? 'deactivate' : 'activate'} this combo?`
+              : 'Are you sure you want to update the status of this combo?'}
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setToggleOpen(false)}>Hủy</Button>
+          <Button onClick={() => setToggleOpen(false)}>Cancel</Button>
           <Button onClick={confirmToggle} color="primary" variant="contained" disabled={saving}>
-            Xác nhận
+            Confirm
           </Button>
         </DialogActions>
       </Dialog>

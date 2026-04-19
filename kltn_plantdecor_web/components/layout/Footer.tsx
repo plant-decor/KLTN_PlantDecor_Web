@@ -80,22 +80,22 @@ export default function Footer() {
             <h3 className="text-lg font-semibold mb-4">{t('customerSupport')}</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/faq" className="text-gray-400 hover:text-green-600 transition-colors duration-200">
+                <Link href="/" className="text-gray-400 hover:text-green-600 transition-colors duration-200">
                   {t('faq')}
                 </Link>
               </li>
               <li>
-                <Link href="/return-policy" className="text-gray-400 hover:text-green-600 transition-colors duration-200">
+                <Link href="/" className="text-gray-400 hover:text-green-600 transition-colors duration-200">
                   {t('returnPolicy')}
                 </Link>
               </li>
               <li>
-                <Link href="/privacy" className="text-gray-400 hover:text-green-600 transition-colors duration-200">
+                <Link href="/" className="text-gray-400 hover:text-green-600 transition-colors duration-200">
                   {t('privacyPolicy')}
                 </Link>
               </li>
               <li>
-                <Link href="/terms" className="text-gray-400 hover:text-green-600 transition-colors duration-200">
+                <Link href="/" className="text-gray-400 hover:text-green-600 transition-colors duration-200">
                   {t('termsOfService')}
                 </Link>
               </li>

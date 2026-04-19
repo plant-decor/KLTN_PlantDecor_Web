@@ -255,12 +255,12 @@ export default function StoreUsersPageClient() {
   };
 
   const handleStaffCreated = () => {
-    toast.success("Tạo nhân viên thành công");
+    toast.success("Create staff successfully");
     void fetchList(1, pagination.pageSize);
   };
 
   const handleCaretakerCreated = () => {
-    toast.success("Tạo nhân viên chăm sóc thành công");
+    toast.success("Create caretaker successfully");
     void fetchList(1, pagination.pageSize);
   };
 
@@ -334,17 +334,17 @@ export default function StoreUsersPageClient() {
     <Box sx={{ bgcolor: "#f5f5f5", minHeight: "100vh", p: { xs: 2, md: 4 } }}>
       <Paper elevation={0} sx={{ p: { xs: 2, md: 3 }, borderRadius: 2 }}>
         <ManagementHeader
-          title="Người dùng cửa hàng"
-          description="Quản lý danh sách nhân viên chăm sóc của vựa và chuyên môn tương ứng"
-          entityLabel="nhân viên chăm sóc"
+          title="Store Users"
+          description="Manage the list of staff and caretakers and their corresponding specializations"
+          entityLabel="staff and caretakers"
           count={pagination.totalCount}
           actions={[
             {
-              label: "Tạo nhân viên",
+              label: "Create Staff",
               onClick: () => setStaffDialogOpen(true),
             },
             {
-              label: "Tạo nhân viên chăm sóc",
+              label: "Create Caretaker",
               onClick: () => setCaretakerDialogOpen(true),
             },
           ]}

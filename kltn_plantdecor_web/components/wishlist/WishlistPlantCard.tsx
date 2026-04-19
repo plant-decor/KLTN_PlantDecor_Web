@@ -292,8 +292,8 @@ export default function WishlistPlantCard({
 
   return (
     <>
-      <article className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow min-h-115 h-full flex flex-col">
-        <div className="relative w-full basis-[50%] shrink-0">
+      <article className="bg-white rounded-3xl overflow-hidden shadow-md hover:shadow-lg transition-shadow min-h-115 h-full flex flex-col">
+        <div className="relative w-full basis-[60%] shrink-0">
           {itemHref ? (
             <Link href={itemHref} className="block relative w-full h-full">
               <Image
@@ -301,7 +301,7 @@ export default function WishlistPlantCard({
                 alt={item.itemName}
                 fill
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                className="object-cover"
+                className="object-contain"
               />
             </Link>
           ) : (
@@ -310,12 +310,12 @@ export default function WishlistPlantCard({
               alt={item.itemName}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              className="object-cover"
+              className="object-contain"
             />
           )}
         </div>
 
-        <div className="basis-[20%] min-h-0 p-4 sm:p-5 space-y-1 overflow-hidden">
+        <div className="basis-[15%] min-h-0 p-4 sm:p-5 space-y-1 overflow-hidden">
           {itemHref ? (
             <Link href={itemHref} className="block">
               <h3 className="font-semibold text-gray-900 line-clamp-2 hover:underline">
@@ -339,7 +339,7 @@ export default function WishlistPlantCard({
           </p>
         </div>
 
-        <div className="basis-[25%] min-h-0 p-4 sm:p-5 pt-0 flex flex-col justify-between">
+        <div className="basis-[15%] min-h-0 p-4 sm:p-5 pt-0 flex flex-col justify-between">
           <p className="text-green-600 font-bold text-lg">{formatCurrency(item.price, locale)}</p>
           <div className="grid grid-cols-2 gap-2 pt-1">
             <Button

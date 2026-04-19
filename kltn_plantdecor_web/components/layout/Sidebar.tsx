@@ -2,8 +2,16 @@
 
 import Link from 'next/link';
 import { useParams, usePathname, useRouter } from 'next/navigation';
-import { type ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+} from '@mui/material';
 import {
   Dashboard as DashboardIcon,
   People as PeopleIcon,
@@ -98,6 +106,7 @@ export default function Sidebar({ isOpen, onClose, role }: SidebarProps) {
   const allHrefs = items.map((item) => item.href);
   const activeItem = items.find((item) => isActiveRoute(pathname, item.href, allHrefs));
   const headerLabel = activeItem?.label ?? tSidebar('dashboard');
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
 
   const redirectToLogin = () => {
     clearAll();
@@ -120,6 +129,19 @@ export default function Sidebar({ isOpen, onClose, role }: SidebarProps) {
       // Keep logout fail-soft: local cleanup and redirect should always happen.
       redirectToLogin();
     }
+  };
+
+  const openLogoutConfirm = () => {
+    setIsLogoutConfirmOpen(true);
+  };
+
+  const closeLogoutConfirm = () => {
+    setIsLogoutConfirmOpen(false);
+  };
+
+  const handleConfirmLogout = async () => {
+    closeLogoutConfirm();
+    await handleLogout();
   };
 
   if (items.length === 0) {
@@ -168,12 +190,33 @@ export default function Sidebar({ isOpen, onClose, role }: SidebarProps) {
         <button
           type="button"
           className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-green-600"
-          onClick={handleLogout}
+          onClick={openLogoutConfirm}
         >
           <span className="text-gray-500">{ICONS[SIDEBAR_LOGOUT_ITEM.icon]}</span>
           <span>{SIDEBAR_LOGOUT_ITEM.label}</span>
         </button>
       </div>
+      <Dialog
+        open={isLogoutConfirmOpen}
+        onClose={closeLogoutConfirm}
+        aria-labelledby="logout-confirm-dialog-title"
+        aria-describedby="logout-confirm-dialog-description"
+      >
+        <DialogTitle id="logout-confirm-dialog-title">{tSidebar('logoutConfirmTitle')}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="logout-confirm-dialog-description">
+            {tSidebar('logoutConfirmMessage')}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={closeLogoutConfirm} color="inherit" variant="text">
+            {tSidebar('cancel')}
+          </Button>
+          <Button onClick={handleConfirmLogout} color="error" variant="contained" autoFocus>
+            {tSidebar('confirmLogout')}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </aside>
   );
 }

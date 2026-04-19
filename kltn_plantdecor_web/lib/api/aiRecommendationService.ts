@@ -45,7 +45,7 @@ const appendIfDefined = (formData: FormData, key: string, value: string | number
 export const analyzeRoomUpload = async (
   request: AnalyzeRoomUploadRequest,
   isServer = false,
-  loading = true
+  loading = false
 ): Promise<AnalyzeRoomUploadPayload | null> => {
   const formData = new FormData();
   formData.append('Image', request.image);
@@ -72,7 +72,7 @@ export const analyzeRoomUpload = async (
     '/RoomDesign/analyze-upload',
     formData,
     isServer,
-    loading,
+    loading, // Don't show global loading for this endpoint since it can be long-running and we want to allow users to cancel it.
     {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -86,7 +86,7 @@ export const analyzeRoomUpload = async (
 export const generateLayoutImages = async (
   layoutDesignId: number,
   isServer = false,
-  loading = true
+  loading = false
 ): Promise<GenerateLayoutImagesPayload | null> => {
   const response = await post<ResponseModel<GenerateLayoutImagesPayload>>(
     `/RoomDesign/${layoutDesignId}/generate-images`,

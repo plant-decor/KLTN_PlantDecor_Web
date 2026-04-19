@@ -1,10 +1,6 @@
 'use client';
 
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
   Alert,
   Box,
   Card,
@@ -15,8 +11,9 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import type { MyPlantItemWithGuide } from '@/types/my-plant.types';
+import { formatDate as formatDateUTC7 } from '@/lib/utils/dateUtils';
 import { localizeRoomDesignEnumLabel } from '@/lib/utils/roomDesignEnumI18n';
 import ClickableImageViewer from '../image-view/ClickableImageViewer';
 
@@ -24,7 +21,7 @@ interface MyPlantsClientProps {
   plants: MyPlantItemWithGuide[];
 }
 
-const formatDate = (value: string | null | undefined, locale: string, fallback: string) => {
+const formatDate = (value: string | null | undefined, fallback: string) => {
   if (!value) {
     return fallback;
   }
@@ -34,7 +31,7 @@ const formatDate = (value: string | null | undefined, locale: string, fallback: 
     return value;
   }
 
-  return date.toLocaleDateString(locale);
+  return formatDateUTC7(date);
 };
 
 const formatNumber = (value: number | null | undefined, fallback: string, suffix = '') => {
@@ -53,11 +50,11 @@ const getHealthChipStyles = (value?: string | null) => {
     normalized.includes('rất khỏe') ||
     normalized.includes('rất khoẻ')
   ) {
-    return { bgcolor: 'success.light', color: 'success.dark' };
+    return { bgcolor: 'success.light', color: 'success.contrastText' };
   }
 
   if (normalized.includes('healthy') || normalized.includes('khỏe') || normalized.includes('khoẻ')) {
-    return { bgcolor: 'success.light', color: 'success.dark' };
+    return { bgcolor: 'success.light', color: 'success.contrastText' };
   }
 
   if (
@@ -67,7 +64,7 @@ const getHealthChipStyles = (value?: string | null) => {
     normalized.includes('cần') ||
     normalized.includes('yếu')
   ) {
-    return { bgcolor: 'warning.light', color: 'warning.dark' };
+    return { bgcolor: 'warning.light', color: 'warning.contrastText' };
   }
 
   return { bgcolor: 'grey.200', color: 'text.primary' };
@@ -83,10 +80,14 @@ const GuideField = ({
   fallback: string;
 }) => (
   <Box>
-    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+    <Typography
+      variant="body2"
+      color="text.secondary"
+      sx={{ display: 'block', mb: 0.75, fontWeight: 600, lineHeight: 1.35 }}
+    >
       {label}
     </Typography>
-    <Typography variant="body2" fontWeight={600}>
+    <Typography variant="body1" fontWeight={600} sx={{ lineHeight: 1.5 }}>
       {value === null || value === undefined || value === '' ? fallback : String(value)}
     </Typography>
   </Box>
@@ -95,7 +96,6 @@ const GuideField = ({
 export default function MyPlantsClient({ plants }: MyPlantsClientProps) {
   const t = useTranslations('myPlantClient');
   const tRoomDesignEnum = useTranslations('roomDesignEnums');
-  const locale = useLocale();
 
   return (
     <Stack spacing={3}>
@@ -145,7 +145,7 @@ export default function MyPlantsClient({ plants }: MyPlantsClientProps) {
                         <Chip label={t('plantCode', { id: plant.id })} size="small" variant="outlined" />
                         <Chip label={plant.healthStatus || notUpdated} size="small" sx={healthStyles} />
                       </Stack>
-                      <Typography variant="h5" fontWeight={800} gutterBottom>
+                      <Typography variant="h5" fontWeight={700} gutterBottom>
                         {plant.plantName}
                       </Typography>
                       <Typography variant="body1" color="text.secondary" sx={{ fontStyle: 'italic' }}>
@@ -154,57 +154,71 @@ export default function MyPlantsClient({ plants }: MyPlantsClientProps) {
                     </Box>
 
                     <Grid container spacing={2}>
-                      <Grid size={{ xs: 6, sm: 4 }}>
-                        <GuideField
-                          label={t('fields.purchaseDate')}
-                          value={formatDate(plant.purchaseDate, locale, notUpdated)}
-                          fallback={notUpdated}
-                        />
+                      <Grid size={{ xs: 12, sm: 6 }}>
+                        <Box
+                          sx={{
+                            p: 2,
+                            borderRadius: 3,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            bgcolor: 'background.default',
+                            height: '100%',
+                          }}
+                        >
+                          <Stack spacing={1.5}>
+                            <GuideField
+                              label={t('fields.purchaseDate')}
+                              value={formatDate(plant.purchaseDate, notUpdated)}
+                              fallback={notUpdated}
+                            />
+                            <GuideField label={t('fields.location')} value={plant.location || notUpdated} fallback={notUpdated} />
+                            <GuideField
+                              label={t('fields.age')}
+                              value={formatNumber(plant.age, notUpdated, t('units.year'))}
+                              fallback={notUpdated}
+                            />
+                            <GuideField
+                              label={t('fields.height')}
+                              value={formatNumber(plant.currentHeight, notUpdated, t('units.cm'))}
+                              fallback={notUpdated}
+                            />
+                          </Stack>
+                        </Box>
                       </Grid>
-                      <Grid size={{ xs: 6, sm: 4 }}>
-                        <GuideField label={t('fields.location')} value={plant.location || notUpdated} fallback={notUpdated} />
-                      </Grid>
-                      <Grid size={{ xs: 6, sm: 4 }}>
-                        <GuideField
-                          label={t('fields.age')}
-                          value={formatNumber(plant.age, notUpdated, t('units.year'))}
-                          fallback={notUpdated}
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 6, sm: 4 }}>
-                        <GuideField
-                          label={t('fields.trunkDiameter')}
-                          value={formatNumber(plant.currentTrunkDiameter, notUpdated, t('units.cm'))}
-                          fallback={notUpdated}
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 6, sm: 4 }}>
-                        <GuideField
-                          label={t('fields.height')}
-                          value={formatNumber(plant.currentHeight, notUpdated, t('units.cm'))}
-                          fallback={notUpdated}
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 6, sm: 4 }}>
-                        <GuideField
-                          label={t('fields.lastWatered')}
-                          value={formatDate(plant.lastWateredDate, locale, notUpdated)}
-                          fallback={notUpdated}
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 6, sm: 4 }}>
-                        <GuideField
-                          label={t('fields.lastFertilized')}
-                          value={formatDate(plant.lastFertilizedDate, locale, notUpdated)}
-                          fallback={notUpdated}
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 6, sm: 4 }}>
-                        <GuideField
-                          label={t('fields.lastPruned')}
-                          value={formatDate(plant.lastPrunedDate, locale, notUpdated)}
-                          fallback={notUpdated}
-                        />
+                      <Grid size={{ xs: 12, sm: 6 }}>
+                        <Box
+                          sx={{
+                            p: 2,
+                            borderRadius: 3,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            bgcolor: 'background.default',
+                            height: '100%',
+                          }}
+                        >
+                          <Stack spacing={1.5}>
+                            <GuideField
+                              label={t('fields.trunkDiameter')}
+                              value={formatNumber(plant.currentTrunkDiameter, notUpdated, t('units.cm'))}
+                              fallback={notUpdated}
+                            />
+                            <GuideField
+                              label={t('fields.lastWatered')}
+                              value={formatDate(plant.lastWateredDate, notUpdated)}
+                              fallback={notUpdated}
+                            />
+                            <GuideField
+                              label={t('fields.lastFertilized')}
+                              value={formatDate(plant.lastFertilizedDate, notUpdated)}
+                              fallback={notUpdated}
+                            />
+                            <GuideField
+                              label={t('fields.lastPruned')}
+                              value={formatDate(plant.lastPrunedDate, notUpdated)}
+                              fallback={notUpdated}
+                            />
+                          </Stack>
+                        </Box>
                       </Grid>
                     </Grid>
                   </Stack>
@@ -214,20 +228,19 @@ export default function MyPlantsClient({ plants }: MyPlantsClientProps) {
               <Divider sx={{ my: 3 }} />
 
               {plant.guide ? (
-                <Accordion disableGutters elevation={0} sx={{ bgcolor: 'transparent', '&:before': { display: 'none' } }}>
-                  <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ px: 0 }}>
-                    <Stack>
-                      <Typography variant="h6" fontWeight={750}>
-                        {t('guide.title', { plantName: plant.plantName })}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {t('guide.subtitle', { plantName: plant.plantName })}
-                      </Typography>
-                    </Stack>
-                  </AccordionSummary>
-                  <AccordionDetails sx={{ px: 0, pt: 0 }}>
-                    <Grid container spacing={2.5}>
-                      <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                <Stack spacing={2}>
+                  <Stack spacing={0.5}>
+                    <Typography variant="h6" fontWeight={750}>
+                      {t('guide.title', { plantName: plant.plantName })}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {t('guide.subtitle', { plantName: plant.plantName })}
+                    </Typography>
+                  </Stack>
+
+                  <Grid container spacing={1.5}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                      <Box sx={{ p: 1.75, borderRadius: 2.5, border: '1px solid', borderColor: 'divider' }}>
                         <GuideField
                           label={t('guide.fields.light')}
                           value={localizeRoomDesignEnumLabel(
@@ -237,46 +250,62 @@ export default function MyPlantsClient({ plants }: MyPlantsClientProps) {
                           )}
                           fallback={notUpdated}
                         />
-                      </Grid>
-                      <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                        <GuideField label={t('guide.fields.watering')} value={plant.guide.watering} fallback={notUpdated} />
-                      </Grid>
-                      <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                        <GuideField label={t('guide.fields.fertilizing')} value={plant.guide.fertilizing} fallback={notUpdated} />
-                      </Grid>
-                      <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                        <GuideField label={t('guide.fields.pruning')} value={plant.guide.pruning} fallback={notUpdated} />
-                      </Grid>
-                      <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                        <GuideField label={t('guide.fields.temperature')} value={plant.guide.temperature} fallback={notUpdated} />
-                      </Grid>
-                      <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                        <GuideField label={t('guide.fields.humidity')} value={plant.guide.humidity} fallback={notUpdated} />
-                      </Grid>
-                      <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                        <GuideField label={t('guide.fields.soil')} value={plant.guide.soil} fallback={notUpdated} />
-                      </Grid>
-                      <Grid size={{ xs: 12 }}>
-                        <Box
-                          sx={{
-                            p: 2,
-                            borderRadius: 2,
-                            bgcolor: 'rgba(25, 118, 210, 0.06)',
-                            border: '1px solid',
-                            borderColor: 'rgba(25, 118, 210, 0.20)',
-                          }}
-                        >
-                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-                            {t('guide.fields.careNotes')}
-                          </Typography>
-                          <Typography variant="body2" fontWeight={600}>
-                            {plant.guide.careNotes || notUpdated}
-                          </Typography>
-                        </Box>
-                      </Grid>
+                      </Box>
                     </Grid>
-                  </AccordionDetails>
-                </Accordion>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                      <Box sx={{ p: 1.75, borderRadius: 2.5, border: '1px solid', borderColor: 'divider' }}>
+                        <GuideField label={t('guide.fields.watering')} value={plant.guide.watering} fallback={notUpdated} />
+                      </Box>
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                      <Box sx={{ p: 1.75, borderRadius: 2.5, border: '1px solid', borderColor: 'divider' }}>
+                        <GuideField label={t('guide.fields.fertilizing')} value={plant.guide.fertilizing} fallback={notUpdated} />
+                      </Box>
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                      <Box sx={{ p: 1.75, borderRadius: 2.5, border: '1px solid', borderColor: 'divider' }}>
+                        <GuideField label={t('guide.fields.pruning')} value={plant.guide.pruning} fallback={notUpdated} />
+                      </Box>
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                      <Box sx={{ p: 1.75, borderRadius: 2.5, border: '1px solid', borderColor: 'divider' }}>
+                        <GuideField label={t('guide.fields.temperature')} value={plant.guide.temperature} fallback={notUpdated} />
+                      </Box>
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                      <Box sx={{ p: 1.75, borderRadius: 2.5, border: '1px solid', borderColor: 'divider' }}>
+                        <GuideField label={t('guide.fields.humidity')} value={plant.guide.humidity} fallback={notUpdated} />
+                      </Box>
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                      <Box sx={{ p: 1.75, borderRadius: 2.5, border: '1px solid', borderColor: 'divider' }}>
+                        <GuideField label={t('guide.fields.soil')} value={plant.guide.soil} fallback={notUpdated} />
+                      </Box>
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
+                      <Box
+                        sx={{
+                          p: 2.25,
+                          borderRadius: 2.5,
+                          bgcolor: 'action.hover',
+                          border: '1px solid',
+                          borderColor: 'divider',
+                        }}
+                      >
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ display: 'block', mb: 0.75, fontWeight: 600, lineHeight: 1.35 }}
+                        >
+                          {t('guide.fields.careNotes')}
+                        </Typography>
+                        <Typography variant="body1" fontWeight={600} sx={{ lineHeight: 1.6 }}>
+                          {plant.guide.careNotes || notUpdated}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                  </Grid>
+                </Stack>
               ) : (
                 <Alert severity="info" sx={{ mt: 1 }}>
                   {t('guide.missing')}

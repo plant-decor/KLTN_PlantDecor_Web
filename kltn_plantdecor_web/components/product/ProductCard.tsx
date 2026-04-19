@@ -385,15 +385,15 @@ export default function ProductCard({
     <>
       <Link
         href={`/products/${plant.id}`}
-        className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow min-h-115 flex flex-col"
+        className="bg-white rounded-3xl overflow-hidden shadow-md hover:shadow-lg transition-shadow min-h-115 flex flex-col"
       >
-        <div className="relative w-full basis-[50%] shrink-0">
+        <div className="relative w-full basis-[60%] shrink-0">
           <Image
             src={plant.primaryImageUrl || '/img/fallbackplant.avif'}
             alt={plant.name}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-cover"
+            className="object-contain"
             loading='eager'
           />
           {showNewBadge ? (
@@ -402,7 +402,7 @@ export default function ProductCard({
             </span>
           ) : null}
         </div>
-        <div className="basis-[25%] min-h-0 space-y-1 p-2 sm:p-2 md:p-4 lg:p-5 flex flex-col overflow-hidden">
+        <div className="basis-[15%] min-h-0 space-y-1 p-2 sm:p-2 md:p-4 lg:p-5 flex flex-col overflow-hidden">
           <h3 className="font-semibold text-gray-900">{plant.name}</h3>
             <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{color: 'gray', fontSize: '8px', fontWeight:"300"}}>
             {normalizedTagNames.length > 0 ?

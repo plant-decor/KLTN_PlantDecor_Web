@@ -25,7 +25,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useTranslations } from 'next-intl';
-import type { Order, OrderInvoiceDetail } from '@/types/order.types';
+import type { Order } from '@/types/order.types';
 import {
   formatCurrency,
   formatDate,
@@ -33,31 +33,36 @@ import {
   getStatusInfo,
 } from './orderHistoryUtils';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
+import Image from 'next/image';
 
-type OrderDisplayItem = {
-  id: number;
-  itemName: string;
-  quantity: number;
-  price: number;
-};
+// type OrderDisplayItem = {
+//   id: number;
+//   imageUrl: string | null;
+//   itemName: string;
+//   quantity: number;
+//   price: number;
+//   statusName: string;
+// };
 
-function mapInvoiceDetailToDisplayItem(detail: OrderInvoiceDetail): OrderDisplayItem {
-  return {
-    id: detail.id,
-    itemName: detail.itemName,
-    quantity: detail.quantity,
-    price: detail.unitPrice,
-  };
-}
+// function mapInvoiceDetailToDisplayItem(detail: OrderInvoiceDetail): OrderDisplayItem {
+//   return {
+//     id: detail.id,
+//     imageUrl: detail.imageUrl,
+//     itemName: detail.itemName,
+//     quantity: detail.quantity,
+//     price: detail.unitPrice,
+//     statusName: detail.statusName,
+//   };
+// }
 
-function getDisplayItems(order: Order): OrderDisplayItem[] {
-  if (order.orderType !== 4) {
-    return order.items;
-  }
+// function getDisplayItems(order: Order): OrderDisplayItem[] {
+//   if (order.orderType !== 4) {
+//     return order.items;
+//   }
 
-  const invoiceWithDetails = order.invoices.find((invoice) => invoice.details.length > 0);
-  return invoiceWithDetails ? invoiceWithDetails.details.map(mapInvoiceDetailToDisplayItem) : [];
-}
+//   const invoiceWithDetails = order.invoices.find((invoice) => invoice.details.length > 0);
+//   return invoiceWithDetails ? invoiceWithDetails.details.map(mapInvoiceDetailToDisplayItem) : [];
+// }
 
 interface OrderDetailModalProps {
   open: boolean;
@@ -86,12 +91,12 @@ export default function OrderDetailModal({
 }: OrderDetailModalProps) {
   const tOrderHistory = useTranslations('orderHistory');
   const statusInfo = order ? getStatusInfo(order.statusName) : null;
-  const canCancelOrder = order?.statusName === 'Pending' || order?.statusName === 'DepositPaid';
+  const canCancelOrder = order?.statusName === 'Pending' || order?.statusName === 'DepositPaid' || order?.statusName === 'Paid';
   const isCancelling = !!order && cancelLoadingOrderId === order.id;
-  const displayItems = order ? getDisplayItems(order) : [];
-
+  // const displayItems = order ? getDisplayItems(order) : [];
+  console.log('OrderDetailModal render - order:', order);
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
       <DialogTitle>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="h6" fontWeight="bold">
@@ -195,60 +200,6 @@ export default function OrderDetailModal({
 
             <Divider sx={{ my: 3 }} />
 
-            <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-              Item details
-            </Typography>
-            <TableContainer component={Paper} elevation={0} sx={{ border: 1, borderColor: 'divider', mb: 3 }}>
-              <Table>
-                <TableHead>
-                  <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                    <TableCell>
-                      <strong>Item</strong>
-                    </TableCell>
-                    <TableCell align="center">
-                      <strong>Qty</strong>
-                    </TableCell>
-                    <TableCell align="right">
-                      <strong>Unit price</strong>
-                    </TableCell>
-                    <TableCell align="right">
-                      <strong>Amount</strong>
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {displayItems.length > 0 ? (
-                    displayItems.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell>{item.itemName}</TableCell>
-                        <TableCell align="center">{item.quantity}</TableCell>
-                        <TableCell align="right">{formatCurrency(item.price)}</TableCell>
-                        <TableCell align="right">{formatCurrency(item.price * item.quantity)}</TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={4} align="center">
-                        <Typography variant="body2" color="text.secondary">
-                          No item details available.
-                        </Typography>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                  <TableRow>
-                    <TableCell colSpan={3} align="right">
-                      <strong>Total</strong>
-                    </TableCell>
-                    <TableCell align="right">
-                      <Typography variant="h6" fontWeight="bold" color="primary">
-                        {formatCurrency(order.totalAmount)}
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </TableContainer>
-
             {order.nurseryOrders.length > 0 ? (
               <>
                 <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
@@ -259,7 +210,7 @@ export default function OrderDetailModal({
                     <Typography variant="body1" fontWeight="bold">
                       {nurseryOrder.nurseryName}
                     </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', my: 0.5 }}>
                       <Typography variant="body2" color="text.secondary" component="span">
                         Status:
                       </Typography>
@@ -270,11 +221,60 @@ export default function OrderDetailModal({
                         Shipper: {nurseryOrder.shipperName}
                       </Typography>
                     ) : null}
-                    <Typography variant="body2" fontWeight="bold" sx={{ mt: 1 }}>
+                    <TableContainer component={Paper} elevation={0} sx={{ mb: 3 }}>
+                      <Table>
+                        <TableHead>
+                          <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                            <TableCell>
+                              <strong>Item</strong>
+                            </TableCell>
+                            <TableCell align="center">
+                              <strong>Qty</strong>
+                            </TableCell>
+                            <TableCell align="right">
+                              <strong>Unit price</strong>
+                            </TableCell>
+                            <TableCell align="right">
+                              <strong>Amount</strong>
+                            </TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {nurseryOrder.items.length > 0 ? (
+                            nurseryOrder.items.map((item) => (
+                              <TableRow key={item.id}>
+                                <TableCell>
+                                  <Box className='flex items-center'>
+                                    <Image src={item.imageUrl || '/img/fallbackplant.avif'} alt={item.itemName} width={60} height={60}
+                                      style={{ objectFit: 'cover', borderRadius: 4, marginRight: 16 }} />
+                                    {item.itemName}
+                                  </Box>
+                                </TableCell>
+                                <TableCell align="center">{item.quantity}</TableCell>
+                                <TableCell align="right">{formatCurrency(item.price)}</TableCell>
+                                <TableCell align="right">{formatCurrency(item.price * item.quantity)}</TableCell>
+                              </TableRow>
+                            ))
+                          ) : (
+                            <TableRow>
+                              <TableCell colSpan={4} align="center">
+                                <Typography variant="body2" color="text.secondary">
+                                  No item details available.
+                                </Typography>
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                    <Typography variant="body2" fontWeight="bold" sx={{ mt: 1 }} align="right">
                       Subtotal: {formatCurrency(nurseryOrder.subTotalAmount)}
                     </Typography>
                   </Card>
                 ))}
+                <Typography variant="subtitle1" fontWeight="bold" gutterBottom align='right' sx={{ mt: 2, backgroundColor: 'var(--primary)', padding: 1, borderRadius: 1 }}>
+                  Total: {formatCurrency(order.totalAmount)}
+                </Typography>
                 <Divider sx={{ my: 3 }} />
               </>
             ) : null}
@@ -298,11 +298,14 @@ export default function OrderDetailModal({
                     <Typography variant="body1" fontWeight="bold" sx={{ mt: 1 }}>
                       {formatCurrency(invoice.totalAmount)}
                     </Typography>
+                    <Box
+                      className='w-full flex justify-end'> 
                     {invoice.statusName === 'Pending' ? (
                       <Button
                         variant="contained"
+                        className='font-semibold!'
                         size="small"
-                        sx={{ mt: 1.5, backgroundColor: 'var(--primary)', ...hoverLiftStyle }}
+                        sx={{ px: 2, py: 1, backgroundColor: 'var(--primary)', ...hoverLiftStyle }}
                         onClick={() => void onPayInvoice(invoice.id)}
                         disabled={paymentLoadingInvoiceId === invoice.id || isCancelling}
                       >
@@ -311,6 +314,7 @@ export default function OrderDetailModal({
                           : tOrderHistory('payNow')}
                       </Button>
                     ) : null}
+                </Box>
                   </Card>
                 ))}
               </>

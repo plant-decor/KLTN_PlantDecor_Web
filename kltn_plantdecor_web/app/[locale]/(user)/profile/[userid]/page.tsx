@@ -15,6 +15,7 @@ import {
   Divider,
   Alert,
   CircularProgress,
+  Autocomplete,
 } from '@mui/material';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import SaveIcon from '@mui/icons-material/Save';
@@ -29,6 +30,7 @@ import { useTranslations } from 'next-intl';
 import type { UserProfile, UpdateUserProfileRequest } from '@/types/auth.types';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
 import ClickableImageViewer from '@/components/image-view/ClickableImageViewer';
+import { searchAddressSuggestions, type AddressSuggestion } from '@/lib/utils/geocoding';
 
 export default function ProfilePage() {
   const t = useTranslations('profile');
@@ -57,6 +59,9 @@ export default function ProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [openChangePassword, setOpenChangePassword] = useState(false);
   const [openSetPassword, setOpenSetPassword] = useState(false);
+  const [addressSuggestions, setAddressSuggestions] = useState<AddressSuggestion[]>([]);
+  const [loadingAddressSuggestions, setLoadingAddressSuggestions] = useState(false);
+  const [addressInputValue, setAddressInputValue] = useState('');
 
   // Fetch profile on mount
   const fetchProfile = useCallback(async () => {
@@ -85,6 +90,7 @@ export default function ProfilePage() {
         
         setProfile(mappedData);
         setOriginalProfile(mappedData);
+        setAddressInputValue(userData.address || '');
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : t('errorLoadingProfile');
@@ -99,10 +105,81 @@ export default function ProfilePage() {
     void fetchProfile();
   }, [fetchProfile]);
 
+  // Fetch address suggestions when user types
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (addressInputValue && addressInputValue.trim().length >= 3) {
+        setLoadingAddressSuggestions(true);
+        try {
+          const suggestions = await searchAddressSuggestions(addressInputValue);
+          setAddressSuggestions(suggestions);
+        } catch (err) {
+          console.error('Error fetching address suggestions:', err);
+          setAddressSuggestions([]);
+        } finally {
+          setLoadingAddressSuggestions(false);
+        }
+      } else {
+        setAddressSuggestions([]);
+      }
+    }, 500); // Debounce 500ms
+
+    return () => clearTimeout(timer);
+  }, [addressInputValue]);
+
   const handleInputChange = (field: keyof UserProfile, value: UserProfile[keyof UserProfile]) => {
     setProfile((prev) => ({
       ...prev,
       [field]: value,
+    }));
+  };
+
+  const handleSelectAddressSuggestion = (value: AddressSuggestion | string | null) => {
+     if (!value) {
+       // User cleared the field
+       setProfile((prev) => ({
+         ...prev,
+         address: '',
+         latitude: 0,
+         longitude: 0,
+       }));
+       setAddressInputValue('');
+       setAddressSuggestions([]);
+       return;
+     }
+
+     // Check if it's a suggestion object (user selected from dropdown)
+     if (typeof value === 'object' && 'display_name' in value) {
+       setProfile((prev) => ({
+         ...prev,
+         address: value.display_name,
+         latitude: value.latitude,
+         longitude: value.longitude,
+       }));
+       setAddressInputValue(value.display_name);
+       setAddressSuggestions([]);
+     }
+     // If it's a string (user typed custom address without selecting suggestion)
+     // Keep the address as-is, set lat/long to 0
+     else if (typeof value === 'string') {
+       setProfile((prev) => ({
+         ...prev,
+         address: value,
+         latitude: 0,
+         longitude: 0,
+       }));
+       setAddressInputValue(value);
+       setAddressSuggestions([]);
+     }
+   };
+
+  const handleAddressInputChange = (value: string) => {
+    setAddressInputValue(value);
+    setProfile((prev) => ({
+      ...prev,
+      address: value,
+      latitude: 0,
+      longitude: 0,
     }));
   };
 
@@ -221,38 +298,57 @@ export default function ProfilePage() {
               <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, alignItems: 'center', gap: 3 }}>
                 {/* Avatar */}
                 <Box sx={{ position: 'relative' }}>
+                  {profile.avatarUrl ? (
                   <ClickableImageViewer
-                    images={profile.avatarUrl ? [profile.avatarUrl] : []}
+                    images={[profile.avatarUrl]}
                     alt={profile.fullName || profile.username || 'User Avatar'}
                     className='rounded-full aspect-square object-cover shadow-md'
                     containerClassName='block xs:w-[120px] md:w-37.5 xs:h-[120px] md:h-37.5'
                     showZoomHint={false}
                   />
-                  <IconButton
-                    component="label"
+                  ) : (
+                  <Box
                     sx={{
-                      position: 'absolute',
-                      bottom: 0,
-                      right: 0,
-                      backgroundColor: 'var(--primary)',
-                      color: 'black',
-                      ":hover": {
-                        backgroundColor: 'var(--success)',
-                        color: 'white',
-                      },
-                      ...hoverLiftStyle,
+                    width: { xs: '120px', md: '150px' },
+                    height: { xs: '120px', md: '150px' },
+                    borderRadius: '50%',
+                    backgroundColor: 'var(--primary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: 2,
                     }}
-                    size="large"
-                    disabled={isSaving}
                   >
-                    <PhotoCameraIcon fontSize="large"/>
-                    <input
-                      hidden
-                      accept="image/jpeg,image/jpg,image/png,image/heif"
-                      type="file"
-                      onChange={handleAvatarUpload}
-                      disabled={isSaving}
-                    />
+                    <Typography variant="h3" fontWeight="bold" sx={{ color: 'white' }}>
+                    {(profile.username || '').charAt(0).toUpperCase()}
+                    </Typography>
+                  </Box>
+                  )}
+                  <IconButton
+                  component="label"
+                  sx={{
+                    position: 'absolute',
+                    bottom: 0,
+                    right: 0,
+                    backgroundColor: 'var(--primary)',
+                    color: 'black',
+                    ":hover": {
+                    backgroundColor: 'var(--success)',
+                    color: 'white',
+                    },
+                    ...hoverLiftStyle,
+                  }}
+                  size="large"
+                  disabled={isSaving}
+                  >
+                  <PhotoCameraIcon fontSize="large"/>
+                  <input
+                    hidden
+                    accept="image/jpeg,image/jpg,image/png,image/heif"
+                    type="file"
+                    onChange={handleAvatarUpload}
+                    disabled={isSaving}
+                  />
                   </IconButton>
                 </Box>
 
@@ -378,44 +474,40 @@ export default function ProfilePage() {
               <Typography variant="subtitle1" fontWeight="bold" gutterBottom sx={{ mb: 2 }}>
                 {t('shippingAddress')}
               </Typography>
-              <TextField
-                label={t('detailedAddress')}
-                value={profile.address || ''}
-                onChange={(e) => handleInputChange('address', e.target.value)}
-                fullWidth
-                multiline
-                rows={3}
-                placeholder={t('addressPlaceholder')}
-                disabled={isSaving}
-              />
-
-              <Box
-                sx={{
-                  mt: 2,
-                  display: 'grid',
-                  gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-                  gap: 2,
+              <Autocomplete
+                freeSolo
+                options={addressSuggestions}
+                filterOptions={(options) => options}
+                getOptionLabel={(option) => {
+                  if (typeof option === 'string') return option;
+                  return option.display_name || '';
                 }}
-              >
-                <TextField
-                  label={t('latitude') || 'Latitude'}
-                  value={profile.latitude ?? 0}
-                  onChange={(e) => handleInputChange('latitude', parseFloat(e.target.value) || 0)}
-                  fullWidth
-                  type="number"
-                  inputProps={{ step: 'any' }}
-                  disabled={isSaving}
-                />
-                <TextField
-                  label={t('longitude') || 'Longitude'}
-                  value={profile.longitude ?? 0}
-                  onChange={(e) => handleInputChange('longitude', parseFloat(e.target.value) || 0)}
-                  fullWidth
-                  type="number"
-                  inputProps={{ step: 'any' }}
-                  disabled={isSaving}
-                />
-              </Box>
+                inputValue={addressInputValue}
+                onInputChange={(e, value) => handleAddressInputChange(value)}
+                onChange={(e, value) => handleSelectAddressSuggestion(value)}
+                loading={loadingAddressSuggestions}
+                disabled={isSaving}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label={t('detailedAddress')}
+                    placeholder={t('addressPlaceholder')}
+                    InputProps={{
+                      ...params.InputProps,
+                      endAdornment: (
+                        <>
+                          {loadingAddressSuggestions ? (
+                            <CircularProgress color="inherit" size={20} />
+                          ) : null}
+                          {params.InputProps.endAdornment}
+                        </>
+                      ),
+                    }}
+                  />
+                )}
+                noOptionsText="Không tìm thấy địa chỉ"
+                loadingText="Đang tìm kiếm..."
+              />
             </CardContent>
           </Card>
 

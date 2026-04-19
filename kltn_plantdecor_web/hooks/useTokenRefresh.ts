@@ -13,7 +13,7 @@ interface UseTokenRefreshOptions {
   enabled?: boolean;
   refreshThreshold?: number; // Thời gian trước khi token hết hạn để refresh (milliseconds)
   checkInterval?: number; // Khoảng thời gian kiểm tra (milliseconds)
-  onRefresh?: (refreshToken: string) => Promise<RefreshActionResult>;
+  onRefresh?: (refreshToken?: string) => Promise<RefreshActionResult>;
   onError?: (error: Error) => void;
 }
 
@@ -80,8 +80,9 @@ export const useTokenRefresh = ({
       return;
     }
 
+    const storeState = useAuthStore.getState();
     const refreshToken = getClientRefreshToken();
-    if (!refreshToken) {
+    if (!refreshToken && !storeState.isAuthenticated && !storeState.user) {
       scheduleNextCheck(checkInterval);
       return;
     }
@@ -90,8 +91,10 @@ export const useTokenRefresh = ({
 
     try {
       const refreshed = onRefresh
-        ? await onRefresh(refreshToken)
-        : await refreshTokenAction({ refreshToken });
+        ? await onRefresh(refreshToken ?? undefined)
+        : refreshToken
+          ? await refreshTokenAction({ refreshToken })
+          : await refreshTokenAction();
 
       if (refreshed.success && refreshed.token) {
         setClientAccessToken(refreshed.token, refreshed.expiresIn);

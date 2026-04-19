@@ -407,7 +407,7 @@ export default function PlantInstanceManagerTab({ nurseryId }: PlantInstanceMana
         </Stack>
 
         <Stack direction="row" spacing={1}>
-          <Button
+          {/* <Button
             startIcon={<AutorenewIcon />}
             variant="outlined"
             onClick={() =>
@@ -419,7 +419,7 @@ export default function PlantInstanceManagerTab({ nurseryId }: PlantInstanceMana
             disabled={loading || summaryLoading}
           >
             Refresh
-          </Button>
+          </Button> */}
           <Button
             startIcon={<AddIcon />}
             variant="contained"

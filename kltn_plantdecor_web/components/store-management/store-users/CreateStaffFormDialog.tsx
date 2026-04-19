@@ -60,7 +60,7 @@ export default function CreateStaffFormDialog({
       onStaffCreated();
       onClose();
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Không thể tạo nhân viên';
+      const errorMessage = err instanceof Error ? err.message : 'Can not create staff. Please try again.';
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -77,7 +77,7 @@ export default function CreateStaffFormDialog({
 
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
-      <DialogTitle>Tạo nhân viên mới</DialogTitle>
+      <DialogTitle>Create New Staff</DialogTitle>
       <DialogContent dividers>
         <Stack spacing={2}>
           {error && (
@@ -92,10 +92,10 @@ export default function CreateStaffFormDialog({
                 name="email"
                 control={control}
                 rules={{
-                  required: 'Email là bắt buộc',
+                  required: 'Email is required',
                   pattern: {
                     value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                    message: 'Email không hợp lệ',
+                    message: 'Invalid email format',
                   },
                 }}
                 render={({ field }) => (
@@ -117,16 +117,16 @@ export default function CreateStaffFormDialog({
                 name="username"
                 control={control}
                 rules={{
-                  required: 'Tên đăng nhập là bắt buộc',
+                  required: 'Username is required',
                   minLength: {
                     value: 3,
-                    message: 'Tên đăng nhập phải có ít nhất 3 ký tự',
+                    message: 'Username must be at least 3 characters long',
                   },
                 }}
                 render={({ field }) => (
                   <TextField
                     {...field}
-                    label="Tên đăng nhập"
+                    label="Username"
                     required
                     fullWidth
                     error={Boolean(errors.username)}
@@ -140,11 +140,11 @@ export default function CreateStaffFormDialog({
               <Controller
                 name="fullName"
                 control={control}
-                rules={{ required: 'Họ và tên là bắt buộc' }}
+                rules={{ required: 'Full name is required' }}
                 render={({ field }) => (
                   <TextField
                     {...field}
-                    label="Họ và tên"
+                    label="Full Name"
                     required
                     fullWidth
                     error={Boolean(errors.fullName)}
@@ -159,9 +159,9 @@ export default function CreateStaffFormDialog({
                 name="phoneNumber"
                 control={control}
                 rules={{
-                  required: 'Số điện thoại là bắt buộc',
+                  required: 'Phone number is required',
                   validate: (value) =>
-                    isValidPhoneNumber10Digits(value) || 'Số điện thoại không hợp lệ',
+                    isValidPhoneNumber10Digits(value) || 'Invalid phone number',
                 }}
                 render={({ field }) => (
                   <TextField
@@ -172,7 +172,7 @@ export default function CreateStaffFormDialog({
                       pattern: '[0-9]*',
                       maxLength: 10,
                     }}
-                    label="Số điện thoại"
+                    label="Phone Number"
                     required
                     fullWidth
                     error={Boolean(errors.phoneNumber)}
@@ -187,16 +187,16 @@ export default function CreateStaffFormDialog({
                 name="password"
                 control={control}
                 rules={{
-                  required: 'Mật khẩu là bắt buộc',
+                  required: 'Password is required',
                   pattern: {
                     value: PASSWORD_REGEX,
-                    message: 'Mật khẩu phải có ít nhất 8 ký tự, chứa chữ hoa, chữ thường, số và ký tự đặc biệt',
+                    message: 'Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters',
                   },
                 }}
                 render={({ field }) => (
                   <TextField
                     {...field}
-                    label="Mật khẩu"
+                    label="Password"
                     type="password"
                     required
                     fullWidth
@@ -212,14 +212,14 @@ export default function CreateStaffFormDialog({
                 name="confirmPassword"
                 control={control}
                 rules={{
-                  required: 'Xác nhận mật khẩu là bắt buộc',
+                  required: 'Confirm password is required',
                   validate: (value, formValues) =>
-                    value === formValues.password || 'Mật khẩu không trùng khớp',
+                    value === formValues.password || 'Passwords do not match',
                 }}
                 render={({ field }) => (
                   <TextField
                     {...field}
-                    label="Xác nhận mật khẩu"
+                    label="Confirm Password"
                     type="password"
                     required
                     fullWidth
@@ -234,7 +234,7 @@ export default function CreateStaffFormDialog({
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose} disabled={loading}>
-          Hủy
+          Cancel
         </Button>
         <Button
           onClick={handleSubmit(onSubmit)}
@@ -242,7 +242,7 @@ export default function CreateStaffFormDialog({
           disabled={loading}
           className="bg-primary!"
         >
-          {loading ? 'Đang tạo...' : 'Tạo nhân viên'}
+          {loading ? 'Creating...' : 'Create Staff'}
         </Button>
       </DialogActions>
     </Dialog>

@@ -73,12 +73,12 @@ export default function PlantGuideTable({
             <TableRow>
               <TableCell sx={{ fontWeight: 700 }}>ID</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>Plant</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Ánh sáng</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Tưới nước</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Ghi chú chăm sóc</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Ngày tạo</TableCell>
+              <TableCell sx={{ fontWeight: 700 }}>Light Requirement</TableCell>
+              <TableCell sx={{ fontWeight: 700 }}>Watering</TableCell>
+              <TableCell sx={{ fontWeight: 700 }}>Care Notes</TableCell>
+              <TableCell sx={{ fontWeight: 700 }}>Created At</TableCell>
               <TableCell sx={{ fontWeight: 700 }} align="center">
-                Hành động
+                Actions
               </TableCell>
             </TableRow>
           </TableHead>
@@ -86,13 +86,13 @@ export default function PlantGuideTable({
             {loading ? (
               <TableRow>
                 <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
-                  <Typography color="text.secondary">Đang tải dữ liệu...</Typography>
+                  <Typography color="text.secondary">Loading data...</Typography>
                 </TableCell>
               </TableRow>
             ) : plantGuides.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
-                  <Typography color="text.secondary">Không có Plant Guide nào</Typography>
+                  <Typography color="text.secondary">No Plant Guides found</Typography>
                 </TableCell>
               </TableRow>
             ) : (
@@ -127,17 +127,17 @@ export default function PlantGuideTable({
                   <TableCell>{formatDateTime(guide.createdAt)}</TableCell>
                   <TableCell align="center">
                     <Stack direction="row" spacing={0.5} justifyContent="center">
-                      <Tooltip title="Xem chi tiết">
+                      <Tooltip title="View Details">
                         <IconButton size="small" color="primary" onClick={() => onView(guide)}>
                           <Visibility fontSize="small" />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title="Chỉnh sửa">
+                      <Tooltip title="Edit Plant Guide">
                         <IconButton size="small" color="primary" onClick={() => onEdit(guide)}>
                           <Edit fontSize="small" />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title="Xóa Plant Guide">
+                      <Tooltip title="Delete Plant Guide">
                         <IconButton size="small" color="error" onClick={() => onDelete(guide)}>
                           <Delete fontSize="small" />
                         </IconButton>
@@ -157,7 +157,7 @@ export default function PlantGuideTable({
           page={Math.max(pageNumber - 1, 0)}
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
-          labelRowsPerPage="Số dòng mỗi trang"
+          labelRowsPerPage="Rows per page"
         />
       </TableContainer>
     </Box>

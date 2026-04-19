@@ -124,7 +124,7 @@ class ChatHubService {
           await connection.invoke("JoinConversation", conversationId);
         } catch (error) {
           console.error(
-            `Rejoin conversation ${conversationId} thất bại sau reconnect`,
+            `Rejoin conversation ${conversationId} failed after reconnect`,
             error,
           );
         }
@@ -192,7 +192,7 @@ class ChatHubService {
     }
 
     if (!this.connection) {
-      throw new Error("Chat hub chưa được khởi tạo");
+      throw new Error("Chat hub did not connect successfully");
     }
 
     return this.connection;
@@ -221,7 +221,7 @@ class ChatHubService {
   async sendMessage(conversationId: number, content: string) {
     const trimmed = content.trim();
     if (!trimmed) {
-      throw new Error("Nội dung tin nhắn không được để trống");
+      throw new Error("Message content cannot be empty");
     }
 
     const connection = await this.ensureConnected();

@@ -1,10 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Box, Step, StepLabel, Stepper, Typography } from '@mui/material';
-import { useLocale, useTranslations } from 'next-intl';
-import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/lib/store/authStore';
+import { Alert, Box, Card, CardContent, CircularProgress, Step, StepLabel, Stepper, Typography } from '@mui/material';
+import { useTranslations } from 'next-intl';
 import { addItemToCart } from '@/lib/api/cartWishlistService';
 import { notifyCartUpdated } from '@/lib/utils/cartEvents';
 import type { ShopNurseryListItem } from '@/lib/api/shopPlantsService';
@@ -15,12 +13,12 @@ import {
 import type {
   AllergyPlantOption,
   AnalyzeRoomUploadPayload,
+  GeneratedLayoutImageItem,
   GenerateLayoutImagesPayload,
   RoomPlantRecommendation,
 } from '@/types/ai-recommendation.types';
 import RoomInputCard from './RoomInputCard';
 import RoomAnalysisCard from './RoomAnalysisCard';
-import PlantRecommendationsGrid from './PlantRecommendationsGrid';
 import GeneratedImagesCard from './GeneratedImagesCard';
 
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/heif'];
@@ -35,32 +33,9 @@ type MessageState = {
   text: string;
 } | null;
 
-const resolveCommonPlantId = (recommendation: RoomPlantRecommendation): number | null => {
-  if (recommendation.entityId > 0) {
-    return recommendation.entityId;
-  }
-
-  if (recommendation.productId > 0) {
-    return recommendation.productId;
-  }
-
-  return null;
-};
-
-const resolvePlantInstanceId = (recommendation: RoomPlantRecommendation): number | null => {
-  if (recommendation.productId > 0) {
-    return recommendation.productId;
-  }
-
-  return null;
-};
-
 export default function AIPlantRecommendationClient({ userId }: AIPlantRecommendationClientProps) {
-  const locale = useLocale();
-  const router = useRouter();
-  const { user } = useAuthStore();
+  void userId;
   const t = useTranslations('aiRecommendation');
-  const parsedRouteUserId = Number(userId);
 
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
@@ -84,6 +59,7 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
 
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<MessageState>(null);
+  const [addingLayoutDesignPlantId, setAddingLayoutDesignPlantId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!imageFile) {
@@ -105,12 +81,12 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
   );
 
   const stepIndex = useMemo(() => {
-    if (generateResult) {
-      return 3;
+    if (isGenerating || generateResult) {
+      return 2;
     }
 
-    if (analysisResult?.recommendations?.length) {
-      return 2;
+    if (isAnalyzing) {
+      return 1;
     }
 
     if (analysisResult?.roomAnalysis) {
@@ -118,13 +94,33 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
     }
 
     return 0;
-  }, [analysisResult, generateResult]);
+  }, [analysisResult, generateResult, isAnalyzing, isGenerating]);
+
+  const recommendationsByProductId = useMemo(() => {
+    const map = new Map<number, RoomPlantRecommendation>();
+
+    (analysisResult?.recommendations ?? []).forEach((recommendation) => {
+      if (recommendation.productId > 0 && !map.has(recommendation.productId)) {
+        map.set(recommendation.productId, recommendation);
+      }
+    });
+
+    return map;
+  }, [analysisResult]);
+
+  const resolveRecommendationFromGeneratedItem = (item: GeneratedLayoutImageItem): RoomPlantRecommendation | null => {
+    if (!item.commonPlantId || item.commonPlantId <= 0) {
+      return null;
+    }
+
+    return recommendationsByProductId.get(item.commonPlantId) ?? null;
+  };
 
   const handleGenerateImages = async (layoutDesignId: number) => {
     try {
       setIsGenerating(true);
       setError(null);
-      const payload = await generateLayoutImages(layoutDesignId, false, true);
+      const payload = await generateLayoutImages(layoutDesignId, false, false);
       setGenerateResult(payload);
     } catch (generateError) {
       const errorMessage = generateError instanceof Error ? generateError.message : t('generatedImages.errors.generateFailed');
@@ -145,6 +141,7 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
     setError(null);
     setAnalysisResult(null);
     setGenerateResult(null);
+    setAddingLayoutDesignPlantId(null);
 
     try {
       setIsAnalyzing(true);
@@ -165,7 +162,7 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
           preferredNurseryIds: selectedNurseries.map((nursery) => nursery.id),
         },
         false,
-        true
+        false
       );
 
       if (!result) {
@@ -176,7 +173,7 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
       setAnalysisResult(result);
 
       if (result.layoutDesignId > 0) {
-        await handleGenerateImages(result.layoutDesignId);
+        void handleGenerateImages(result.layoutDesignId);
       }
     } catch (analyzeError) {
       const errorMessage = analyzeError instanceof Error ? analyzeError.message : t('errors.analyzeRoomFailed');
@@ -207,51 +204,34 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
     setImageFile(file);
   };
 
-  const handleAddCommonPlantToCart = async (recommendation: RoomPlantRecommendation) => {
+  const handleAddGeneratedPlantToCart = async (item: GeneratedLayoutImageItem) => {
     try {
       setMessage(null);
       setError(null);
+      setAddingLayoutDesignPlantId(item.layoutDesignPlantId);
 
-      const commonPlantId = resolveCommonPlantId(recommendation);
-      if (!commonPlantId) {
+      if (!item.commonPlantId || item.commonPlantId <= 0) {
         setError(t('recommendations.errors.missingCommonPlantId'));
         return;
       }
 
-      await addItemToCart({ commonPlantId, quantity: 1 });
+      const matchedRecommendation = resolveRecommendationFromGeneratedItem(item);
+
+      await addItemToCart({ commonPlantId: item.commonPlantId, quantity: 1 });
       notifyCartUpdated();
-      setMessage({ type: 'success', text: t('recommendations.errors.addedToCart', { name: recommendation.name }) });
+      setMessage({
+        type: 'success',
+        text: t('recommendations.errors.addedToCart', {
+          name: matchedRecommendation?.name ?? t('generatedImages.plantFallbackName'),
+        }),
+      });
     } catch (cartError) {
       const errorMessage = cartError instanceof Error ? cartError.message : t('recommendations.errors.addToCartFailed');
       setError(errorMessage);
       console.error('Add common plant to cart error:', cartError);
+    } finally {
+      setAddingLayoutDesignPlantId(null);
     }
-  };
-
-  const handleBuyPlantInstanceNow = (recommendation: RoomPlantRecommendation) => {
-    const checkoutUserId = user?.id ?? (Number.isInteger(parsedRouteUserId) && parsedRouteUserId > 0 ? parsedRouteUserId : null);
-
-    if (!checkoutUserId) {
-      router.push(`/${locale}/login`);
-      return;
-    }
-
-    const plantInstanceId = resolvePlantInstanceId(recommendation);
-    if (!plantInstanceId) {
-      setError(t('recommendations.errors.checkoutFailed'));
-      return;
-    }
-
-    const query = new URLSearchParams({
-      orderType: '2',
-      paymentStrategy: '1',
-      plantId: String(recommendation.entityId > 0 ? recommendation.entityId : 0),
-      plantInstanceId: String(plantInstanceId),
-      instanceName: recommendation.name,
-      instancePrice: String(recommendation.price ?? 0),
-    });
-
-    router.push(`/${locale}/checkout/${checkoutUserId}/0?${query.toString()}`);
   };
 
   return (
@@ -264,8 +244,7 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
         {[
           t('steps.roomInput'),
           t('steps.roomAnalysis'),
-          t('steps.recommendations'),
-          t('steps.generatedImages'),
+          t('steps.results'),
         ].map((label) => (
           <Step key={label}>
             <StepLabel>{label}</StepLabel>
@@ -313,18 +292,28 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
         onErrorDismiss={() => setError(null)}
       />
 
-      {analysisResult && <RoomAnalysisCard analysisResult={analysisResult} />}
+      {isAnalyzing && !analysisResult && (
+        <Card sx={{ mb: 3, boxShadow: 2 }}>
+          <CardContent>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <CircularProgress size={20} />
+              <Typography variant="body2" color="text.secondary">
+                {t('roomInput.analyzingButton')}
+              </Typography>
+            </Box>
+          </CardContent>
+        </Card>
+      )}
 
-      <PlantRecommendationsGrid
-        analysisResult={analysisResult}
-        onAddToCart={handleAddCommonPlantToCart}
-        onBuyNow={handleBuyPlantInstanceNow}
-      />
+      {analysisResult && <RoomAnalysisCard analysisResult={analysisResult} />}
 
       <GeneratedImagesCard
         isGenerating={isGenerating}
         generateResult={generateResult}
         analysisResult={analysisResult}
+        resolveRecommendationFromGeneratedItem={resolveRecommendationFromGeneratedItem}
+        addingLayoutDesignPlantId={addingLayoutDesignPlantId}
+        onAddToCart={handleAddGeneratedPlantToCart}
         onRetryGenerate={() => {
           if (analysisResult?.layoutDesignId) {
             void handleGenerateImages(analysisResult.layoutDesignId);

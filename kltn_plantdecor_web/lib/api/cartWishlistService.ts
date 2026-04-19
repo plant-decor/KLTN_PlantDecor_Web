@@ -316,13 +316,15 @@ export const checkWishlistItem = async (
   itemType: WishlistItemType,
   itemId: number,
   isServer = false,
-  loading = false
+  loading = false,
+  showToast = false
 ): Promise<boolean> => {
   const response = await get<unknown>(
     `/Wishlist/${itemType}/${itemId}/check`,
     undefined,
     isServer,
-    loading
+    loading,
+    {showToast}
   );
   const unwrapped = unwrapResponse(response);
 
@@ -382,7 +384,8 @@ const extractPlantInstanceIds = (response: unknown): number[] => {
 export const checkWishlistPlantInstanceByPlantId = async (
   plantId: number,
   isServer = false,
-  loading = false
+  loading = false,
+  showToast = false
 ): Promise<boolean> => {
   if (!Number.isFinite(plantId) || plantId <= 0) {
     return false;
@@ -414,7 +417,8 @@ export const checkWishlistPlantInstanceByPlantId = async (
             plantId,
           },
           isServer,
-          loading
+          loading,
+          { showToast: showToast }
         )
       )
     );

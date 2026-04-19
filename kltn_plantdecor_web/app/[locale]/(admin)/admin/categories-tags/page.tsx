@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useMemo, useEffect, useRef } from 'react';
 import {
@@ -378,11 +378,11 @@ export default function CategoriesTagsPage() {
     <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', p: 4 }}>
       {/* Header */}
       <Box sx={{ mb: 4 }}>
-      <ManagementHeader
-        title="Danh mục & thẻ"
-        description="Quản lý danh mục và thẻ sản phẩm của cửa hàng. Bạn có thể tạo, chỉnh sửa, kích hoạt hoặc xóa các danh mục và thẻ tại đây."
-        entityLabel='Categories & Tags'
-      />
+        <ManagementHeader
+          title="Categories & Tags"
+          description="Manage store product categories and tags. You can create, edit, activate, or delete categories and tags here."
+          entityLabel="Categories & Tags"
+        />
       </Box>
 
       {/* Tabs */}
@@ -504,3 +504,4 @@ export default function CategoriesTagsPage() {
     </Box>
   );
 }
+

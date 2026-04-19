@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon } from '@mui/icons-material';
 import { Alert, Box, Button, Card, CardContent, IconButton, MenuItem, TextField, Typography } from '@mui/material';
@@ -65,20 +65,20 @@ export default function TagsSection({
           </TextField>
 
           <Button size="small" variant="outlined" disabled={!tagHasPrevious || tagsLoading} onClick={onPrevPage}>
-            Trước
+            Previous
           </Button>
 
           <Typography variant="body2" sx={{ color: '#666' }}>
-            Trang {tagPageNumber} / {Math.max(tagTotalPages, 1)}
+            Page {tagPageNumber} / {Math.max(tagTotalPages, 1)}
           </Typography>
 
           <Button size="small" variant="outlined" disabled={!tagHasNext || tagsLoading} onClick={onNextPage}>
-            Sau
+            Next
           </Button>
         </Box>
 
         <Button variant="contained" startIcon={<AddIcon />} onClick={onOpenCreate} sx={{ backgroundColor: 'var(--primary)', ...hoverLiftStyle }}>
-          Thêm thẻ mới
+          Add New Tag
         </Button>
       </Box>
 
@@ -92,16 +92,16 @@ export default function TagsSection({
               }}
               className="flex! items-center! justify-center!"
             >
-              <CardContent className="w-full h-full flex-col! items-center! justify-center!" sx={{ p: 2,textAlign: 'center' }}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold'}}>
-                    {tag.tagName}
-                  </Typography>
-                  <IconButton size="small" onClick={() => onEditTag(tag)} color="primary" sx={{...hoverLiftStyle}}>
-                    <EditIcon sx={{ fontSize: 18 }} />
-                  </IconButton>
-                  <IconButton size="small" onClick={() => onDeleteTag(tag)} color="error" sx={{...hoverLiftStyle}}>
-                    <DeleteIcon sx={{ fontSize: 18 }} />
-                  </IconButton>
+              <CardContent className="w-full h-full flex-col! items-center! justify-center!" sx={{ p: 2, textAlign: 'center' }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+                  {tag.tagName}
+                </Typography>
+                <IconButton size="small" onClick={() => onEditTag(tag)} color="primary" sx={{ ...hoverLiftStyle }}>
+                  <EditIcon sx={{ fontSize: 18 }} />
+                </IconButton>
+                <IconButton size="small" onClick={() => onDeleteTag(tag)} color="error" sx={{ ...hoverLiftStyle }}>
+                  <DeleteIcon sx={{ fontSize: 18 }} />
+                </IconButton>
               </CardContent>
             </Card>
           ))

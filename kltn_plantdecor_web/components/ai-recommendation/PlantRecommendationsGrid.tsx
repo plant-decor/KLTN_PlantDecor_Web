@@ -7,8 +7,8 @@ import PlantRecommendationCard from './PlantRecommendationCard';
 
 interface PlantRecommendationsGridProps {
   analysisResult: AnalyzeRoomUploadPayload | null;
-  onAddToCart: (recommendation: RoomPlantRecommendation) => void;
-  onBuyNow: (recommendation: RoomPlantRecommendation) => void;
+  onAddToCart: (recommendation: RoomPlantRecommendation, recommendationIndex: number) => void;
+  onBuyNow: (recommendation: RoomPlantRecommendation, recommendationIndex: number) => void;
 }
 
 export default function PlantRecommendationsGrid({
@@ -34,6 +34,7 @@ export default function PlantRecommendationsGrid({
             <PlantRecommendationCard
               key={`${recommendation.entityType}-${recommendation.productId}-${index}`}
               recommendation={recommendation}
+              recommendationIndex={index}
               onAddToCart={onAddToCart}
               onBuyNow={onBuyNow}
             />

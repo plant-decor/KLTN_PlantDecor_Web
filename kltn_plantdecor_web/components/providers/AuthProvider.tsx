@@ -7,6 +7,7 @@ import { refreshTokenAction } from '@/app/actions/authenticationActions';
 import { useTokenRefresh } from '@/hooks/useTokenRefresh';
 import {
   getClientAccessToken,
+  getClientRefreshToken,
   setClientAccessToken,
   setClientRefreshToken,
 } from '@/lib/axios/tokenStorage';
@@ -34,15 +35,56 @@ export function AuthProvider({ children, initialUser }: { children: React.ReactN
 
     let active = true;
 
+    const waitForStoreHydration = async () => {
+      const persistedStore = useAuthStore as typeof useAuthStore & {
+        persist?: {
+          hasHydrated?: () => boolean;
+          onFinishHydration?: (listener: () => void) => () => void;
+        };
+      };
+
+      const persistApi = persistedStore.persist;
+      if (!persistApi?.hasHydrated || !persistApi?.onFinishHydration || persistApi.hasHydrated()) {
+        return;
+      }
+
+      await new Promise<void>((resolve) => {
+        const unsubscribe = persistApi.onFinishHydration?.(() => {
+          unsubscribe?.();
+          resolve();
+        });
+
+        window.setTimeout(() => {
+          unsubscribe?.();
+          resolve();
+        }, 800);
+      });
+    };
+
     const initializeAuth = async () => {
       try {
-        if (!active || !initialUser) {
+        if (!active) {
           return;
         }
 
-        setUser(initialUser);
+        await waitForStoreHydration();
 
-        if (!getClientAccessToken()) {
+        if (!active) {
+          return;
+        }
+
+        if (initialUser) {
+          setUser(initialUser);
+        }
+
+        const state = useAuthStore.getState();
+        const hasRecoverableSession =
+          !!initialUser ||
+          state.isAuthenticated ||
+          !!state.user ||
+          !!getClientRefreshToken();
+
+        if (!getClientAccessToken() && hasRecoverableSession) {
           const refreshed = await refreshTokenAction();
 
           if (!active) {

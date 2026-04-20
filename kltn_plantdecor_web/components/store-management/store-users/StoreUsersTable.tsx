@@ -107,13 +107,13 @@ export default function StoreUsersTable({
       <Table size="small">
         <TableHead sx={{ backgroundColor: "var(--primary)" }}>
           <TableRow className="font-bold">
-            <TableCell sx={{ fontWeight:700}} >ID</TableCell>
-            <TableCell sx={{ fontWeight:700}} >Staff Name</TableCell>
-            <TableCell sx={{ fontWeight:700}} >Email</TableCell>
-            <TableCell sx={{ fontWeight:700}} >Phone Number</TableCell>
-            <TableCell sx={{ fontWeight:700}} >Status</TableCell>
-            <TableCell sx={{ fontWeight:700}} >Specialization</TableCell>
-            <TableCell sx={{fontWeight: 700}} >
+            <TableCell sx={{ fontWeight:700}} align="center" >ID</TableCell>
+            <TableCell sx={{ fontWeight:700}} align="center" >Staff Name</TableCell>
+            <TableCell sx={{ fontWeight:700}} align="center" >Email</TableCell>
+            <TableCell sx={{ fontWeight:700}} align="center" >Phone Number</TableCell>
+            <TableCell sx={{ fontWeight:700}} align="center" >Status</TableCell>
+            <TableCell sx={{ fontWeight:700}} align="center" >Specialization</TableCell>
+            <TableCell sx={{fontWeight: 700}} align="center">
               Actions 
             </TableCell>
           </TableRow>
@@ -121,7 +121,7 @@ export default function StoreUsersTable({
         <TableBody>
           {loading && (
             <TableRow>
-              <TableCell colSpan={7}>
+              <TableCell colSpan={7} align="center">
                 <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", py: 3 }}>
                   <CircularProgress size={26} />
                 </Box>
@@ -140,8 +140,8 @@ export default function StoreUsersTable({
           {!loading &&
             items.map((staff) => (
               <TableRow key={staff.id} hover>
-                <TableCell>{staff.id}</TableCell>
-                <TableCell>
+                <TableCell align="center">{staff.id}</TableCell>
+                <TableCell align="center">
                   <Stack direction="row" spacing={1.5} alignItems="center">
                     <Avatar src={staff.avatarUrl ?? undefined}>{staff.username.charAt(0)}</Avatar>
                     <Typography variant="body2" fontWeight={500}>
@@ -149,9 +149,9 @@ export default function StoreUsersTable({
                     </Typography>
                   </Stack>
                 </TableCell>
-                <TableCell>{staff.email || "-"}</TableCell>
-                <TableCell>{staff.phoneNumber || "-"}</TableCell>
-                <TableCell>
+                <TableCell align="center">{staff.email || "-"}</TableCell>
+                <TableCell align="center">{staff.phoneNumber || "-"}</TableCell>
+                <TableCell align="center">
                   <Chip
                     label={getStatusLabel(staff.status)}
                     size="small"
@@ -159,18 +159,25 @@ export default function StoreUsersTable({
                     variant="outlined"
                   />
                 </TableCell>
-                <TableCell>
+                {staff.specializations.length == 0 ? (
+                  <TableCell align="center">
+                    <Typography variant="body2" color="text.secondary">
+                      No specializations
+                    </Typography>
+                  </TableCell>
+                ) : (
+                  <TableCell align="center">
                   <Typography variant="body2">{staff.specializations.length} specializations</Typography>
                 </TableCell>
-                <TableCell align="right">
-                  <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                )}
+                <TableCell align="center">
+                  <Stack direction="row" spacing={0.5} justifyContent="center">
                     <Tooltip title="Xem chi tiết">
                       <IconButton color="primary" onClick={() => onViewDetail(staff.id)}>
                         <VisibilityIcon />
                       </IconButton>
                     </Tooltip>
-
-                    {!readOnly && (
+                  {staff.specializations.length > 0 && !readOnly && (
                       <Tooltip title="Add Specialization">
                         <span>
                           <IconButton
@@ -183,12 +190,14 @@ export default function StoreUsersTable({
                         </span>
                       </Tooltip>
                     )}
-
+                  
+                                        {staff.specializations.length > 0 && (
                     <Tooltip title="View Schedule">
                       <IconButton color="info" onClick={() => onViewSchedule(staff.id)}>
                         <CalendarMonthIcon />
                       </IconButton>
                     </Tooltip>
+                    )}
                   </Stack>
                 </TableCell>
               </TableRow>

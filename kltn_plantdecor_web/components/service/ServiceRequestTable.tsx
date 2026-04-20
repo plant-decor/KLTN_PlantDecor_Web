@@ -31,6 +31,7 @@ interface ServiceRequestTableProps {
   showCaretaker?: boolean;
   actionButtons?: (request: ServiceRegistration) => React.ReactNode;
   columns?: Column[];
+  statusLabels?: Record<number, string>;
 }
 
 export default function ServiceRequestTable({
@@ -40,6 +41,7 @@ export default function ServiceRequestTable({
   showCaretaker = false,
   actionButtons,
   columns,
+  statusLabels,
 }: ServiceRequestTableProps) {
   const t = useTranslations('services');
   const tCommon = useTranslations('common');
@@ -66,7 +68,7 @@ export default function ServiceRequestTable({
           {
             id: 'status',
             label: t('status'),
-            format: (value: unknown) => <ServiceStatusChip status={Number(value)} />,
+            format: (value: unknown) => <ServiceStatusChip status={Number(value)} label={statusLabels?.[Number(value)]} />,
           },
         ]
       : []),

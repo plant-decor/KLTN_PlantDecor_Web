@@ -2,22 +2,23 @@
 
 import { Button, Chip, FormControl, InputLabel, MenuItem, Select, Stack } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import type { ServiceRegistrationStatusEnum } from '@/types/care-service.types';
-import { ALL_STATUS_FILTER, SERVICE_STATUS_OPTIONS } from './managerServiceOrders.constants';
+import type { ServiceStatusFilterValue, ServiceStatusOption } from './managerServiceOrders.constants';
 
 interface ServiceOrdersHeaderProps {
-  statusFilter: typeof ALL_STATUS_FILTER | ServiceRegistrationStatusEnum;
+  statusFilter: ServiceStatusFilterValue;
+  statusOptions: ServiceStatusOption[];
   activeFilterLabel: string;
   pendingCount: number;
   awaitingPaymentCount: number;
   activeCount: number;
   loading: boolean;
-  onStatusFilterChange: (value: typeof ALL_STATUS_FILTER | ServiceRegistrationStatusEnum) => void;
+  onStatusFilterChange: (value: ServiceStatusFilterValue) => void;
   onRefresh: () => void;
 }
 
 export default function ServiceOrdersHeader({
   statusFilter,
+  statusOptions,
   activeFilterLabel,
   pendingCount,
   awaitingPaymentCount,
@@ -42,10 +43,10 @@ export default function ServiceOrdersHeader({
             label="Status"
             value={statusFilter}
             onChange={(event) => {
-              onStatusFilterChange(event.target.value as typeof ALL_STATUS_FILTER | ServiceRegistrationStatusEnum);
+              onStatusFilterChange(event.target.value as ServiceStatusFilterValue);
             }}
           >
-            {SERVICE_STATUS_OPTIONS.map((option) => (
+            {statusOptions.map((option) => (
               <MenuItem key={String(option.value)} value={option.value}>
                 {option.label}
               </MenuItem>

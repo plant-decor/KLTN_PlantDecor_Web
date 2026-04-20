@@ -12,15 +12,14 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import type { ManagerServiceRegistration, ServiceRegistrationStatusEnum } from '@/types/care-service.types';
+import type { ManagerServiceRegistration } from '@/types/care-service.types';
 import {
-  STATUS_CHIP_COLOR,
-  STATUS_LABELS,
   canApproveOrReject,
   canAssignCaretaker,
   canManagerCancel,
   formatCurrency,
   formatDate,
+  getStatusChipColor,
 } from './managerServiceOrders.constants';
 
 interface ServiceOrderDetailDialogProps {
@@ -28,6 +27,7 @@ interface ServiceOrderDetailDialogProps {
   loading: boolean;
   submitting: boolean;
   detailItem: ManagerServiceRegistration | null;
+  statusLabels: Record<number, string>;
   onClose: () => void;
   onApprove: (item: ManagerServiceRegistration) => void;
   onReject: (item: ManagerServiceRegistration) => void;
@@ -40,6 +40,7 @@ export default function ServiceOrderDetailDialog({
   loading,
   submitting,
   detailItem,
+  statusLabels,
   onClose,
   onApprove,
   onReject,
@@ -74,9 +75,9 @@ export default function ServiceOrderDetailDialog({
               <strong>Status:</strong>{' '}
               <Chip
                 size="small"
-                color={STATUS_CHIP_COLOR[detailItem.status as ServiceRegistrationStatusEnum] || 'default'}
+                color={getStatusChipColor(detailItem.status)}
                 label={
-                  STATUS_LABELS[detailItem.status as ServiceRegistrationStatusEnum] ||
+                  statusLabels[detailItem.status] ||
                   detailItem.statusName ||
                   `#${detailItem.status}`
                 }

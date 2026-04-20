@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 
 interface ServiceStatusChipProps {
   status: ServiceRegistrationStatus | number;
+  label?: string;
   size?: 'small' | 'medium';
   variant?: 'outlined' | 'filled';
 }
@@ -16,6 +17,7 @@ type TranslationFunction = (key: string) => string;
 export const getStatusColor = (status: ServiceRegistrationStatus | number) => {
   if (typeof status === 'number') {
     const colors: Record<number, ChipProps['color']> = {
+      0: 'warning',
       1: 'warning',
       2: 'info',
       3: 'primary',
@@ -41,6 +43,7 @@ export const getStatusColor = (status: ServiceRegistrationStatus | number) => {
 export const getStatusLabel = (status: ServiceRegistrationStatus | number, t: TranslationFunction) => {
   if (typeof status === 'number') {
     const labels: Record<number, string> = {
+      0: 'Waiting for Nursery',
       1: t('pendingApproval'),
       2: t('awaitPayment'),
       3: t('active'),
@@ -65,6 +68,7 @@ export const getStatusLabel = (status: ServiceRegistrationStatus | number, t: Tr
 
 export default function ServiceStatusChip({ 
   status, 
+  label,
   size = 'small', 
   variant = 'outlined' 
 }: ServiceStatusChipProps) {
@@ -72,7 +76,7 @@ export default function ServiceStatusChip({
 
   return (
     <Chip
-      label={getStatusLabel(status, t)}
+      label={label ?? getStatusLabel(status, t)}
       color={getStatusColor(status)}
       variant={variant}
       size={size}

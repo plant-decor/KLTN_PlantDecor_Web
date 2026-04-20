@@ -15,19 +15,19 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import PersonAddAltOutlinedIcon from '@mui/icons-material/PersonAddAltOutlined';
-import type { ManagerServiceRegistration, ServiceRegistrationStatusEnum } from '@/types/care-service.types';
+import type { ManagerServiceRegistration } from '@/types/care-service.types';
 import {
-  STATUS_CHIP_COLOR,
-  STATUS_LABELS,
   canApproveOrReject,
   canAssignCaretaker,
   canManagerCancel,
   formatCurrency,
   formatDate,
+  getStatusChipColor,
 } from './managerServiceOrders.constants';
 
 interface ServiceOrdersTableProps {
   items: ManagerServiceRegistration[];
+  statusLabels: Record<number, string>;
   submitting: boolean;
   onViewDetail: (id: number) => void;
   onApprove: (item: ManagerServiceRegistration) => void;
@@ -38,6 +38,7 @@ interface ServiceOrdersTableProps {
 
 export default function ServiceOrdersTable({
   items,
+  statusLabels,
   submitting,
   onViewDetail,
   onApprove,
@@ -74,8 +75,6 @@ export default function ServiceOrdersTable({
           </TableRow>
         ) : (
           items.map((item) => {
-            const typedStatus = item.status as ServiceRegistrationStatusEnum;
-
             return (
               <TableRow key={item.id} hover>
                 <TableCell>#{item.id}</TableCell>
@@ -105,21 +104,21 @@ export default function ServiceOrdersTable({
                 <TableCell align="center">
                   <Chip
                     size="small"
-                    color={STATUS_CHIP_COLOR[typedStatus] || 'default'}
-                    label={STATUS_LABELS[typedStatus] || item.statusName || `#${item.status}`}
+                    color={getStatusChipColor(item.status)}
+                    label={statusLabels[item.status] || item.statusName || `#${item.status}`}
                   />
                 </TableCell>
                 <TableCell align="center">{item.mainCaretaker?.fullName || '-'}</TableCell>
                 <TableCell align="center">
-                  <Stack direction="row" spacing={1} justifyContent="center" useFlexGap flexWrap="wrap">
-                    <Button size="small" variant="outlined" onClick={() => onViewDetail(item.id)}>
-                      <VisibilityIcon />
+                  <Stack direction="row" spacing={1} justifyContent="center" useFlexGap flexWrap="nowrap" maxHeight={40}>
+                    <Button size="small" variant='contained' className='bg-transparent! aspect-square! rounded-full!' onClick={() => onViewDetail(item.id)}>
+                      <VisibilityIcon fontSize='medium'/>
                     </Button>
                     {canApproveOrReject(item.status) && (
                       <Button
                         size="small"
-                        variant="contained"
-                        color="success"
+                        variant='contained'
+                        className='bg-primary! aspect-square! rounded-full!'
                         onClick={() => onApprove(item)}
                         disabled={submitting}
                       >
@@ -129,8 +128,8 @@ export default function ServiceOrdersTable({
                     {canApproveOrReject(item.status) && (
                       <Button
                         size="small"
-                        variant="outlined"
-                        color="error"
+                        variant='contained'
+                        className='bg-error! aspect-square! rounded-full!'
                         onClick={() => onReject(item)}
                         disabled={submitting}
                       >
@@ -140,8 +139,9 @@ export default function ServiceOrdersTable({
                     {canManagerCancel(item.status) && (
                       <Button
                         size="small"
-                        variant="outlined"
                         color="error"
+                        variant='contained'
+                        className='bg-error! aspect-square! rounded-full!'
                         onClick={() => onCancel(item)}
                         disabled={submitting}
                       >
@@ -151,7 +151,9 @@ export default function ServiceOrdersTable({
                     {canAssignCaretaker(item.status) && (
                       <Button
                         size="small"
-                        variant="outlined"
+                        variant='contained'
+                        
+                        className='bg-blue-400! aspect-square! rounded-full!'
                         onClick={() => onAssignCaretaker(item)}
                         disabled={submitting}
                       >

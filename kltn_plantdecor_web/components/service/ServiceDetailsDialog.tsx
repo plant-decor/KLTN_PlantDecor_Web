@@ -47,6 +47,7 @@ interface ServiceDetailsDialogProps {
   paying?: boolean;
   onPay?: () => void;
   onCancel?: () => void;
+  statusLabels?: Record<number, string>;
 }
 
 export default function ServiceDetailsDialog({
@@ -59,6 +60,7 @@ export default function ServiceDetailsDialog({
   paying = false,
   onPay,
   onCancel,
+  statusLabels,
 }: ServiceDetailsDialogProps) {
   const t = useTranslations('services');
   const tCommon = useTranslations('common');
@@ -155,7 +157,7 @@ export default function ServiceDetailsDialog({
             <Typography variant="subtitle2" color="text.secondary" gutterBottom>
               {t('status')}
             </Typography>
-            <ServiceStatusChip status={service.status} />
+            <ServiceStatusChip status={service.status} label={statusLabels?.[Number(service.status)]} />
           </Box>
 
           <Grid size={{ xs: 12, md: 6 }}>{renderReadOnlyField(t('serviceDate'), formatDate(service.serviceDate))}</Grid>

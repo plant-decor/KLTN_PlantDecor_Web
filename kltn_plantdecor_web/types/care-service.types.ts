@@ -108,6 +108,7 @@ export interface ServiceRegistrationShift {
 export type PublicShift = ServiceRegistrationShift;
 
 export enum ServiceRegistrationStatusEnum {
+  WaitingForNursery = 0,
   PendingApproval = 1,
   AwaitPayment = 2,
   Active = 3,

@@ -9,11 +9,18 @@ import {
   getEligibleCaretakersForServiceRegistration,
   getManagerNurseryServiceRegistrationDetail,
   getManagerNurseryServiceRegistrations,
+  getSystemEnumValues,
   managerCancelServiceRegistration,
   rejectManagerServiceRegistration,
 } from '@/lib/api/careServiceService';
-import type { EligibleCaretaker, ManagerServiceRegistration, ServiceRegistrationStatusEnum } from '@/types/care-service.types';
-import { ALL_STATUS_FILTER, getErrorMessage } from './managerServiceOrders.constants';
+import type { EligibleCaretaker, EnumOption, ManagerServiceRegistration } from '@/types/care-service.types';
+import {
+  ALL_STATUS_FILTER,
+  buildServiceStatusLabelMap,
+  buildServiceStatusOptions,
+  getErrorMessage,
+  type ServiceStatusFilterValue,
+} from './managerServiceOrders.constants';
 import ServiceOrdersHeader from './ServiceOrdersHeader';
 import ServiceOrdersTable from './ServiceOrdersTable';
 import ServiceOrderDetailDialog from './ServiceOrderDetailDialog';
@@ -21,14 +28,14 @@ import ServiceOrderApproveDialog from './ServiceOrderApproveDialog';
 import ServiceOrderRejectDialog from './ServiceOrderRejectDialog';
 import ServiceOrderCancelDialog from './ServiceOrderCancelDialog';
 import ServiceOrderAssignDialog from './ServiceOrderAssignDialog';
-import { SERVICE_STATUS_OPTIONS } from './managerServiceOrders.constants';
 import ManagementHeader from '@/components/layout/ManagementHeader';
 
 export default function ManagerServiceOrdersPageClient() {
   const [items, setItems] = useState<ManagerServiceRegistration[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<typeof ALL_STATUS_FILTER | ServiceRegistrationStatusEnum>(ALL_STATUS_FILTER);
+  const [statusEnums, setStatusEnums] = useState<EnumOption[]>([]);
+  const [statusFilter, setStatusFilter] = useState<ServiceStatusFilterValue>(ALL_STATUS_FILTER);
   const [pageNumber, setPageNumber] = useState(1);
   const pageSize = 10;
 
@@ -48,10 +55,26 @@ export default function ManagerServiceOrdersPageClient() {
   const [selectedCaretakerId, setSelectedCaretakerId] = useState<number>(0);
 
   const [submitting, setSubmitting] = useState(false);
+  useEffect(() => {
+    const loadStatusEnums = async () => {
+      try {
+        const enums = await getSystemEnumValues('service-registrations', false);
+        setStatusEnums(enums);
+      } catch {
+        setStatusEnums([]);
+      }
+    };
+
+    void loadStatusEnums();
+  }, []);
+
+  const statusOptions = useMemo(() => buildServiceStatusOptions(statusEnums), [statusEnums]);
+
+  const statusLabelMap = useMemo(() => buildServiceStatusLabelMap(statusEnums), [statusEnums]);
 
   const activeFilterLabel = useMemo(
-    () => SERVICE_STATUS_OPTIONS.find((option) => option.value === statusFilter)?.label || 'Tất cả trạng thái',
-    [statusFilter]
+    () => statusOptions.find((option) => option.value === statusFilter)?.label || 'All Statuses',
+    [statusFilter, statusOptions]
   );
 
   const stats = useMemo(() => {
@@ -75,7 +98,6 @@ export default function ManagerServiceOrdersPageClient() {
         },
         false
       );
-
       setItems(response.items);
     } catch (loadError) {
       const message = getErrorMessage(loadError, 'Cannot load service orders');
@@ -240,6 +262,7 @@ export default function ManagerServiceOrdersPageClient() {
 
       <ServiceOrdersHeader
         statusFilter={statusFilter}
+        statusOptions={statusOptions}
         activeFilterLabel={activeFilterLabel}
         pendingCount={stats.pending}
         awaitingPaymentCount={stats.awaitingPayment}
@@ -268,6 +291,7 @@ export default function ManagerServiceOrdersPageClient() {
             <TableContainer>
               <ServiceOrdersTable
                 items={items}
+                statusLabels={statusLabelMap}
                 submitting={submitting}
                 onViewDetail={handleViewDetail}
                 onApprove={(item) => setApproveTarget(item)}
@@ -291,6 +315,7 @@ export default function ManagerServiceOrdersPageClient() {
         loading={detailLoading}
         submitting={submitting}
         detailItem={detailItem}
+        statusLabels={statusLabelMap}
         onClose={() => {
           setDetailOpen(false);
           setDetailItem(null);

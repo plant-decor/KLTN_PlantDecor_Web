@@ -272,10 +272,11 @@ export default function UserServicePage({ params }: PageProps) {
     try {
       await createServiceRegistration(
         {
-          nurseryCareServiceId: data.nurseryCareServiceId,
+          careServicePackageId: data.careServicePackageId,
+          preferredNurseryId: data.preferredNurseryId,
           serviceDate: data.serviceDate,
           scheduleDaysOfWeek: data.scheduleDaysOfWeek,
-          preferredShiftId: 1,
+          preferredShiftId: data.preferredShiftId,
           address: data.address,
           phone: data.phone,
           note: data.note,

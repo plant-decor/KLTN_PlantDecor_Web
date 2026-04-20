@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Box, Card, CardContent, CircularProgress, Step, StepLabel, Stepper, Typography } from '@mui/material';
+import { Alert, Box, Button, Card, CardContent, CircularProgress, Stack, Step, StepLabel, Stepper, Typography } from '@mui/material';
 import { useTranslations } from 'next-intl';
 import { addItemToCart } from '@/lib/api/cartWishlistService';
 import { notifyCartUpdated } from '@/lib/utils/cartEvents';
@@ -20,6 +20,8 @@ import type {
 import RoomInputCard from './RoomInputCard';
 import RoomAnalysisCard from './RoomAnalysisCard';
 import GeneratedImagesCard from './GeneratedImagesCard';
+import MyDesignHistoryModal from './MyDesignHistoryModal';
+import { HistoryOutlined } from '@mui/icons-material';
 
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/heif'];
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -34,7 +36,6 @@ type MessageState = {
 } | null;
 
 export default function AIPlantRecommendationClient({ userId }: AIPlantRecommendationClientProps) {
-  void userId;
   const t = useTranslations('aiRecommendation');
 
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -60,6 +61,7 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<MessageState>(null);
   const [addingLayoutDesignPlantId, setAddingLayoutDesignPlantId] = useState<number | null>(null);
+  const [isMyDesignModalOpen, setIsMyDesignModalOpen] = useState(false);
 
   useEffect(() => {
     if (!imageFile) {
@@ -236,11 +238,22 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
 
   return (
     <Box sx={{ py: 4, px: { xs: 2, md: 4 }, maxWidth: 1280, mx: 'auto' }}>
-      <Typography variant="h4" fontWeight="bold" gutterBottom>
-        {t('title')}
-      </Typography>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        alignItems={{ xs: 'flex-start', sm: 'center' }}
+        justifyContent="space-between"
+        spacing={1.5}
+        sx={{ mb: 1 }}
+      >
+        <Typography variant="h4" fontWeight="bold">
+          {t('title')}
+        </Typography>
+        <Button className='bg-primary! font-semibold!' variant="outlined" onClick={() => setIsMyDesignModalOpen(true)}>
+          {t('myDesign.buttonLabel')} <HistoryOutlined  sx={{ ml: 0.5 }} />
+        </Button>
+      </Stack>
 
-      <Stepper activeStep={stepIndex} sx={{ mb: 4 }}>
+      <Stepper activeStep={stepIndex} sx={{ mb: 4, pt: 4 }}>
         {[
           t('steps.roomInput'),
           t('steps.roomAnalysis'),
@@ -319,6 +332,12 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
             void handleGenerateImages(analysisResult.layoutDesignId);
           }
         }}
+      />
+
+      <MyDesignHistoryModal
+        open={isMyDesignModalOpen}
+        userId={userId}
+        onClose={() => setIsMyDesignModalOpen(false)}
       />
     </Box>
   );

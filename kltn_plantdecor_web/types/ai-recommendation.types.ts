@@ -75,6 +75,10 @@ export interface GenerateLayoutImagesPayload {
 
 export interface GeneratedImageItem {
   id: number;
+  layoutDesignId?: number | null;
+  layoutDesignPlantId?: number | null;
+  commonPlantId?: number | null;
+  plantInstanceId?: number | null;
   imageUrl: string | null;
   fluxPromptUsed: string | null;
   createdAt: string;

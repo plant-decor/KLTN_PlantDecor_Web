@@ -1084,7 +1084,7 @@
       }
     },
     "generatedImages": {
-      "title": "Generated room images",
+      "title": "3) Generated room images",
       "generatingLabel": "Generating AI room images...",
       "imageFailed": "Image generation failed for this recommendation.",
       "placementLabel": "Placement:",

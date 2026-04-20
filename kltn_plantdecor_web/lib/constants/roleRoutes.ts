@@ -65,6 +65,7 @@ export const ROLE_TO_ROUTES: Record<string, string[]> = {
   ],
   Customer: [
     "services",
+    "design-registration",
     "profile",
     "orders",
     "wishlist",
@@ -82,6 +83,7 @@ export const ROUTE_TO_ROLES: Record<string, string[]> = {
   shipper: ["Admin", "Manager", "Shipper"],
   consultant: ["Admin", "Manager", "Staff", "Consultant"],
   services: ["Customer"],
+  "design-registration": ["Customer"],
   cart: ["Customer"],
   dashboard: [
     "Admin",

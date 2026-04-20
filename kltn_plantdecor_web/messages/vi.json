@@ -1037,6 +1037,23 @@
   },
   "aiRecommendation": {
     "title": "Đề xuất cây cảnh bằng AI",
+    "myDesign": {
+      "buttonLabel": "My Design",
+      "modalTitle": "Lịch sử hình ảnh thiết kế",
+      "loading": "Đang tải các hình ảnh thiết kế đã tạo...",
+      "empty": "Bạn chưa có hình ảnh thiết kế nào được tạo.",
+      "generatedAt": "Thời gian tạo",
+      "layoutDesignId": "Mã layout",
+      "layoutDesignPlantId": "Mã cây trong layout",
+      "promptLabel": "Prompt",
+      "noPrompt": "Chưa có prompt.",
+      "imageMissing": "Không có hình ảnh cho bản ghi đã tạo này.",
+      "retryButton": "Thử lại",
+      "closeButton": "Đóng",
+      "errors": {
+        "loadFailed": "Không thể tải lịch sử thiết kế của bạn."
+      }
+    },
     "steps": {
       "roomInput": "Thông tin phòng và sở thích",
       "roomAnalysis": "Phân tích phòng",

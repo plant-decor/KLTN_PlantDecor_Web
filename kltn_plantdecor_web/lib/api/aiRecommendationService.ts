@@ -112,3 +112,17 @@ export const getGeneratedImages = async (
 
   return unwrapResponse(response) ?? [];
 };
+
+export const getMyDesignGeneratedImages = async (
+  isServer = false,
+  loading = false
+): Promise<GeneratedImageItem[]> => {
+  const response = await get<ResponseModel<GeneratedImageItem[]>>(
+    '/RoomDesign/generated-images',
+    undefined,
+    isServer,
+    loading
+  );
+
+  return unwrapResponse(response) ?? [];
+};

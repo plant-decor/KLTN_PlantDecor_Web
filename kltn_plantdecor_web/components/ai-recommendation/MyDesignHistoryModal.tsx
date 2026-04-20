@@ -139,7 +139,7 @@ export default function MyDesignHistoryModal({ open, userId, onClose }: MyDesign
                     {t('layoutDesignPlantId')}: {item.layoutDesignPlantId ?? '-'}
                   </Typography>
 
-                  <Typography
+                  {/* <Typography
                     variant="body2"
                     title={item.fluxPromptUsed ?? ''}
                     sx={{
@@ -150,7 +150,7 @@ export default function MyDesignHistoryModal({ open, userId, onClose }: MyDesign
                     }}
                   >
                     {t('promptLabel')}: {item.fluxPromptUsed?.trim() ? item.fluxPromptUsed : t('noPrompt')}
-                  </Typography>
+                  </Typography> */}
                 </Stack>
               </Paper>
             ))}

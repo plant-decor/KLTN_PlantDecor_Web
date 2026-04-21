@@ -16,7 +16,7 @@ import {
   Typography,
 } from '@mui/material';
 import type { AdminPlantGuideDetail } from '@/types/admin-plant-guide.types';
-import { formatDate, formatDateTime } from '@/lib/utils/dateUtils';
+import { formatDateTime } from '@/lib/utils/dateUtils';
 import { localizeRoomDesignEnumLabel } from '@/lib/utils/roomDesignEnumI18n';
 
 interface PlantGuideDetailDialogProps {

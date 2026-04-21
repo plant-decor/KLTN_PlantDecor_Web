@@ -432,7 +432,7 @@ export const useAdminPlants = (): UseAdminPlantsReturn => {
           );
           // console.log('[savePlant] Guide payload created:', guidePayload);
 
-          const existingGuideResponse = await getAdminPlantGuideByPlantId(plantId, true).catch((err) => {
+          const existingGuideResponse = await getAdminPlantGuideByPlantId(plantId, true).catch(() => {
             // console.warn('[savePlant] Could not fetch existing guide:', err);
             return null;
           });

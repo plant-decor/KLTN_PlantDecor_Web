@@ -311,7 +311,7 @@ export default function PlantComboFormDialog({
       setSelectedPlantMap({});
     });
     lastSearchedKeywordRef.current = null;
-  }, [editingData, open, reset]);
+  }, [editingData, lightRequirementOptions, open, reset, roomTypeOptions]);
 
   useEffect(() => {
     if (!open) {

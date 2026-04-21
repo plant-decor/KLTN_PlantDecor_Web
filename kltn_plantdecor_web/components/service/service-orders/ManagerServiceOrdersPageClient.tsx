@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Box, CircularProgress, Paper, TableContainer, Typography } from '@mui/material';
+import { Alert, Box, CircularProgress, Paper, TableContainer } from '@mui/material';
 import { toast } from 'react-toastify';
 import {
   approveManagerServiceRegistration,

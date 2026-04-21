@@ -73,7 +73,7 @@ export default function MaterialFormDialog({
   });
 
   const [images, setImages] = useState<ImageUploadData[]>([]);
-  const [specsError, setSpecsError] = useState<string>('');
+  // const [specsError, setSpecsError] = useState<string>('');
 
   useEffect(() => {
     if (!open) {
@@ -112,7 +112,7 @@ export default function MaterialFormDialog({
       setImages([]);
     }
 
-    setSpecsError('');
+    // setSpecsError('');
   }, [editingData, open, reset]);
 
   const handleFormSubmit = (data: MaterialFormData) => {
@@ -123,12 +123,12 @@ export default function MaterialFormDialog({
       try {
         JSON.parse(normalizedSpecs);
       } catch {
-        setSpecsError('Invalid JSON format');
+        // setSpecsError('Invalid JSON format');
         return;
       }
     }
 
-    setSpecsError('');
+    // setSpecsError('');
     onSubmit(
       {
         ...data,

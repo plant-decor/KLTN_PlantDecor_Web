@@ -25,7 +25,7 @@ import {
   Typography,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import AutorenewIcon from '@mui/icons-material/Autorenew';
+// import AutorenewIcon from '@mui/icons-material/Autorenew';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
 import {
   batchUpdateManagerPlantInstanceStatus,
@@ -94,7 +94,7 @@ const statusColorMap: Record<number, 'success' | 'warning' | 'default' | 'error'
 
 export default function PlantInstanceManagerTab({ nurseryId }: PlantInstanceManagerTabProps) {
   const [summaryItems, setSummaryItems] = useState<PlantSummaryItem[]>([]);
-  const [summaryLoading, setSummaryLoading] = useState(false);
+  // const [summaryLoading, setSummaryLoading] = useState(false);
 
   const [items, setItems] = useState<PlantInstanceItem[]>([]);
   const [pagination, setPagination] = useState<PaginationState>(DEFAULT_PAGINATION);
@@ -118,7 +118,7 @@ export default function PlantInstanceManagerTab({ nurseryId }: PlantInstanceMana
       return;
     }
 
-    setSummaryLoading(true);
+    // setSummaryLoading(true);
     try {
       const response = await getManagerPlantsSummary(nurseryId, true);
       const payload = getPayload<PlantSummaryItem[]>(response) ?? [];
@@ -126,7 +126,7 @@ export default function PlantInstanceManagerTab({ nurseryId }: PlantInstanceMana
     } catch {
       setSummaryItems([]);
     } finally {
-      setSummaryLoading(false);
+      // setSummaryLoading(false);
     }
   }, [nurseryId]);
 

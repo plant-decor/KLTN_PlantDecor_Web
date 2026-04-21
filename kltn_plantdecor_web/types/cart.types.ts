@@ -37,6 +37,7 @@ export interface CheckoutData {
   buyNowItemType?: number | null;
   buyNowQuantity?: number | null;
   paymentMethod?: string;
+  useProfileInfo?: boolean;
   subtotal: number;
   // shippingFee: number;
   total: number;

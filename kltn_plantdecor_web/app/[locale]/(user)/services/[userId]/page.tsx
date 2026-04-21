@@ -478,7 +478,7 @@ export default function UserServicePage({ params }: PageProps) {
 
             return (
               <Stack direction="row" spacing={1} justifyContent="center">
-                <Button variant="outlined" size="small" onClick={() => void handleViewDetails(request)}>
+                <Button sx={hoverLiftStyle} variant="outlined" size="small" onClick={() => void handleViewDetails(request)}>
                   {tCommon('view')}
                 </Button>
                 {canPay ? (
@@ -500,6 +500,7 @@ export default function UserServicePage({ params }: PageProps) {
                   startIcon={<CancelOutlinedIcon />}
                   disabled={!canCancel}
                   onClick={() => handleOpenCancel(request)}
+                  sx={hoverLiftStyle}
                 >
                   {t('cancel')}
                 </Button>

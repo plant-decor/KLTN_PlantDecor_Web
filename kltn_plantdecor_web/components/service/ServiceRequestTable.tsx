@@ -14,6 +14,7 @@ import { useTranslations } from 'next-intl';
 import { ServiceRegistration } from '@/types/service.types';
 import ServiceStatusChip from './ServiceStatusChip';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 
 interface Column {
   id: string;
@@ -138,6 +139,7 @@ export default function ServiceRequestTable({
                       size="small"
                       startIcon={<VisibilityIcon />}
                       onClick={() => onViewDetails(request)}
+                      sx={{...hoverLiftStyle}}
                     >
                       {tCommon('view')}
                     </Button>

@@ -32,6 +32,8 @@ import {
 import { Add, Delete, Search as SearchIcon } from '@mui/icons-material';
 import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import ImageUpload from './ImageUpload';
+import RichTextEditor from './RichTextEditor';
+import { uploadAdminPlantComboImages } from '@/lib/api/adminPlantCombosService';
 import type {
   ImageUploadData,
   Plant,
@@ -46,6 +48,36 @@ import Image from 'next/image';
 interface OptionItem {
   id: number;
   name: string;
+}
+
+type UnknownApiResponse = { payload?: unknown; data?: unknown };
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object';
+}
+
+function readImageUrlFromUnknownPayload(payload: unknown): string | null {
+  if (!isRecord(payload)) {
+    return null;
+  }
+
+  const images = payload.images;
+  if (Array.isArray(images) && images.length > 0) {
+    const last = images.at(-1);
+    if (isRecord(last) && typeof last.imageUrl === 'string' && last.imageUrl.trim()) {
+      return last.imageUrl;
+    }
+    const maybeLast = images[images.length - 1];
+    if (isRecord(maybeLast) && typeof maybeLast.imageUrl === 'string' && maybeLast.imageUrl.trim()) {
+      return maybeLast.imageUrl;
+    }
+  }
+
+  if (typeof payload.imageUrl === 'string' && payload.imageUrl.trim()) {
+    return payload.imageUrl;
+  }
+
+  return null;
 }
 
 interface EnumOptionItem {
@@ -154,9 +186,33 @@ export default function PlantComboFormDialog({
   const [keyword, setKeyword] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const [selectedPlantMap, setSelectedPlantMap] = useState<Record<number, string>>({});
+  const [uploadingImage, setUploadingImage] = useState(false);
   const lastSearchedKeywordRef = useRef<string | null>(null);
   const searchRootRef = useRef<HTMLDivElement | null>(null);
   const fallbackImage = '/img/fallbackplant.avif'
+
+  // Handle image upload for RichTextEditor
+  const handleRichTextImageUpload = async (file: File): Promise<string> => {
+    if (!editingData?.id) {
+      throw new Error('Combo must be created first before uploading images to description');
+    }
+
+    setUploadingImage(true);
+    try {
+      const response = await uploadAdminPlantComboImages(editingData.id, [file], true);
+      const candidate = response as UnknownApiResponse;
+      const payload = candidate.payload ?? candidate.data;
+      const imageUrl = readImageUrlFromUnknownPayload(payload);
+
+      if (!imageUrl) {
+        throw new Error('No image URL returned from server');
+      }
+
+      return imageUrl;
+    } finally {
+      setUploadingImage(false);
+    }
+  };
   const plantOptions = useMemo(() => {
     return plants.map((item) => ({ id: item.id, name: item.name }));
   }, [plants]);
@@ -311,7 +367,7 @@ export default function PlantComboFormDialog({
       setSelectedPlantMap({});
     });
     lastSearchedKeywordRef.current = null;
-  }, [editingData, open, reset]);
+  }, [editingData, lightRequirementOptions, open, reset, roomTypeOptions]);
 
   useEffect(() => {
     if (!open) {
@@ -464,7 +520,16 @@ export default function PlantComboFormDialog({
                 <Controller
                   name="description"
                   control={control}
-                  render={({ field }) => <TextField {...field} label="Description" fullWidth multiline rows={3} />}
+                  render={({ field }) => (
+                    <RichTextEditor
+                      {...field}
+                      label="Description"
+                      placeholder="Enter combo description with rich formatting..."
+                      minHeight={200}
+                      onUploadImage={editingData?.id ? handleRichTextImageUpload : undefined}
+                      uploading={uploadingImage}
+                    />
+                  )}
                 />
               </Grid>
             </Grid>
@@ -592,7 +657,16 @@ export default function PlantComboFormDialog({
                 <Controller
                   name="themeDescription"
                   control={control}
-                  render={({ field }) => <TextField {...field} label="Theme Description" fullWidth />}
+                  render={({ field }) => (
+                    <RichTextEditor
+                      {...field}
+                      label="Theme Description"
+                      placeholder="Enter theme description with rich formatting..."
+                      minHeight={150}
+                      onUploadImage={editingData?.id ? handleRichTextImageUpload : undefined}
+                      uploading={uploadingImage}
+                    />
+                  )}
                 />
               </Grid>
             </Grid>

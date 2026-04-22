@@ -15,6 +15,7 @@ import type { Plant } from '@/data/sampledata';
 import { Category, Tag } from '@/data/storeCatalogData';
 import ProductDetailPurchasePanel from '@/components/product/ProductDetailPurchasePanel';
 import ClickableImageViewer from '@/components/image-view/ClickableImageViewer';
+import RichTextDisplay from '@/components/store-management/RichTextDisplay';
 import { getFengShuiColors, getFengShuiElementLabel } from '@/lib/utils/fengShui';
 import { formatCurrency } from '@/lib/utils/formatUtil';
 import { localizeRoomDesignEnumLabel } from '@/lib/utils/roomDesignEnumI18n';
@@ -425,7 +426,24 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                 {plant.fengShuiMeaning && <p className="text-sm text-gray-700">{plant.fengShuiMeaning}</p>}
               </div>
             )}
+            <div className="my-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('safetyAndTraits')}</h3>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="bg-gray-50 rounded-lg px-3 py-2">{t('traits.toxicity')}: {booleanLabel(plant.toxicity)}</div>
+                <div className="bg-gray-50 rounded-lg px-3 py-2">{t('traits.airPurifying')}: {booleanLabel(plant.airPurifying)}</div>
+                <div className="bg-gray-50 rounded-lg px-3 py-2">{t('traits.hasFlower')}: {booleanLabel(plant.hasFlower)}</div>
+                <div className="bg-gray-50 rounded-lg px-3 py-2">{t('traits.petSafe')}: {booleanLabel(plant.petSafe)}</div>
+                <div className="bg-gray-50 rounded-lg px-3 py-2">{t('traits.childSafe')}: {booleanLabel(plant.childSafe)}</div>
+                <div className="bg-gray-50 rounded-lg px-3 py-2">{t('traits.potIncluded')}: {booleanLabel(plant.potIncluded)}</div>
+              </div>
+            </div>
+          </div>
 
+          <div>
+            <div className="mb-6 space-y-3 border-t border-gray-100 pt-6">
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">{plant.name}</h1>
+              {plant.specificName && <p className="text-xl text-gray-600 italic mb-6">{plant.specificName}</p>}
+            <div className='grid grid-cols-2'>
             {Array.isArray(plant.categories) && plant.categories.length > 0 && (
               <div className="mb-4">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('categories')}</h3>
@@ -457,30 +475,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                 </div>
               </div>
             )}
-            <div className="my-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('safetyAndTraits')}</h3>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="bg-gray-50 rounded-lg px-3 py-2">{t('traits.toxicity')}: {booleanLabel(plant.toxicity)}</div>
-                <div className="bg-gray-50 rounded-lg px-3 py-2">{t('traits.airPurifying')}: {booleanLabel(plant.airPurifying)}</div>
-                <div className="bg-gray-50 rounded-lg px-3 py-2">{t('traits.hasFlower')}: {booleanLabel(plant.hasFlower)}</div>
-                <div className="bg-gray-50 rounded-lg px-3 py-2">{t('traits.petSafe')}: {booleanLabel(plant.petSafe)}</div>
-                <div className="bg-gray-50 rounded-lg px-3 py-2">{t('traits.childSafe')}: {booleanLabel(plant.childSafe)}</div>
-                <div className="bg-gray-50 rounded-lg px-3 py-2">{t('traits.potIncluded')}: {booleanLabel(plant.potIncluded)}</div>
-              </div>
             </div>
-            {plant.description && (
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('description')}</h3>
-                <p className="text-gray-600 leading-relaxed">{plant.description}</p>
-              </div>
-            )}
-          </div>
-
-          <div>
-            <div className="mb-6 space-y-3 border-t border-gray-100 pt-6">
-              <h1 className="text-4xl font-bold text-gray-900 mb-2">{plant.name}</h1>
-              {plant.specificName && <p className="text-xl text-gray-600 italic mb-6">{plant.specificName}</p>}
-
               <div className="mb-6">
                 <span className="text-3xl font-bold text-green-600">{formatCurrency(plant.basePrice, locale)}</span>
               </div>
@@ -493,7 +488,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
             </div>
 
 
-            
+
 
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div className="bg-gray-50 rounded-lg p-4">
@@ -534,6 +529,15 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
               </div>
             </div>
           </div>
+          {plant.description && (
+            <div className="mb-6 w-full col-span-2"> {/* Thêm w-full */}
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('description')}</h3>
+              {/* Loại bỏ prose ở div này, chỉ để bên trong RichTextDisplay xử lý */}
+              <div className="w-full overflow-hidden text-gray-600">
+                <RichTextDisplay content={plant.description} />
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

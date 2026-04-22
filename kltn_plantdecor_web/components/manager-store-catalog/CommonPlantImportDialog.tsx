@@ -92,24 +92,51 @@ export default function CommonPlantImportDialog({
               label="Select Plant"
               value={form.plantId || ''}
               onChange={(event) =>
-              onFormChange({ ...form, plantId: Number(event.target.value) })
+                onFormChange({ ...form, plantId: Number(event.target.value) })
               }
               disabled={loadingAvailable || submitting}
               fullWidth
               SelectProps={{
-              MenuProps: {
-                PaperProps: {
-                style: {
-                  maxHeight: 48 * 5 + 8,
+                // SỬA Ở ĐÂY: Target vào đúng class hiển thị của Select
+                sx: {
+                  "& .MuiSelect-select": {
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px", // Khoảng cách giữa ảnh và chữ
+                  },
                 },
+                MenuProps: {
+                  PaperProps: {
+                    style: {
+                      maxHeight: 48 * 5 + 8,
+                    },
+                  },
                 },
-              },
               }}
             >
               {availablePlants.map((plant) => (
-              <MenuItem key={plant.id} value={plant.id}>
-                {plant.name}
-              </MenuItem>
+                <MenuItem
+                  key={plant.id}
+                  value={plant.id}
+                  sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                >
+                  {plant.primaryImageUrl && (
+                    <Box
+                      component="img"
+                      src={plant.primaryImageUrl}
+                      alt={plant.name}
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: '4px',
+                        objectFit: 'cover'
+                      }}
+                    />
+                  )}
+                  <Box component="span">
+                    {plant.name}
+                  </Box>
+                </MenuItem>
               ))}
             </TextField>
 

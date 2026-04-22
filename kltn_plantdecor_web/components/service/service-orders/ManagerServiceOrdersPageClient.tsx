@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Box, CircularProgress, Paper, TableContainer, Typography } from '@mui/material';
+import { Alert, Box, CircularProgress, Paper, TableContainer } from '@mui/material';
 import { toast } from 'react-toastify';
 import {
   approveManagerServiceRegistration,
@@ -9,11 +9,13 @@ import {
   getEligibleCaretakersForServiceRegistration,
   getManagerNurseryServiceRegistrationDetail,
   getManagerNurseryServiceRegistrations,
+  getPublicShifts,
   getSystemEnumValues,
   managerCancelServiceRegistration,
   rejectManagerServiceRegistration,
+  rescheduleManagerServiceRegistration,
 } from '@/lib/api/careServiceService';
-import type { EligibleCaretaker, EnumOption, ManagerServiceRegistration } from '@/types/care-service.types';
+import type { EligibleCaretaker, EnumOption, ManagerServiceRegistration, PublicShift } from '@/types/care-service.types';
 import {
   ALL_STATUS_FILTER,
   buildServiceStatusLabelMap,
@@ -28,6 +30,7 @@ import ServiceOrderApproveDialog from './ServiceOrderApproveDialog';
 import ServiceOrderRejectDialog from './ServiceOrderRejectDialog';
 import ServiceOrderCancelDialog from './ServiceOrderCancelDialog';
 import ServiceOrderAssignDialog from './ServiceOrderAssignDialog';
+import ServiceOrderRescheduleDialog, { type ServiceOrderRescheduleValues } from './ServiceOrderRescheduleDialog';
 import ManagementHeader from '@/components/layout/ManagementHeader';
 
 export default function ManagerServiceOrdersPageClient() {
@@ -54,6 +57,10 @@ export default function ManagerServiceOrdersPageClient() {
   const [assignLoading, setAssignLoading] = useState(false);
   const [selectedCaretakerId, setSelectedCaretakerId] = useState<number>(0);
 
+  const [rescheduleTarget, setRescheduleTarget] = useState<ManagerServiceRegistration | null>(null);
+  const [publicShifts, setPublicShifts] = useState<PublicShift[]>([]);
+  const [shiftsLoading, setShiftsLoading] = useState(false);
+
   const [submitting, setSubmitting] = useState(false);
   useEffect(() => {
     const loadStatusEnums = async () => {
@@ -69,7 +76,7 @@ export default function ManagerServiceOrdersPageClient() {
   }, []);
 
   const statusOptions = useMemo(() => buildServiceStatusOptions(statusEnums), [statusEnums]);
-
+  console.log(statusOptions);
   const statusLabelMap = useMemo(() => buildServiceStatusLabelMap(statusEnums), [statusEnums]);
 
   const activeFilterLabel = useMemo(
@@ -251,6 +258,44 @@ export default function ManagerServiceOrdersPageClient() {
     }
   };
 
+  const openRescheduleDialog = async (registration: ManagerServiceRegistration) => {
+    try {
+      setRescheduleTarget(registration);
+      if (publicShifts.length > 0) {
+        return;
+      }
+
+      setShiftsLoading(true);
+      const shifts = await getPublicShifts(false);
+      setPublicShifts(shifts);
+    } catch (shiftError) {
+      toast.error(getErrorMessage(shiftError, 'Cannot load shifts'));
+      setRescheduleTarget(null);
+      setPublicShifts([]);
+    } finally {
+      setShiftsLoading(false);
+    }
+  };
+
+  const handleReschedule = async (values: ServiceOrderRescheduleValues) => {
+    if (!rescheduleTarget) {
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await rescheduleManagerServiceRegistration(rescheduleTarget.id, values, false);
+      toast.success('Registration schedule updated successfully');
+      const targetId = rescheduleTarget.id;
+      setRescheduleTarget(null);
+      await Promise.all([loadList(), refreshDetailIfNeeded(targetId)]);
+    } catch (rescheduleError) {
+      toast.error(getErrorMessage(rescheduleError, 'Cannot reschedule service order'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <Box sx={{ py: 4, px: { xs: 2, md: 4 }, mx: 'auto' }}>
       <ManagementHeader 
@@ -304,6 +349,7 @@ export default function ManagerServiceOrdersPageClient() {
                   setCancelReason('');
                 }}
                 onAssignCaretaker={(item) => void openAssignDialog(item)}
+                onReschedule={(item) => void openRescheduleDialog(item)}
               />
             </TableContainer>
           </>
@@ -330,6 +376,7 @@ export default function ManagerServiceOrdersPageClient() {
           setCancelReason('');
         }}
         onAssignCaretaker={(item) => void openAssignDialog(item)}
+        onReschedule={(item) => void openRescheduleDialog(item)}
       />
 
       <ServiceOrderApproveDialog
@@ -373,6 +420,16 @@ export default function ManagerServiceOrdersPageClient() {
           setEligibleCaretakers([]);
         }}
         onConfirm={() => void handleAssignCaretaker()}
+      />
+
+      <ServiceOrderRescheduleDialog
+        open={Boolean(rescheduleTarget)}
+        target={rescheduleTarget}
+        shifts={publicShifts}
+        shiftsLoading={shiftsLoading}
+        submitting={submitting}
+        onClose={() => setRescheduleTarget(null)}
+        onConfirm={(values) => void handleReschedule(values)}
       />
     </Box>
   );

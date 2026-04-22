@@ -18,11 +18,11 @@ const FENG_SHUI_COLORS: Record<FengShuiElementKey, FengShuiColorSet> = {
 };
 
 const FENG_SHUI_LABELS: Record<FengShuiElementKey, string> = {
-  kim: 'Kim',
-  moc: 'Mộc',
-  thuy: 'Thủy',
-  hoa: 'Hỏa',
-  tho: 'Thổ',
+  kim: 'Metal',
+  moc: 'Wood',
+  thuy: 'Water',
+  hoa: 'Fire',
+  tho: 'Earth',
   unknown: 'Unknown',
 };
 
@@ -43,11 +43,11 @@ const FENG_SHUI_KEY_TO_ID: Record<Exclude<FengShuiElementKey, 'unknown'>, FengSh
 };
 
 export const FENG_SHUI_ELEMENT_OPTIONS: { value: FengShuiElementId; label: string }[] = [
-  { value: 1, label: 'Kim' },
-  { value: 2, label: 'Mộc' },
-  { value: 3, label: 'Thủy' },
-  { value: 4, label: 'Hỏa' },
-  { value: 5, label: 'Thổ' },
+  { value: 1, label: 'Metal' },
+  { value: 2, label: 'Wood' },
+  { value: 3, label: 'Water' },
+  { value: 4, label: 'Fire' },
+  { value: 5, label: 'Earth' },
 ];
 
 const normalizeText = (value?: string | null): string =>
@@ -74,11 +74,11 @@ export const getFengShuiElementKey = (element?: FengShuiElementInput): FengShuiE
 
   const normalized = normalizeText(raw);
 
-  if (normalized === 'kim') return 'kim';
-  if (normalized === 'moc') return 'moc';
-  if (normalized === 'thuy') return 'thuy';
-  if (normalized === 'hoa') return 'hoa';
-  if (normalized === 'tho') return 'tho';
+  if (normalized === 'metal') return 'kim';
+  if (normalized === 'wood') return 'moc';
+  if (normalized === 'water') return 'thuy';
+  if (normalized === 'fire') return 'hoa';
+  if (normalized === 'earth') return 'tho';
 
   return 'unknown';
 };

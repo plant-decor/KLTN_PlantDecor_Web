@@ -30,12 +30,6 @@ export default function ServiceOrdersHeader({
   return (
     <>
       <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 2 }}>
-        <Chip color="warning" variant="outlined" label={`Pending: ${pendingCount}`} />
-        <Chip color="info" variant="outlined" label={`Awaiting payment: ${awaitingPaymentCount}`} />
-        <Chip color="success" variant="outlined" label={`Active: ${activeCount}`} />
-      </Stack>
-
-      <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 2 }}>
         <FormControl size="small" sx={{ minWidth: 260 }}>
           <InputLabel id="service-order-status-filter">Status</InputLabel>
           <Select
@@ -58,7 +52,12 @@ export default function ServiceOrdersHeader({
           Reload
         </Button>
 
-        <Chip label={`Filter: ${activeFilterLabel}`} variant="outlined" />
+        <Stack direction="row" spacing={1} flexWrap="wrap" alignItems="center">
+          <Chip label={`Filter: ${activeFilterLabel}`} variant="outlined" />
+          <Chip label={`Pending: ${pendingCount}`} variant="outlined" />
+          <Chip label={`Awaiting payment: ${awaitingPaymentCount}`} variant="outlined" />
+          <Chip label={`Active: ${activeCount}`} variant="outlined" />
+        </Stack>
       </Stack>
     </>
   );

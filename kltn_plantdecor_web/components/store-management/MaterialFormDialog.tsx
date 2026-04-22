@@ -23,6 +23,8 @@ import {
 } from '@mui/material';
 import { Controller, useForm } from 'react-hook-form';
 import ImageUpload from './ImageUpload';
+import RichTextEditor from './RichTextEditor';
+import { uploadAdminMaterialImages } from '@/lib/api/adminMaterialsService';
 import type {
   MaterialDetail,
   MaterialFormData,
@@ -33,6 +35,36 @@ import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils/formatUtil'
 interface OptionItem {
   id: number;
   name: string;
+}
+
+type UnknownApiResponse = { payload?: unknown; data?: unknown };
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object';
+}
+
+function readImageUrlFromUnknownPayload(payload: unknown): string | null {
+  if (!isRecord(payload)) {
+    return null;
+  }
+
+  const images = payload.images;
+  if (Array.isArray(images) && images.length > 0) {
+    const last = images.at(-1);
+    if (isRecord(last) && typeof last.imageUrl === 'string' && last.imageUrl.trim()) {
+      return last.imageUrl;
+    }
+    const maybeLast = images[images.length - 1];
+    if (isRecord(maybeLast) && typeof maybeLast.imageUrl === 'string' && maybeLast.imageUrl.trim()) {
+      return maybeLast.imageUrl;
+    }
+  }
+
+  if (typeof payload.imageUrl === 'string' && payload.imageUrl.trim()) {
+    return payload.imageUrl;
+  }
+
+  return null;
 }
 
 interface MaterialFormDialogProps {
@@ -73,7 +105,32 @@ export default function MaterialFormDialog({
   });
 
   const [images, setImages] = useState<ImageUploadData[]>([]);
-  const [specsError, setSpecsError] = useState<string>('');
+  // const [specsError, setSpecsError] = useState<string>('');
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  // Handle image upload for RichTextEditor
+  const handleRichTextImageUpload = async (file: File): Promise<string> => {
+    if (!editingData?.id) {
+      throw new Error('Material must be created first before uploading images to description');
+    }
+
+    setUploadingImage(true);
+    try {
+      const response = await uploadAdminMaterialImages(editingData.id, [file], true);
+
+      const candidate = response as UnknownApiResponse;
+      const payload = candidate.payload ?? candidate.data;
+      const imageUrl = readImageUrlFromUnknownPayload(payload);
+
+      if (!imageUrl) {
+        throw new Error('No image URL returned from server');
+      }
+
+      return imageUrl;
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   useEffect(() => {
     if (!open) {
@@ -97,22 +154,23 @@ export default function MaterialFormDialog({
         tagIds: editingData.tags.map((item) => item.id),
       });
 
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setImages(
-        editingData.images.map((image) => ({
-          id: image.id,
-          existingImageId: image.id,
-          preview: image.imageUrl,
-          url: image.imageUrl,
-          isThumbnail: Boolean(image.isPrimary),
-        }))
-      );
+      queueMicrotask(() => {
+        setImages(
+          editingData.images.map((image) => ({
+            id: image.id,
+            existingImageId: image.id,
+            preview: image.imageUrl,
+            url: image.imageUrl,
+            isThumbnail: Boolean(image.isPrimary),
+          }))
+        );
+      });
     } else {
       reset(defaultMaterial);
       setImages([]);
     }
 
-    setSpecsError('');
+    // setSpecsError('');
   }, [editingData, open, reset]);
 
   const handleFormSubmit = (data: MaterialFormData) => {
@@ -123,12 +181,12 @@ export default function MaterialFormDialog({
       try {
         JSON.parse(normalizedSpecs);
       } catch {
-        setSpecsError('Invalid JSON format');
+        // setSpecsError('Invalid JSON format');
         return;
       }
     }
 
-    setSpecsError('');
+    // setSpecsError('');
     onSubmit(
       {
         ...data,
@@ -190,7 +248,16 @@ export default function MaterialFormDialog({
                 <Controller
                   name="description"
                   control={control}
-                  render={({ field }) => <TextField {...field} label="Description" fullWidth multiline rows={3} />}
+                  render={({ field }) => (
+                    <RichTextEditor
+                      {...field}
+                      label="Description"
+                      placeholder="Enter material description with rich formatting..."
+                      minHeight={200}
+                      onUploadImage={editingData?.id ? handleRichTextImageUpload : undefined}
+                      uploading={uploadingImage}
+                    />
+                  )}
                 />
               </Grid>
             </Grid>

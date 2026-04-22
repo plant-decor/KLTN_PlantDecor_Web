@@ -25,13 +25,6 @@ import {
 } from '@/lib/api/cartWishlistService';
 import type { CheckoutData, CartItem } from '@/types/cart.types';
 import type { CustomerProfile } from '@/types/auth.types';
-import {
-  createOrder,
-} from '@/lib/api/orderService';
-import type {
-  OrderCreatePayload,
-  OrderCreateRequest,
-} from '@/types/order.types';
 
 interface CheckoutPageClientProps {
   userId: string;
@@ -93,11 +86,9 @@ export default function CheckoutPageClient({
   ];
   const [activeStep, setActiveStep] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [checkoutData, setCheckoutData] = useState<CheckoutData | null>(null);
   const [userProfile, setUserProfile] = useState<CustomerProfile | null>(null);
-  const [createdOrder, setCreatedOrder] = useState<OrderCreatePayload | null>(null);
 
   const orderTypeFromQuery = parsePositiveInt(searchParams.get('orderType')) || 1;
   const isPlantInstanceOrder = orderTypeFromQuery === 2;
@@ -177,9 +168,9 @@ export default function CheckoutPageClient({
         }
 
         const shippingInfo = {
-          fullName: profilePayload?.fullName ?? profilePayload?.username ?? '',
-          phone: profilePayload?.phoneNumber ?? '',
-          address: profilePayload?.address ?? '',
+          fullName: '',
+          phone: '',
+          address: '',
           notes: '',
         };
 
@@ -267,14 +258,13 @@ export default function CheckoutPageClient({
     setActiveStep((prev) => Math.max(0, prev - 1));
   };
 
-  const handleCreateOrderAndGoReview = async () => {
+  const handleShippingSubmit = async () => {
     if (!checkoutData.shippingInfo) {
       setError(tCheckout('errors.missingShippingInfo'));
       return;
     }
 
     try {
-      setIsSubmitting(true);
       setError('');
 
       if (checkoutData.items.length === 0) {
@@ -282,7 +272,7 @@ export default function CheckoutPageClient({
         return;
       }
 
-      const { fullName, phone, address, notes } = checkoutData.shippingInfo;
+      const { fullName, phone, address } = checkoutData.shippingInfo;
       if (!fullName || !phone || !address) {
         setError(tCheckout('errors.missingRequiredShippingFields'));
         return;
@@ -293,65 +283,15 @@ export default function CheckoutPageClient({
         return;
       }
 
-      const basePayload = {
-        address,
-        phone,
-        customerName: fullName,
-        note: notes ?? '',
-        paymentStrategy: checkoutData.orderType === 2 ? (checkoutData.paymentStrategy ?? 1) : 1,
-      };
-
-      let payload: OrderCreateRequest;
-      if (checkoutData.orderType === 2) {
-        payload = {
-          ...basePayload,
-          orderType: 2,
-          plantInstanceId: checkoutData.plantInstanceId ?? 0,
-        };
-      } else if (checkoutData.orderType === 3) {
-        payload = {
-          ...basePayload,
-          orderType: 3,
-          buyNowItemId: checkoutData.buyNowItemId ?? checkoutData.items[0]?.id ?? 0,
-          buyNowItemType: (checkoutData.buyNowItemType ?? 1) as 1 | 2 | 3,
-          buyNowQuantity: checkoutData.buyNowQuantity ?? checkoutData.items[0]?.quantity ?? 1,
-        };
-      } else {
-        payload = {
-          ...basePayload,
-          orderType: 1,
-          cartItemIds: checkoutData.items.map((item) => item.id),
-        };
-      }
-
-      const created: OrderCreatePayload = await createOrder(payload);
-
-      setCreatedOrder(created);
-
-      setCheckoutData((prev) =>
-        prev
-          ? {
-              ...prev,
-              total: created.totalAmount ?? prev.total,
-            }
-          : prev
-      );
-
       setActiveStep(1);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : tCheckout('errors.submitFailed');
       setError(errorMessage);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   const handleReviewToPayment = () => {
-    if (!createdOrder?.id) {
-      setError(tCheckout('errors.orderNotCreated'));
-      return;
-    }
     setError('');
     setActiveStep(2);
   };
@@ -378,7 +318,6 @@ export default function CheckoutPageClient({
           <Button
             variant="outlined"
             onClick={handleBack}
-            disabled={isSubmitting}
           >
             {tCommon('back')}
           </Button>
@@ -398,23 +337,23 @@ export default function CheckoutPageClient({
         <Button
           variant="outlined"
           onClick={handleBack}
-          disabled={activeStep === 0 || isSubmitting}
+          disabled={activeStep === 0}
+          className='font-semibold!'
         >
           {tCommon('back')}
         </Button>
         <Button
           variant="contained"
+          className='font-semibold! bg-primary!'
           onClick={() => {
             if (activeStep === 0) {
-              void handleCreateOrderAndGoReview();
+              void handleShippingSubmit();
               return;
             }
             if (activeStep === 1) {
               handleReviewToPayment();
             }
           }}
-          disabled={isSubmitting}
-          sx={{ backgroundColor: '#4CAF50' }}
         >
           {activeStep === 0 ? tCheckout('actions.reviewOrder') : tCheckout('actions.goToPayment')}
         </Button>
@@ -433,7 +372,7 @@ export default function CheckoutPageClient({
       <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
         {STEPS.map((label) => (
           <Step key={label}>
-            <StepLabel>{label}</StepLabel>
+            <StepLabel className='font-bold!'>{label}</StepLabel>
           </Step>
         ))}
       </Stepper>
@@ -450,16 +389,14 @@ export default function CheckoutPageClient({
         {activeStep === 1 && (
           <CheckoutReview
             checkoutData={checkoutData}
-            cartId={cartId}
-            createdOrder={createdOrder}
+            // cartId={cartId}
           />
         )}
 
-        {activeStep === 2 && createdOrder && (
+        {activeStep === 2 && (
           <CheckoutPayment
             checkoutData={checkoutData}
             onDataChange={updateCheckoutData}
-            orderId={createdOrder.id}
             onPaymentCompleted={handlePaymentCompleted}
           />
         )}
@@ -468,7 +405,6 @@ export default function CheckoutPageClient({
           <CheckoutComplete
             checkoutData={checkoutData}
             userId={userId}
-            orderId={createdOrder?.id}
           />
         )}
       </Box>

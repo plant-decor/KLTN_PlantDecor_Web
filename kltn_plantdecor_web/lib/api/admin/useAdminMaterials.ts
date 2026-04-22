@@ -12,6 +12,7 @@ import {
   assignMaterialCategories,
   assignMaterialTags,
   createAdminMaterial,
+  deleteAdminMaterialImage,
   getAdminMaterialById,
   removeMaterialCategory,
   removeMaterialTag,
@@ -105,8 +106,8 @@ const toUpsertPayload = (data: MaterialFormData, isCreateMode = false): Material
 
   return {
     ...basePayload,
-    categoryId: data.categoryIds,
-    tagId: data.tagIds,
+    categoryIds: data.categoryIds,
+    tagIds: data.tagIds,
   };
 };
 
@@ -281,6 +282,22 @@ export const useAdminMaterials = (): UseAdminMaterialsReturn => {
 
         if (!materialId) {
           throw new Error('Cannot resolve material ID after save');
+        }
+
+        if (editingMaterialId) {
+          const latestMaterial = await getAdminMaterialById(materialId, true).catch(() => null);
+          const latestPayload = latestMaterial ? getResponsePayload(latestMaterial) : null;
+          const currentImageIds =
+            latestPayload?.images?.map((image) => image.id).filter((id): id is number => typeof id === 'number') ?? [];
+          const keptImageIds = images
+            .map((image) => image.existingImageId)
+            .filter((id): id is number => typeof id === 'number');
+          const keptSet = new Set(keptImageIds);
+          const toDelete = currentImageIds.filter((id) => !keptSet.has(id));
+
+          if (toDelete.length > 0) {
+            await Promise.all(toDelete.map((imageId) => deleteAdminMaterialImage(materialId, imageId, true)));
+          }
         }
 
         const selectedThumbnail = images.find((image) => image.isThumbnail && image.file);

@@ -6,6 +6,8 @@ import type { Plant } from '@/data/sampledata';
 import { useAuthStore } from '@/lib/store/authStore';
 import { addItemToCart, addPlantToCart } from '@/lib/api/cartWishlistService';
 import { notifyCartUpdated } from '@/lib/utils/cartEvents';
+import { ShoppingCartOutlined } from '@mui/icons-material';
+import { Button } from '@mui/material';
 
 interface CartItemTarget {
   commonPlantId?: number | null;
@@ -154,17 +156,18 @@ export default function AddToCartButton({
           </button>
         </div>
 
-        <button
+        <Button
           onClick={handleAddToCart}
+          startIcon={<ShoppingCartOutlined />}
           disabled={isButtonDisabled}
-          className={`flex-1 px-8 py-3 rounded-lg font-semibold transition-colors ${
+          className={`bg-primary! flex-1 px-8 py-3 rounded-lg font-semibold transition-colors ${
             !isButtonDisabled
-              ? 'bg-green-600 text-white hover:bg-green-700'
+              ? 'bg-green-600 text-white hover:bg-green-600'
               : 'bg-gray-300 text-gray-500 cursor-not-allowed'
           }`}
         >
           {isLoading ? tCart('processing') : isOutOfStock ? tProducts('outOfStock') : tProducts('addToCart')}
-        </button>
+        </Button>
       </div>
 
       {feedbackMessage && (

@@ -11,6 +11,7 @@ import {
 import type { PlantCombo } from '@/types/store-management.types';
 import ClickableImageViewer from '@/components/image-view/ClickableImageViewer';
 import ComboDetailPurchasePanel from '@/components/product/ComboDetailPurchasePanel';
+import RichTextDisplay from '@/components/store-management/RichTextDisplay';
 import { formatCurrency } from '@/lib/utils/formatUtil';
 import { localizeRoomDesignEnumLabel } from '@/lib/utils/roomDesignEnumI18n';
 
@@ -239,13 +240,13 @@ export default async function ComboDetailPage({ params }: ComboDetailPageProps) 
 
   const comboJsonLd = hasKnownStockSignal
     ? {
-        ...comboJsonLdBase,
-        offers: {
-          ...comboJsonLdBase.offers,
-          availability:
-            totalKnownStock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-        },
-      }
+      ...comboJsonLdBase,
+      offers: {
+        ...comboJsonLdBase.offers,
+        availability:
+          totalKnownStock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      },
+    }
     : comboJsonLdBase;
 
   return (
@@ -271,54 +272,42 @@ export default async function ComboDetailPage({ params }: ComboDetailPageProps) 
               containerClassName="rounded-xl overflow-hidden bg-gray-100 border border-gray-200"
               className="w-full aspect-square object-cover"
             />
-          </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <p className="text-sm text-gray-500 mb-1">Season</p>
+                  <p className="font-semibold text-gray-900">{seasonName || tCommon('noData')}</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <p className="text-sm text-gray-500 mb-1">Theme</p>
+                  <p className="font-semibold text-gray-900">{themeName || tCommon('noData')}</p>
+                </div>
+                {themeDescription ? (
+                  <div className="bg-gray-50 rounded-lg p-4 col-span-2">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{tCombo("themeDescription")}</h3>
+                    <div className="prose prose-sm max-w-none text-gray-600">
+                      <RichTextDisplay content={themeDescription} />
+                    </div>
+                  </div>
+                ) : null}
+                <div className="bg-gray-50 rounded-lg p-4 col-span-2">
+                  <p className="text-sm text-gray-500 mb-1">Suitable space</p>
+                  <p className="font-semibold text-gray-900">{suitableSpaceLabel || tCommon('noData')}</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4 col-span-2">
+                  <p className="text-sm text-gray-500 mb-1">Suitable rooms</p>
+                  <p className="font-semibold text-gray-900">
+                    {suitableRoomLabels.length > 0 ? suitableRoomLabels.join(', ') : tCommon('noData')}
+                  </p>
+                </div>
+              </div>
+            </div>
 
-          <div className="space-y-5">
-            <div>
+            <div className="space-y-5">
               <h1 className="text-4xl font-bold text-gray-900">{comboName}</h1>
               {comboTypeName ? <p className="text-sm text-gray-600 mt-2">Type: {comboTypeName}</p> : null}
-            </div>
-
-            <div>
-              <span className="text-3xl font-bold text-green-600">{formatCurrency(comboPrice, locale)}</span>
-            </div>
-
-            {comboDescription ? (
-            <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Description</h3>
-                <p className="text-gray-600 leading-relaxed">{comboDescription}</p>
-              </div>
-            ) : null}
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-sm text-gray-500 mb-1">Season</p>
-                <p className="font-semibold text-gray-900">{seasonName || tCommon('noData')}</p>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-sm text-gray-500 mb-1">Theme</p>
-                <p className="font-semibold text-gray-900">{themeName || tCommon('noData')}</p>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-4 col-span-2">
-                <p className="text-sm text-gray-500 mb-1">Suitable space</p>
-                <p className="font-semibold text-gray-900">{suitableSpaceLabel || tCommon('noData')}</p>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-4 col-span-2">
-                <p className="text-sm text-gray-500 mb-1">Suitable rooms</p>
-                <p className="font-semibold text-gray-900">
-                  {suitableRoomLabels.length > 0 ? suitableRoomLabels.join(', ') : tCommon('noData')}
-                </p>
-              </div>
-            </div>
-
-            {themeDescription ? (
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">{tCombo("description")}</h3>
-                <p className="text-gray-600 leading-relaxed">{themeDescription}</p>
+                <span className="text-3xl font-bold text-green-600">{formatCurrency(comboPrice, locale)}</span>
               </div>
-            ) : null}
-
-            <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-3">{tProducts('nurseryDrawer.selectNursery')}</h3>
               <ComboDetailPurchasePanel
                 comboId={numericComboId}
@@ -328,9 +317,17 @@ export default async function ComboDetailPage({ params }: ComboDetailPageProps) 
                 quantityByNurseryId={quantityByNurseryId}
               />
             </div>
+            {comboDescription && (
+              <div className="mb-6 w-full col-span-2"> {/* Thêm w-full */}
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Description</h3>
+                {/* Loại bỏ prose ở div này, chỉ để bên trong RichTextDisplay xử lý */}
+                <div className="w-full overflow-hidden text-gray-600">
+                  <RichTextDisplay content={comboDescription} />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
-    </div>
-  );
+      );
 }

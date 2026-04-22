@@ -13,9 +13,6 @@ import {
   DialogTitle,
   Divider,
   Paper,
-  Step,
-  StepLabel,
-  Stepper,
   Table,
   TableBody,
   TableCell,
@@ -29,41 +26,13 @@ import type { Order } from '@/types/order.types';
 import {
   formatCurrency,
   formatDate,
-  getOrderSteps,
   getStatusInfo,
 } from './orderHistoryUtils';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 import Image from 'next/image';
 import { canCreateReturnTicket, isPendingNurseryOrderDetail } from './returnTicket.constants';
 
-// type OrderDisplayItem = {
-//   id: number;
-//   imageUrl: string | null;
-//   itemName: string;
-//   quantity: number;
-//   price: number;
-//   statusName: string;
-// };
-
-// function mapInvoiceDetailToDisplayItem(detail: OrderInvoiceDetail): OrderDisplayItem {
-//   return {
-//     id: detail.id,
-//     imageUrl: detail.imageUrl,
-//     itemName: detail.itemName,
-//     quantity: detail.quantity,
-//     price: detail.unitPrice,
-//     statusName: detail.statusName,
-//   };
-// }
-
-// function getDisplayItems(order: Order): OrderDisplayItem[] {
-//   if (order.orderType !== 4) {
-//     return order.items;
-//   }
-
-//   const invoiceWithDetails = order.invoices.find((invoice) => invoice.details.length > 0);
-//   return invoiceWithDetails ? invoiceWithDetails.details.map(mapInvoiceDetailToDisplayItem) : [];
-// }
+const SERVICE_ORDER_TYPE = 4;
 
 interface OrderDetailModalProps {
   open: boolean;
@@ -96,14 +65,15 @@ export default function OrderDetailModal({
 }: OrderDetailModalProps) {
   const tOrderHistory = useTranslations('orderHistory');
   const statusInfo = order ? getStatusInfo(order.statusName) : null;
+  const isServiceOrder = order?.orderType === SERVICE_ORDER_TYPE;
   const canCancelOrder = order?.statusName === 'Pending' || order?.statusName === 'DepositPaid' || order?.statusName === 'Paid';
   const canCreateReturn = !!order
+    && !isServiceOrder
     && canCreateReturnTicket(order.statusName)
     && order.nurseryOrders.some((nurseryOrder) =>
       nurseryOrder.items.some((item) => isPendingNurseryOrderDetail(item.statusName))
     );
   const isCancelling = !!order && cancelLoadingOrderId === order.id;
-  // const displayItems = order ? getDisplayItems(order) : [];
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
@@ -162,31 +132,15 @@ export default function OrderDetailModal({
 
             <Divider sx={{ my: 3 }} />
 
-            {order.statusName !== 'Cancelled' ? (
-              <>
-                <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                  Order progress
-                </Typography>
-                <Stepper activeStep={getOrderSteps(order.statusName).activeStep} alternativeLabel sx={{ mb: 3 }}>
-                  {getOrderSteps(order.statusName).steps.map((label) => (
-                    <Step key={label}>
-                      <StepLabel>{label}</StepLabel>
-                    </Step>
-                  ))}
-                </Stepper>
-                <Divider sx={{ my: 3 }} />
-              </>
-            ) : null}
-
             <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-              Shipping information
+              Customer information
             </Typography>
             <Box sx={{ mb: 3 }}>
               <Typography variant="body2" color="text.secondary">
                 Customer
               </Typography>
               <Typography variant="body1" gutterBottom>
-                {order.customerName}
+                {order.customerName || '-'}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Phone
@@ -210,7 +164,7 @@ export default function OrderDetailModal({
 
             <Divider sx={{ my: 3 }} />
 
-            {order.nurseryOrders.length > 0 ? (
+            {!isServiceOrder && order.nurseryOrders.length > 0 ? (
               <>
                 <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
                   Nursery orders
@@ -292,7 +246,7 @@ export default function OrderDetailModal({
             {order.invoices.length > 0 ? (
               <>
                 <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                  Invoices
+                  {isServiceOrder ? 'Service details' : 'Invoices'}
                 </Typography>
                 {order.invoices.map((invoice) => (
                   <Card key={invoice.id} variant="outlined" sx={{ mb: 2, p: 2 }}>
@@ -308,6 +262,49 @@ export default function OrderDetailModal({
                     <Typography variant="body1" fontWeight="bold" sx={{ mt: 1 }}>
                       {formatCurrency(invoice.totalAmount)}
                     </Typography>
+
+                    {isServiceOrder ? (
+                      <TableContainer component={Paper} elevation={0} sx={{ mt: 2 }}>
+                        <Table>
+                          <TableHead>
+                            <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                              <TableCell>
+                                <strong>Item</strong>
+                              </TableCell>
+                              <TableCell align="center">
+                                <strong>Qty</strong>
+                              </TableCell>
+                              <TableCell align="right">
+                                <strong>Unit price</strong>
+                              </TableCell>
+                              <TableCell align="right">
+                                <strong>Amount</strong>
+                              </TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {invoice.details.length > 0 ? (
+                              invoice.details.map((detail) => (
+                                <TableRow key={detail.id}>
+                                  <TableCell>{detail.itemName}</TableCell>
+                                  <TableCell align="center">{detail.quantity}</TableCell>
+                                  <TableCell align="right">{formatCurrency(detail.unitPrice)}</TableCell>
+                                  <TableCell align="right">{formatCurrency(detail.amount)}</TableCell>
+                                </TableRow>
+                              ))
+                            ) : (
+                              <TableRow>
+                                <TableCell colSpan={4} align="center">
+                                  <Typography variant="body2" color="text.secondary">
+                                    No service details available.
+                                  </Typography>
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    ) : null}
                     <Box
                       className='w-full flex justify-end'> 
                     {invoice.statusName === 'Pending' ? (
@@ -349,6 +346,7 @@ export default function OrderDetailModal({
             color="error"
             onClick={() => void onCancelOrder(order.id)}
             disabled={isCancelling || retryLoadingOrderId === order.id}
+            className='bg-error!'
           >
             {isCancelling ? tOrderHistory('cancelling') : tOrderHistory('cancelOrder')}
           </Button>

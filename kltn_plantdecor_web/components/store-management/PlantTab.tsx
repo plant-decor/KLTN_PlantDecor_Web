@@ -212,7 +212,7 @@ export default function PlantTab({}: PlantTabProps) {
     setToggleTarget(null);
   }, [togglePlantActive, toggleTarget]);
 
-  const handleFormSubmit = useCallback(async (data: PlantFormData, images: ImageUploadData[]) => {
+  const handleFormSubmit = async (data: PlantFormData, images: ImageUploadData[]) => {
     console.log('Form submit', { data });
     const success = await savePlant({
       formData: data,
@@ -223,6 +223,12 @@ export default function PlantTab({}: PlantTabProps) {
     });
 
     if (success) {
+      if (viewOpen && viewingData?.id) {
+        const refreshed = await fetchPlantById(viewingData.id);
+        if (refreshed) {
+          setViewingData(refreshed);
+        }
+      }
       toast.success(editingData ? 'Plant updated successfully' : 'Plant created successfully');
       setFormOpen(false);
       setEditingData(undefined);
@@ -231,7 +237,7 @@ export default function PlantTab({}: PlantTabProps) {
     }
 
     toast.error('Failed to save plant');
-  }, [editingData, savePlant]);
+  };
 
   return (
     <Box>

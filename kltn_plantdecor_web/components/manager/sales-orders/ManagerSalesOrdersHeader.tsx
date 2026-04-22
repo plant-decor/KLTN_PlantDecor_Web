@@ -1,7 +1,7 @@
 ﻿'use client';
 
-import { Button, FormControl, InputLabel, MenuItem, Select, Stack, Typography } from '@mui/material';
-import RefreshIcon from '@mui/icons-material/Refresh';
+import { FormControl, InputLabel, MenuItem, Select, Stack, Typography } from '@mui/material';
+// import RefreshIcon from '@mui/icons-material/Refresh';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import { SALES_ORDER_STATUS_OPTIONS } from './managerSalesOrders.constants';
 
@@ -16,9 +16,9 @@ interface ManagerSalesOrdersHeaderProps {
 export default function ManagerSalesOrdersHeader({
   totalCount,
   statusFilter,
-  loading,
+  // loading,
   onStatusFilterChange,
-  onRefresh,
+  // onRefresh,
 }: ManagerSalesOrdersHeaderProps) {
   const handleStatusChange = (event: SelectChangeEvent<number>) => {
     onStatusFilterChange(Number(event.target.value));

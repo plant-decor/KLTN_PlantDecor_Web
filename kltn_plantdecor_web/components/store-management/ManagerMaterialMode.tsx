@@ -493,7 +493,7 @@ export default function ManagerMaterialMode() {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseToggle} disabled={submitting}>Cancel</Button>
-          <Button onClick={() => void handleSubmitToggle()} variant="contained" disabled={submitting}>
+          <Button className='bg-primary!' onClick={() => void handleSubmitToggle()} variant="contained" disabled={submitting}>
             Confirm
           </Button>
         </DialogActions>

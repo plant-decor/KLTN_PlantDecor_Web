@@ -255,6 +255,7 @@ export default function OrderHistoryList({
                     sx={{...hoverLiftStyle}}
                     onClick={() => void onCancelOrder(order.id)}
                     disabled={isCancelling || isRetrying}
+                    className='bg-error!'
                   >
                     {isCancelling ? tOrderHistory('cancelling') : tOrderHistory('cancelOrder')}
                   </Button>

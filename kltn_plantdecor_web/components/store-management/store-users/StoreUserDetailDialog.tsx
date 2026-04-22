@@ -34,11 +34,11 @@ interface StoreUserDetailDialogProps {
 const getStatusLabel = (status: number) => {
   switch (status) {
     case 1:
-      return "Hoạt động";
+      return "Active";
     case 2:
-      return "Tạm khóa";
+      return "Inactive";
     default:
-      return "Không xác định";
+      return "Unknown";
   }
 };
 
@@ -69,7 +69,7 @@ export default function StoreUserDetailDialog({
   return (
     <Dialog open={open} onClose={submitting ? undefined : onClose} fullWidth maxWidth="md">
       <DialogTitle sx={{ pr: 6 }}>
-        Chi tiết nhân viên
+        Caretaker details
         <IconButton
           aria-label="close"
           onClick={onClose}
@@ -95,7 +95,7 @@ export default function StoreUserDetailDialog({
 
         {!loading && !staff && !error && (
           <Typography variant="body2" color="text.secondary">
-            Không tìm thấy dữ liệu nhân viên.
+            No caretaker data found.
           </Typography>
         )}
 

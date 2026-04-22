@@ -492,6 +492,7 @@ export default function UserServicePage({ params }: PageProps) {
                     {paymentSubmittingId === request.id ? t('creatingPayment') : t('payNow')}
                   </Button>
                 ) : null}
+                {canCancel ? (
                 <Button
                   variant="outlined"
                   size="small"
@@ -504,6 +505,7 @@ export default function UserServicePage({ params }: PageProps) {
                 >
                   {t('cancel')}
                 </Button>
+                ) : null}
               </Stack>
             );
           }}

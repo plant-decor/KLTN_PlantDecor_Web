@@ -669,6 +669,32 @@ export const getSystemEnumValues = async (enumName: string, loading = true): Pro
     QUERY_CONFIG
   );
 
+  const payload = unwrapPayloadData(response);
+  if (Array.isArray(payload) && payload.length > 0) {
+    const first = payload[0];
+    if (isRecord(first) && Array.isArray(first.values)) {
+      return first.values
+        .map((item) => {
+          if (!isRecord(item)) {
+            return null;
+          }
+
+          const value = toNumber(item.value, Number.NaN);
+          if (!Number.isFinite(value)) {
+            return null;
+          }
+
+          return {
+            value,
+            name: toText(item.name) || String(value),
+          };
+        })
+        .filter((item): item is EnumOption => Boolean(item));
+    }
+
+    return normalizeEnumOptions({ payload: first });
+  }
+
   return normalizeEnumOptions(response);
 };
 
@@ -924,6 +950,31 @@ export const assignCaretakerToManagerServiceRegistration = async (
   const normalized = normalizeServiceRegistration(unwrapPayloadData(response));
   if (!normalized) {
     throw new Error("Cannot assign caretaker to service order");
+  }
+
+  return normalized;
+};
+
+export interface RescheduleServiceRegistrationRequest {
+  serviceDate: string;
+  preferredShiftId: number;
+}
+
+export const rescheduleManagerServiceRegistration = async (
+  id: number,
+  data: RescheduleServiceRegistrationRequest,
+  loading = true
+): Promise<ManagerServiceRegistration> => {
+  const response = await apiClient.put<WrappedResponse<unknown>>(
+    `service-registrations/${id}/reschedule`,
+    data,
+    loading,
+    MUTATION_CONFIG
+  );
+
+  const normalized = normalizeServiceRegistration(unwrapPayloadData(response));
+  if (!normalized) {
+    throw new Error("Cannot reschedule service order");
   }
 
   return normalized;

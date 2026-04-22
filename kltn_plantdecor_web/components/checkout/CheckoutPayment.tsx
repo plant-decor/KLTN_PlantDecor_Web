@@ -309,7 +309,7 @@ export default function CheckoutPayment({
           disabled={isLoadingInvoice || isSubmitting || isCreatingOrder}
           sx={{ mt: 3, backgroundColor: 'var(--primary)', fontWeight: 'bold', fontSize: '16px', '&:hover': { backgroundColor: '#45a049' } }}
         >
-          {isCreatingOrder ? 'Creating order...' : isSubmitting ? 'Creating payment...' : `Thanh toán thông qua VNPay`}
+          {isCreatingOrder ? 'Creating order...' : isSubmitting ? 'Creating payment...' : `Pay with VNPay`}
         </Button>
       </CardContent>
     </Card>

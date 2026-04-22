@@ -282,7 +282,7 @@ export default function ManagerNurseryDesignTemplateManagementPageClient() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setToggleTarget(null)}>Cancel</Button>
-          <Button variant="contained" onClick={() => void handleToggle()} disabled={submitting}>
+          <Button variant="contained" className='bg-primary!' onClick={() => void handleToggle()} disabled={submitting}>
             Confirm
           </Button>
         </DialogActions>

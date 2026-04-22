@@ -9,6 +9,7 @@ import {
   DeleteOutline as DeleteOutlineIcon,
   Favorite as FavoriteIcon,
   FavoriteBorder as FavoriteBorderIcon,
+  ShoppingCartOutlined,
 } from '@mui/icons-material';
 import { useLocale, useTranslations } from 'next-intl';
 import { useAuthStore } from '@/lib/store/authStore';
@@ -355,17 +356,17 @@ export default function ProductCard({
     return !selectedInstanceId;
   }, [pendingAction, selectedInstanceId, selectedNursery, selectedNurseryMaxQuantity]);
 
-  const drawerConfirmLabel = useMemo(() => {
-    if (pendingAction === 'wishlist-add') {
-      return tWishlist('addToWishlistCompact');
-    }
+  // const drawerConfirmLabel = useMemo(() => {
+  //   if (pendingAction === 'wishlist-add') {
+  //     return tWishlist('addToWishlistCompact');
+  //   }
 
-    if (pendingAction === 'wishlist-remove') {
-      return tWishlist('removeItem');
-    }
+  //   if (pendingAction === 'wishlist-remove') {
+  //     return tWishlist('removeItem');
+  //   }
 
-    return tProducts('nurseryDrawer.continue');
-  }, [pendingAction, tProducts, tWishlist]);
+  //   return tProducts('nurseryDrawer.continue');
+  // }, [pendingAction, tProducts, tWishlist]);
 
   const normalizedTagNames = useMemo(() => {
     if (!Array.isArray(plant.tagNames)) return [];
@@ -498,6 +499,7 @@ export default function ProductCard({
                 <Button
                   onClick={handleAddToCart}
                   variant="contained"
+                  startIcon={<ShoppingCartOutlined />}
                   size="medium"
                   fullWidth
                   disabled={isActionDisabled || isOutOfStock}
@@ -556,18 +558,32 @@ export default function ProductCard({
               onSelectNursery={handleSelectNursery}
             />
           )}
-
+          <div className="flex flex-col justify-center ">
           {pendingAction === 'cart' && selectedNursery ? (
-            <div className="mt-4">
+          <div className="flex items-center gap-4 ">
               <QuantitySelector
                 value={selectedQuantity}
                 max={selectedNurseryMaxQuantity}
                 onChange={setSelectedQuantity}
                 showAvailable
                 preventEventBubbling
-              />
-            </div>
+                />
+          <Button
+              variant="contained"
+              fullWidth
+              startIcon={<ShoppingCartOutlined />}
+              disabled={drawerConfirmDisabled}
+              onClick={handleConfirmWithNursery}
+              sx={{
+                bgcolor: 'var(--primary)',
+                '&:hover': { bgcolor: '#45a049' },
+              }}
+              >
+              Add to Cart
+            </Button>
+              </div>
           ) : null}
+          </div>
 
           {(pendingAction === 'wishlist-add' || pendingAction === 'wishlist-remove') && selectedNursery ? (
             <div className="mt-4 space-y-2">
@@ -603,18 +619,7 @@ export default function ProductCard({
             <Button variant="outlined" fullWidth onClick={handleCancelNurserySelection}>
               {tCommon('cancel')}
             </Button>
-            <Button
-              variant="contained"
-              fullWidth
-              disabled={drawerConfirmDisabled}
-              onClick={handleConfirmWithNursery}
-              sx={{
-                bgcolor: 'var(--primary)',
-                '&:hover': { bgcolor: '#45a049' },
-              }}
-            >
-              {drawerConfirmLabel}
-            </Button>
+            
           </div>
         </div>
       </Drawer>

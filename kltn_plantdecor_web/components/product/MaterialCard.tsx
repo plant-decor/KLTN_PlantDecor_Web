@@ -2,11 +2,10 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState, type MouseEvent } from 'react';
 import { Button, Drawer } from '@mui/material';
-import { FavoriteBorder as FavoriteBorderIcon, Favorite as FavoriteIcon, ShoppingBagOutlined, ShoppingCartOutlined } from '@mui/icons-material';
+import { FavoriteBorder as FavoriteBorderIcon, Favorite as FavoriteIcon, ShoppingCartOutlined } from '@mui/icons-material';
 import { useLocale, useTranslations } from 'next-intl';
 import { useAuthStore } from '@/lib/store/authStore';
 import { addMaterialToWishlist, removeItemFromWishlist } from '@/lib/api/cartWishlistService';

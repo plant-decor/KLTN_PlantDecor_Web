@@ -1,11 +1,41 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Box } from '@mui/material';
 
 interface RichTextDisplayProps {
     content: string | null | undefined;
     className?: string;
+}
+
+const YOUTUBE_VIDEO_ID_RE = /([a-zA-Z0-9_-]{11})/;
+
+function toYouTubeEmbedUrl(input: string): string | null {
+    const normalized = input.replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
+    if (!normalized) return null;
+
+    const directMatch = normalized.match(
+        /(?:youtube(?:-nocookie)?\.com\/embed\/|youtube\.com\/watch\?v=|youtube\.com\/shorts\/|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+    );
+    const videoId = directMatch?.[1] ?? normalized.match(YOUTUBE_VIDEO_ID_RE)?.[1];
+    if (!videoId) return null;
+
+    return `https://www.youtube-nocookie.com/embed/${videoId}?rel=0`;
+}
+
+function transformYouTubeLinksToIframes(html: string): string {
+    // IMPORTANT: keep this transformation deterministic for SSR hydration.
+    // Only use regex/string operations here (no DOM), so server + client first render match.
+    return html.replace(
+        /<a\b[^>]*\bhref=(["'])(https?:\/\/[^"']+)\1[^>]*>[\s\S]*?<\/a>/gi,
+        (full, _q, href) => {
+            const embedUrl = toYouTubeEmbedUrl(String(href));
+            if (!embedUrl) {
+                return full;
+            }
+            return `<iframe class="ql-video" frameborder="0" allowfullscreen="true" src="${embedUrl}"></iframe>`;
+        }
+    );
 }
 
 
@@ -24,6 +54,11 @@ function insertSoftBreaksIntoText(text: string, maxLen = 30): string {
         .join('');
 }
 function insertSoftBreaksIntoHtml(html: string, maxLen = 30): string {
+    if (typeof document === 'undefined') {
+        // SSR-safe fallback: keep HTML as-is.
+        return html;
+    }
+
     const container = document.createElement('div');
     container.innerHTML = html;
 
@@ -43,35 +78,59 @@ function insertSoftBreaksIntoHtml(html: string, maxLen = 30): string {
 
     return container.innerHTML;
 }
+
+function toBaseHtml(content: string): string {
+    const trimmed = content.trim();
+    if (!trimmed) {
+        return '';
+    }
+
+    const htmlTagRegex = /<[^>]+>/;
+    if (htmlTagRegex.test(trimmed)) {
+        return transformYouTubeLinksToIframes(trimmed);
+    }
+
+    const embedUrl = toYouTubeEmbedUrl(trimmed);
+    if (embedUrl) {
+        return `<iframe class="ql-video" frameborder="0" allowfullscreen="true" src="${embedUrl}"></iframe>`;
+    }
+
+    const escaped = trimmed
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+
+    return `<p>${insertSoftBreaksIntoText(escaped).replace(/\n/g, '<br/>')}</p>`;
+}
+
 export default function RichTextDisplay({ content, className }: RichTextDisplayProps) {
-    const sanitizedContent = useMemo(() => {
+    const baseHtml = useMemo(() => {
         if (!content || typeof content !== 'string') {
             return '';
         }
-
-        const trimmed = content.trim();
-        if (!trimmed) {
-            return '';
-        }
-
-        // Check if content contains HTML tags
-        const htmlTagRegex = /<[^>]+>/;
-        if (htmlTagRegex.test(trimmed)) {
-            return insertSoftBreaksIntoHtml(trimmed);
-        }
-
-        // Plain text - escape and wrap in paragraph
-        const escaped = trimmed
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-
-        return `<p>${insertSoftBreaksIntoText(escaped).replace(/\n/g, '<br/>')}</p>`;
+        return toBaseHtml(content);
     }, [content]);
 
-    if (!sanitizedContent) {
+    const [renderedHtml, setRenderedHtml] = useState(baseHtml);
+
+    useEffect(() => {
+        if (typeof document === 'undefined') {
+            return;
+        }
+
+        // Enhance after mount: insert soft breaks on client only.
+        // Schedule the update so we don't call setState synchronously in the effect body.
+        const handle = requestAnimationFrame(() => {
+            const enhanced = insertSoftBreaksIntoHtml(baseHtml);
+            setRenderedHtml((prev) => (prev === enhanced ? prev : enhanced));
+        });
+
+        return () => cancelAnimationFrame(handle);
+    }, [baseHtml]);
+
+    if (!renderedHtml) {
         return <Box className="text-gray-500 italic">No description provided</Box>;
     }
 
@@ -190,7 +249,7 @@ export default function RichTextDisplay({ content, className }: RichTextDisplayP
                     margin: '1rem 0',
                 },
             }}
-            dangerouslySetInnerHTML={{ __html: sanitizedContent }}
+            dangerouslySetInnerHTML={{ __html: renderedHtml }}
         />
     );
 }

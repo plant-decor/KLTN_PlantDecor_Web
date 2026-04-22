@@ -371,8 +371,8 @@ export interface MaterialUpsertRequest {
   specifications?: string | null;
   expiryMonths?: number | null;
   isActive: boolean;
-  categoryId?: number[];
-  tagId?: number[];
+  categoryIds?: number[];
+  tagIds?: number[];
 }
 
 export interface MaterialFormData extends MaterialUpsertRequest {

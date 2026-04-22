@@ -20,12 +20,10 @@ import type { CheckoutData } from '@/types/cart.types';
 
 interface CheckoutReviewProps {
   checkoutData: CheckoutData;
-  cartId: string;
 }
 
 export default function CheckoutReview({
   checkoutData,
-  cartId,
 }: CheckoutReviewProps) {
   const paymentMethodLabel = getPaymentMethodLabel(
     checkoutData.paymentMethod || ''

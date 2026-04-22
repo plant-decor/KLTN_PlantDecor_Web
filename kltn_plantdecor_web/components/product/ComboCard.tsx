@@ -5,7 +5,7 @@ import { Link } from '@/i18n/navigation';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState, useEffect, type MouseEvent } from 'react';
 import { Box, Button, Chip, Drawer } from '@mui/material';
-import { FavoriteBorder as FavoriteBorderIcon, Favorite as FavoriteIcon } from '@mui/icons-material';
+import { FavoriteBorder as FavoriteBorderIcon, Favorite as FavoriteIcon, ShoppingCartOutlined } from '@mui/icons-material';
 import { useLocale, useTranslations } from 'next-intl';
 import type { ShopUnifiedComboItem } from '@/lib/api/shopUnifiedService';
 import { formatCurrency } from '@/lib/utils/formatUtil';
@@ -33,7 +33,7 @@ export default function ComboCard({
   const tWishlist = useTranslations('wishlist');
   const tCommon = useTranslations('common');
   const { user } = useAuthStore();
-  const availableQuantity = (combo.nurseries ?? []).reduce((sum, item) => sum + (item.quantity ?? 0), 0);
+  // const availableQuantity = (combo.nurseries ?? []).reduce((sum, item) => sum + (item.quantity ?? 0), 0);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isLoadingNurseries, setIsLoadingNurseries] = useState(false);
   const [nurseries, setNurseries] = useState<ShopNurseryListItem[]>([]);
@@ -237,6 +237,7 @@ export default function ComboCard({
                 variant="contained"
                 size="medium"
                 fullWidth
+                startIcon={<ShoppingCartOutlined />}
                 sx={{
                   textTransform: 'none',
                   whiteSpace: 'nowrap',

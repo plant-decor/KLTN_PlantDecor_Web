@@ -1,9 +1,47 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef } from 'react';
-import { Box, FormHelperText, Typography } from '@mui/material';
-import ReactQuill from 'react-quill-new';
+import React, { type ComponentType, useEffect, useMemo, useRef, useState } from 'react';
+import { Box, Button, FormHelperText, Popover, Stack, TextField, Typography } from '@mui/material';
+import dynamic from 'next/dynamic';
 import 'react-quill-new/dist/quill.snow.css';
+
+type QuillRange = { index: number; length: number };
+
+interface QuillToolbarModule {
+  addHandler: (name: string, handler: () => void) => void;
+  container?: Element;
+}
+
+interface QuillEditor {
+  getModule: (name: 'toolbar') => QuillToolbarModule | null;
+  getSelection: (focus?: boolean) => QuillRange | null;
+  getLength: () => number;
+  insertEmbed: (index: number, type: 'image' | 'video', value: string, source?: string) => void;
+  setSelection: (index: number, length?: number) => void;
+  getText: () => string;
+  root?: { innerHTML?: string };
+  isEnabled?: () => boolean;
+  enable?: (enabled: boolean) => void;
+  focus?: () => void;
+}
+
+interface ReactQuillHandle {
+  getEditor: () => QuillEditor;
+}
+
+interface ReactQuillProps {
+  theme?: string;
+  value: string;
+  onChange: (value: string) => void;
+  modules?: unknown;
+  formats?: string[];
+  readOnly?: boolean;
+  placeholder?: string;
+}
+
+const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false }) as unknown as ComponentType<
+  ReactQuillProps & { ref?: React.Ref<ReactQuillHandle> }
+>;
 
 interface RichTextEditorProps {
   value: string;
@@ -21,33 +59,44 @@ interface RichTextEditorProps {
 }
 
 const normalizeVideoUrl = (input: string): string => {
-  const trimmed = input.trim();
+  const trimmed = input
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .trim();
   if (!trimmed) {
     return trimmed;
   }
 
   try {
+    const rawVideoIdMatch = trimmed.match(/(?:v=|\/embed\/|\/shorts\/|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    const matchedVideoId = rawVideoIdMatch?.[1]?.trim();
+    if (matchedVideoId) {
+      return `https://www.youtube-nocookie.com/embed/${matchedVideoId}?rel=0`;
+    }
+
     const parsedUrl = new URL(trimmed);
     const host = parsedUrl.hostname.replace(/^www\./, '').toLowerCase();
 
+    const toEmbedUrl = (videoId: string) => `https://www.youtube-nocookie.com/embed/${videoId}?rel=0`;
+
     if (host === 'youtu.be') {
       const videoId = parsedUrl.pathname.replace('/', '').trim();
-      return videoId ? `https://www.youtube.com/embed/${videoId}` : trimmed;
+      return videoId ? toEmbedUrl(videoId) : trimmed;
     }
 
     if (host.endsWith('youtube.com')) {
       if (parsedUrl.pathname === '/watch') {
         const videoId = parsedUrl.searchParams.get('v')?.trim();
-        return videoId ? `https://www.youtube.com/embed/${videoId}` : trimmed;
+        return videoId ? toEmbedUrl(videoId) : trimmed;
       }
 
       if (parsedUrl.pathname.startsWith('/shorts/')) {
         const videoId = parsedUrl.pathname.split('/shorts/')[1]?.split('/')[0]?.trim();
-        return videoId ? `https://www.youtube.com/embed/${videoId}` : trimmed;
+        return videoId ? toEmbedUrl(videoId) : trimmed;
       }
 
       if (parsedUrl.pathname.startsWith('/embed/')) {
-        return trimmed;
+        const videoId = parsedUrl.pathname.split('/embed/')[1]?.split('/')[0]?.trim();
+        return videoId ? toEmbedUrl(videoId) : trimmed;
       }
     }
   } catch {
@@ -71,7 +120,10 @@ export default function RichTextEditor({
   onUploadImage,
   uploading = false,
 }: RichTextEditorProps) {
-  const quillRef = useRef<any>(null);
+  const quillRef = useRef<ReactQuillHandle | null>(null);
+  const [videoAnchorEl, setVideoAnchorEl] = useState<HTMLElement | null>(null);
+  const [videoInputValue, setVideoInputValue] = useState('');
+  const selectionRef = useRef<{ index: number; length: number } | null>(null);
 
   const modules = useMemo(
     () => ({
@@ -80,7 +132,7 @@ export default function RichTextEditor({
         ['blockquote', 'code-block'],
         [{ header: 1 }, { header: 2 }],
         [{ list: 'ordered' }, { list: 'bullet' }],
-        ['link', 'image', 'video'],
+        ['image', 'video'],
         ['clean'],
       ],
     }),
@@ -113,15 +165,11 @@ export default function RichTextEditor({
     }
 
     toolbar.addHandler('video', () => {
-      const rawUrl = window.prompt('Enter YouTube URL');
-      if (!rawUrl) {
-        return;
-      }
-
-      const videoUrl = normalizeVideoUrl(rawUrl);
       const range = quill.getSelection(true) || { index: quill.getLength(), length: 0 };
-      quill.insertEmbed(range.index, 'video', videoUrl, 'user');
-      quill.setSelection(range.index + 1);
+      selectionRef.current = range;
+      const anchor = toolbar?.container?.querySelector?.('.ql-video') as HTMLElement | null;
+      setVideoInputValue('');
+      setVideoAnchorEl(anchor);
     });
 
     if (onUploadImage) {
@@ -139,9 +187,20 @@ export default function RichTextEditor({
 
           try {
             const imageUrl = await onUploadImage(file);
+            const wasEnabled = typeof quill.isEnabled === 'function' ? quill.isEnabled() : true;
+            if (!wasEnabled && typeof quill.enable === 'function') {
+              quill.enable(true);
+            }
+            if (typeof quill.focus === 'function') {
+              quill.focus();
+            }
             const range = quill.getSelection(true) || { index: quill.getLength(), length: 0 };
             quill.insertEmbed(range.index, 'image', imageUrl, 'user');
             quill.setSelection(range.index + 1);
+            onChange(quill.root?.innerHTML ?? quill.getText());
+            if (!wasEnabled && typeof quill.enable === 'function') {
+              quill.enable(false);
+            }
           } catch (err) {
             console.error('Image upload failed:', err);
             alert('Failed to upload image. Please try again.');
@@ -149,7 +208,46 @@ export default function RichTextEditor({
         });
       });
     }
-  }, [onUploadImage]);
+  }, [onChange, onUploadImage]);
+
+  const handleCloseVideoPopover = () => {
+    setVideoAnchorEl(null);
+    selectionRef.current = null;
+  };
+
+  const handleInsertVideo = () => {
+    const quill = quillRef.current?.getEditor?.();
+    if (!quill) {
+      handleCloseVideoPopover();
+      return;
+    }
+
+    const rawUrl = videoInputValue.trim();
+    if (!rawUrl) {
+      handleCloseVideoPopover();
+      return;
+    }
+
+    const videoUrl = normalizeVideoUrl(rawUrl);
+    const wasEnabled = typeof quill.isEnabled === 'function' ? quill.isEnabled() : true;
+    if (!wasEnabled && typeof quill.enable === 'function') {
+      quill.enable(true);
+    }
+    if (typeof quill.focus === 'function') {
+      quill.focus();
+    }
+
+    const range = selectionRef.current || quill.getSelection(true) || { index: quill.getLength(), length: 0 };
+    quill.insertEmbed(range.index, 'video', videoUrl, 'user');
+    quill.setSelection(range.index + 1);
+    onChange(quill.root?.innerHTML ?? quill.getText());
+
+    if (!wasEnabled && typeof quill.enable === 'function') {
+      quill.enable(false);
+    }
+
+    handleCloseVideoPopover();
+  };
 
   return (
     <Box>
@@ -253,6 +351,46 @@ export default function RichTextEditor({
           placeholder={placeholder}
         />
       </Box>
+      <Popover
+        open={Boolean(videoAnchorEl)}
+        anchorEl={videoAnchorEl}
+        onClose={handleCloseVideoPopover}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+        disableRestoreFocus
+        PaperProps={{ sx: { p: 1.5, width: 360 } }}
+      >
+        <Stack spacing={1.25}>
+          <Typography variant="subtitle2" fontWeight={600}>
+            YouTube URL
+          </Typography>
+          <TextField
+            size="small"
+            placeholder="Paste YouTube link (watch/shorts/youtu.be)"
+            value={videoInputValue}
+            onChange={(e) => setVideoInputValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleInsertVideo();
+              }
+              if (e.key === 'Escape') {
+                e.preventDefault();
+                handleCloseVideoPopover();
+              }
+            }}
+            autoFocus
+          />
+          <Stack direction="row" spacing={1} justifyContent="flex-end">
+            <Button size="small" onClick={handleCloseVideoPopover}>
+              Cancel
+            </Button>
+            <Button size="small" variant="contained" onClick={handleInsertVideo} disabled={!videoInputValue.trim()}>
+              Insert
+            </Button>
+          </Stack>
+        </Stack>
+      </Popover>
       {helperText && (
         <FormHelperText error={error} sx={{ mt: 0.5 }}>
           {helperText}

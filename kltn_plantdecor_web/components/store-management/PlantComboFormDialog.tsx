@@ -50,6 +50,36 @@ interface OptionItem {
   name: string;
 }
 
+type UnknownApiResponse = { payload?: unknown; data?: unknown };
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object';
+}
+
+function readImageUrlFromUnknownPayload(payload: unknown): string | null {
+  if (!isRecord(payload)) {
+    return null;
+  }
+
+  const images = payload.images;
+  if (Array.isArray(images) && images.length > 0) {
+    const last = images.at(-1);
+    if (isRecord(last) && typeof last.imageUrl === 'string' && last.imageUrl.trim()) {
+      return last.imageUrl;
+    }
+    const maybeLast = images[images.length - 1];
+    if (isRecord(maybeLast) && typeof maybeLast.imageUrl === 'string' && maybeLast.imageUrl.trim()) {
+      return maybeLast.imageUrl;
+    }
+  }
+
+  if (typeof payload.imageUrl === 'string' && payload.imageUrl.trim()) {
+    return payload.imageUrl;
+  }
+
+  return null;
+}
+
 interface EnumOptionItem {
   value: number;
   name: string;
@@ -170,12 +200,10 @@ export default function PlantComboFormDialog({
     setUploadingImage(true);
     try {
       const response = await uploadAdminPlantComboImages(editingData.id, [file], true);
-      
-      // Extract URL from response
-      const imageUrl = (response.payload as any)?.[0]?.imageUrl || 
-                       (response.data as any)?.[0]?.imageUrl ||
-                       (response as any)?.imageUrl;
-      
+      const candidate = response as UnknownApiResponse;
+      const payload = candidate.payload ?? candidate.data;
+      const imageUrl = readImageUrlFromUnknownPayload(payload);
+
       if (!imageUrl) {
         throw new Error('No image URL returned from server');
       }

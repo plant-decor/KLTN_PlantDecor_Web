@@ -5,6 +5,7 @@ import {
   assignPlantCategories,
   assignPlantTags,
   createAdminPlant,
+  deleteAdminPlantImage,
   getAdminPlantById,
   getPlantEnums,
   removePlantCategory,
@@ -382,6 +383,22 @@ export const useAdminPlants = (): UseAdminPlantsReturn => {
         if (!plantId) {
           // console.error('[savePlant] FATAL: Cannot resolve plant ID after save');
           throw new Error('Cannot resolve plant ID after save');
+        }
+
+        if (editingPlantId) {
+          const latestPlant = await getAdminPlantById(plantId, true).catch(() => null);
+          const latestPayload = latestPlant ? getResponsePayload(latestPlant) : null;
+          const currentImageIds =
+            latestPayload?.images?.map((image) => image.id).filter((id): id is number => typeof id === 'number') ?? [];
+          const keptImageIds = images
+            .map((image) => image.existingImageId)
+            .filter((id): id is number => typeof id === 'number');
+          const keptSet = new Set(keptImageIds);
+          const toDelete = currentImageIds.filter((id) => !keptSet.has(id));
+
+          if (toDelete.length > 0) {
+            await Promise.all(toDelete.map((imageId) => deleteAdminPlantImage(plantId, imageId, true)));
+          }
         }
 
         // console.log('[savePlant] Plant ID confirmed:', plantId);

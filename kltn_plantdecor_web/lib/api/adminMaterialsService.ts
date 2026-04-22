@@ -79,6 +79,14 @@ export const uploadAdminMaterialImages = async (
   });
 };
 
+export const deleteAdminMaterialImage = async (
+  id: number,
+  imageId: number,
+  loading = true
+): Promise<ResponseModel<unknown>> => {
+  return apiClient.del(`/admin/Materials/${id}/images/${imageId}`, loading);
+};
+
 export const uploadAdminMaterialThumbnail = async (
   id: number,
   file: File,

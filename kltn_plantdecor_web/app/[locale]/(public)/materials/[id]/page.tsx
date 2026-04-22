@@ -3,6 +3,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import ClickableImageViewer from '@/components/image-view/ClickableImageViewer';
 import MaterialPurchasePanel from '@/components/product/MaterialPurchasePanel';
+import RichTextDisplay from '@/components/store-management/RichTextDisplay';
 import {
   getMaterialById,
   getMaterialNurseries,
@@ -153,20 +154,6 @@ export default async function MaterialDetailPage({ params }: PageProps) {
               containerClassName="rounded-xl overflow-hidden bg-gray-100 border border-gray-200"
               className="w-full aspect-square object-cover"
             />
-          </div>
-
-          <div className="space-y-5">
-            <div>
-              <h1 className="text-4xl font-bold text-gray-900">{material.name}</h1>
-              <p className="text-sm text-gray-500 mt-2">Code: {material.materialCode}</p>
-            </div>
-
-            <div>
-              <span className="text-3xl font-bold text-green-600">
-                {formatCurrency(material.basePrice, locale)}
-              </span>
-            </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-gray-50 rounded-lg p-4">
                 <p className="text-sm text-gray-500 mb-1">Brand</p>
@@ -187,48 +174,64 @@ export default async function MaterialDetailPage({ params }: PageProps) {
                 <p className="font-semibold text-gray-900">{material.isActive ? 'Active' : 'Inactive'}</p>
               </div>
             </div>
+          </div>
 
-            {material.description && (
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Description</h3>
-                <p className="text-gray-600 leading-relaxed">{material.description}</p>
-              </div>
-            )}
-
-            {material.categories?.length > 0 && (
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Categories</h3>
-                <div className="flex flex-wrap gap-2">
-                  {material.categories.map((category) => (
-                    <span
-                      key={category.id}
-                      className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm"
-                    >
-                      {category.name}
-                    </span>
-                  ))}
+          <div className="space-y-5">
+            <div>
+              <h1 className="text-4xl font-bold text-gray-900">{material.name}</h1>
+              {/* <p className="text-sm text-gray-500 mt-2">Code: {material.materialCode}</p> */}
+            </div>
+            <div className='grid grid-cols-2 gap-4'>
+              {material.categories?.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Categories</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {material.categories.map((category) => (
+                      <span
+                        key={category.id}
+                        className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm"
+                      >
+                        {category.name}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {material.tags?.length > 0 && (
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Tags</h3>
-                <div className="flex flex-wrap gap-2">
-                  {material.tags.map((tag) => (
-                    <span key={tag.id} className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">
-                      {tag.tagName}
-                    </span>
-                  ))}
+              {material.tags?.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Tags</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {material.tags.map((tag) => (
+                      <span key={tag.id} className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">
+                        {tag.tagName}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+
+            <div>
+              <span className="text-3xl font-bold text-green-600">
+                {formatCurrency(material.basePrice, locale)}
+              </span>
+            </div>
 
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-3">Select nursery to buy</h3>
               <MaterialPurchasePanel material={material} nurseries={nurseries} />
             </div>
           </div>
+          {material.description && (
+              <div className="mb-6 w-full col-span-2"> {/* Thêm w-full */}
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Description</h3>
+                {/* Loại bỏ prose ở div này, chỉ để bên trong RichTextDisplay xử lý */}
+                <div className="w-full overflow-hidden text-gray-600">
+                  <RichTextDisplay content={material.description} />
+                </div>
+              </div>
+            )}
         </div>
       </div>
     </div>

@@ -133,7 +133,7 @@ export default function CustomerOrdersPage() {
         <Table>
           <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
             <TableRow>
-              <TableCell sx={{ fontWeight: 'bold' }}>Order ID</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>ID</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Customer Name</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Phone</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }} align="center">

@@ -44,11 +44,11 @@ interface StoreUsersTableProps {
 const getStatusLabel = (status: number) => {
   switch (status) {
     case 1:
-      return "Hoạt động";
+      return "Active";
     case 2:
-      return "Tạm khóa";
+      return "Inactive";
     default:
-      return "Không xác định";
+      return "Unknown";
   }
 };
 
@@ -172,7 +172,7 @@ export default function StoreUsersTable({
                 )}
                 <TableCell align="center">
                   <Stack direction="row" spacing={0.5} justifyContent="center">
-                    <Tooltip title="Xem chi tiết">
+                    <Tooltip title="View details">
                       <IconButton color="primary" onClick={() => onViewDetail(staff.id)}>
                         <VisibilityIcon />
                       </IconButton>

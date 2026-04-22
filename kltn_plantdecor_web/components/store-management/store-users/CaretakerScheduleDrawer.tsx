@@ -89,7 +89,7 @@ export default function CaretakerScheduleDrawer({
         <Box sx={{ p: 2.5 }}>
           <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
             <Typography variant="h6" fontWeight={700}>
-              Lịch công việc caretaker
+              Caretaker Schedule
             </Typography>
             <IconButton onClick={onClose}>
               <CloseIcon />
@@ -97,12 +97,12 @@ export default function CaretakerScheduleDrawer({
           </Stack>
 
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            {caretaker ? `Nhân viên: ${caretaker.username} (#${caretaker.id})` : "Chưa chọn caretaker"}
+            {caretaker ? `Caretaker: ${caretaker.username} (#${caretaker.id})` : "No caretaker selected"}
           </Typography>
 
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
             <TextField
-              label="Từ ngày"
+              label="From date"
               type="date"
               size="small"
               value={fromDate}
@@ -111,7 +111,7 @@ export default function CaretakerScheduleDrawer({
               slotProps={{ htmlInput: { max: toDate || undefined } }}
             />
             <TextField
-              label="Đến ngày"
+              label="To date"
               type="date"
               size="small"
               value={toDate}
@@ -120,7 +120,7 @@ export default function CaretakerScheduleDrawer({
               slotProps={{ htmlInput: { min: fromDate || undefined } }}
             />
             <Button variant="outlined" startIcon={<RefreshIcon />} onClick={onRefresh} disabled={!caretaker || !fromDate || !toDate}>
-              Tải lịch
+              Reload
             </Button>
           </Stack>
         </Box>
@@ -136,7 +136,7 @@ export default function CaretakerScheduleDrawer({
 
           {!error && (
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Tổng cộng {items.length} phiên chăm sóc trong khoảng ngày đã chọn.
+              Total {items.length} care sessions in the selected period.
             </Typography>
           )}
 
@@ -144,14 +144,15 @@ export default function CaretakerScheduleDrawer({
             <Table size="small">
               <TableHead sx={{ backgroundColor: "var(--primary)" }}>
                 <TableRow>
-                  <TableCell sx={{ color: "var(--primary-foreground)", fontWeight: 600 }}>Phiên</TableCell>
-                  <TableCell sx={{ color: "var(--primary-foreground)", fontWeight: 600 }}>Ngày</TableCell>
-                  <TableCell sx={{ color: "var(--primary-foreground)", fontWeight: 600 }}>Ca làm</TableCell>
-                  <TableCell sx={{ color: "var(--primary-foreground)", fontWeight: 600 }}>Khách hàng</TableCell>
-                  <TableCell sx={{ color: "var(--primary-foreground)", fontWeight: 600 }}>Gói dịch vụ</TableCell>
-                  <TableCell sx={{ color: "var(--primary-foreground)", fontWeight: 600 }}>Trạng thái</TableCell>
-                  <TableCell align="right" sx={{ color: "var(--primary-foreground)", fontWeight: 600 }}>
-                    Chi tiết
+                  <TableCell sx={{ fontWeight: 600 }} align="center">Session</TableCell>
+             
+                  <TableCell sx={{ fontWeight: 600 }} align="center">Date</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }} align="center">Shifts</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }} align="center">Customer</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }} align="center">Service Package</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }} align="center">Status</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 600 }}>
+                    Actions
                   </TableCell>
                 </TableRow>
               </TableHead>
@@ -160,7 +161,7 @@ export default function CaretakerScheduleDrawer({
                 {!loading && items.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={7} align="center" sx={{ py: 4, color: "text.secondary" }}>
-                      Caretaker chưa có phiên chăm sóc trong khoảng này.
+                      Caretaker has no care sessions in this period.
                     </TableCell>
                   </TableRow>
                 )}
@@ -168,7 +169,7 @@ export default function CaretakerScheduleDrawer({
                 {loading && (
                   <TableRow>
                     <TableCell colSpan={7} align="center" sx={{ py: 4, color: "text.secondary" }}>
-                      Đang tải lịch công việc...
+                      Loading care schedule...
                     </TableCell>
                   </TableRow>
                 )}

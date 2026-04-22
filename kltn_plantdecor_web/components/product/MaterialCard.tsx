@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState, type MouseEvent } from 'react';
 import { Button, Drawer } from '@mui/material';
-import { FavoriteBorder as FavoriteBorderIcon, Favorite as FavoriteIcon } from '@mui/icons-material';
+import { FavoriteBorder as FavoriteBorderIcon, Favorite as FavoriteIcon, ShoppingCartOutlined } from '@mui/icons-material';
 import { useLocale, useTranslations } from 'next-intl';
 import { useAuthStore } from '@/lib/store/authStore';
 import { addMaterialToWishlist, removeItemFromWishlist } from '@/lib/api/cartWishlistService';
@@ -169,17 +169,26 @@ export default function MaterialCard({
           </div>
         </Link>
 
-        <div className="basis-[15%] min-h-0 p-2 sm:p-2 md:p-4 lg:p-5 overflow-hidden ">
+        <div className="hidden 2xl:flex 2xl:basis-[15%] min-h-0 p-2 sm:p-2 md:p-4 lg:p-5 overflow-hidden">
           <Link href={`/${locale}/materials/${material.id}`} className="block">
             <h3 className="font-semibold text-gray-900 line-clamp-2">{material.name}</h3>
             <p className="text-sm text-gray-600 mt-2 line-clamp-3">{materialDescription}</p>
           </Link>
         </div>
 
-        <div className="basis-[20%] min-h-0 p-2 sm:p-2 md:p-4 lg:p-5 pt-0 flex flex-col justify-between">
-          <p className="text-green-600 font-bold text-lg">{formatCurrency(material.basePrice, locale)}</p>
-
-          <div className="grid grid-cols-2 gap-2">
+        <div className="basis-[35%] 2xl:basis-[20%] min-h-0 p-2 sm:p-2 md:p-4 lg:p-5 pt-0 flex flex-col justify-between">
+          <div>
+            {material.basePrice ? (
+              <div className="flex flex-col">
+                <span className="text-green-600 font-bold text-lg">
+                  {formatCurrency(material.basePrice, 'vi-VN')}
+                </span>
+              </div>
+            ) : (
+              <span className="text-green-600 font-bold text-lg">Contact us</span>
+            )}
+          </div>
+          <div className="grid grid-cols-1 pt-1 gap-2 2xl:grid-cols-2">
             <div>
               <Button
                 onClick={handleToggleWishlist}
@@ -205,6 +214,7 @@ export default function MaterialCard({
               <Button
                 onClick={handleOpenDrawer}
                 variant="contained"
+                startIcon={<ShoppingCartOutlined />}
                 size="medium"
                 fullWidth
                 disabled={isActionDisabled}

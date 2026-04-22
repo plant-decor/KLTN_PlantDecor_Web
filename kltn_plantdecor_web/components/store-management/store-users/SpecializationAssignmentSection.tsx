@@ -40,18 +40,18 @@ export default function SpecializationAssignmentSection({
 
   return (
     <Stack spacing={2}>
+      <Box className="flex items-center justify-between">
       <Typography variant="subtitle1" fontWeight={700}>
-        Quản lý chuyên môn
+        Manage specializations
       </Typography>
 
       {!readOnly && (
-        <Stack direction="row" justifyContent="flex-end">
-          <Button variant="contained" startIcon={<SaveIcon />} onClick={onSaveAll} disabled={submitting} sx={{backgroundColor: 'var(--primary)', ...hoverLiftStyle}}>
-            Lưu toàn bộ
+        <Button variant="contained" startIcon={<SaveIcon />} onClick={onSaveAll} disabled={submitting} sx={{backgroundColor: 'var(--primary)', ...hoverLiftStyle}}>
+            Save
           </Button>
-        </Stack>
       )}
 
+      </Box>
       <Divider />
 
       {readOnly ? (

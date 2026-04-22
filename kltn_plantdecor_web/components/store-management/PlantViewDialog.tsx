@@ -20,6 +20,7 @@ import {
 import { Check, Close } from '@mui/icons-material';
 import type { PlantDetail, PlantEnumPayload } from '@/types/store-management.types';
 import type { AdminPlantGuideDetail } from '@/types/admin-plant-guide.types';
+import RichTextDisplay from './RichTextDisplay';
 import { getAdminPlantGuideByPlantId } from '@/lib/api/adminPlantGuidesService';
 import { getFengShuiColors, getFengShuiElementLabel } from '@/lib/utils/fengShui';
 import { formatCurrency } from '@/lib/utils/formatUtil';
@@ -167,7 +168,9 @@ export default function PlantViewDialog({ open, plant, enums, onClose }: PlantVi
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <Typography variant="body2" color="text.secondary">Description</Typography>
-                <Typography variant="body1">{plant.description || '-'}</Typography>
+                <Box sx={{ mt: 1 }}>
+                  <RichTextDisplay content={plant.description} />
+                </Box>
               </Grid>
             </Grid>
           </Box>

@@ -98,6 +98,14 @@ export const uploadAdminPlantComboImages = async (
   });
 };
 
+export const deleteAdminPlantComboImage = async (
+  id: number,
+  imageId: number,
+  loading = true
+): Promise<ResponseModel<unknown>> => {
+  return apiClient.del(`/admin/PlantCombos/${id}/images/${imageId}`, loading);
+};
+
 export const toggleAdminPlantComboActive = async (
   id: number,
   loading = true

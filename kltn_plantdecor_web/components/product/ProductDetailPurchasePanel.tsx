@@ -1,8 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import type { Plant } from '@/data/sampledata';
 import type { NurseryResponse } from '@/types/nursery.types';
 import NurseryList from './NuseriesList';
@@ -36,7 +36,6 @@ export default function ProductDetailPurchasePanel({
 }: ProductDetailPurchasePanelProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const locale = useLocale();
   const t = useTranslations('productDetail');
   const tProducts = useTranslations('products');
@@ -48,11 +47,25 @@ export default function ProductDetailPurchasePanel({
   const [instanceItems, setInstanceItems] = useState<NurseryPlantInstanceItem[]>([]);
   const [selectedInstanceId, setSelectedInstanceId] = useState<number | null>(null);
   const [isLoadingInstances, setIsLoadingInstances] = useState(false);
+  const initialSelectedInstanceIdRef = useRef<number | null>(initialSelectedInstanceId ?? null);
+  const selectedInstanceIdRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    initialSelectedInstanceIdRef.current = initialSelectedInstanceId ?? null;
+  }, [initialSelectedInstanceId]);
+
+  useEffect(() => {
+    selectedInstanceIdRef.current = selectedInstanceId;
+  }, [selectedInstanceId]);
 
   const isPlantInstanceFlow = plant.availableInstances > 0;
 
   const updateInstanceInUrl = useCallback((instanceId: number | null) => {
-    const params = new URLSearchParams(searchParams?.toString());
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
     const currentInstanceId = params.get('instanceId');
     const nextInstanceId = instanceId && instanceId > 0 ? String(instanceId) : null;
 
@@ -69,7 +82,7 @@ export default function ProductDetailPurchasePanel({
     const nextQuery = params.toString();
     const nextUrl = nextQuery ? `${pathname}?${nextQuery}` : pathname;
     router.replace(nextUrl, { scroll: false });
-  }, [pathname, router, searchParams]);
+  }, [pathname, router]);
 
   const selectedNursery = useMemo(
     () =>
@@ -111,12 +124,18 @@ export default function ProductDetailPurchasePanel({
         const payloadItems = response.payload?.items ?? [];
         setInstanceItems(payloadItems);
 
-        const validInitialInstanceId =
-          initialSelectedInstanceId &&
-          payloadItems.some((item) => item.plantInstanceId === initialSelectedInstanceId)
-            ? initialSelectedInstanceId
+        const validCurrentSelectedInstanceId =
+          selectedInstanceIdRef.current &&
+          payloadItems.some((item) => item.plantInstanceId === selectedInstanceIdRef.current)
+            ? selectedInstanceIdRef.current
             : null;
-        const nextSelectedInstanceId = validInitialInstanceId ?? payloadItems[0]?.plantInstanceId ?? null;
+        const validInitialInstanceId =
+          initialSelectedInstanceIdRef.current &&
+          payloadItems.some((item) => item.plantInstanceId === initialSelectedInstanceIdRef.current)
+            ? initialSelectedInstanceIdRef.current
+            : null;
+        const nextSelectedInstanceId =
+          validCurrentSelectedInstanceId ?? validInitialInstanceId ?? payloadItems[0]?.plantInstanceId ?? null;
 
         setSelectedInstanceId(nextSelectedInstanceId);
         updateInstanceInUrl(nextSelectedInstanceId);
@@ -138,7 +157,6 @@ export default function ProductDetailPurchasePanel({
       isMounted = false;
     };
   }, [
-    initialSelectedInstanceId,
     isPlantInstanceFlow,
     plant.id,
     selectedNursery?.nurseryId,

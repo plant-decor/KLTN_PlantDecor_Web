@@ -108,6 +108,14 @@ export const setAdminPlantPrimaryImage = async (
   return apiClient.patch(`/admin/Plants/${id}/images/${imageId}/set-primary`, undefined, loading);
 };
 
+export const deleteAdminPlantImage = async (
+  id: number,
+  imageId: number,
+  loading = true
+): Promise<ResponseModel<unknown>> => {
+  return apiClient.del(`/admin/Plants/${id}/images/${imageId}`, loading);
+};
+
 export const uploadAdminPlantThumbnail = async (
   id: number,
   file: File,

@@ -17,6 +17,7 @@ import {
   canApproveOrReject,
   canAssignCaretaker,
   canManagerCancel,
+  canReschedule,
   formatCurrency,
   formatDate,
   getStatusChipColor,
@@ -33,6 +34,7 @@ interface ServiceOrderDetailDialogProps {
   onReject: (item: ManagerServiceRegistration) => void;
   onCancel: (item: ManagerServiceRegistration) => void;
   onAssignCaretaker: (item: ManagerServiceRegistration) => void;
+  onReschedule: (item: ManagerServiceRegistration) => void;
 }
 
 export default function ServiceOrderDetailDialog({
@@ -46,6 +48,7 @@ export default function ServiceOrderDetailDialog({
   onReject,
   onCancel,
   onAssignCaretaker,
+  onReschedule,
 }: ServiceOrderDetailDialogProps) {
   return (
     <Dialog
@@ -141,6 +144,7 @@ export default function ServiceOrderDetailDialog({
               color="success"
               onClick={() => onApprove(detailItem)}
               disabled={submitting}
+              className='bg-primary!'
             >
               Approve Order
             </Button>
@@ -149,6 +153,7 @@ export default function ServiceOrderDetailDialog({
             <Button
               variant="outlined"
               color="error"
+              className='bg-error!'
               onClick={() => onReject(detailItem)}
               disabled={submitting}
             >
@@ -161,6 +166,7 @@ export default function ServiceOrderDetailDialog({
               color="error"
               onClick={() => onCancel(detailItem)}
               disabled={submitting}
+              className='bg-error!'
             >
               Cancel Order
             </Button>
@@ -170,8 +176,14 @@ export default function ServiceOrderDetailDialog({
               variant="outlined"
               onClick={() => onAssignCaretaker(detailItem)}
               disabled={submitting}
+              className='bg-blue-400!'
             >
               Assign caretaker
+            </Button>
+          )}
+          {detailItem && canReschedule(detailItem.status) && (
+            <Button variant="outlined" onClick={() => onReschedule(detailItem)} disabled={submitting} className='bg-warning!'>
+              Reschedule
             </Button>
           )}
         </Stack>

@@ -389,7 +389,7 @@ export default function CheckoutPageClient({
         {activeStep === 1 && (
           <CheckoutReview
             checkoutData={checkoutData}
-            cartId={cartId}
+            // cartId={cartId}
           />
         )}
 

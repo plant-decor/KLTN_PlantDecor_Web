@@ -32,6 +32,8 @@ import {
 import { Add, Delete, Search as SearchIcon } from '@mui/icons-material';
 import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import ImageUpload from './ImageUpload';
+import RichTextEditor from './RichTextEditor';
+import { uploadAdminPlantComboImages } from '@/lib/api/adminPlantCombosService';
 import type {
   ImageUploadData,
   Plant,
@@ -154,9 +156,35 @@ export default function PlantComboFormDialog({
   const [keyword, setKeyword] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const [selectedPlantMap, setSelectedPlantMap] = useState<Record<number, string>>({});
+  const [uploadingImage, setUploadingImage] = useState(false);
   const lastSearchedKeywordRef = useRef<string | null>(null);
   const searchRootRef = useRef<HTMLDivElement | null>(null);
   const fallbackImage = '/img/fallbackplant.avif'
+
+  // Handle image upload for RichTextEditor
+  const handleRichTextImageUpload = async (file: File): Promise<string> => {
+    if (!editingData?.id) {
+      throw new Error('Combo must be created first before uploading images to description');
+    }
+
+    setUploadingImage(true);
+    try {
+      const response = await uploadAdminPlantComboImages(editingData.id, [file], true);
+      
+      // Extract URL from response
+      const imageUrl = (response.payload as any)?.[0]?.imageUrl || 
+                       (response.data as any)?.[0]?.imageUrl ||
+                       (response as any)?.imageUrl;
+      
+      if (!imageUrl) {
+        throw new Error('No image URL returned from server');
+      }
+
+      return imageUrl;
+    } finally {
+      setUploadingImage(false);
+    }
+  };
   const plantOptions = useMemo(() => {
     return plants.map((item) => ({ id: item.id, name: item.name }));
   }, [plants]);
@@ -464,7 +492,16 @@ export default function PlantComboFormDialog({
                 <Controller
                   name="description"
                   control={control}
-                  render={({ field }) => <TextField {...field} label="Description" fullWidth multiline rows={3} />}
+                  render={({ field }) => (
+                    <RichTextEditor
+                      {...field}
+                      label="Description"
+                      placeholder="Enter combo description with rich formatting..."
+                      minHeight={200}
+                      onUploadImage={editingData?.id ? handleRichTextImageUpload : undefined}
+                      uploading={uploadingImage}
+                    />
+                  )}
                 />
               </Grid>
             </Grid>
@@ -592,7 +629,16 @@ export default function PlantComboFormDialog({
                 <Controller
                   name="themeDescription"
                   control={control}
-                  render={({ field }) => <TextField {...field} label="Theme Description" fullWidth />}
+                  render={({ field }) => (
+                    <RichTextEditor
+                      {...field}
+                      label="Theme Description"
+                      placeholder="Enter theme description with rich formatting..."
+                      minHeight={150}
+                      onUploadImage={editingData?.id ? handleRichTextImageUpload : undefined}
+                      uploading={uploadingImage}
+                    />
+                  )}
                 />
               </Grid>
             </Grid>

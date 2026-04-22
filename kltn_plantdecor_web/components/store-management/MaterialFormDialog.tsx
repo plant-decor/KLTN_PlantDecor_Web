@@ -23,6 +23,8 @@ import {
 } from '@mui/material';
 import { Controller, useForm } from 'react-hook-form';
 import ImageUpload from './ImageUpload';
+import RichTextEditor from './RichTextEditor';
+import { uploadAdminMaterialImages } from '@/lib/api/adminMaterialsService';
 import type {
   MaterialDetail,
   MaterialFormData,
@@ -74,6 +76,32 @@ export default function MaterialFormDialog({
 
   const [images, setImages] = useState<ImageUploadData[]>([]);
   // const [specsError, setSpecsError] = useState<string>('');
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  // Handle image upload for RichTextEditor
+  const handleRichTextImageUpload = async (file: File): Promise<string> => {
+    if (!editingData?.id) {
+      throw new Error('Material must be created first before uploading images to description');
+    }
+
+    setUploadingImage(true);
+    try {
+      const response = await uploadAdminMaterialImages(editingData.id, [file], true);
+      
+      // Extract URL from response
+      const imageUrl = (response.payload as any)?.[0]?.imageUrl || 
+                       (response.data as any)?.[0]?.imageUrl ||
+                       (response as any)?.imageUrl;
+      
+      if (!imageUrl) {
+        throw new Error('No image URL returned from server');
+      }
+
+      return imageUrl;
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   useEffect(() => {
     if (!open) {
@@ -190,7 +218,16 @@ export default function MaterialFormDialog({
                 <Controller
                   name="description"
                   control={control}
-                  render={({ field }) => <TextField {...field} label="Description" fullWidth multiline rows={3} />}
+                  render={({ field }) => (
+                    <RichTextEditor
+                      {...field}
+                      label="Description"
+                      placeholder="Enter material description with rich formatting..."
+                      minHeight={200}
+                      onUploadImage={editingData?.id ? handleRichTextImageUpload : undefined}
+                      uploading={uploadingImage}
+                    />
+                  )}
                 />
               </Grid>
             </Grid>

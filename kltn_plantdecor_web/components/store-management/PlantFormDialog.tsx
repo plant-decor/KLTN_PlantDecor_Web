@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useReducer } from 'react';
+import React, { useEffect, useReducer, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   Dialog,
@@ -27,6 +27,8 @@ import {
 } from '@mui/material';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import ImageUpload from './ImageUpload';
+import RichTextEditor from './RichTextEditor';
+import { uploadAdminPlantImages } from '@/lib/api/adminPlantsService';
 import type {
   PlantDetail,
   PlantEnumPayload,
@@ -117,6 +119,32 @@ export default function PlantFormDialog({
 
   const [images, dispatchImages] = useReducer(imagesReducer, [] as ImageUploadData[]);
   const [includePlantGuide, dispatchPlantGuide] = useReducer(plantGuideReducer, false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  // Handle image upload for RichTextEditor
+  const handleRichTextImageUpload = async (file: File): Promise<string> => {
+    if (!editingData?.id) {
+      throw new Error('Plant must be created first before uploading images to description');
+    }
+
+    setUploadingImage(true);
+    try {
+      const response = await uploadAdminPlantImages(editingData.id, [file], true);
+      
+      // Extract URL from response
+      const imageUrl = (response.payload as any)?.[0]?.imageUrl || 
+                       (response.data as any)?.[0]?.imageUrl ||
+                       (response as any)?.imageUrl;
+      
+      if (!imageUrl) {
+        throw new Error('No image URL returned from server');
+      }
+
+      return imageUrl;
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   useEffect(() => {
     if (!open) {
@@ -315,15 +343,16 @@ export default function PlantFormDialog({
                   control={control}
                   rules={{ required: true }}
                   render={({ field, fieldState }) => (
-                    <TextField
+                    <RichTextEditor
                       {...field}
                       label="Description"
-                      fullWidth
-                      multiline
-                      rows={3}
+                      placeholder="Enter plant description with rich formatting..."
                       required
                       error={Boolean(fieldState.error)}
                       helperText={getValidationMessage(fieldState.error)}
+                      minHeight={200}
+                      onUploadImage={editingData?.id ? handleRichTextImageUpload : undefined}
+                      uploading={uploadingImage}
                     />
                   )}
                 />

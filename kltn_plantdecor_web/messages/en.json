@@ -1123,5 +1123,9 @@
     "validation": {
       "roomImageRequired": "Please upload a room image"
     }
+  },
+  "combo":{
+    "description": "Description",
+    "themeDescription": "Theme Description"
   }
 }

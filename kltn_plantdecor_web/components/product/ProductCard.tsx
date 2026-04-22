@@ -402,7 +402,7 @@ export default function ProductCard({
             </span>
           ) : null}
         </div>
-        <div className="basis-[15%] min-h-0 space-y-1 p-2 sm:p-2 md:p-4 lg:p-5 flex flex-col overflow-hidden">
+        <div className="hidden 2xl:flex 2xl:basis-[15%] min-h-0 space-y-1 p-2 sm:p-2 md:p-4 lg:p-5 flex-col overflow-hidden">
           <h3 className="font-semibold text-gray-900">{plant.name}</h3>
             <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{color: 'gray', fontSize: '8px', fontWeight:"300"}}>
             {normalizedTagNames.length > 0 ?
@@ -412,16 +412,16 @@ export default function ProductCard({
             : tCommon('noTags')}
             </Stack>
             {plant.description && (
-              <p className="text-sm text-gray-600 line-clamp-3">{plant.description}</p>
+              <p className="text-sm text-gray-600 line-clamp-1">{plant.description}</p>
             )}
         </div>
 
-        <div className="basis-[20%] min-h-0 p-2 sm:p-2 md:p-4 lg:p-5 pt-0 flex flex-col justify-between">
+        <div className="basis-[35%] 2xl:basis-[20%] min-h-0 p-2 sm:p-2 md:p-4 lg:p-5 pt-0 flex flex-col justify-between">
           <div>
             {plant.basePrice ? (
               <div className="flex flex-col">
                 <span className="text-green-600 font-bold text-lg">
-                  {formatCurrency(plant.basePrice, 'vi-VN')} VND
+                  {formatCurrency(plant.basePrice, 'vi-VN')}
                 </span>
               </div>
             ) : (
@@ -429,7 +429,7 @@ export default function ProductCard({
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-3 pt-1">
+          <div className="grid grid-cols-1 gap-3 pt-1 2xl:grid-cols-2">
             {showAddToWishlistButton && (
               <div>
                 {isPlantInstanceFlow ? (

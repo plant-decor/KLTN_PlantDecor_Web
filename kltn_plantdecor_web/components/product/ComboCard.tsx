@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState, useEffect, type MouseEvent } from 'react';
-import { Button, Chip, Drawer } from '@mui/material';
+import { Box, Button, Chip, Drawer } from '@mui/material';
 import { FavoriteBorder as FavoriteBorderIcon, Favorite as FavoriteIcon } from '@mui/icons-material';
 import { useLocale, useTranslations } from 'next-intl';
 import type { ShopUnifiedComboItem } from '@/lib/api/shopUnifiedService';
@@ -153,11 +153,12 @@ export default function ComboCard({
           </div>
         </Link>
 
-        <div className="basis-[15%] min-h-0 p-2 sm:p-2 md:p-4 lg:p-5 overflow-hidden">
-          <div className="flex items-start justify-between gap-2">
+        <div className="hidden 2xl:flex 2xl:basis-[15%] min-h-0 space-y-1 p-2 sm:p-2 md:p-4 lg:p-5 flex-col overflow-hidden">
+          <div className="w-full flex items-start justify-around gap-2">
             <Link href={`/combo/${combo.id}`} className="block min-w-0">
               <h3 className="font-semibold text-gray-900 line-clamp-2">{combo.name}</h3>
             </Link>
+            <Box sx={{ flexShrink: 0, display: 'flex', alignItems: 'center'}}>
             {combo.comboTypeName ? (
               <Chip
                 size="small"
@@ -168,20 +169,28 @@ export default function ComboCard({
                 }}
               />
             ) : null}
+            </Box>
           </div>
 
-          <p className="text-sm text-gray-600 mt-2 line-clamp-3">
+          {/* <p className="text-sm text-gray-600 mt-2 line-clamp-3">
             {combo.description || tCommon('noData')}
-          </p>
+          </p> */}
         </div>
 
-        <div className="basis-[20%] min-h-0 p-2 sm:p-2 md:p-4 lg:p-5 pt-0 flex flex-col justify-between">
-          <div className='flex justify-between items-center'>
-            <p className="text-green-600 font-bold text-lg">{formatCurrency(combo.price, locale)}</p>
-            <p className="text-sm text-gray-600">{tProducts('inStock')}: {availableQuantity}</p>
+        <div className="basis-[35%] 2xl:basis-[20%] min-h-0 p-2 sm:p-2 md:p-4 lg:p-5 pt-0 flex flex-col justify-between">
+          <div>
+            {combo.price ? (
+              <div className="flex flex-col">
+                <span className="text-green-600 font-bold text-lg">
+                  {formatCurrency(combo.price, 'vi-VN')}
+                </span>
+              </div>
+            ) : (
+              <span className="text-green-600 font-bold text-lg">Contact us</span>
+            )}
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 pt-1 gap-2 2xl:grid-cols-2">
             {/* <div className="sm:flex-1">
               <Button
                 component={Link}

@@ -72,6 +72,7 @@ export interface PlantDetail {
   name: string;
   specificName: string | null;
   origin: string | null;
+  /** HTML-formatted description from rich-text editor */
   description: string | null;
   basePrice: number;
   placementType: number;
@@ -143,6 +144,7 @@ export interface PlantCombo {
   comboName: string;
   comboType: number;
   comboTypeName?: string;
+  /** HTML-formatted description from rich-text editor */
   description: string;
   suitableSpace: number;
   suitableRooms: number[];
@@ -151,6 +153,7 @@ export interface PlantCombo {
   petSafe?: boolean;
   childSafe?: boolean;
   themeName: string;
+  /** HTML-formatted theme description from rich-text editor */
   themeDescription: string;
   comboPrice: number;
   season: number;
@@ -343,6 +346,7 @@ export interface MaterialDetail {
   id: number;
   materialCode: string;
   name: string;
+  /** HTML-formatted description from rich-text editor */
   description: string | null;
   basePrice: number;
   unit: string;

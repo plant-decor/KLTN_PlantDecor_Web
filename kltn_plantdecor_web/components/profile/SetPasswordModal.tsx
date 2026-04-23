@@ -9,13 +9,13 @@ import {
   TextField,
   Button,
   Alert,
-  CircularProgress,
   Typography,
   Box,
 } from '@mui/material';
 import { setPasswordForGoogleLogin } from '@/lib/api/userProfileService';
 import { hoverGlowStyle, hoverLiftStyle } from '@/lib/styles/buttonStyles';
 import { useTranslations } from 'next-intl';
+import { CustomLoading } from '../CustomLoading';
 
 interface SetPasswordModalProps {
   open: boolean;
@@ -155,7 +155,7 @@ export default function SetPasswordModal({ open, onClose }: SetPasswordModalProp
           variant="contained"
           disabled={isLoading}
           sx={{background: "var(--primary)", ...hoverLiftStyle}}
-          startIcon={isLoading ? <CircularProgress size={20} /> : undefined}
+          startIcon={isLoading ? <CustomLoading size={20} /> : undefined}
         >
           {isLoading ? t('processing') || 'Processing...' : (t('setPassword') || 'Set Password')}
         </Button>

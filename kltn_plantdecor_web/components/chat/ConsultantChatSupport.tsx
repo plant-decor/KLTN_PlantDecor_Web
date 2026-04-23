@@ -6,7 +6,6 @@ import {
   Badge,
   Box,
   Chip,
-  CircularProgress,
   Divider,
   IconButton,
   InputBase,
@@ -29,6 +28,7 @@ import type {
   SupportConversationPayload,
 } from "@/types/chat.types";
 import { SupportConversationStatus } from "@/types/chat.types";
+import { CustomLoading } from "../CustomLoading";
 
 type ChatSession = {
   id: string;
@@ -528,7 +528,7 @@ export default function ConsultantChatSupport() {
                       py: 1,
                     }}
                   >
-                    <CircularProgress size={18} sx={{ color: "#94a3b8" }} />
+                    <CustomLoading size={18}  color1="#94a3b8" />
                   </Box>
                 ) : hasOlderMessages ? (
                   <Box

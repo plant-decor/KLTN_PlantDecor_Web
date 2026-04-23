@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, Box, CircularProgress, Container, Grid, Typography } from '@mui/material';
+import { Alert, Box, Container, Grid, Typography } from '@mui/material';
 import type { CartItem } from '@/types/cart.types';
 import CartEmptyState from './CartEmptyState';
 import CartTable from './CartTable';
@@ -18,6 +18,7 @@ import {
 import { searchShopNurseries } from '@/lib/api/shopPlantsService';
 import { notifyCartUpdated } from '@/lib/utils/cartEvents';
 import { useTranslations } from 'next-intl';
+import { CustomLoading } from '../CustomLoading';
 
 interface CartPageClientProps {
   userid: string;
@@ -214,7 +215,7 @@ export default function CartPageClient({ userid }: CartPageClientProps) {
     return (
       <Container maxWidth="lg" sx={{ py: 20 }}>
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <CircularProgress />
+          <CustomLoading size={18} />
         </Box>
       </Container>
     );

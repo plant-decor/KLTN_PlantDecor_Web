@@ -15,7 +15,6 @@ import {
 import type { CheckoutData } from '@/types/cart.types';
 import type { OrderInvoice, OrderCreatePayload } from '@/types/order.types';
 import { createPaymentUrl, getInvoicesByOrderId, createOrder } from '@/lib/api/orderService';
-import { clearCartItems } from '@/lib/api/cartWishlistService';
 import type { OrderCreateRequest } from '@/types/order.types';
 import Image from 'next/image';
 
@@ -182,14 +181,6 @@ export default function CheckoutPayment({
       // Create order
       const created: OrderCreatePayload = await createOrder(payload);
       setCreatedOrderId(created.id);
-
-      // Clear cart after successful order creation
-      try {
-        await clearCartItems();
-      } catch (cartErr) {
-        console.warn('Failed to clear cart:', cartErr);
-        // Don't block payment if cart clear fails
-      }
 
       // Set flag to auto-proceed to payment once invoices are loaded
       setShouldAutoPayAfterOrderCreation(true);

@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Box, Button, Card, CardContent, CircularProgress, Stack, Step, StepLabel, Stepper, Typography } from '@mui/material';
+import { Alert, Box, Button, Card, CardContent, Stack, Step, StepLabel, Stepper, Typography } from '@mui/material';
 import { useTranslations } from 'next-intl';
+import { CustomLoading } from '@/components/CustomLoading';
 import { addItemToCart } from '@/lib/api/cartWishlistService';
 import { notifyCartUpdated } from '@/lib/utils/cartEvents';
 import type { ShopNurseryListItem } from '@/lib/api/shopPlantsService';
@@ -309,7 +310,7 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
         <Card sx={{ mb: 3, boxShadow: 2 }}>
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <CircularProgress size={20} />
+              <CustomLoading size={20} />
               <Typography variant="body2" color="text.secondary">
                 {t('roomInput.analyzingButton')}
               </Typography>

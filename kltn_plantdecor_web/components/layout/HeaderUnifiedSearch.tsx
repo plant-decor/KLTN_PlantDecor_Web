@@ -3,10 +3,10 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
+import { CustomLoading } from '@/components/CustomLoading';
 import {
   Box,
   Chip,
-  CircularProgress,
   ClickAwayListener,
   InputAdornment,
   List,
@@ -199,7 +199,11 @@ export default function HeaderUnifiedSearch({ width, onNavigate }: HeaderUnified
                 ),
                 endAdornment: loading ? (
                   <InputAdornment position="end">
-                    <CircularProgress size={16} sx={{ color: 'var(--primary)' }} />
+                    <CustomLoading
+                      size={16}
+                      color2="var(--primary)"
+                      color1="color-mix(in srgb, var(--primary) 60%, white)"
+                    />
                   </InputAdornment>
                 ) : undefined,
               },

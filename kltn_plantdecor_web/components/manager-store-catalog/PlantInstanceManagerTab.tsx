@@ -8,7 +8,6 @@ import {
   Button,
   Checkbox,
   Chip,
-  CircularProgress,
   FormControl,
   InputLabel,
   MenuItem,
@@ -27,6 +26,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 // import AutorenewIcon from '@mui/icons-material/Autorenew';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
+import { CustomLoading } from '@/components/CustomLoading';
 import {
   batchUpdateManagerPlantInstanceStatus,
   createManagerPlantInstanceBatch,
@@ -512,7 +512,7 @@ export default function PlantInstanceManagerTab({ nurseryId }: PlantInstanceMana
             {loading ? (
               <TableRow>
                 <TableCell colSpan={9} align="center" sx={{ py: 5 }}>
-                  <CircularProgress size={24} />
+                  <CustomLoading size={24} />
                 </TableCell>
               </TableRow>
             ) : items.length === 0 ? (

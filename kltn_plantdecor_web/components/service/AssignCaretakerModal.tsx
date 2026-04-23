@@ -11,7 +11,6 @@ import {
   FormControlLabel,
   Radio,
   TextField,
-  CircularProgress,
   Alert,
   Card,
   CardContent,
@@ -21,6 +20,7 @@ import {
 import PersonIcon from "@mui/icons-material/Person";
 import { CaretakerInfo } from "@/types/service.types";
 import { get } from '@/lib/api/apiService';
+import { CustomLoading } from "../CustomLoading";
 
 interface AssignCaretakerModalProps {
   open: boolean;
@@ -101,7 +101,7 @@ export const AssignCaretakerModal: React.FC<AssignCaretakerModalProps> = ({
 
         {fetchLoading ? (
           <Box display="flex" justifyContent="center" py={3}>
-            <CircularProgress />
+            <CustomLoading />
           </Box>
         ) : caretakers.length === 0 ? (
           <Alert severity="warning">

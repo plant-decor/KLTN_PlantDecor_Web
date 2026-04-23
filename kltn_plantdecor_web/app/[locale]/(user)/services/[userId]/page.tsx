@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Typography,
-  CircularProgress,
   Alert,
   Button,
   Dialog,
@@ -41,6 +40,7 @@ import {
 import { createPaymentUrlByOrderId } from '@/lib/api/orderService';
 import type { EnumOption, MyServiceRegistration } from '@/types/care-service.types';
 import { ServiceRegistrationStatusEnum } from '@/types/care-service.types';
+import { CustomLoading } from '@/components/CustomLoading';
 
 interface PageProps {
   params: Promise<{ userid: string }>;
@@ -429,7 +429,7 @@ export default function UserServicePage({ params }: PageProps) {
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
-        <CircularProgress />
+        <CustomLoading size={18} />
       </Box>
     );
   }

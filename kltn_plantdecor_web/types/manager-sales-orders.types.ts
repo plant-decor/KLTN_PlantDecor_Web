@@ -41,16 +41,34 @@ export interface ManagerNurseryOrder {
   customerPhone: string;
   customerAddress: string;
   subTotalAmount: number;
+  totalAmount?: number | null;
+  depositAmount?: number | null;
+  remainingAmount?: number | null;
+  /**
+   * API field name is not finalized; UI will also tolerate `paidAmount` / `amountPaid`.
+   */
+  paymentAmount?: number | null;
+  paidAmount?: number | null;
+  amountPaid?: number | null;
   status: number;
   statusName: string;
   shipperNote: string | null;
   deliveryNote: string | null;
+  deliveryImageUrl?: string | null;
   note: string;
   items: ManagerNurseryOrderItem[];
 }
 
 export type ManagerNurseryOrderDetail = ManagerNurseryOrder;
 export type ManagerNurseryOrderListPayload = PaginatedPayload<ManagerNurseryOrder>;
+
+export interface ManagerNurseryOrderShipper {
+  id: number;
+  username: string;
+  email: string;
+  phoneNumber: string;
+  totalOrdersInDay: number;
+}
 
 export interface ManagerNurseryOrdersListQuery {
   status?: ManagerNurseryOrderStatus;

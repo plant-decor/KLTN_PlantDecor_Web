@@ -4,7 +4,6 @@ import {
   Alert,
   Box,
   Button,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -17,6 +16,7 @@ import {
   Typography,
 } from '@mui/material';
 import type { EligibleCaretaker, ManagerServiceRegistration } from '@/types/care-service.types';
+import { CustomLoading } from '@/components/CustomLoading';
 
 interface ServiceOrderAssignDialogProps {
   open: boolean;
@@ -47,7 +47,7 @@ export default function ServiceOrderAssignDialog({
       <DialogContent dividers>
         {loading ? (
           <Box sx={{ py: 3, display: 'flex', justifyContent: 'center' }}>
-            <CircularProgress />
+            <CustomLoading />
           </Box>
         ) : eligibleCaretakers.length === 0 ? (
           <Alert severity="warning">No eligible caretakers found for this order.</Alert>

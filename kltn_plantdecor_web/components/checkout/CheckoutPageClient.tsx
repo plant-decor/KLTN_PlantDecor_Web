@@ -9,7 +9,6 @@ import {
   Button,
   Container,
   Alert,
-  CircularProgress,
 } from '@mui/material';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
@@ -19,6 +18,7 @@ import CheckoutReview from '@/components/checkout/CheckoutReview';
 import CheckoutComplete from '@/components/checkout/CheckoutComplete';
 import { get } from '@/lib/api/apiService';
 import { isValidPhoneNumber10Digits } from '@/lib/utils/phoneNumber';
+import { CustomLoading } from '@/components/CustomLoading';
 import {
   fetchCartItems,
   type CartApiItem,
@@ -231,7 +231,7 @@ export default function CheckoutPageClient({
   if (isLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
-        <CircularProgress />
+        <CustomLoading />
       </Box>
     );
   }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Box, CircularProgress, Paper } from '@mui/material';
+import { Alert, Box, Paper } from '@mui/material';
 import { toast } from 'react-toastify';
 import {
   approveManagerReturnTicketItem,
@@ -24,6 +24,7 @@ import {
   ALL_ASSIGNMENT_STATUS_FILTER,
   getErrorMessage,
 } from './managerReturnTicket.constants';
+import { CustomLoading } from '@/components/CustomLoading';
 
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -294,7 +295,7 @@ export default function ManagerReturnTicketManagementPageClient({
       <Paper sx={{ border: '1px solid var(--card-border)', overflow: 'hidden' }}>
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-            <CircularProgress />
+            <CustomLoading size={18} />
           </Box>
         ) : (
           <ManagerReturnTicketAssignmentsTable

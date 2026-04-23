@@ -18,7 +18,6 @@ import {
   Tooltip,
   Container,
   Typography,
-  CircularProgress,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -29,6 +28,7 @@ import {
   DifficultyLevel,
 } from "@/types/service.types";
 import { hoverGlowStyle } from "@/lib/styles/buttonStyles";
+import { CustomLoading } from "../CustomLoading";
 
 interface CarePackageManagementTableProps {
   packages: CareServicePackage[];
@@ -84,7 +84,7 @@ export const CarePackageManagementTable: React.FC<CarePackageManagementTableProp
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" py={5}>
-        <CircularProgress />
+        <CustomLoading size={18} />
       </Box>
     );
   }

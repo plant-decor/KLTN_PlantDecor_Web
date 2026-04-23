@@ -10,7 +10,6 @@ import {
   Card,
   CardContent,
   Chip,
-  CircularProgress,
   ClickAwayListener,
   FormControlLabel,
   InputAdornment,
@@ -30,6 +29,7 @@ import type { AllergyPlantOption } from '@/types/ai-recommendation.types';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 import { localizeRoomDesignEnumLabel } from '@/lib/utils/roomDesignEnumI18n';
 import ClickableImageViewer from '../image-view/ClickableImageViewer';
+import { CustomLoading } from '../CustomLoading';
 
 const SEARCH_DEBOUNCE_MS = 300;
 const MAX_VISIBLE_ITEMS = 6;
@@ -435,7 +435,7 @@ export default function RoomInputCard({
                       ),
                       endAdornment: allergyLoading ? (
                         <InputAdornment position="end">
-                          <CircularProgress size={16} />
+                          <CustomLoading size={16} />
                         </InputAdornment>
                       ) : undefined,
                     },

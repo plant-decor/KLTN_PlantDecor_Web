@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Box, Button, CircularProgress, Container, Typography } from '@mui/material';
+import { Box, Button, Container, Typography } from '@mui/material';
 import { useTranslations } from 'next-intl';
 import CartEmptyState from '@/components/cart/CartEmptyState';
 import WishlistPlantCard from '@/components/wishlist/WishlistPlantCard';
@@ -12,6 +12,7 @@ import {
   type WishlistListItem,
   type WishlistPagedPayload,
 } from '@/lib/api/cartWishlistService';
+import { CustomLoading } from '../CustomLoading';
 
 interface WishlistPageClientProps {
   userid: string;
@@ -97,7 +98,7 @@ export default function WishlistPageClient({ userid, initialPayload }: WishlistP
     return (
       <Container maxWidth="lg" sx={{ py: 20 }}>
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <CircularProgress />
+          <CustomLoading size={18} />
         </Box>
       </Container>
     );

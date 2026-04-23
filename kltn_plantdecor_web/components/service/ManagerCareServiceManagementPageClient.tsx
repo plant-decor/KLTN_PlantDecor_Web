@@ -6,7 +6,6 @@ import {
   Box,
   Button,
   Chip,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -32,6 +31,7 @@ import ToggleOnIcon from "@mui/icons-material/ToggleOn";
 import ToggleOffIcon from "@mui/icons-material/ToggleOff";
 import { toast } from "react-toastify";
 import ManagementHeader from "@/components/layout/ManagementHeader";
+import { CustomLoading } from "@/components/CustomLoading";
 import { getCareServiceTypeOptions } from "@/lib/api/adminCareServicePackagesService";
 import {
   addManagerPackageToNursery,
@@ -199,7 +199,7 @@ export default function ManagerCareServiceManagementPageClient() {
       <Paper sx={{ border: "1px solid var(--card-border)", overflow: "hidden" }}>
         {loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
-            <CircularProgress />
+            <CustomLoading />
           </Box>
         ) : (
           <TableContainer>

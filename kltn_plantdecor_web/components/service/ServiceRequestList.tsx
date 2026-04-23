@@ -8,7 +8,6 @@ import {
   Button,
   Chip,
   Container,
-  CircularProgress,
   Avatar,
   Grid,
 } from "@mui/material";
@@ -16,6 +15,7 @@ import PhoneIcon from "@mui/icons-material/Phone";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import { ServiceRegistration } from "@/types/service.types";
+import { CustomLoading } from "../CustomLoading";
 
 interface ServiceRequestListProps {
   requests: ServiceRegistration[];
@@ -31,7 +31,7 @@ export const ServiceRequestList: React.FC<ServiceRequestListProps> = ({
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" py={5}>
-        <CircularProgress />
+        <CustomLoading size={18} />
       </Box>
     );
   }

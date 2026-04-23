@@ -24,6 +24,12 @@ import {
 import { Controller, useForm } from 'react-hook-form';
 import ImageUpload from './ImageUpload';
 import RichTextEditor from './RichTextEditor';
+import MaterialSpecificationsSection, {
+  buildSpecificationsJson,
+  defaultSpecs,
+  parseEditingSpecsToForm,
+  type MaterialSpecsFormSlice,
+} from './MaterialSpecificationsSection';
 import { uploadAdminMaterialImages } from '@/lib/api/adminMaterialsService';
 import type {
   MaterialDetail,
@@ -91,6 +97,8 @@ const defaultMaterial: MaterialFormData = {
   tagIds: [],
 };
 
+type MaterialSpecFormValues = MaterialFormData & MaterialSpecsFormSlice;
+
 export default function MaterialFormDialog({
   open,
   editingData,
@@ -100,12 +108,11 @@ export default function MaterialFormDialog({
   onSubmit,
   isLoading = false,
 }: MaterialFormDialogProps) {
-  const { control, handleSubmit, reset } = useForm<MaterialFormData>({
-    defaultValues: defaultMaterial,
+  const { control, handleSubmit, reset } = useForm<MaterialSpecFormValues>({
+    defaultValues: { ...defaultMaterial, ...defaultSpecs },
   });
 
   const [images, setImages] = useState<ImageUploadData[]>([]);
-  // const [specsError, setSpecsError] = useState<string>('');
   const [uploadingImage, setUploadingImage] = useState(false);
 
   // Handle image upload for RichTextEditor
@@ -138,6 +145,7 @@ export default function MaterialFormDialog({
     }
 
     if (editingData) {
+      const parsedSpecs = parseEditingSpecsToForm(editingData.specifications);
       reset({
         materialCode: editingData.materialCode,
         name: editingData.name,
@@ -145,13 +153,12 @@ export default function MaterialFormDialog({
         basePrice: editingData.basePrice,
         unit: editingData.unit,
         brand: editingData.brand,
-        specifications: editingData.specifications
-          ? JSON.stringify(editingData.specifications, null, 2)
-          : '',
+        specifications: '',
         expiryMonths: editingData.expiryMonths ?? null,
         isActive: editingData.isActive,
         categoryIds: editingData.categories.map((item) => item.id),
         tagIds: editingData.tags.map((item) => item.id),
+        ...parsedSpecs,
       });
 
       queueMicrotask(() => {
@@ -166,31 +173,17 @@ export default function MaterialFormDialog({
         );
       });
     } else {
-      reset(defaultMaterial);
+      reset({ ...defaultMaterial, ...defaultSpecs });
       setImages([]);
     }
-
-    // setSpecsError('');
   }, [editingData, open, reset]);
 
-  const handleFormSubmit = (data: MaterialFormData) => {
-    const rawSpecs = data.specifications ?? '';
-    const normalizedSpecs = rawSpecs.trim();
-
-    if (normalizedSpecs) {
-      try {
-        JSON.parse(normalizedSpecs);
-      } catch {
-        // setSpecsError('Invalid JSON format');
-        return;
-      }
-    }
-
-    // setSpecsError('');
+  const handleFormSubmit = (data: MaterialSpecFormValues) => {
+    const specifications = buildSpecificationsJson(data);
     onSubmit(
       {
         ...data,
-        specifications: normalizedSpecs,
+        specifications,
       },
       images
     );
@@ -390,29 +383,9 @@ export default function MaterialFormDialog({
 
           <Divider />
 
-          {/* <Box>
-            <Typography variant="h6" fontWeight="600" gutterBottom>
-              Specifications (JSON)
-            </Typography>
-            <Controller
-              name="specifications"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Specifications"
-                  fullWidth
-                  multiline
-                  rows={6}
-                  placeholder='{"color": "gray", "weight": "5kg"}'
-                  error={Boolean(specsError)}
-                  helperText={specsError}
-                />
-              )}
-            />
-          </Box> */}
+          <MaterialSpecificationsSection control={control} />
 
-          {/* <Divider /> */}
+          <Divider />
 
           <ImageUpload images={images} onImagesChange={setImages} label="Material images" maxImages={10} />
 

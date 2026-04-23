@@ -81,15 +81,10 @@ export default function StoreManagementPageClient({
             onChange={handleTabChange}
             aria-label="store management tabs"
             sx={{
-              backgroundColor: '#fff',
-              borderBottom: '1px solid',
+              borderBottom: 1,
               borderColor: 'divider',
-              '& .MuiTab-root': {
-                py: 2,
-                textTransform: 'none',
-                fontSize: '1rem',
-                fontWeight: 500,
-              },
+              '& .MuiTab-root': { fontWeight: 600, textTransform: 'none', fontSize: '1rem' },
+              '& .Mui-selected': { backgroundColor: 'var(--primary) !important', color: '#fff !important' },
             }}
           >
             <Tab

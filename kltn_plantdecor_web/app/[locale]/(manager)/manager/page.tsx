@@ -20,8 +20,8 @@ export default function ManagerDashboardPage() {
         sx={{
           borderBottom: 1,
           borderColor: 'divider',
-          backgroundColor: 'white',
-          px: 2,
+          '& .MuiTab-root': { fontWeight: 600, textTransform: 'none', fontSize: '1rem' },
+          '& .Mui-selected': { backgroundColor: 'var(--primary) !important', color: '#fff !important' },
         }}
       >
         <Tab label="Store Metrics" />`r`n        <Tab label="Operations" />

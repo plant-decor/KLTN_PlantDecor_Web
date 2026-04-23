@@ -6,7 +6,6 @@ import {
   Button,
   Card,
   Chip,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -31,6 +30,7 @@ import {
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 import Image from 'next/image';
 import { canCreateReturnTicket, isPendingNurseryOrderDetail } from './returnTicket.constants';
+import { CustomLoading } from '@/components/CustomLoading';
 
 const SERVICE_ORDER_TYPE = 4;
 
@@ -91,7 +91,7 @@ export default function OrderDetailModal({
       <DialogContent dividers>
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-            <CircularProgress />
+            <CustomLoading />
           </Box>
         ) : error ? (
           <Alert severity="error">{error}</Alert>

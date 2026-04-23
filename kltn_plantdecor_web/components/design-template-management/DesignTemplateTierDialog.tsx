@@ -5,7 +5,6 @@ import {
   Alert,
   Box,
   Button,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -25,6 +24,7 @@ import { DeleteOutline, Add, EditNoteOutlined } from '@mui/icons-material';
 import type { AdminDesignTemplateDetail, DesignTemplateTier, DesignTemplateTierItemCreateRequest } from '@/types/admin-design-template.types';
 import { DESIGN_TEMPLATE_TIER_ITEM_TYPE_OPTIONS, formatCurrency } from './designTemplateManagement.constants';
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils/formatUtil';
+import { CustomLoading } from '@/components/CustomLoading';
 
 export interface DesignTemplateTierFormValue {
   tierName: string;
@@ -110,7 +110,7 @@ export default function DesignTemplateTierDialog({
       <DialogContent dividers>
         {detailLoading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-            <CircularProgress />
+            <CustomLoading />
           </Box>
         ) : detailError ? (
           <Alert severity="error">{detailError}</Alert>

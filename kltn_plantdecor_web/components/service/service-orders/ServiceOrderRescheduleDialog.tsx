@@ -5,7 +5,6 @@ import {
   Alert,
   Box,
   Button,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -19,6 +18,7 @@ import {
   Typography,
 } from '@mui/material';
 import type { ManagerServiceRegistration, PublicShift } from '@/types/care-service.types';
+import { CustomLoading } from '@/components/CustomLoading';
 
 export interface ServiceOrderRescheduleValues {
   serviceDate: string;
@@ -114,7 +114,7 @@ export default function ServiceOrderRescheduleDialog({
       <DialogContent dividers>
         {shiftsLoading ? (
           <Box sx={{ py: 3, display: 'flex', justifyContent: 'center' }}>
-            <CircularProgress />
+            <CustomLoading />
           </Box>
         ) : (
           <Stack spacing={2}>

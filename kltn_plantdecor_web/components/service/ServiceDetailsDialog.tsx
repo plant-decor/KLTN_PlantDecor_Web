@@ -7,7 +7,6 @@ import {
   DialogActions,
   Button,
   Box,
-  CircularProgress,
   Typography,
   TextField,
   Grid,
@@ -15,6 +14,7 @@ import {
 import { useTranslations } from 'next-intl';
 import { ServiceRegistration } from '@/types/service.types';
 import ServiceStatusChip from './ServiceStatusChip';
+import { CustomLoading } from '@/components/CustomLoading';
 
 interface ExtendedServiceRegistration extends ServiceRegistration {
   totalSessions?: number;
@@ -145,7 +145,7 @@ export default function ServiceDetailsDialog({
       <DialogContent sx={{ pt: 3 }}>
         {loading ? (
           <Box sx={{ py: 4, display: 'flex', justifyContent: 'center' }}>
-            <CircularProgress size={24} />
+            <CustomLoading size={24} />
           </Box>
         ) : !service ? (
           <Typography variant="body2" color="text.secondary">

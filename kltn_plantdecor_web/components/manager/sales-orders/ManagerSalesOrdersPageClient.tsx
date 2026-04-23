@@ -47,11 +47,11 @@ export default function ManagerSalesOrdersPageClient() {
         value={activeTab}
         onChange={handleChangeTab}
         sx={{
-            borderBottom: 1,
-            borderColor: 'divider',
-            '& .MuiTab-root': { fontWeight: 600, textTransform: 'none', fontSize: '1rem' },
-            '& .Mui-selected': { backgroundColor: 'var(--primary) !important', color: '#fff !important' },
-          }}
+          borderBottom: 1,
+          borderColor: 'divider',
+          '& .MuiTab-root': { fontWeight: 600, textTransform: 'none', fontSize: '1rem' },
+          '& .Mui-selected': { backgroundColor: 'var(--primary) !important', color: '#fff !important' },
+        }}
       >
         <Tab label="Sales Orders" />
         <Tab

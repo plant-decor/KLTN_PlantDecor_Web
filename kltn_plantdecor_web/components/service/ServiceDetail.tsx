@@ -10,7 +10,6 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  CircularProgress,
   Divider,
   Grid,
 } from "@mui/material";
@@ -19,6 +18,7 @@ import TimelineIcon from "@mui/icons-material/Timeline";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import SquareFootIcon from "@mui/icons-material/SquareFoot";
 import { CareServicePackage, ServiceType, DifficultyLevel } from "@/types/service.types";
+import { CustomLoading } from "../CustomLoading";
 
 interface ServiceDetailProps {
   package: CareServicePackage | null;
@@ -43,7 +43,7 @@ export const ServiceDetail: React.FC<ServiceDetailProps> = ({
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" py={10}>
-        <CircularProgress />
+        <CustomLoading size={18} />
       </Box>
     );
   }

@@ -8,7 +8,6 @@ import {
   Button,
   Card,
   CardContent,
-  CircularProgress,
   Divider,
   FormControlLabel,
   MenuItem,
@@ -41,6 +40,7 @@ import type {
 import type { ResponseModel } from '@/types/api.types';
 import { isValidPhoneNumber10Digits } from '@/lib/utils/phoneNumber';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
+import { CustomLoading } from '../CustomLoading';
 
 type ManagerProfileFormState = {
   userName: string;
@@ -414,7 +414,7 @@ export default function ManagerNurseryProfilePage() {
 
               {profileLoading ? (
                 <Stack direction="row" spacing={1} alignItems="center">
-                  <CircularProgress size={18} />
+                  <CustomLoading size={18} />
                   <Typography variant="body2">{t('loadingProfile')}</Typography>
                 </Stack>
               ) : (
@@ -594,7 +594,7 @@ export default function ManagerNurseryProfilePage() {
 
               {nurseryLoading ? (
                 <Stack direction="row" spacing={1} alignItems="center">
-                  <CircularProgress size={18} />
+                  <CustomLoading size={18} />
                   <Typography variant="body2">{t('loadingNursery')}</Typography>
                 </Stack>
               ) : (

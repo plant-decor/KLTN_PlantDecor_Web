@@ -5,7 +5,6 @@ import {
   Alert,
   Box,
   Button,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -16,6 +15,7 @@ import {
 } from '@mui/material';
 import { useLocale, useTranslations } from 'next-intl';
 import ClickableImageViewer from '@/components/image-view/ClickableImageViewer';
+import { CustomLoading } from '@/components/CustomLoading';
 import { getMyDesignGeneratedImages } from '@/lib/api/aiRecommendationService';
 import type { GeneratedImageItem } from '@/types/ai-recommendation.types';
 
@@ -89,7 +89,7 @@ export default function MyDesignHistoryModal({ open, userId, onClose }: MyDesign
         {loading ? (
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', py: 4 }}>
             <Stack direction="row" spacing={1.5} alignItems="center">
-              <CircularProgress size={20} />
+              <CustomLoading size={20} />
               <Typography variant="body2" color="text.secondary">
                 {t('loading')}
               </Typography>

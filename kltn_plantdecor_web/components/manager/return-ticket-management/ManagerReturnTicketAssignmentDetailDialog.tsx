@@ -5,7 +5,6 @@ import {
   Box,
   Button,
   Chip,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -30,6 +29,7 @@ import {
   formatDateTime,
 } from './managerReturnTicket.constants';
 import { ImageOutlined } from '@mui/icons-material';
+import { CustomLoading } from '@/components/CustomLoading';
 
 interface ManagerReturnTicketAssignmentDetailDialogProps {
   open: boolean;
@@ -91,7 +91,7 @@ export default function ManagerReturnTicketAssignmentDetailDialog({
       <DialogContent dividers>
         {loading ? (
           <Box sx={{ py: 6, display: 'flex', justifyContent: 'center' }}>
-            <CircularProgress />
+            <CustomLoading size={18} />
           </Box>
         ) : !detail ? (
           <Typography color="text.secondary">No detail data available.</Typography>

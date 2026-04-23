@@ -144,7 +144,7 @@ export const searchShopUnified = async (
     console.log('Server-side searchShopUnified with data:', data);
     return apiServer.post('/shop/search', data);
   }
-
+  console.log('Client-side searchShopUnified with data:', data);
   return apiClient.post('/shop/search', data, loading);
 };
 

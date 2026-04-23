@@ -8,7 +8,6 @@ import {
   Card,
   CardContent,
   Chip,
-  CircularProgress,
   Divider,
   Stack,
   Typography,
@@ -23,6 +22,7 @@ import { formatCurrency, formatDate } from './orderHistoryUtils';
 import FullscreenImageModal from '@/components/image-view/FullscreenImageModal';
 import { ImageOutlined } from '@mui/icons-material';
 import ClickableImageViewer from '../image-view/ClickableImageViewer';
+import { CustomLoading } from '../CustomLoading';
 
 interface MyReturnTicketsPanelProps {
   tickets: ReturnTicket[];
@@ -55,7 +55,7 @@ export default function MyReturnTicketsPanel({ tickets, loading, error }: MyRetu
 
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-          <CircularProgress />
+          <CustomLoading size={18} />
         </Box>
       ) : error ? (
         <Alert severity="error">{error}</Alert>

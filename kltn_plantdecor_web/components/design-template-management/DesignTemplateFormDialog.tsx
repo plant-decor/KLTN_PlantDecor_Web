@@ -6,7 +6,6 @@ import {
   Box,
   Button,
   Checkbox,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -27,6 +26,7 @@ import type {
   DesignTemplateSpecialization,
   DesignTemplateStyleOption,
 } from '@/types/admin-design-template.types';
+import { CustomLoading } from '@/components/CustomLoading';
 
 export interface DesignTemplateFormValue {
   name: string;
@@ -83,7 +83,7 @@ export default function DesignTemplateFormDialog({
       <DialogContent dividers>
         {detailLoading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-            <CircularProgress />
+            <CustomLoading />
           </Box>
         ) : detailError ? (
           <Alert severity="error">{detailError}</Alert>

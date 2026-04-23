@@ -5,7 +5,6 @@ import {
   Avatar,
   Box,
   Chip,
-  CircularProgress,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -16,6 +15,7 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import type { StoreUserItem, StoreUserSpecializationOption } from "@/types/store-management.types";
 import SpecializationAssignmentSection from "./SpecializationAssignmentSection";
+import { CustomLoading } from "@/components/CustomLoading";
 
 interface StoreUserDetailDialogProps {
   open: boolean;
@@ -89,7 +89,7 @@ export default function StoreUserDetailDialog({
 
         {loading && (
           <Box sx={{ py: 5, display: "flex", justifyContent: "center" }}>
-            <CircularProgress />
+            <CustomLoading />
           </Box>
         )}
 

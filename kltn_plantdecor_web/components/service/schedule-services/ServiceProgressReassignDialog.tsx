@@ -4,7 +4,6 @@ import CloseIcon from '@mui/icons-material/Close';
 import {
   Alert,
   Button,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -18,6 +17,7 @@ import {
   Typography,
 } from '@mui/material';
 import type { EligibleCaretaker, NurseryServiceScheduleItem } from '@/types/care-service.types';
+import { CustomLoading } from '@/components/CustomLoading';
 
 interface ServiceProgressReassignDialogProps {
   open: boolean;
@@ -68,7 +68,7 @@ export default function ServiceProgressReassignDialog({
 
           {loading ? (
             <Stack direction='row' spacing={1} alignItems='center'>
-              <CircularProgress size={22} />
+              <CustomLoading size={22} />
               <Typography variant='body2'>Đang tải caretaker đủ điều kiện...</Typography>
             </Stack>
           ) : (

@@ -3,7 +3,6 @@ import { DeleteOutline, EditOutlined, VisibilityOutlined } from "@mui/icons-mate
 import {
   Box,
   Chip,
-  CircularProgress,
   IconButton,
   Paper,
   Table,
@@ -16,6 +15,7 @@ import {
   Typography,
 } from "@mui/material";
 import type { AdminSpecializationListItem } from "@/types/admin-specialization.types";
+import { CustomLoading } from "@/components/CustomLoading";
 
 interface SpecializationTableProps {
   specializations: AdminSpecializationListItem[];
@@ -36,7 +36,7 @@ export default function SpecializationTable({
     <Paper sx={{ border: "1px solid var(--card-border)", overflow: "hidden" }}>
       {loading ? (
         <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
-          <CircularProgress />
+          <CustomLoading size={18} />
         </Box>
       ) : (
         <TableContainer>

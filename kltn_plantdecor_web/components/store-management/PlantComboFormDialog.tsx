@@ -34,6 +34,7 @@ import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import ImageUpload from './ImageUpload';
 import RichTextEditor from './RichTextEditor';
 import { uploadAdminPlantComboImages } from '@/lib/api/adminPlantCombosService';
+import { CustomLoading } from '@/components/CustomLoading';
 import type {
   ImageUploadData,
   Plant,
@@ -251,10 +252,10 @@ export default function PlantComboFormDialog({
 
   const hasKeyword = keyword.trim().length > 0;
   const items = plants;
-  const showSuggestionDropdown = searchOpen && (hasKeyword);
+  const showSuggestionDropdown = searchOpen && (hasKeyword || plantsLoading);
   const noResults = useMemo(
-    () => hasKeyword && items.length === 0,
-    [hasKeyword, items.length]
+    () => hasKeyword && !plantsLoading && items.length === 0,
+    [hasKeyword, items.length, plantsLoading]
   );
 
   useEffect(() => {
@@ -781,6 +782,11 @@ export default function PlantComboFormDialog({
                     }}
                   >
                     <List disablePadding>
+                      {plantsLoading && (
+                        <Box sx={{ px: 2, py: 1.25, display: 'flex', alignItems: 'center', gap: 1.25 }}>
+                          <CustomLoading size={18} ariaLabel="Searching plants" />
+                        </Box>
+                      )}
                       {items.map((plant, index) => (
                         <ListItemButton
                           key={`${plant.id}-${index}`}

@@ -4,7 +4,6 @@ import {
   Avatar,
   Box,
   Chip,
-  CircularProgress,
   IconButton,
   Menu,
   MenuItem,
@@ -25,6 +24,7 @@ import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import { useState, type MouseEvent } from "react";
 import type { StoreUserItem, StoreUserSpecializationOption } from "@/types/store-management.types";
+import { CustomLoading } from "@/components/CustomLoading";
 
 interface StoreUsersTableProps {
   items: StoreUserItem[];
@@ -123,7 +123,7 @@ export default function StoreUsersTable({
             <TableRow>
               <TableCell colSpan={7} align="center">
                 <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", py: 3 }}>
-                  <CircularProgress size={26} />
+                  <CustomLoading size={26} />
                 </Box>
               </TableCell>
             </TableRow>

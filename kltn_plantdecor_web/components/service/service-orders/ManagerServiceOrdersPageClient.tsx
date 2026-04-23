@@ -1,8 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Box, CircularProgress, Paper, TableContainer } from '@mui/material';
+import { Alert, Box, Paper, TableContainer } from '@mui/material';
 import { toast } from 'react-toastify';
+import { CustomLoading } from '@/components/CustomLoading';
 import {
   approveManagerServiceRegistration,
   assignCaretakerToManagerServiceRegistration,
@@ -329,7 +330,7 @@ export default function ManagerServiceOrdersPageClient() {
       <Paper sx={{ border: '1px solid var(--card-border)', overflow: 'hidden' }}>
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-            <CircularProgress />
+            <CustomLoading />
           </Box>
         ) : (
           <>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Box, CircularProgress, Paper } from '@mui/material';
+import { Alert, Box, Paper } from '@mui/material';
 import { toast } from 'react-toastify';
 import {
   getManagerNurseryOrderDetail,
@@ -17,6 +17,7 @@ import ManagerSalesOrderDetailDialog from './ManagerSalesOrderDetailDialog';
 import ManagerSalesOrdersHeader from './ManagerSalesOrdersHeader';
 import ManagerSalesOrdersTable from './ManagerSalesOrdersTable';
 import { ALL_STATUS_FILTER, getErrorMessage } from './managerSalesOrders.constants';
+import { CustomLoading } from '@/components/CustomLoading';
 
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -44,6 +45,7 @@ export default function ManagerSalesOrdersTabContent() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailItem, setDetailItem] = useState<ManagerNurseryOrderDetail | null>(null);
+  const [focusShipperSelector, setFocusShipperSelector] = useState(false);
 
   const loadList = useCallback(async () => {
     try {
@@ -79,6 +81,25 @@ export default function ManagerSalesOrdersTabContent() {
       setDetailOpen(true);
       setDetailLoading(true);
       setDetailItem(null);
+      setFocusShipperSelector(false);
+
+      const payload = await getManagerNurseryOrderDetail(item.id, false);
+      setDetailItem(payload);
+    } catch (detailError) {
+      toast.error(getErrorMessage(detailError, 'Failed to load order details'));
+      setDetailOpen(false);
+      setDetailItem(null);
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const handleAssignShipper = async (item: ManagerNurseryOrder) => {
+    try {
+      setDetailOpen(true);
+      setDetailLoading(true);
+      setDetailItem(null);
+      setFocusShipperSelector(true);
 
       const payload = await getManagerNurseryOrderDetail(item.id, false);
       setDetailItem(payload);
@@ -113,7 +134,7 @@ export default function ManagerSalesOrdersTabContent() {
       <Paper sx={{ border: '1px solid var(--card-border)', overflow: 'hidden' }}>
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-            <CircularProgress />
+            <CustomLoading size={18} />
           </Box>
         ) : (
           <ManagerSalesOrdersTable
@@ -127,6 +148,7 @@ export default function ManagerSalesOrdersTabContent() {
               setPageNumber(1);
             }}
             onViewDetail={(item) => void handleViewDetail(item)}
+            onAssignShipper={(item) => void handleAssignShipper(item)}
           />
         )}
       </Paper>
@@ -135,9 +157,15 @@ export default function ManagerSalesOrdersTabContent() {
         open={detailOpen}
         loading={detailLoading}
         detailItem={detailItem}
+        focusShipperSelector={focusShipperSelector}
+        onShipperUpdated={(updated) => {
+          setDetailItem(updated);
+          void loadList();
+        }}
         onClose={() => {
           setDetailOpen(false);
           setDetailItem(null);
+          setFocusShipperSelector(false);
         }}
       />
     </>

@@ -7,7 +7,6 @@ import {
   Box,
   Button,
   Checkbox,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -25,6 +24,7 @@ import {
 import { useTranslations } from 'next-intl';
 import { toast } from 'react-toastify';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
+import { CustomLoading } from '@/components/CustomLoading';
 import { isValidPhoneNumber10Digits } from '@/lib/utils/phoneNumber';
 import {
   getDayOfWeekEnums,
@@ -486,7 +486,7 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit }: Servic
       <DialogContent sx={{ pt: 5 }}>
         {loadingPackages ? (
           <Box sx={{ py: 8, display: 'flex', justifyContent: 'center' }}>
-            <CircularProgress />
+            <CustomLoading />
           </Box>
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
@@ -574,7 +574,7 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit }: Servic
                       ...params.InputProps,
                       endAdornment: (
                         <>
-                          {loadingAddressSuggestions ? <CircularProgress color="inherit" size={20} /> : null}
+                          {loadingAddressSuggestions ? <CustomLoading size={20} /> : null}
                           {params.InputProps.endAdornment}
                         </>
                       ),

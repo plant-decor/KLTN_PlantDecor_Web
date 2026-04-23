@@ -6,7 +6,6 @@ import {
   Box,
   Button,
   Chip,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -30,6 +29,7 @@ import {
 import { Add, DeleteOutline, Refresh, ToggleOff, ToggleOn } from '@mui/icons-material';
 import { toast } from 'react-toastify';
 import ManagementHeader from '@/components/layout/ManagementHeader';
+import { CustomLoading } from '@/components/CustomLoading';
 import {
   createNurseryDesignTemplate,
   deleteNurseryDesignTemplate,
@@ -193,7 +193,7 @@ export default function ManagerNurseryDesignTemplateManagementPageClient() {
             {loading ? (
               <TableRow>
                 <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                  <CircularProgress size={24} />
+                  <CustomLoading size={24} />
                 </TableCell>
               </TableRow>
             ) : items.length === 0 ? (

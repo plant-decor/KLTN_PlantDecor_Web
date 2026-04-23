@@ -14,7 +14,6 @@ import {
   Select,
   MenuItem,
   Typography,
-  CircularProgress,
   Grid,
 } from "@mui/material";
 import { Controller, useForm, useWatch } from "react-hook-form";
@@ -26,6 +25,7 @@ import {
   ServiceType,
   DifficultyLevel,
 } from "@/types/service.types";
+import { CustomLoading } from "../CustomLoading";
 
 interface CarePackageFormProps {
   open: boolean;
@@ -341,7 +341,7 @@ export const CarePackageForm: React.FC<CarePackageFormProps> = ({
           color="primary"
           disabled={isSubmitting || loading}
         >
-          {isSubmitting || loading ? <CircularProgress size={20} /> : "Save"}
+          {isSubmitting || loading ? <CustomLoading size={20} /> : "Save"}
         </Button>
       </DialogActions>
     </Dialog>

@@ -5,7 +5,6 @@ import {
   Alert,
   Box,
   Chip,
-  CircularProgress,
   Paper,
   Stack,
   Tab,
@@ -23,6 +22,7 @@ import CommonPlantTab from '@/components/manager-store-catalog/CommonPlantTab';
 import ManagerPlantComboTab from '@/components/manager-store-catalog/ManagerPlantComboTab';
 import PlantInstanceManagerTab from '@/components/manager-store-catalog/PlantInstanceManagerTab';
 import ManagerMaterialTab from '@/components/store-management/MaterialTab';
+import { CustomLoading } from '@/components/CustomLoading';
 
 interface TabPanelProps {
   children: React.ReactNode;
@@ -131,7 +131,7 @@ export default function StoreCatalogPage() {
       <Stack spacing={2} sx={{ mb: 3 }}>
         {loadingNursery ? (
           <Stack direction="row" spacing={1} alignItems="center">
-            <CircularProgress size={18} />
+            <CustomLoading size={18} />
             <Typography variant="body2" color="text.secondary">
               Loading nursery information...
             </Typography>

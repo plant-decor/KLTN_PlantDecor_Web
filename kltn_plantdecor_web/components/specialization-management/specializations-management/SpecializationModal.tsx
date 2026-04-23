@@ -3,7 +3,6 @@ import {
   Alert,
   Box,
   Button,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -15,6 +14,7 @@ import {
 } from "@mui/material";
 import type { AdminSpecializationDetail } from "@/types/admin-specialization.types";
 import type { SpecializationFormValue, SpecializationModalMode } from "./types";
+import { CustomLoading } from "@/components/CustomLoading";
 
 interface SpecializationModalProps {
   open: boolean;
@@ -65,7 +65,7 @@ export default function SpecializationModal({
       <DialogContent dividers>
         {detailLoading ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-            <CircularProgress />
+            <CustomLoading size={18} />
           </Box>
         ) : detailError ? (
           <Alert severity="error">{detailError}</Alert>

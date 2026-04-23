@@ -7,7 +7,6 @@ import {
   Button,
   Divider,
   Dialog,
-  CircularProgress,
   Grid,
 } from "@mui/material";
 import PhoneIcon from "@mui/icons-material/Phone";
@@ -17,6 +16,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import { ServiceRegistration } from "@/types/service.types";
 import AssignCaretakerModal from "./AssignCaretakerModal";
+import { CustomLoading } from "../CustomLoading";
 
 interface ServiceRequestDetailProps {
   request: ServiceRegistration | null;
@@ -69,7 +69,7 @@ export const ServiceRequestDetail: React.FC<ServiceRequestDetailProps> = ({
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" py={10}>
-        <CircularProgress />
+        <CustomLoading size={18} />
       </Box>
     );
   }

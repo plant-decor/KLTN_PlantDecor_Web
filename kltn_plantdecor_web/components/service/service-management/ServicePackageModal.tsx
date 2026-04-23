@@ -4,7 +4,6 @@ import {
   Box,
   Button,
   Checkbox,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -25,6 +24,7 @@ import type {
   CareServiceTypeOption,
 } from "@/types/admin-service-package.types";
 import type { ModalMode, ServicePackageFormValue } from "./types";
+import { CustomLoading } from "@/components/CustomLoading";
 
 interface ServicePackageModalProps {
   open: boolean;
@@ -81,7 +81,7 @@ export default function ServicePackageModal({
       <DialogContent dividers>
         {detailLoading ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-            <CircularProgress />
+            <CustomLoading size={18} />
           </Box>
         ) : detailError ? (
           <Alert severity="error">{detailError}</Alert>

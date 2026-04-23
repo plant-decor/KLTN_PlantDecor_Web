@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, Button, Card, CardContent, CircularProgress, Typography } from '@mui/material';
+import { Box, Button, Card, CardContent, Typography } from '@mui/material';
 import { useTranslations } from 'next-intl';
 import type {
   AnalyzeRoomUploadPayload,
@@ -10,6 +10,7 @@ import type {
 } from '@/types/ai-recommendation.types';
 import GeneratedImageItem from './GeneratedImageItem';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
+import { CustomLoading } from '../CustomLoading';
 
 interface GeneratedImagesCardProps {
   isGenerating: boolean;
@@ -45,7 +46,7 @@ export default function GeneratedImagesCard({
 
         {isGenerating && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
-            <CircularProgress size={20} />
+            <CustomLoading size={20} />
             <Typography variant="body2" color="text.secondary">
               {t('generatingLabel')}
             </Typography>

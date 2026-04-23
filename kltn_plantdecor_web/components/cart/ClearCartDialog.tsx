@@ -3,13 +3,13 @@
 import React from 'react';
 import {
   Button,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Typography,
 } from '@mui/material';
+import { CustomLoading } from '../CustomLoading';
 
 interface ClearCartDialogProps {
   open: boolean;
@@ -42,7 +42,7 @@ export default function ClearCartDialog({
           variant="contained"
           sx={{ backgroundColor: '#d32f2f', color: '#fff' }}
         >
-          {isUpdating ? <CircularProgress size={32} /> : 'Clear Cart'}
+          {isUpdating ? <CustomLoading size={32} /> : 'Clear Cart'}
         </Button>
       </DialogActions>
     </Dialog>

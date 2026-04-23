@@ -36,6 +36,7 @@ export default function FullscreenImageModal({
   const [activeStep, setActiveStep] = useState(initialIndex);
   const [zoom, setZoom] = useState(1);
   const maxSteps = images.length;
+  const currentSrc = images[activeStep];
 
   const handleDialogEnter = useCallback(() => {
     setActiveStep(initialIndex);
@@ -43,11 +44,13 @@ export default function FullscreenImageModal({
   }, [initialIndex]);
 
   const handleNext = useCallback(() => {
+    if (maxSteps <= 1) return;
     setActiveStep((prevActiveStep) => (prevActiveStep + 1) % maxSteps);
     setZoom(1);
   }, [maxSteps]);
 
   const handleBack = useCallback(() => {
+    if (maxSteps <= 1) return;
     setActiveStep((prevActiveStep) => (prevActiveStep - 1 + maxSteps) % maxSteps);
     setZoom(1);
   }, [maxSteps]);
@@ -90,6 +93,20 @@ export default function FullscreenImageModal({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, handleNext, handleBack, handleZoomIn, handleZoomOut, onClose]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (maxSteps === 0) {
+      setActiveStep(0);
+      setZoom(1);
+      return;
+    }
+
+    if (activeStep < 0 || activeStep >= maxSteps) {
+      setActiveStep(0);
+      setZoom(1);
+    }
+  }, [activeStep, isOpen, maxSteps]);
 
   return (
     <Dialog
@@ -169,19 +186,21 @@ export default function FullscreenImageModal({
             }}
           >
             <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-              <Image
-                src={images[activeStep]}
-                alt={`${alt} ${activeStep + 1}`}
-                fill
-                sizes="100vw"
-                className="object-contain"
-                style={{
-                  transform: `scale(${zoom})`,
-                  transition: 'transform 0.2s ease-in-out',
-                  cursor: zoom > 1 ? 'grab' : 'pointer',
-                }}
-                quality={90}
-              />
+              {typeof currentSrc === 'string' && currentSrc.trim() !== '' ? (
+                <Image
+                  src={currentSrc}
+                  alt={`${alt} ${activeStep + 1}`}
+                  fill
+                  sizes="100vw"
+                  className="object-contain"
+                  style={{
+                    transform: `scale(${zoom})`,
+                    transition: 'transform 0.2s ease-in-out',
+                    cursor: zoom > 1 ? 'grab' : 'pointer',
+                  }}
+                  quality={90}
+                />
+              ) : null}
             </div>
           </Box>
 

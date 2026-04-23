@@ -1,5 +1,6 @@
 ﻿'use client';
 
+import { useMemo, useState } from 'react';
 import {
   Box,
   Button,
@@ -16,12 +17,22 @@ import {
   Typography,
 } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
+import ImageIcon from '@mui/icons-material/Image';
 import type { ManagerNurseryOrder } from '@/types/manager-sales-orders.types';
+import FullscreenImageModal from '@/components/image-view/FullscreenImageModal';
 import {
   formatCurrency,
   SALES_ORDER_STATUS_CHIP_COLOR,
   SALES_ORDER_STATUS_LABELS,
 } from './managerSalesOrders.constants';
+
+const ASSIGNABLE_STATUSES = new Set([1, 2, 3]);
+
+const getPaidAmount = (order: ManagerNurseryOrder): number | undefined => {
+  const candidate = order.paymentAmount ?? order.paidAmount ?? order.amountPaid;
+  return typeof candidate === 'number' && Number.isFinite(candidate) ? candidate : undefined;
+};
 
 interface ManagerSalesOrdersTableProps {
   items: ManagerNurseryOrder[];
@@ -31,6 +42,7 @@ interface ManagerSalesOrdersTableProps {
   onPageChange: (pageNumber: number) => void;
   onRowsPerPageChange: (pageSize: number) => void;
   onViewDetail: (item: ManagerNurseryOrder) => void;
+  onAssignShipper?: (item: ManagerNurseryOrder) => void;
 }
 
 export default function ManagerSalesOrdersTable({
@@ -41,7 +53,12 @@ export default function ManagerSalesOrdersTable({
   onPageChange,
   onRowsPerPageChange,
   onViewDetail,
+  onAssignShipper,
 }: ManagerSalesOrdersTableProps) {
+  const [shipImageOpen, setShipImageOpen] = useState(false);
+  const [shipImageUrl, setShipImageUrl] = useState<string | null>(null);
+  const shipImages = useMemo(() => (shipImageUrl ? [shipImageUrl] : []), [shipImageUrl]);
+
   const handleChangePage = (_event: unknown, newPage: number) => {
     onPageChange(newPage + 1);
   };
@@ -57,9 +74,17 @@ export default function ManagerSalesOrdersTable({
           <TableHead sx={{ backgroundColor: 'var(--primary)' }}>
             <TableRow>
               <TableCell sx={{ fontWeight: 700 }}>Nursery Order ID</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Master Order ID</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>Customer</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>Shipper</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="right">
+                Payment
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="right">
+                Deposit
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="right">
+                Remaining
+              </TableCell>
               <TableCell sx={{ fontWeight: 700 }} align="right">
                 Subtotal
               </TableCell>
@@ -77,7 +102,7 @@ export default function ManagerSalesOrdersTable({
           <TableBody>
             {items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
+                <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
                   <Typography color="text.secondary">No orders match the current filter.</Typography>
                 </TableCell>
               </TableRow>
@@ -86,11 +111,12 @@ export default function ManagerSalesOrdersTable({
                 const mappedStatus = item.status as keyof typeof SALES_ORDER_STATUS_LABELS;
                 const customerDescription = `${item.customerName} - ${item.customerPhone}`;
                 const shipperDescription = item.shipperName || 'Unassigned';
+                const canAssignShipper = ASSIGNABLE_STATUSES.has(item.status);
+                const paidAmount = getPaidAmount(item);
 
                 return (
                   <TableRow key={item.id} hover>
                     <TableCell>#{item.id}</TableCell>
-                    <TableCell>#{item.orderId}</TableCell>
                     <TableCell>
                       <Typography variant="body2" fontWeight={600}>
                         {item.customerName}
@@ -109,6 +135,21 @@ export default function ManagerSalesOrdersTable({
                     </TableCell>
                     <TableCell align="right">
                       <Typography variant="body2" fontWeight={700}>
+                        {paidAmount != null ? formatCurrency(paidAmount) : '-'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Typography variant="body2" fontWeight={700}>
+                        {formatCurrency(item.depositAmount ?? undefined)}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Typography variant="body2" fontWeight={700}>
+                        {formatCurrency(item.remainingAmount ?? undefined)}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Typography variant="body2" fontWeight={700}>
                         {formatCurrency(item.subTotalAmount)}
                       </Typography>
                     </TableCell>
@@ -121,8 +162,30 @@ export default function ManagerSalesOrdersTable({
                     </TableCell>
                     <TableCell align="center">{item.items.length}</TableCell>
                     <TableCell align="center">
+                      {onAssignShipper ? (
+                        <Tooltip title={canAssignShipper ? 'Assign shipper' : 'Only for DepositPaid / Paid / Assigned'}>
+                          <span>
+                            <Button size="small" disabled={!canAssignShipper} onClick={() => onAssignShipper(item)}>
+                              <AssignmentIndIcon fontSize="medium" className="hover:scale-110" />
+                            </Button>
+                          </span>
+                        </Tooltip>
+                      ) : null}
+                      {item.deliveryImageUrl ? (
+                        <Tooltip title="View ship image">
+                          <Button
+                            size="small"
+                            onClick={() => {
+                              setShipImageUrl(item.deliveryImageUrl ?? null);
+                              setShipImageOpen(true);
+                            }}
+                          >
+                            <ImageIcon fontSize="medium" className="hover:scale-110" />
+                          </Button>
+                        </Tooltip>
+                      ) : null}
                       <Button size="small" onClick={() => onViewDetail(item)}>
-                        <VisibilityIcon fontSize="medium" className='hover:scale-110' />
+                        <VisibilityIcon fontSize="medium" className="hover:scale-110" />
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -143,6 +206,17 @@ export default function ManagerSalesOrdersTable({
           labelRowsPerPage="Rows"
         />
       </TableContainer>
+
+      <FullscreenImageModal
+        images={shipImages}
+        initialIndex={0}
+        isOpen={shipImageOpen}
+        onClose={() => {
+          setShipImageOpen(false);
+          setShipImageUrl(null);
+        }}
+        alt="Delivery image"
+      />
     </Box>
   );
 }

@@ -10,7 +10,6 @@ import {
   TextField,
   Button,
   Alert,
-  CircularProgress,
 } from '@mui/material';
 import { changePassword } from '@/lib/api/userProfileService';
 import { logoutAllAction } from '@/app/actions/authenticationActions';
@@ -19,6 +18,7 @@ import { clearClientAccessToken, getClientAccessToken, getClientRefreshToken } f
 import { getDeviceId } from '@/lib/utils/deviceId';
 import { hoverGlowStyle, hoverLiftStyle } from '@/lib/styles/buttonStyles';
 import { useTranslations } from 'next-intl';
+import { CustomLoading } from '../CustomLoading';
 
 interface ChangePasswordModalProps {
   open: boolean;
@@ -207,7 +207,7 @@ export default function ChangePasswordModal({ open, onClose }: ChangePasswordMod
           variant="contained"
           disabled={isLoading}
           sx={{background: "var(--primary)", ...hoverLiftStyle}}
-          startIcon={isLoading ? <CircularProgress size={20} /> : undefined}
+          startIcon={isLoading ? <CustomLoading size={20} /> : undefined}
         >
           {isLoading ? t('processing') : t('changePassword')}
         </Button>

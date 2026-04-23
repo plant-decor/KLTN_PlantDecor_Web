@@ -14,7 +14,6 @@ import {
   IconButton,
   Divider,
   Alert,
-  CircularProgress,
   Autocomplete,
 } from '@mui/material';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
@@ -31,6 +30,7 @@ import type { UserProfile, UpdateUserProfileRequest } from '@/types/auth.types';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
 import ClickableImageViewer from '@/components/image-view/ClickableImageViewer';
 import { searchAddressSuggestions, type AddressSuggestion } from '@/lib/utils/geocoding';
+import { CustomLoading } from '@/components/CustomLoading';
 
 export default function ProfilePage() {
   const t = useTranslations('profile');
@@ -497,7 +497,7 @@ export default function ProfilePage() {
                       endAdornment: (
                         <>
                           {loadingAddressSuggestions ? (
-                            <CircularProgress color="inherit" size={20} />
+                            <CustomLoading size={20} />
                           ) : null}
                           {params.InputProps.endAdornment}
                         </>
@@ -555,7 +555,7 @@ export default function ProfilePage() {
             <Button
               variant="contained"
               size="large"
-              startIcon={isSaving ? <CircularProgress size={20} /> : <SaveIcon />}
+              startIcon={isSaving ? <CustomLoading size={20} /> : <SaveIcon />}
               onClick={handleSaveChanges}
               disabled={isSaving}
               sx={{

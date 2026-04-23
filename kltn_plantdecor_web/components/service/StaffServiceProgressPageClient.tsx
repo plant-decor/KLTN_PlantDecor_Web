@@ -5,7 +5,6 @@ import {
   Box,
   Container,
   Alert,
-  CircularProgress,
   Tabs,
   Tab,
 } from "@mui/material";
@@ -18,6 +17,7 @@ import {
   AddOnService,
 } from "@/types/service.types";
 import { get, post } from '@/lib/api/apiService';
+import { CustomLoading } from "../CustomLoading";
 
 type View = "timeline" | "detail";
 
@@ -178,7 +178,7 @@ export const StaffServiceProgressPageClient: React.FC = () => {
           <TabPanel value={tabValue} index={0}>
             {loading ? (
               <Box display="flex" justifyContent="center" py={5}>
-                <CircularProgress />
+                <CustomLoading size={18} />
               </Box>
             ) : inProgressServices.length === 0 ? (
               <Box sx={{ p: 3, textAlign: "center" }}>

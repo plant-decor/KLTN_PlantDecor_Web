@@ -8,7 +8,6 @@ import {
   Box,
   Chip,
   Container,
-  CircularProgress,
   Grid,
 } from "@mui/material";
 import {
@@ -16,6 +15,7 @@ import {
   DifficultyLevel,
   ServiceType,
 } from "@/types/service.types";
+import { CustomLoading } from "../CustomLoading";
 
 interface ServiceCatalogProps {
   packages: CareServicePackage[];
@@ -38,7 +38,7 @@ export const ServiceCatalog: React.FC<ServiceCatalogProps> = ({
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" py={5}>
-        <CircularProgress />
+        <CustomLoading size={18} />
       </Box>
     );
   }

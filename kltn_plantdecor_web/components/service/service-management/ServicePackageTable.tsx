@@ -3,7 +3,6 @@ import { DeleteOutline, EditOutlined, VisibilityOutlined } from "@mui/icons-mate
 import {
   Box,
   Chip,
-  CircularProgress,
   IconButton,
   Paper,
   Table,
@@ -18,6 +17,7 @@ import {
 import type { AdminCareServicePackageListItem } from "@/types/admin-service-package.types";
 import { hoverGlowStyle } from "@/lib/styles/buttonStyles";
 import { formatCurrency } from "@/lib/utils/formatUtil";
+import { CustomLoading } from "@/components/CustomLoading";
 
 interface ServicePackageTableProps {
   packages: AdminCareServicePackageListItem[];
@@ -40,7 +40,7 @@ export default function ServicePackageTable({
     <Paper sx={{ border: "1px solid var(--card-border)", overflow: "hidden" }}>
       {loading ? (
         <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
-          <CircularProgress />
+          <CustomLoading />
         </Box>
       ) : (
         <TableContainer>

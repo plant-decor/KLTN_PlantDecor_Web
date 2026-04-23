@@ -7,7 +7,6 @@ import {
   Card,
   CardContent,
   Chip,
-  CircularProgress,
   Divider,
   Typography,
 } from '@mui/material';
@@ -19,6 +18,7 @@ import type { Order, OrderInvoiceDetail } from '@/types/order.types';
 import { formatCurrency, formatDate, getStatusInfo } from './orderHistoryUtils';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 import Image from 'next/image';
+import { CustomLoading } from '@/components/CustomLoading';
 
 const SERVICE_ORDER_TYPE = 4;
 const ORDER_ITEM_FALLBACK_IMAGE = '/img/fallbackplant.avif';
@@ -96,7 +96,7 @@ export default function OrderHistoryList({
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
-        <CircularProgress />
+        <CustomLoading />
       </Box>
     );
   }

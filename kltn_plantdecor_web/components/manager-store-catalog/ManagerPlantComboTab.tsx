@@ -6,7 +6,6 @@ import {
   Box,
   Button,
   Chip,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -30,6 +29,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 // import AutorenewIcon from '@mui/icons-material/Autorenew';
 import CallSplitIcon from '@mui/icons-material/CallSplit';
+import { CustomLoading } from '@/components/CustomLoading';
 import type { ResponseModel } from '@/types/api.types';
 import type {
   ManagerPlantComboInventoryItem,
@@ -315,7 +315,7 @@ export default function ManagerPlantComboTab() {
             {loading ? (
               <TableRow>
                 <TableCell colSpan={9} align="center" sx={{ py: 5 }}>
-                  <CircularProgress size={24} />
+                  <CustomLoading size={24} />
                 </TableCell>
               </TableRow>
             ) : items.length === 0 ? (

@@ -5,7 +5,6 @@ import { useTranslations } from 'next-intl';
 import {
   Box,
   Chip,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -24,6 +23,7 @@ import { localizeRoomDesignEnumLabel } from '@/lib/utils/roomDesignEnumI18n';
 import type { ShopNurseryListItem } from '@/lib/api/shopPlantsService';
 import { formatDateTime } from '@/lib/utils/dateUtils';
 import RichTextDisplay from './RichTextDisplay';
+import { CustomLoading } from '@/components/CustomLoading';
 
 interface PlantComboViewDialogProps {
   open: boolean;
@@ -280,7 +280,7 @@ export default function PlantComboViewDialog({
             </Typography>
             {nurseriesLoading ? (
               <Stack direction="row" spacing={1} alignItems="center">
-                <CircularProgress size={18} />
+                <CustomLoading size={18} />
                 <Typography variant="body2" color="text.secondary">
                   Đang tải danh sách vựa...
                 </Typography>

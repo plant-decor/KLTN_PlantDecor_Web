@@ -207,7 +207,7 @@ export const useAdminPlantCombos = (): UseAdminPlantCombosReturn => {
   const [, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
-  const [plantsLoading] = useState(false);
+  const [plantsLoading, setPlantsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState<PaginationState>(defaultPagination);
   const [filters, setFilters] = useState<ListFilters>({ keyword: '' });
@@ -274,6 +274,7 @@ export const useAdminPlantCombos = (): UseAdminPlantCombosReturn => {
   const fetchComboPlants = useCallback(async (keyword = '') => {
     const requestId = ++plantSearchRequestRef.current;
     setError(null);
+    setPlantsLoading(true);
 
     try {
       const normalizedKeyword = keyword.trim();
@@ -289,7 +290,7 @@ export const useAdminPlantCombos = (): UseAdminPlantCombosReturn => {
           sortBy: '',
           sortDirection: '',
         },
-        true
+        false
       );
       const payload = getResponsePayload(response);
       if (requestId === plantSearchRequestRef.current) {
@@ -298,6 +299,10 @@ export const useAdminPlantCombos = (): UseAdminPlantCombosReturn => {
     } catch (err) {
       if (requestId === plantSearchRequestRef.current) {
         setError(normalizeError(err));
+      }
+    } finally {
+      if (requestId === plantSearchRequestRef.current) {
+        setPlantsLoading(false);
       }
     }
   }, []);

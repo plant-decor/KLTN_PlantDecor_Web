@@ -3,7 +3,6 @@
 import {
   Box,
   Chip,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -19,6 +18,7 @@ import {
   Typography,
 } from '@mui/material';
 import type { ManagerNurseryOrderDetail } from '@/types/manager-sales-orders.types';
+import { CustomLoading } from '@/components/CustomLoading';
 import {
   formatCurrency,
   normalizeMultilineText,
@@ -55,7 +55,7 @@ export default function ManagerSalesOrderDetailDialog({
       <DialogContent dividers>
         {loading ? (
           <Box sx={{ py: 5, display: 'flex', justifyContent: 'center' }}>
-            <CircularProgress />
+            <CustomLoading />
           </Box>
         ) : !detailItem ? (
           <Typography color="text.secondary">No detail data available.</Typography>

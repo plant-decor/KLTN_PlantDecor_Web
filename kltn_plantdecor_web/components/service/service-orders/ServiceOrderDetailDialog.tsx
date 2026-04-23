@@ -4,7 +4,6 @@ import {
   Box,
   Button,
   Chip,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -13,6 +12,7 @@ import {
   Typography,
 } from '@mui/material';
 import type { ManagerServiceRegistration } from '@/types/care-service.types';
+import { CustomLoading } from '@/components/CustomLoading';
 import {
   canApproveOrReject,
   canAssignCaretaker,
@@ -68,7 +68,7 @@ export default function ServiceOrderDetailDialog({
       <DialogContent dividers>
         {loading ? (
           <Box sx={{ py: 3, display: 'flex', justifyContent: 'center' }}>
-            <CircularProgress />
+            <CustomLoading />
           </Box>
         ) : !detailItem ? (
           <Typography color="text.secondary">No detail data available.</Typography>

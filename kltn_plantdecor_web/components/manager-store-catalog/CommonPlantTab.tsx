@@ -6,7 +6,6 @@ import {
   Box,
   Button,
   Chip,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -29,6 +28,7 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import ToggleOnIcon from '@mui/icons-material/ToggleOn';
 import ToggleOffIcon from '@mui/icons-material/ToggleOff';
+import { CustomLoading } from '@/components/CustomLoading';
 import {
   createManagerCommonPlant,
   getAvailableImportCommonPlants,
@@ -340,7 +340,7 @@ export default function CommonPlantTab({ nurseryId }: CommonPlantTabProps) {
             {loading ? (
               <TableRow>
                 <TableCell colSpan={7} align="center" sx={{ py: 5 }}>
-                  <CircularProgress size={24} />
+                  <CustomLoading size={24} />
                 </TableCell>
               </TableRow>
             ) : items.length === 0 ? (

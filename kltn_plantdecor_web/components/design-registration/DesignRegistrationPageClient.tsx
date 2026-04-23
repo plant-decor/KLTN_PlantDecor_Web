@@ -9,7 +9,6 @@ import {
   CardContent,
   CardMedia,
   Chip,
-  CircularProgress,
   FormControl,
   InputLabel,
   MenuItem,
@@ -20,6 +19,7 @@ import {
   Typography,
 } from '@mui/material';
 import { toast } from 'react-toastify';
+import { CustomLoading } from '@/components/CustomLoading';
 import ManagementHeader from '@/components/layout/ManagementHeader';
 import {
   createDesignRegistration,
@@ -196,7 +196,7 @@ export default function DesignRegistrationPageClient() {
 
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-          <CircularProgress />
+          <CustomLoading />
         </Box>
       ) : (
         <Stack spacing={3}>

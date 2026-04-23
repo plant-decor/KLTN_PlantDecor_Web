@@ -4,7 +4,6 @@ import { useCallback, useMemo, useState } from 'react';
 import {
   Box,
   Button,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -16,6 +15,7 @@ import {
   Typography,
 } from '@mui/material';
 import ImageUpload from '@/components/store-management/ImageUpload';
+import { CustomLoading } from '@/components/CustomLoading';
 import type { ImageUploadData } from '@/types/store-management.types';
 import type { CreatePlantInstanceInput, SystemPlantSearchItem } from '@/types/manager-store-catalog.types';
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils/formatUtil';
@@ -108,7 +108,7 @@ export default function PlantInstanceCreateDialog({
                 {loadingPlants ? (
                   <MenuItem value={0} disabled>
                     <Stack direction="row" spacing={1} alignItems="center">
-                      <CircularProgress size={14} />
+                      <CustomLoading size={14} />
                       <span>Loading plants...</span>
                     </Stack>
                   </MenuItem>

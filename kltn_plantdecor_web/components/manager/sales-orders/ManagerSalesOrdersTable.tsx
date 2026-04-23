@@ -29,10 +29,10 @@ import {
 
 const ASSIGNABLE_STATUSES = new Set([1, 2, 3]);
 
-const getPaidAmount = (order: ManagerNurseryOrder): number | undefined => {
-  const candidate = order.paymentAmount ?? order.paidAmount ?? order.amountPaid;
-  return typeof candidate === 'number' && Number.isFinite(candidate) ? candidate : undefined;
-};
+// const getPaidAmount = (order: ManagerNurseryOrder): number | undefined => {
+//   const candidate = order.paymentAmount ?? order.paidAmount ?? order.amountPaid;
+//   return typeof candidate === 'number' && Number.isFinite(candidate) ? candidate : undefined;
+// };
 
 interface ManagerSalesOrdersTableProps {
   items: ManagerNurseryOrder[];
@@ -77,9 +77,6 @@ export default function ManagerSalesOrdersTable({
               <TableCell sx={{ fontWeight: 700 }}>Customer</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>Shipper</TableCell>
               <TableCell sx={{ fontWeight: 700 }} align="right">
-                Payment
-              </TableCell>
-              <TableCell sx={{ fontWeight: 700 }} align="right">
                 Deposit
               </TableCell>
               <TableCell sx={{ fontWeight: 700 }} align="right">
@@ -112,7 +109,7 @@ export default function ManagerSalesOrdersTable({
                 const customerDescription = `${item.customerName} - ${item.customerPhone}`;
                 const shipperDescription = item.shipperName || 'Unassigned';
                 const canAssignShipper = ASSIGNABLE_STATUSES.has(item.status);
-                const paidAmount = getPaidAmount(item);
+                // const paidAmount = getPaidAmount(item);
 
                 return (
                   <TableRow key={item.id} hover>
@@ -133,11 +130,11 @@ export default function ManagerSalesOrdersTable({
                         {item.shipperPhone || '-'}
                       </Typography>
                     </TableCell>
-                    <TableCell align="right">
+                    {/* <TableCell align="right">
                       <Typography variant="body2" fontWeight={700}>
                         {paidAmount != null ? formatCurrency(paidAmount) : '-'}
                       </Typography>
-                    </TableCell>
+                    </TableCell> */}
                     <TableCell align="right">
                       <Typography variant="body2" fontWeight={700}>
                         {formatCurrency(item.depositAmount ?? undefined)}
@@ -145,7 +142,7 @@ export default function ManagerSalesOrdersTable({
                     </TableCell>
                     <TableCell align="right">
                       <Typography variant="body2" fontWeight={700}>
-                        {formatCurrency(item.remainingAmount ?? undefined)}
+                        {formatCurrency(item.remainingAmount ?? 0)}
                       </Typography>
                     </TableCell>
                     <TableCell align="right">

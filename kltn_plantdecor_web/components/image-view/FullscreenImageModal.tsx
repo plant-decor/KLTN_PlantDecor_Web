@@ -36,7 +36,8 @@ export default function FullscreenImageModal({
   const [activeStep, setActiveStep] = useState(initialIndex);
   const [zoom, setZoom] = useState(1);
   const maxSteps = images.length;
-  const currentSrc = images[activeStep];
+  const safeActiveStep = maxSteps > 0 ? ((activeStep % maxSteps) + maxSteps) % maxSteps : 0;
+  const currentSrc = images[safeActiveStep];
 
   const handleDialogEnter = useCallback(() => {
     setActiveStep(initialIndex);
@@ -93,20 +94,6 @@ export default function FullscreenImageModal({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, handleNext, handleBack, handleZoomIn, handleZoomOut, onClose]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    if (maxSteps === 0) {
-      setActiveStep(0);
-      setZoom(1);
-      return;
-    }
-
-    if (activeStep < 0 || activeStep >= maxSteps) {
-      setActiveStep(0);
-      setZoom(1);
-    }
-  }, [activeStep, isOpen, maxSteps]);
 
   return (
     <Dialog

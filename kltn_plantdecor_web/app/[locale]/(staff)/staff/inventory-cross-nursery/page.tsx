@@ -175,7 +175,8 @@ export default function CrossNurseryInventoryPage() {
           sx={{
             borderBottom: 1,
             borderColor: 'divider',
-            '& .MuiTab-root': { textTransform: 'none', fontSize: '0.95rem' },
+            '& .MuiTab-root': { fontWeight: 600, textTransform: 'none', fontSize: '1rem' },
+            '& .Mui-selected': { backgroundColor: 'var(--primary) !important', color: '#fff !important' },
           }}
         >
           <Tab label="All Products" />

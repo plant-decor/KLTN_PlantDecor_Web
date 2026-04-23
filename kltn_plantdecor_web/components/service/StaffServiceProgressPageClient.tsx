@@ -170,7 +170,15 @@ export const StaffServiceProgressPageClient: React.FC = () => {
 
       {view === "timeline" && (
         <>
-          <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)} sx={{ mb: 3 }}>
+          <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)} 
+          sx={{
+          borderBottom: 1,
+          borderColor: 'divider',
+          '& .MuiTab-root': { fontWeight: 600, textTransform: 'none', fontSize: '1rem' },
+          '& .Mui-selected': { backgroundColor: 'var(--primary) !important', color: '#fff !important' },
+        }}
+            
+            >
             <Tab label={`In Progress (${inProgressServices.length})`} />
             <Tab label="Instructions" />
           </Tabs>

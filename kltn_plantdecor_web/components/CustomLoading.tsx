@@ -44,7 +44,6 @@ export const CustomLoading = ({
       <div className="leaf-loader__inner" aria-hidden="true">
         {Array.from({ length: 10 }).map((_, i) => (
           <span
-            // eslint-disable-next-line react/no-array-index-key
             key={i}
             className="leaf-loader__leaf"
             style={{ '--i': i } as React.CSSProperties}

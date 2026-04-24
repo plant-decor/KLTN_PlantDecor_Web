@@ -1,20 +1,28 @@
-﻿import type { ServiceRegistrationStatusEnum } from '@/types/care-service.types';
+﻿import type { EnumOption } from '@/types/care-service.types';
 
 export const ALL_STATUS_FILTER = 'ALL';
 
-export const STATUS_LABELS: Record<ServiceRegistrationStatusEnum, string> = {
-  1: 'Pending Approval',
-  2: 'Awaiting Payment',
-  3: 'Active',
-  4: 'Completed',
-  5: 'Cancelled',
-  6: 'Rejected',
+export type ServiceStatusFilterValue = typeof ALL_STATUS_FILTER | number;
+
+export interface ServiceStatusOption {
+  value: ServiceStatusFilterValue;
+  label: string;
+}
+
+export const formatStatusEnumLabel = (value: string) => {
+  if (!value) {
+    return '';
+  }
+
+  return value
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 };
 
-export const STATUS_CHIP_COLOR: Record<
-  ServiceRegistrationStatusEnum,
-  'default' | 'warning' | 'success' | 'error' | 'info'
-> = {
+const STATUS_CHIP_COLOR: Partial<Record<number, 'default' | 'warning' | 'success' | 'error' | 'info'>> = {
+  0: 'warning',
   1: 'warning',
   2: 'info',
   3: 'success',
@@ -23,18 +31,18 @@ export const STATUS_CHIP_COLOR: Record<
   6: 'error',
 };
 
-export const SERVICE_STATUS_OPTIONS: Array<{
-  value: typeof ALL_STATUS_FILTER | ServiceRegistrationStatusEnum;
-  label: string;
-}> = [
-  { value: ALL_STATUS_FILTER, label: 'All Statuses' },
-  { value: 1, label: STATUS_LABELS[1] },
-  { value: 2, label: STATUS_LABELS[2] },
-  { value: 3, label: STATUS_LABELS[3] },
-  { value: 4, label: STATUS_LABELS[4] },
-  { value: 5, label: STATUS_LABELS[5] },
-  { value: 6, label: STATUS_LABELS[6] },
-];
+export const getStatusChipColor = (status: number) => STATUS_CHIP_COLOR[status] || 'default';
+
+export const buildServiceStatusOptions = (enums: EnumOption[]): ServiceStatusOption[] => {
+  return [{ value: ALL_STATUS_FILTER, label: 'All Statuses' }, ...enums.map((item) => ({ value: item.value, label: formatStatusEnumLabel(item.name) }))];
+};
+
+export const buildServiceStatusLabelMap = (enums: EnumOption[]) => {
+  return enums.reduce<Record<number, string>>((accumulator, item) => {
+    accumulator[item.value] = formatStatusEnumLabel(item.name);
+    return accumulator;
+  }, {});
+};
 
 export const formatDate = (value: string | null | undefined) => {
   if (!value) {
@@ -42,7 +50,11 @@ export const formatDate = (value: string | null | undefined) => {
   }
 
   const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleString('vi-VN');
+  return parsed.toLocaleDateString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
 };
 
 export const formatCurrency = (value?: number) => {
@@ -66,6 +78,7 @@ export const getErrorMessage = (error: unknown, fallback: string) => {
   return candidate.response?.data?.message || candidate.message || fallback;
 };
 
-export const canApproveOrReject = (status: number) => status === 1;
+export const canApproveOrReject = (status: number) => status === 1 || status === 0;
+export const canReschedule = (status: number) => status === 0;
 export const canAssignCaretaker = (status: number) => status === 2 || status === 3;
 export const canManagerCancel = (status: number) => status === 3;

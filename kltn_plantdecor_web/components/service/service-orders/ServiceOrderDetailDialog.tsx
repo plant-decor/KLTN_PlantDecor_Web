@@ -4,7 +4,6 @@ import {
   Box,
   Button,
   Chip,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -12,15 +11,16 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import type { ManagerServiceRegistration, ServiceRegistrationStatusEnum } from '@/types/care-service.types';
+import type { ManagerServiceRegistration } from '@/types/care-service.types';
+import { CustomLoading } from '@/components/CustomLoading';
 import {
-  STATUS_CHIP_COLOR,
-  STATUS_LABELS,
   canApproveOrReject,
   canAssignCaretaker,
   canManagerCancel,
+  canReschedule,
   formatCurrency,
   formatDate,
+  getStatusChipColor,
 } from './managerServiceOrders.constants';
 
 interface ServiceOrderDetailDialogProps {
@@ -28,11 +28,13 @@ interface ServiceOrderDetailDialogProps {
   loading: boolean;
   submitting: boolean;
   detailItem: ManagerServiceRegistration | null;
+  statusLabels: Record<number, string>;
   onClose: () => void;
   onApprove: (item: ManagerServiceRegistration) => void;
   onReject: (item: ManagerServiceRegistration) => void;
   onCancel: (item: ManagerServiceRegistration) => void;
   onAssignCaretaker: (item: ManagerServiceRegistration) => void;
+  onReschedule: (item: ManagerServiceRegistration) => void;
 }
 
 export default function ServiceOrderDetailDialog({
@@ -40,11 +42,13 @@ export default function ServiceOrderDetailDialog({
   loading,
   submitting,
   detailItem,
+  statusLabels,
   onClose,
   onApprove,
   onReject,
   onCancel,
   onAssignCaretaker,
+  onReschedule,
 }: ServiceOrderDetailDialogProps) {
   return (
     <Dialog
@@ -64,7 +68,7 @@ export default function ServiceOrderDetailDialog({
       <DialogContent dividers>
         {loading ? (
           <Box sx={{ py: 3, display: 'flex', justifyContent: 'center' }}>
-            <CircularProgress />
+            <CustomLoading />
           </Box>
         ) : !detailItem ? (
           <Typography color="text.secondary">No detail data available.</Typography>
@@ -74,9 +78,9 @@ export default function ServiceOrderDetailDialog({
               <strong>Status:</strong>{' '}
               <Chip
                 size="small"
-                color={STATUS_CHIP_COLOR[detailItem.status as ServiceRegistrationStatusEnum] || 'default'}
+                color={getStatusChipColor(detailItem.status)}
                 label={
-                  STATUS_LABELS[detailItem.status as ServiceRegistrationStatusEnum] ||
+                  statusLabels[detailItem.status] ||
                   detailItem.statusName ||
                   `#${detailItem.status}`
                 }
@@ -140,6 +144,7 @@ export default function ServiceOrderDetailDialog({
               color="success"
               onClick={() => onApprove(detailItem)}
               disabled={submitting}
+              className='bg-primary!'
             >
               Approve Order
             </Button>
@@ -148,6 +153,7 @@ export default function ServiceOrderDetailDialog({
             <Button
               variant="outlined"
               color="error"
+              className='bg-error!'
               onClick={() => onReject(detailItem)}
               disabled={submitting}
             >
@@ -160,6 +166,7 @@ export default function ServiceOrderDetailDialog({
               color="error"
               onClick={() => onCancel(detailItem)}
               disabled={submitting}
+              className='bg-error!'
             >
               Cancel Order
             </Button>
@@ -169,8 +176,14 @@ export default function ServiceOrderDetailDialog({
               variant="outlined"
               onClick={() => onAssignCaretaker(detailItem)}
               disabled={submitting}
+              className='bg-blue-400!'
             >
               Assign caretaker
+            </Button>
+          )}
+          {detailItem && canReschedule(detailItem.status) && (
+            <Button variant="outlined" onClick={() => onReschedule(detailItem)} disabled={submitting} className='bg-warning!'>
+              Reschedule
             </Button>
           )}
         </Stack>

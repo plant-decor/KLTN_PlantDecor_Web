@@ -31,7 +31,7 @@ export default function PlantGuideDeleteDialog({
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={onConfirm} color="error" variant="contained" disabled={isLoading}>
+        <Button className='bg-error!' onClick={onConfirm} color="error" variant="contained" disabled={isLoading}>
           Delete
         </Button>
       </DialogActions>

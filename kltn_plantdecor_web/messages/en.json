@@ -1034,6 +1034,23 @@
   },
   "aiRecommendation": {
     "title": "AI Plant Recommendation",
+    "myDesign": {
+      "buttonLabel": "My Design",
+      "modalTitle": "My Design History",
+      "loading": "Loading your generated room designs...",
+      "empty": "You do not have any generated room designs yet.",
+      "generatedAt": "Generated at",
+      "layoutDesignId": "Layout design ID",
+      "layoutDesignPlantId": "Layout design plant ID",
+      "promptLabel": "Prompt",
+      "noPrompt": "No prompt available.",
+      "imageMissing": "Image is unavailable for this generated record.",
+      "retryButton": "Retry",
+      "closeButton": "Close",
+      "errors": {
+        "loadFailed": "Failed to load your design history."
+      }
+    },
     "steps": {
       "roomInput": "Room Input",
       "roomAnalysis": "Room Analysis",
@@ -1084,7 +1101,7 @@
       }
     },
     "generatedImages": {
-      "title": "Generated room images",
+      "title": "3) Generated room images",
       "generatingLabel": "Generating AI room images...",
       "imageFailed": "Image generation failed for this recommendation.",
       "placementLabel": "Placement:",
@@ -1106,5 +1123,9 @@
     "validation": {
       "roomImageRequired": "Please upload a room image"
     }
+  },
+  "combo":{
+    "description": "Description",
+    "themeDescription": "Theme Description"
   }
 }

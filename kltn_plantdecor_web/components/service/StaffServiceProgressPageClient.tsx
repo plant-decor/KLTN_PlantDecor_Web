@@ -5,7 +5,6 @@ import {
   Box,
   Container,
   Alert,
-  CircularProgress,
   Tabs,
   Tab,
 } from "@mui/material";
@@ -18,6 +17,7 @@ import {
   AddOnService,
 } from "@/types/service.types";
 import { get, post } from '@/lib/api/apiService';
+import { CustomLoading } from "../CustomLoading";
 
 type View = "timeline" | "detail";
 
@@ -170,7 +170,15 @@ export const StaffServiceProgressPageClient: React.FC = () => {
 
       {view === "timeline" && (
         <>
-          <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)} sx={{ mb: 3 }}>
+          <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)} 
+          sx={{
+          borderBottom: 1,
+          borderColor: 'divider',
+          '& .MuiTab-root': { fontWeight: 600, textTransform: 'none', fontSize: '1rem' },
+          '& .Mui-selected': { backgroundColor: 'var(--primary) !important', color: '#fff !important' },
+        }}
+            
+            >
             <Tab label={`In Progress (${inProgressServices.length})`} />
             <Tab label="Instructions" />
           </Tabs>
@@ -178,7 +186,7 @@ export const StaffServiceProgressPageClient: React.FC = () => {
           <TabPanel value={tabValue} index={0}>
             {loading ? (
               <Box display="flex" justifyContent="center" py={5}>
-                <CircularProgress />
+                <CustomLoading size={18} />
               </Box>
             ) : inProgressServices.length === 0 ? (
               <Box sx={{ p: 3, textAlign: "center" }}>

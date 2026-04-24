@@ -5,7 +5,6 @@ import { useTranslations } from 'next-intl';
 import {
   Box,
   Chip,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -23,6 +22,8 @@ import { formatCurrency } from '@/lib/utils/formatUtil';
 import { localizeRoomDesignEnumLabel } from '@/lib/utils/roomDesignEnumI18n';
 import type { ShopNurseryListItem } from '@/lib/api/shopPlantsService';
 import { formatDateTime } from '@/lib/utils/dateUtils';
+import RichTextDisplay from './RichTextDisplay';
+import { CustomLoading } from '@/components/CustomLoading';
 
 interface PlantComboViewDialogProps {
   open: boolean;
@@ -125,7 +126,9 @@ export default function PlantComboViewDialog({
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <Typography variant="body2" color="text.secondary">Description</Typography>
-                <Typography variant="body1">{combo.description || '-'}</Typography>
+                <Box sx={{ mt: 1 }}>
+                  <RichTextDisplay content={combo.description} />
+                </Box>
               </Grid>
             </Grid>
           </Box>
@@ -188,7 +191,9 @@ export default function PlantComboViewDialog({
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="body2" color="text.secondary">Theme Description</Typography>
-                <Typography variant="body1">{combo.themeDescription || '-'}</Typography>
+                <Box sx={{ mt: 1 }}>
+                  <RichTextDisplay content={combo.themeDescription} />
+                </Box>
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <Typography variant="body2" color="text.secondary" gutterBottom>
@@ -275,7 +280,7 @@ export default function PlantComboViewDialog({
             </Typography>
             {nurseriesLoading ? (
               <Stack direction="row" spacing={1} alignItems="center">
-                <CircularProgress size={18} />
+                <CustomLoading size={18} />
                 <Typography variant="body2" color="text.secondary">
                   Đang tải danh sách vựa...
                 </Typography>

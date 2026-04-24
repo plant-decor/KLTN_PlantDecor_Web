@@ -20,8 +20,8 @@ export default function AdminPage() {
         sx={{
           borderBottom: 1,
           borderColor: 'divider',
-          backgroundColor: 'white',
-          px: 2,
+          '& .MuiTab-root': { fontWeight: 600, textTransform: 'none', fontSize: '1rem' },
+          '& .Mui-selected': { backgroundColor: 'var(--primary) !important', color: '#fff !important' },
         }}
       >
         <Tab label="Business Dashboard" />`r`n        <Tab label="System Dashboard" />

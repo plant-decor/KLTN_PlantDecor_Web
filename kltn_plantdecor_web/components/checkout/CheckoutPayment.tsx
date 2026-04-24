@@ -7,21 +7,21 @@ import {
   Button,
   Card,
   CardContent,
-  CircularProgress,
   FormControlLabel,
   Radio,
   RadioGroup,
   Typography,
 } from '@mui/material';
 import type { CheckoutData } from '@/types/cart.types';
-import type { OrderInvoice } from '@/types/order.types';
-import { createPaymentUrl, getInvoicesByOrderId } from '@/lib/api/orderService';
+import type { OrderInvoice, OrderCreatePayload } from '@/types/order.types';
+import { createPaymentUrl, getInvoicesByOrderId, createOrder } from '@/lib/api/orderService';
+import type { OrderCreateRequest } from '@/types/order.types';
 import Image from 'next/image';
 
 interface CheckoutPaymentProps {
   checkoutData: CheckoutData;
   onDataChange: (data: Partial<CheckoutData>) => void;
-  orderId: number;
+  orderId?: number;
   onPaymentCompleted: () => void;
 }
 
@@ -41,25 +41,35 @@ export default function CheckoutPayment({
   const [selectedMethod, setSelectedMethod] = useState(
     checkoutData.paymentMethod || 'credit_debit'
   );
-  const [isLoadingInvoice, setIsLoadingInvoice] = useState(true);
+  const [isLoadingInvoice, setIsLoadingInvoice] = useState(false);
   const [invoiceError, setInvoiceError] = useState('');
   const [invoices, setInvoices] = useState<OrderInvoice[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createdOrderId, setCreatedOrderId] = useState<number | undefined>(orderId);
+  const [isCreatingOrder, setIsCreatingOrder] = useState(false);
+  const [orderError, setOrderError] = useState('');
+  const [shouldAutoPayAfterOrderCreation, setShouldAutoPayAfterOrderCreation] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
 
     async function loadInvoices() {
+      if (!createdOrderId) {
+        setIsLoadingInvoice(false);
+        return;
+      }
+
       setIsLoadingInvoice(true);
       setInvoiceError('');
 
       try {
-        const response = await getInvoicesByOrderId(orderId);
+        const response = await getInvoicesByOrderId(createdOrderId);
         if (!isMounted) return;
 
         if (response.length === 0) {
           setInvoiceError('No invoice found for this order. Please try again later.');
           setInvoices([]);
+          setShouldAutoPayAfterOrderCreation(false);
           return;
         }
 
@@ -68,6 +78,7 @@ export default function CheckoutPayment({
         if (!isMounted) return;
         const message = err instanceof Error ? err.message : 'Failed to load invoice data.';
         setInvoiceError(message);
+        setShouldAutoPayAfterOrderCreation(false);
       } finally {
         if (!isMounted) return;
         setIsLoadingInvoice(false);
@@ -78,7 +89,7 @@ export default function CheckoutPayment({
     return () => {
       isMounted = false;
     };
-  }, [orderId]);
+  }, [createdOrderId]);
 
   const selectedInvoice = useMemo(() => {
     if (invoices.length === 0) return null;
@@ -87,6 +98,30 @@ export default function CheckoutPayment({
       invoices[0]
     );
   }, [invoices]);
+
+  // Auto-proceed to payment after invoices are loaded
+  useEffect(() => {
+    const proceedToPayment = async () => {
+      if (!shouldAutoPayAfterOrderCreation || isLoadingInvoice || !selectedInvoice) {
+        return;
+      }
+
+      try {
+        setShouldAutoPayAfterOrderCreation(false);
+        setIsSubmitting(true);
+        setInvoiceError('');
+        const paymentUrl = await createPaymentUrl(selectedInvoice.id);
+        onPaymentCompleted();
+        window.location.assign(paymentUrl);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to create payment URL.';
+        setInvoiceError(message);
+        setIsSubmitting(false);
+      }
+    };
+
+    void proceedToPayment();
+  }, [shouldAutoPayAfterOrderCreation, isLoadingInvoice, selectedInvoice, onPaymentCompleted]);
 
   const handlePaymentMethodChange = (
     e: React.ChangeEvent<HTMLInputElement>
@@ -98,25 +133,96 @@ export default function CheckoutPayment({
     });
   };
 
-  const handleCreatePayment = async () => {
-    if (!selectedInvoice) {
-      setInvoiceError('Invoice is unavailable for payment.');
-      return;
-    }
+  const handleCreateOrderAndPay = async () => {
+    if (isCreatingOrder || isSubmitting) return;
 
     try {
-      setIsSubmitting(true);
-      setInvoiceError('');
-      const paymentUrl = await createPaymentUrl(selectedInvoice.id);
-      onPaymentCompleted();
-      window.location.assign(paymentUrl);
+      setIsCreatingOrder(true);
+      setOrderError('');
+
+      if (!checkoutData.shippingInfo) {
+        setOrderError('Shipping information is missing.');
+        return;
+      }
+
+      const { fullName, phone, address, notes } = checkoutData.shippingInfo;
+
+      const basePayload = {
+        address,
+        phone,
+        customerName: fullName,
+        note: notes ?? '',
+        paymentStrategy: checkoutData.orderType === 2 ? (checkoutData.paymentStrategy ?? 1) : 1,
+      };
+
+      let payload: OrderCreateRequest;
+      if (checkoutData.orderType === 2) {
+        payload = {
+          ...basePayload,
+          orderType: 2,
+          plantInstanceId: checkoutData.plantInstanceId ?? 0,
+        };
+      } else if (checkoutData.orderType === 3) {
+        payload = {
+          ...basePayload,
+          orderType: 3,
+          buyNowItemId: checkoutData.buyNowItemId ?? checkoutData.items[0]?.id ?? 0,
+          buyNowItemType: (checkoutData.buyNowItemType ?? 1) as 1 | 2 | 3,
+          buyNowQuantity: checkoutData.buyNowQuantity ?? checkoutData.items[0]?.quantity ?? 1,
+        };
+      } else {
+        payload = {
+          ...basePayload,
+          orderType: 1,
+          cartItemIds: checkoutData.items.map((item) => item.id),
+        };
+      }
+
+      // Create order
+      const created: OrderCreatePayload = await createOrder(payload);
+      setCreatedOrderId(created.id);
+
+      // Set flag to auto-proceed to payment once invoices are loaded
+      setShouldAutoPayAfterOrderCreation(true);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to create payment URL.';
-      setInvoiceError(message);
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to create order.';
+      setOrderError(errorMessage);
     } finally {
-      setIsSubmitting(false);
+      setIsCreatingOrder(false);
     }
   };
+
+  // const handleCreatePayment = async (orderIdToUse: number) => {
+  //   if (!selectedInvoice && !isLoadingInvoice) {
+  //     setInvoiceError('Invoice is unavailable for payment.');
+  //     return;
+  //   }
+
+  //   // If we're still loading invoices, wait for the selectedInvoice to be available
+  //   if (isLoadingInvoice) {
+  //     // This function will be called again once invoices are loaded
+  //     return;
+  //   }
+
+  //   if (!selectedInvoice) {
+  //     setInvoiceError('Invoice is unavailable for payment.');
+  //     return;
+  //   }
+
+  //   try {
+  //     setIsSubmitting(true);
+  //     setInvoiceError('');
+  //     const paymentUrl = await createPaymentUrl(selectedInvoice.id);
+  //     onPaymentCompleted();
+  //     window.location.assign(paymentUrl);
+  //   } catch (err) {
+  //     const message = err instanceof Error ? err.message : 'Failed to create payment URL.';
+  //     setInvoiceError(message);
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // };
 
   return (
     <Card sx={{ boxShadow: 1 }}>
@@ -175,33 +281,11 @@ export default function CheckoutPayment({
           </Typography>
         </Box>
 
-        <Box sx={{ mt: 3, p: 2, border: '1px solid #eee', borderRadius: 1 }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
-            Invoice Summary
-          </Typography>
-
-          {isLoadingInvoice && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <CircularProgress size={18} />
-              <Typography variant="body2">Loading invoice...</Typography>
-            </Box>
-          )}
-
-          {!isLoadingInvoice && selectedInvoice && (
-            <Box>
-              <Typography variant="body2">Invoice ID: {selectedInvoice.id}</Typography>
-              <Typography variant="body2">Order ID: {selectedInvoice.orderId}</Typography>
-              <Typography variant="body2">Status: {selectedInvoice.statusName}</Typography>
-              <Typography variant="body2" sx={{ fontWeight: 600, mt: 1 }}>
-                Total: {selectedInvoice.totalAmount.toLocaleString('vi-VN')} VND
-              </Typography>
-            </Box>
-          )}
-
-          {!isLoadingInvoice && !selectedInvoice && !invoiceError && (
-            <Typography variant="body2">No invoice available.</Typography>
-          )}
-        </Box>
+        {orderError && (
+          <Alert severity="error" sx={{ mt: 2 }}>
+            {orderError}
+          </Alert>
+        )}
 
         {invoiceError && (
           <Alert severity="error" sx={{ mt: 2 }}>
@@ -212,11 +296,11 @@ export default function CheckoutPayment({
         <Button
           fullWidth
           variant="contained"
-          onClick={() => void handleCreatePayment()}
-          disabled={isLoadingInvoice || isSubmitting || !selectedInvoice}
+          onClick={() => void handleCreateOrderAndPay()}
+          disabled={isLoadingInvoice || isSubmitting || isCreatingOrder}
           sx={{ mt: 3, backgroundColor: 'var(--primary)', fontWeight: 'bold', fontSize: '16px', '&:hover': { backgroundColor: '#45a049' } }}
         >
-          {isSubmitting ? 'Creating payment...' : `Thanh toán thông qua VNPay`}
+          {isCreatingOrder ? 'Creating order...' : isSubmitting ? 'Creating payment...' : `Pay with VNPay`}
         </Button>
       </CardContent>
     </Card>

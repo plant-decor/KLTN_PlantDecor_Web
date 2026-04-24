@@ -2,22 +2,23 @@
 
 import { Button, Chip, FormControl, InputLabel, MenuItem, Select, Stack } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import type { ServiceRegistrationStatusEnum } from '@/types/care-service.types';
-import { ALL_STATUS_FILTER, SERVICE_STATUS_OPTIONS } from './managerServiceOrders.constants';
+import type { ServiceStatusFilterValue, ServiceStatusOption } from './managerServiceOrders.constants';
 
 interface ServiceOrdersHeaderProps {
-  statusFilter: typeof ALL_STATUS_FILTER | ServiceRegistrationStatusEnum;
+  statusFilter: ServiceStatusFilterValue;
+  statusOptions: ServiceStatusOption[];
   activeFilterLabel: string;
   pendingCount: number;
   awaitingPaymentCount: number;
   activeCount: number;
   loading: boolean;
-  onStatusFilterChange: (value: typeof ALL_STATUS_FILTER | ServiceRegistrationStatusEnum) => void;
+  onStatusFilterChange: (value: ServiceStatusFilterValue) => void;
   onRefresh: () => void;
 }
 
 export default function ServiceOrdersHeader({
   statusFilter,
+  statusOptions,
   activeFilterLabel,
   pendingCount,
   awaitingPaymentCount,
@@ -29,12 +30,6 @@ export default function ServiceOrdersHeader({
   return (
     <>
       <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 2 }}>
-        <Chip color="warning" variant="outlined" label={`Pending: ${pendingCount}`} />
-        <Chip color="info" variant="outlined" label={`Awaiting payment: ${awaitingPaymentCount}`} />
-        <Chip color="success" variant="outlined" label={`Active: ${activeCount}`} />
-      </Stack>
-
-      <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 2 }}>
         <FormControl size="small" sx={{ minWidth: 260 }}>
           <InputLabel id="service-order-status-filter">Status</InputLabel>
           <Select
@@ -42,10 +37,10 @@ export default function ServiceOrdersHeader({
             label="Status"
             value={statusFilter}
             onChange={(event) => {
-              onStatusFilterChange(event.target.value as typeof ALL_STATUS_FILTER | ServiceRegistrationStatusEnum);
+              onStatusFilterChange(event.target.value as ServiceStatusFilterValue);
             }}
           >
-            {SERVICE_STATUS_OPTIONS.map((option) => (
+            {statusOptions.map((option) => (
               <MenuItem key={String(option.value)} value={option.value}>
                 {option.label}
               </MenuItem>
@@ -57,7 +52,12 @@ export default function ServiceOrdersHeader({
           Reload
         </Button>
 
-        <Chip label={`Filter: ${activeFilterLabel}`} variant="outlined" />
+        <Stack direction="row" spacing={1} flexWrap="wrap" alignItems="center">
+          <Chip label={`Filter: ${activeFilterLabel}`} variant="outlined" />
+          <Chip label={`Pending: ${pendingCount}`} variant="outlined" />
+          <Chip label={`Awaiting payment: ${awaitingPaymentCount}`} variant="outlined" />
+          <Chip label={`Active: ${activeCount}`} variant="outlined" />
+        </Stack>
       </Stack>
     </>
   );

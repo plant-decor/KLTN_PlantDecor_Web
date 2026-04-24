@@ -3,13 +3,13 @@
 import React from 'react';
 import {
   Button,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Typography,
 } from '@mui/material';
+import { CustomLoading } from '../CustomLoading';
 
 interface DeleteItemDialogProps {
   open: boolean;
@@ -40,7 +40,7 @@ export default function DeleteItemDialog({
           variant="contained"
           sx={{ backgroundColor: '#d32f2f' }}
         >
-          {isUpdating ? <CircularProgress size={20} aria-label="Removing item" /> : 'Remove'}
+          {isUpdating ? <CustomLoading size={20} aria-label="Removing item" /> : 'Remove'}
         </Button>
       </DialogActions>
     </Dialog>

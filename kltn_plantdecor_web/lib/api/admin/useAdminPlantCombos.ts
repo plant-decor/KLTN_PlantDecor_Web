@@ -19,6 +19,7 @@ import {
   addPlantComboItem,
   assignPlantComboTags,
   createAdminPlantCombo,
+  deleteAdminPlantComboImage,
   getAdminPlantCombos,
   getPlantComboById,
   removePlantComboItem,
@@ -98,6 +99,28 @@ const EMPTY_ENUMS: ComboEnums = {
 const getResponsePayload = <T,>(response: { data?: T; payload?: T }): T | undefined => {
   return response.payload ?? response.data;
 };
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object';
+}
+
+function extractImageIdsFromUnknownImages(value: unknown): number[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const ids: number[] = [];
+  value.forEach((item) => {
+    if (!isRecord(item)) {
+      return;
+    }
+    const id = item.id;
+    if (typeof id === 'number') {
+      ids.push(id);
+    }
+  });
+  return ids;
+}
 
 const normalizeError = (err: unknown): string => {
   if (!err || typeof err !== 'object') {
@@ -184,7 +207,7 @@ export const useAdminPlantCombos = (): UseAdminPlantCombosReturn => {
   const [, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
-  const [plantsLoading] = useState(false);
+  const [plantsLoading, setPlantsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState<PaginationState>(defaultPagination);
   const [filters, setFilters] = useState<ListFilters>({ keyword: '' });
@@ -251,6 +274,7 @@ export const useAdminPlantCombos = (): UseAdminPlantCombosReturn => {
   const fetchComboPlants = useCallback(async (keyword = '') => {
     const requestId = ++plantSearchRequestRef.current;
     setError(null);
+    setPlantsLoading(true);
 
     try {
       const normalizedKeyword = keyword.trim();
@@ -266,7 +290,7 @@ export const useAdminPlantCombos = (): UseAdminPlantCombosReturn => {
           sortBy: '',
           sortDirection: '',
         },
-        true
+        false
       );
       const payload = getResponsePayload(response);
       if (requestId === plantSearchRequestRef.current) {
@@ -275,6 +299,10 @@ export const useAdminPlantCombos = (): UseAdminPlantCombosReturn => {
     } catch (err) {
       if (requestId === plantSearchRequestRef.current) {
         setError(normalizeError(err));
+      }
+    } finally {
+      if (requestId === plantSearchRequestRef.current) {
+        setPlantsLoading(false);
       }
     }
   }, []);
@@ -371,6 +399,21 @@ export const useAdminPlantCombos = (): UseAdminPlantCombosReturn => {
 
       if (!comboId) {
         throw new Error('Cannot resolve combo ID after save');
+      }
+
+      if (editingCombo) {
+        const latestCombo = await getPlantComboById(comboId, true).catch(() => null);
+        const latestPayload = latestCombo ? getResponsePayload(latestCombo) : null;
+        const currentImageIds = extractImageIdsFromUnknownImages((latestPayload as { images?: unknown } | null)?.images);
+        const keptImageIds = images
+          .map((image) => image.existingImageId)
+          .filter((id): id is number => typeof id === 'number');
+        const keptSet = new Set(keptImageIds);
+        const toDelete = currentImageIds.filter((id: number) => !keptSet.has(id));
+
+        if (toDelete.length > 0) {
+          await Promise.all(toDelete.map((imageId: number) => deleteAdminPlantComboImage(comboId as number, imageId, true)));
+        }
       }
 
       await uploadImages(comboId, images);

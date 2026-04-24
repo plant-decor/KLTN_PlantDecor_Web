@@ -63,7 +63,7 @@ export default function ServiceProgressDetailDialog({
   return (
     <Dialog open={open} onClose={onClose} maxWidth='md' fullWidth>
       <DialogTitle sx={{ pr: 6 }}>
-        Chi tiết phiên chăm sóc #{detail?.id || '-'}
+        Care session details #{detail?.id || '-'}
         <IconButton
           aria-label='close'
           onClick={onClose}
@@ -74,53 +74,53 @@ export default function ServiceProgressDetailDialog({
       </DialogTitle>
 
       <DialogContent dividers>
-        {loading && <Typography>Đang tải chi tiết...</Typography>}
+        {loading && <Typography>Loading details...</Typography>}
 
         {!loading && error && <Alert severity='error'>{error}</Alert>}
 
         {!loading && !error && detail && (
           <Stack spacing={2}>
-            <DetailRow label='Ngày thực hiện' value={formatDateForDisplay(detail.taskDate)} />
+            <DetailRow label='Service date' value={formatDateForDisplay(detail.taskDate)} />
             <DetailRow
-              label='Ca làm'
+              label='Shift'
               value={detail.shift ? `${detail.shift.shiftName} (${detail.shift.startTime} - ${detail.shift.endTime})` : '-'}
             />
-            <DetailRow label='Trạng thái' value={detail.statusName || '-'} />
-            <DetailRow label='Bắt đầu thực tế' value={detail.actualStartTime || '-'} />
-            <DetailRow label='Kết thúc thực tế' value={detail.actualEndTime || '-'} />
-            <DetailRow label='Mô tả công việc' value={detail.description || '-'} />
+            <DetailRow label='Status' value={detail.statusName || '-'} />
+            <DetailRow label='Actual start time' value={detail.actualStartTime || '-'} />
+            <DetailRow label='Actual end time' value={detail.actualEndTime || '-'} />
+            <DetailRow label='Task description' value={detail.description || '-'} />
 
             <Divider sx={{ my: 0.5 }} />
 
             <Typography variant='subtitle1' fontWeight={700}>
-              Thông tin khách hàng
+              Customer information
             </Typography>
-            <DetailRow label='Khách hàng' value={detail.serviceRegistration?.customer?.fullName || '-'} />
+            <DetailRow label='Customer' value={detail.serviceRegistration?.customer?.fullName || '-'} />
             <DetailRow label='Email' value={detail.serviceRegistration?.customer?.email || '-'} />
-            <DetailRow label='Điện thoại' value={detail.serviceRegistration?.phone || '-'} />
-            <DetailRow label='Địa chỉ chăm sóc' value={detail.serviceRegistration?.address || '-'} />
+            <DetailRow label='Phone' value={detail.serviceRegistration?.phone || '-'} />
+            <DetailRow label='Service address' value={detail.serviceRegistration?.address || '-'} />
 
             <Divider sx={{ my: 0.5 }} />
 
             <Typography variant='subtitle1' fontWeight={700}>
-              Thông tin dịch vụ
+              Service information
             </Typography>
             <DetailRow
-              label='Gói dịch vụ'
+              label='Service package'
               value={detail.serviceRegistration?.nurseryCareService.careServicePackage.name || '-'}
             />
-            <DetailRow label='Vựa phụ trách' value={detail.serviceRegistration?.nurseryCareService.nurseryName || '-'} />
-            <DetailRow label='Caretaker hiện tại' value={detail.caretaker?.fullName || 'Chưa phân công'} />
+            <DetailRow label='Assigned nursery' value={detail.serviceRegistration?.nurseryCareService.nurseryName || '-'} />
+            <DetailRow label='Current caretaker' value={detail.caretaker?.fullName || 'Unassigned'} />
 
             {detail.evidenceImageUrl && (
               <Box>
                 <Typography variant='body2' color='text.secondary' sx={{ mb: 0.75 }}>
-                  Ảnh minh chứng
+                  Evidence photo
                 </Typography>
                 <Box
                   component='img'
                   src={detail.evidenceImageUrl}
-                  alt='Ảnh minh chứng'
+                  alt='Evidence photo'
                   sx={{ width: '100%', maxHeight: 260, borderRadius: 2, objectFit: 'cover' }}
                 />
               </Box>

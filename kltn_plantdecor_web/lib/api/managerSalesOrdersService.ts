@@ -6,6 +6,7 @@ import type {
   ManagerNurseryOrderDetail,
   ManagerNurseryOrderListPayload,
   ManagerNurseryOrdersListQuery,
+  ManagerNurseryOrderShipper,
 } from '@/types/manager-sales-orders.types';
 
 type WrappedResponse<T> = ResponseModel<T> | T;
@@ -66,6 +67,40 @@ export const getManagerNurseryOrderDetail = async (
   const response = await apiClient.get<ResponseModel<ManagerNurseryOrderDetail>>(
     `/manager/nursery-orders/${nurseryOrderId}`,
     undefined,
+    loading,
+    {
+      showToast: false,
+      showErrorToast: false,
+    }
+  );
+
+  return unwrapPayloadData(response);
+};
+
+export const getManagerNurseryOrderShippers = async (
+  loading = true
+): Promise<ManagerNurseryOrderShipper[]> => {
+  const response = await apiClient.get<ResponseModel<ManagerNurseryOrderShipper[]>>(
+    '/manager/nursery-orders/shippers',
+    undefined,
+    loading,
+    {
+      showToast: false,
+      showErrorToast: false,
+    }
+  );
+
+  return unwrapPayloadData(response);
+};
+
+export const updateManagerNurseryOrderShipper = async (
+  nurseryOrderId: number,
+  shipperId: number,
+  loading = true
+): Promise<ManagerNurseryOrderDetail> => {
+  const response = await apiClient.put<ResponseModel<ManagerNurseryOrderDetail>>(
+    `/manager/nursery-orders/${nurseryOrderId}/shipper`,
+    { shipperId },
     loading,
     {
       showToast: false,

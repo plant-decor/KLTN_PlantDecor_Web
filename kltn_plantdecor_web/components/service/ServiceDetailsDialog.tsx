@@ -7,7 +7,6 @@ import {
   DialogActions,
   Button,
   Box,
-  CircularProgress,
   Typography,
   TextField,
   Grid,
@@ -15,6 +14,7 @@ import {
 import { useTranslations } from 'next-intl';
 import { ServiceRegistration } from '@/types/service.types';
 import ServiceStatusChip from './ServiceStatusChip';
+import { CustomLoading } from '@/components/CustomLoading';
 
 interface ExtendedServiceRegistration extends ServiceRegistration {
   totalSessions?: number;
@@ -47,6 +47,7 @@ interface ServiceDetailsDialogProps {
   paying?: boolean;
   onPay?: () => void;
   onCancel?: () => void;
+  statusLabels?: Record<number, string>;
 }
 
 export default function ServiceDetailsDialog({
@@ -59,6 +60,7 @@ export default function ServiceDetailsDialog({
   paying = false,
   onPay,
   onCancel,
+  statusLabels,
 }: ServiceDetailsDialogProps) {
   const t = useTranslations('services');
   const tCommon = useTranslations('common');
@@ -143,7 +145,7 @@ export default function ServiceDetailsDialog({
       <DialogContent sx={{ pt: 3 }}>
         {loading ? (
           <Box sx={{ py: 4, display: 'flex', justifyContent: 'center' }}>
-            <CircularProgress size={24} />
+            <CustomLoading size={24} />
           </Box>
         ) : !service ? (
           <Typography variant="body2" color="text.secondary">
@@ -155,7 +157,7 @@ export default function ServiceDetailsDialog({
             <Typography variant="subtitle2" color="text.secondary" gutterBottom>
               {t('status')}
             </Typography>
-            <ServiceStatusChip status={service.status} />
+            <ServiceStatusChip status={service.status} label={statusLabels?.[Number(service.status)]} />
           </Box>
 
           <Grid size={{ xs: 12, md: 6 }}>{renderReadOnlyField(t('serviceDate'), formatDate(service.serviceDate))}</Grid>

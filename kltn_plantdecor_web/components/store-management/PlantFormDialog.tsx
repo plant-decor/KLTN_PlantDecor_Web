@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useReducer } from 'react';
+import React, { useEffect, useReducer, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   Dialog,
@@ -27,6 +27,8 @@ import {
 } from '@mui/material';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import ImageUpload from './ImageUpload';
+import RichTextEditor from './RichTextEditor';
+import { uploadAdminPlantImages } from '@/lib/api/adminPlantsService';
 import type {
   PlantDetail,
   PlantEnumPayload,
@@ -49,6 +51,36 @@ import {
 interface OptionItem {
   id: number;
   name: string;
+}
+
+type UnknownApiResponse = { payload?: unknown; data?: unknown };
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object';
+}
+
+function readImageUrlFromUnknownPayload(payload: unknown): string | null {
+  if (!isRecord(payload)) {
+    return null;
+  }
+
+  const images = payload.images;
+  if (Array.isArray(images) && images.length > 0) {
+    const last = images.at(-1);
+    if (isRecord(last) && typeof last.imageUrl === 'string' && last.imageUrl.trim()) {
+      return last.imageUrl;
+    }
+    const maybeLast = images[images.length - 1];
+    if (isRecord(maybeLast) && typeof maybeLast.imageUrl === 'string' && maybeLast.imageUrl.trim()) {
+      return maybeLast.imageUrl;
+    }
+  }
+
+  if (typeof payload.imageUrl === 'string' && payload.imageUrl.trim()) {
+    return payload.imageUrl;
+  }
+
+  return null;
 }
 
 type ImageStateAction =
@@ -117,6 +149,32 @@ export default function PlantFormDialog({
 
   const [images, dispatchImages] = useReducer(imagesReducer, [] as ImageUploadData[]);
   const [includePlantGuide, dispatchPlantGuide] = useReducer(plantGuideReducer, false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  // Handle image upload for RichTextEditor
+  const handleRichTextImageUpload = async (file: File): Promise<string> => {
+    if (!editingData?.id) {
+      throw new Error('Plant must be created first before uploading images to description');
+    }
+
+    setUploadingImage(true);
+    try {
+      const response = await uploadAdminPlantImages(editingData.id, [file], true);
+
+      const candidate = response as UnknownApiResponse;
+      const payload = candidate.payload ?? candidate.data;
+      const imageUrl = readImageUrlFromUnknownPayload(payload);
+      console.log('imageUrl', imageUrl); 
+
+      if (!imageUrl) {
+        throw new Error('No image URL returned from server');
+      }
+
+      return imageUrl;
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   useEffect(() => {
     if (!open) {
@@ -315,15 +373,16 @@ export default function PlantFormDialog({
                   control={control}
                   rules={{ required: true }}
                   render={({ field, fieldState }) => (
-                    <TextField
+                    <RichTextEditor
                       {...field}
                       label="Description"
-                      fullWidth
-                      multiline
-                      rows={3}
+                      placeholder="Enter plant description with rich formatting..."
                       required
                       error={Boolean(fieldState.error)}
                       helperText={getValidationMessage(fieldState.error)}
+                      minHeight={200}
+                      onUploadImage={editingData?.id ? handleRichTextImageUpload : undefined}
+                      uploading={uploadingImage}
                     />
                   )}
                 />

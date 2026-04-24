@@ -36,7 +36,7 @@ export default function ConfirmActionDialog({
         <Button onClick={onClose} color="inherit">
           {cancelLabel}
         </Button>
-        <Button onClick={onConfirm} variant="contained" color={confirmColor} disabled={loading}>
+        <Button onClick={onConfirm} variant="contained" className='bg-primary!' color={confirmColor} disabled={loading}>
           {confirmLabel}
         </Button>
       </DialogActions>

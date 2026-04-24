@@ -38,7 +38,7 @@ export default function QuantitySelector({
   };
 
   return (
-    <div>
+    <div className="flex flex-col justify-center">
       <p className="text-sm text-gray-600 mb-2">{label}</p>
       <div className="flex items-center border border-gray-300 rounded-lg w-fit">
         <button

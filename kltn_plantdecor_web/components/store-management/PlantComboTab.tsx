@@ -143,11 +143,17 @@ export default function PlantComboTab({}: PlantComboTabProps) {
     });
 
     if (success) {
+      if (viewOpen && viewingData?.id) {
+        const refreshed = await fetchComboById(viewingData.id);
+        if (refreshed) {
+          setViewingData(refreshed);
+        }
+      }
       setFormOpen(false);
       setEditingData(undefined);
       return;
     }
-  }, [editingData, savePlantCombo]);
+  }, [editingData, fetchComboById, savePlantCombo, viewOpen, viewingData?.id]);
 
   const handlePageChange = useCallback((pageNumber: number) => {
     void setPage(pageNumber);

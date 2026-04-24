@@ -6,7 +6,6 @@ import {
   Box,
   Button,
   Chip,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -17,7 +16,6 @@ import {
   MenuItem,
   Paper,
   Select,
-  Stack,
   Table,
   TableBody,
   TableCell,
@@ -31,9 +29,10 @@ import AddIcon from "@mui/icons-material/Add";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import ToggleOnIcon from "@mui/icons-material/ToggleOn";
 import ToggleOffIcon from "@mui/icons-material/ToggleOff";
-import RefreshIcon from "@mui/icons-material/Refresh";
 import { toast } from "react-toastify";
 import ManagementHeader from "@/components/layout/ManagementHeader";
+import { CustomLoading } from "@/components/CustomLoading";
+import { getCareServiceTypeOptions } from "@/lib/api/adminCareServicePackagesService";
 import {
   addManagerPackageToNursery,
   deleteManagerNurseryCareService,
@@ -41,12 +40,8 @@ import {
   getManagerNurseryCareServices,
   toggleManagerNurseryCareService,
 } from "@/lib/api/careServiceService";
+import type { CareServiceTypeOption } from "@/types/admin-service-package.types";
 import type { CareServicePackage, NurseryCareService } from "@/types/care-service.types";
-
-const SERVICE_TYPE_LABELS: Record<number, string> = {
-  1: "Một lần",
-  2: "Định kỳ",
-};
 
 const formatCurrency = (value: number) => {
   return value.toLocaleString("vi-VN", { style: "currency", currency: "VND" });
@@ -70,13 +65,18 @@ export default function ManagerCareServiceManagementPageClient() {
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState<string | null>(null);
   const [notOfferedPackages, setNotOfferedPackages] = useState<CareServicePackage[]>([]);
+  const [serviceTypeOptions, setServiceTypeOptions] = useState<CareServiceTypeOption[]>([]);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [selectedPackageId, setSelectedPackageId] = useState<number>(0);
   const [targetToggleItem, setTargetToggleItem] = useState<NurseryCareService | null>(null);
   const [targetDeleteItem, setTargetDeleteItem] = useState<NurseryCareService | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const activeCount = useMemo(() => items.filter((item) => item.isActive).length, [items]);
+  const serviceTypeLabelMap = useMemo(() => {
+    const map = new Map<number, string>();
+    serviceTypeOptions.forEach((option) => map.set(option.value, option.label));
+    return map;
+  }, [serviceTypeOptions]);
 
   const loadItems = useCallback(async () => {
     const response = await getManagerNurseryCareServices(false);
@@ -92,13 +92,15 @@ export default function ManagerCareServiceManagementPageClient() {
     try {
       setLoading(true);
       setPageError(null);
-      const [myServices, availablePackages] = await Promise.all([
+      const [myServices, availablePackages, serviceTypeEnums] = await Promise.all([
         getManagerNurseryCareServices(false),
         getManagerNotOfferedPackages(false),
+        getCareServiceTypeOptions(false),
       ]);
 
       setItems(myServices);
       setNotOfferedPackages(availablePackages.filter((item) => item.isActive));
+      setServiceTypeOptions(serviceTypeEnums);
     } catch (error) {
       const message = getErrorMessage(error, "Cannot load the list of care service packages");
       setPageError(message);
@@ -188,20 +190,6 @@ export default function ManagerCareServiceManagementPageClient() {
         onAction={() => void openAddDialog()}
       />
 
-      <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
-        <Chip label={`Active: ${activeCount}`} color="success" variant="outlined" />
-        <Chip label={`Inactive: ${items.length - activeCount}`} variant="outlined" />
-        <Button
-          size="small"
-          variant="outlined"
-          startIcon={<RefreshIcon />}
-          onClick={() => void loadInitialData()}
-          disabled={loading}
-        >
-          Reload
-        </Button>
-      </Stack>
-
       {pageError && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setPageError(null)}>
           {pageError}
@@ -211,23 +199,23 @@ export default function ManagerCareServiceManagementPageClient() {
       <Paper sx={{ border: "1px solid var(--card-border)", overflow: "hidden" }}>
         {loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
-            <CircularProgress />
+            <CustomLoading />
           </Box>
         ) : (
           <TableContainer>
             <Table size="small">
               <TableHead sx={{ backgroundColor: "var(--primary)" }}>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 700 }}>ID NCS</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }} align="center">ID</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Package Name</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Type</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }} align="right">
+                  <TableCell sx={{ fontWeight: 700 }} align="center">Type</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }} align="center">
                     Visits/Week
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 700 }} align="right">
+                  <TableCell sx={{ fontWeight: 700 }} align="center">
                     Duration (Days)
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 700 }} align="right">
+                  <TableCell sx={{ fontWeight: 700 }} align="center">
                     Unit Price
                   </TableCell>
                   <TableCell sx={{ fontWeight: 700 }} align="center">
@@ -248,7 +236,7 @@ export default function ManagerCareServiceManagementPageClient() {
                 ) : (
                   items.map((item) => (
                     <TableRow key={item.id} hover sx={{ opacity: item.isActive ? 1 : 0.65 }}>
-                      <TableCell>{item.id}</TableCell>
+                      <TableCell align="center">{item.id}</TableCell>
                       <TableCell>
                         <Typography variant="body2" fontWeight={600}>
                           {item.careServicePackage.name}
@@ -257,13 +245,13 @@ export default function ManagerCareServiceManagementPageClient() {
                           {item.careServicePackage.description}
                         </Typography>
                       </TableCell>
-                      <TableCell>
-                        {SERVICE_TYPE_LABELS[item.careServicePackage.serviceType] ||
+                      <TableCell align="center">
+                        {serviceTypeLabelMap.get(item.careServicePackage.serviceType) ||
                           `Loại ${item.careServicePackage.serviceType}`}
                       </TableCell>
-                      <TableCell align="right">{item.careServicePackage.visitPerWeek}</TableCell>
-                      <TableCell align="right">{item.careServicePackage.durationDays}</TableCell>
-                      <TableCell align="right">{formatCurrency(item.careServicePackage.unitPrice)}</TableCell>
+                      <TableCell align="center">{item.careServicePackage.visitPerWeek}</TableCell>
+                      <TableCell align="center">{item.careServicePackage.durationDays}</TableCell>
+                      <TableCell align="center">{formatCurrency(item.careServicePackage.unitPrice)}</TableCell>
                       <TableCell align="center">
                         <Chip
                           size="small"
@@ -354,7 +342,7 @@ export default function ManagerCareServiceManagementPageClient() {
           <Button onClick={() => setTargetToggleItem(null)} disabled={submitting}>
             Cancel
           </Button>
-          <Button variant="contained" onClick={() => void handleConfirmToggle()} disabled={submitting}>
+          <Button className="bg-primary!" variant="contained" onClick={() => void handleConfirmToggle()} disabled={submitting}>
             {submitting ? "Processing..." : "Confirm"}
           </Button>
         </DialogActions>

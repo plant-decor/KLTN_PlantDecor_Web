@@ -95,7 +95,9 @@ export default function AddToWishlistButton({
         },
       }}
     >
-      {label ?? tWishlist('addToWishlist')}
+      <span className='overflow-hidden'>
+        {label ?? tWishlist('addToWishlist')}
+      </span>
     </Button>
   );
 }

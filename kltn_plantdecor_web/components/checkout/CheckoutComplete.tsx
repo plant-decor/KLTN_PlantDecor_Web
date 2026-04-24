@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
 import {
   Box,
@@ -32,8 +33,18 @@ export default function CheckoutComplete({
   orderId,
 }: CheckoutCompleteProps) {
   const locale = useLocale();
+  const router = useRouter();
   const tCheckout = useTranslations('checkout');
   const displayOrderId = orderId ?? tCheckout('completeDetails.notAvailable');
+
+  useEffect(() => {
+    // Auto-redirect to orders page after 3 seconds
+    const timer = setTimeout(() => {
+      router.push(`/${locale}/orders`);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [locale, router]);
 
   return (
     <Grid container spacing={3} justifyContent="center">

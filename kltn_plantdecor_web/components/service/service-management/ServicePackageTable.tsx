@@ -3,7 +3,6 @@ import { DeleteOutline, EditOutlined, VisibilityOutlined } from "@mui/icons-mate
 import {
   Box,
   Chip,
-  CircularProgress,
   IconButton,
   Paper,
   Table,
@@ -16,8 +15,9 @@ import {
   Typography,
 } from "@mui/material";
 import type { AdminCareServicePackageListItem } from "@/types/admin-service-package.types";
-import { toCurrency } from "./types";
 import { hoverGlowStyle } from "@/lib/styles/buttonStyles";
+import { formatCurrency } from "@/lib/utils/formatUtil";
+import { CustomLoading } from "@/components/CustomLoading";
 
 interface ServicePackageTableProps {
   packages: AdminCareServicePackageListItem[];
@@ -40,28 +40,20 @@ export default function ServicePackageTable({
     <Paper sx={{ border: "1px solid var(--card-border)", overflow: "hidden" }}>
       {loading ? (
         <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
-          <CircularProgress />
+          <CustomLoading />
         </Box>
       ) : (
         <TableContainer>
           <Table size="small">
             <TableHead sx={{ backgroundColor: "var(--primary)" }}>
               <TableRow>
-                <TableCell sx={{ fontWeight: 700 }}>ID</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Package Name</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Service Type</TableCell>
-                <TableCell sx={{ fontWeight: 700 }} align="right">
-                  Visits/Week
-                </TableCell>
-                <TableCell sx={{ fontWeight: 700 }} align="right">
-                  Duration (Days)
-                </TableCell>
-                <TableCell sx={{ fontWeight: 700 }} align="right">
-                  Area Limit (m²)
-                </TableCell>
-                <TableCell sx={{ fontWeight: 700 }} align="right">
-                  Unit Price
-                </TableCell>
+                <TableCell sx={{ fontWeight: 700 }} align="center">ID</TableCell>
+                <TableCell sx={{ fontWeight: 700 }} align="center">Package Name</TableCell>
+                <TableCell sx={{ fontWeight: 700 }} align="center">Service Type</TableCell>
+                <TableCell sx={{ fontWeight: 700 }} align="center">Visits/Week</TableCell>
+                <TableCell sx={{ fontWeight: 700 }} align="center">Duration (Days)</TableCell>
+                <TableCell sx={{ fontWeight: 700 }} align="center">Area Limit (m²)</TableCell>
+                <TableCell sx={{ fontWeight: 700 }} align="center">Unit Price</TableCell>
                 <TableCell sx={{ fontWeight: 700 }} align="center">
                   Status
                 </TableCell>
@@ -80,7 +72,7 @@ export default function ServicePackageTable({
               ) : (
                 packages.map((item) => (
                   <TableRow key={item.id} hover sx={{ opacity: item.isActive ? 1 : 0.65, ...hoverGlowStyle }}>
-                    <TableCell>{item.id}</TableCell>
+                    <TableCell align="center">{item.id}</TableCell>
                     <TableCell>
                       <Typography variant="body2" fontWeight={600}>
                         {item.name}
@@ -89,15 +81,15 @@ export default function ServicePackageTable({
                         {item.description}
                       </Typography>
                     </TableCell>
-                    <TableCell>
+                    <TableCell align="center">
                       {item.serviceTypeLabel ||
                         serviceTypeLabelMap.get(item.serviceType) ||
                         `Loại ${item.serviceType}`}
                     </TableCell>
-                    <TableCell align="right">{item.visitPerWeek}</TableCell>
-                    <TableCell align="right">{item.durationDays}</TableCell>
-                    <TableCell align="right">{item.areaLimit}</TableCell>
-                    <TableCell align="right">{toCurrency(item.unitPrice)}</TableCell>
+                    <TableCell align="center">{item.visitPerWeek}</TableCell>
+                    <TableCell align="center">{item.durationDays}</TableCell>
+                    <TableCell align="center">{item.areaLimit}</TableCell>
+                    <TableCell align="center">{formatCurrency(item.unitPrice, 'vi-VN')}</TableCell>
                     <TableCell align="center">
                       <Chip
                         size="small"

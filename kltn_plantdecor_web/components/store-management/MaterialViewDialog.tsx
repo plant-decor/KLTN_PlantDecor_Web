@@ -15,6 +15,7 @@ import {
   Typography,
 } from '@mui/material';
 import type { MaterialDetail } from '@/types/store-management.types';
+import RichTextDisplay from './RichTextDisplay';
 import { formatCurrency } from '@/lib/utils/formatUtil';
 
 interface MaterialViewDialogProps {
@@ -119,7 +120,9 @@ export default function MaterialViewDialog({ open, material, onClose }: Material
                 <Typography variant="body2" color="text.secondary">
                   Description
                 </Typography>
-                <Typography variant="body1">{material.description || '-'}</Typography>
+                <Box sx={{ mt: 1 }}>
+                  <RichTextDisplay content={material.description} />
+                </Box>
               </Grid>
             </Grid>
           </Box>

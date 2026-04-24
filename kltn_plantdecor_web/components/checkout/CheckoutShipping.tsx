@@ -12,6 +12,7 @@ import {
   FormControlLabel,
   Radio,
   Box,
+  Checkbox,
 } from '@mui/material';
 import type { CheckoutData } from '@/types/cart.types';
 import type { CustomerProfile } from '@/types/auth.types';
@@ -30,57 +31,36 @@ export default function CheckoutShipping({
 }: CheckoutShippingProps) {
   const tError = useTranslations('profile');
   const [formData, setFormData] = useState({
-    fullName: checkoutData.shippingInfo?.fullName ?? userProfile?.fullName ?? '',
-    phone: checkoutData.shippingInfo?.phone ?? userProfile?.phoneNumber ?? '',
-    address: checkoutData.shippingInfo?.address ?? userProfile?.address ?? '',
+    fullName: checkoutData.shippingInfo?.fullName ?? '',
+    phone: checkoutData.shippingInfo?.phone ?? '',
+    address: checkoutData.shippingInfo?.address ?? '',
     notes: checkoutData.shippingInfo?.notes ?? '',
   });
   const [phoneError, setPhoneError] = useState('');
+  const [useProfileInfo, setUseProfileInfo] = useState(checkoutData.useProfileInfo ?? false);
 
   useEffect(() => {
-    if (!userProfile) return;
-
-    // Only prefill fields that are empty (so user input is not overwritten)
-    const fullName = checkoutData.shippingInfo?.fullName || userProfile.fullName || '';
-    const phone = checkoutData.shippingInfo?.phone || userProfile.phoneNumber || '';
-    const address = checkoutData.shippingInfo?.address || userProfile.address || '';
-    const nextNotes = checkoutData.shippingInfo?.notes ?? formData.notes ?? '';
-
-    const shouldUpdateParent =
-      !checkoutData.shippingInfo?.fullName ||
-      !checkoutData.shippingInfo?.phone ||
-      !checkoutData.shippingInfo?.address;
-
-    setFormData((prev) => ({
-      ...prev,
-      fullName,
-      phone,
-      address,
-      notes: nextNotes,
-    }));
-
-    if (phone && !isValidPhoneNumber10Digits(phone)) {
-      setPhoneError(tError('phoneNumberInvalid'));
-    } else {
-      setPhoneError('');
-    }
-
-    if (shouldUpdateParent) {
+    // Only sync back to parent when form data changes manually
+    if (!checkoutData.shippingInfo) {
       onDataChange({
-        shippingInfo: {
-          fullName,
-          phone,
-          address,
-          notes: nextNotes,
-        },
+        shippingInfo: formData,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userProfile]);
+  }, []);
     
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    
+    // Auto-uncheck "use profile info" when user edits any field
+    if (useProfileInfo) {
+      setUseProfileInfo(false);
+      onDataChange({
+        useProfileInfo: false,
+      });
+    }
+
     setFormData((prev) => {
       const updated = { ...prev, [name]: value };
       return updated;
@@ -88,7 +68,7 @@ export default function CheckoutShipping({
 
     if (name === 'phone') {
       if (!value.trim()) {
-        setPhoneError(tError('phoneRequired'));
+        setPhoneError('Phone number is required');
       } else if (!isValidPhoneNumber10Digits(value)) {
         setPhoneError(tError('phoneNumberInvalid'));
       } else {
@@ -114,12 +94,67 @@ export default function CheckoutShipping({
     });
   };
 
+  const handleUseProfileInfoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const isChecked = event.target.checked;
+    setUseProfileInfo(isChecked);
+
+    if (isChecked && userProfile) {
+      // Fill form with profile data when checkbox is checked
+      const profileFullName = userProfile.fullName ?? userProfile.username ?? '';
+      const profilePhone = userProfile.phoneNumber ?? '';
+      const profileAddress = userProfile.address ?? '';
+
+      setFormData({
+        fullName: profileFullName,
+        phone: profilePhone,
+        address: profileAddress,
+        notes: formData.notes,
+      });
+
+      // Update parent state
+      onDataChange({
+        useProfileInfo: isChecked,
+        shippingInfo: {
+          fullName: profileFullName,
+          phone: profilePhone,
+          address: profileAddress,
+          notes: formData.notes,
+        },
+      });
+
+      // Validate phone
+      if (profilePhone && !isValidPhoneNumber10Digits(profilePhone)) {
+        setPhoneError(tError('phoneNumberInvalid'));
+      } else {
+        setPhoneError('');
+      }
+    } else {
+      // Just update the checkbox state when unchecked
+      onDataChange({
+        useProfileInfo: isChecked,
+      });
+    }
+  };
+
   return (
     <Card sx={{ boxShadow: 1 }}>
       <CardContent>
         <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 3 }}>
           Shipping Information
         </Typography>
+
+        {/* Use Profile Info Checkbox */}
+        <Box sx={{ mb: 3, p: 2, backgroundColor: '#f9f9f9', borderRadius: 1, border: '1px solid #e0e0e0' }}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={useProfileInfo}
+                onChange={handleUseProfileInfoChange}
+              />
+            }
+            label="Use profile information"
+          />
+        </Box>
 
         <Grid container spacing={2}>
           {/* Full Name */}
@@ -133,6 +168,7 @@ export default function CheckoutShipping({
               placeholder="Your name"
               variant="outlined"
               size="small"
+              required
             />
           </Grid>
 
@@ -150,12 +186,14 @@ export default function CheckoutShipping({
               size="small"
               error={!!phoneError}
               helperText={phoneError}
+              required
             />
           </Grid>
 
           {/* Address */}
           <Grid size={{ xs: 12 }}>
             <TextField
+              required
               fullWidth
               label="Shipping Address"
               name="address"

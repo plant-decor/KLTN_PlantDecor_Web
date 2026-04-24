@@ -23,6 +23,14 @@ import {
 } from '@mui/material';
 import { Controller, useForm } from 'react-hook-form';
 import ImageUpload from './ImageUpload';
+import RichTextEditor from './RichTextEditor';
+import MaterialSpecificationsSection, {
+  buildSpecificationsJson,
+  defaultSpecs,
+  parseEditingSpecsToForm,
+  type MaterialSpecsFormSlice,
+} from './MaterialSpecificationsSection';
+import { uploadAdminMaterialImages } from '@/lib/api/adminMaterialsService';
 import type {
   MaterialDetail,
   MaterialFormData,
@@ -33,6 +41,36 @@ import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils/formatUtil'
 interface OptionItem {
   id: number;
   name: string;
+}
+
+type UnknownApiResponse = { payload?: unknown; data?: unknown };
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object';
+}
+
+function readImageUrlFromUnknownPayload(payload: unknown): string | null {
+  if (!isRecord(payload)) {
+    return null;
+  }
+
+  const images = payload.images;
+  if (Array.isArray(images) && images.length > 0) {
+    const last = images.at(-1);
+    if (isRecord(last) && typeof last.imageUrl === 'string' && last.imageUrl.trim()) {
+      return last.imageUrl;
+    }
+    const maybeLast = images[images.length - 1];
+    if (isRecord(maybeLast) && typeof maybeLast.imageUrl === 'string' && maybeLast.imageUrl.trim()) {
+      return maybeLast.imageUrl;
+    }
+  }
+
+  if (typeof payload.imageUrl === 'string' && payload.imageUrl.trim()) {
+    return payload.imageUrl;
+  }
+
+  return null;
 }
 
 interface MaterialFormDialogProps {
@@ -59,6 +97,8 @@ const defaultMaterial: MaterialFormData = {
   tagIds: [],
 };
 
+type MaterialSpecFormValues = MaterialFormData & MaterialSpecsFormSlice;
+
 export default function MaterialFormDialog({
   open,
   editingData,
@@ -68,12 +108,36 @@ export default function MaterialFormDialog({
   onSubmit,
   isLoading = false,
 }: MaterialFormDialogProps) {
-  const { control, handleSubmit, reset } = useForm<MaterialFormData>({
-    defaultValues: defaultMaterial,
+  const { control, handleSubmit, reset } = useForm<MaterialSpecFormValues>({
+    defaultValues: { ...defaultMaterial, ...defaultSpecs },
   });
 
   const [images, setImages] = useState<ImageUploadData[]>([]);
-  const [specsError, setSpecsError] = useState<string>('');
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  // Handle image upload for RichTextEditor
+  const handleRichTextImageUpload = async (file: File): Promise<string> => {
+    if (!editingData?.id) {
+      throw new Error('Material must be created first before uploading images to description');
+    }
+
+    setUploadingImage(true);
+    try {
+      const response = await uploadAdminMaterialImages(editingData.id, [file], true);
+
+      const candidate = response as UnknownApiResponse;
+      const payload = candidate.payload ?? candidate.data;
+      const imageUrl = readImageUrlFromUnknownPayload(payload);
+
+      if (!imageUrl) {
+        throw new Error('No image URL returned from server');
+      }
+
+      return imageUrl;
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   useEffect(() => {
     if (!open) {
@@ -81,6 +145,7 @@ export default function MaterialFormDialog({
     }
 
     if (editingData) {
+      const parsedSpecs = parseEditingSpecsToForm(editingData.specifications);
       reset({
         materialCode: editingData.materialCode,
         name: editingData.name,
@@ -88,51 +153,37 @@ export default function MaterialFormDialog({
         basePrice: editingData.basePrice,
         unit: editingData.unit,
         brand: editingData.brand,
-        specifications: editingData.specifications
-          ? JSON.stringify(editingData.specifications, null, 2)
-          : '',
+        specifications: '',
         expiryMonths: editingData.expiryMonths ?? null,
         isActive: editingData.isActive,
         categoryIds: editingData.categories.map((item) => item.id),
         tagIds: editingData.tags.map((item) => item.id),
+        ...parsedSpecs,
       });
 
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setImages(
-        editingData.images.map((image) => ({
-          id: image.id,
-          existingImageId: image.id,
-          preview: image.imageUrl,
-          url: image.imageUrl,
-          isThumbnail: Boolean(image.isPrimary),
-        }))
-      );
+      queueMicrotask(() => {
+        setImages(
+          editingData.images.map((image) => ({
+            id: image.id,
+            existingImageId: image.id,
+            preview: image.imageUrl,
+            url: image.imageUrl,
+            isThumbnail: Boolean(image.isPrimary),
+          }))
+        );
+      });
     } else {
-      reset(defaultMaterial);
+      reset({ ...defaultMaterial, ...defaultSpecs });
       setImages([]);
     }
-
-    setSpecsError('');
   }, [editingData, open, reset]);
 
-  const handleFormSubmit = (data: MaterialFormData) => {
-    const rawSpecs = data.specifications ?? '';
-    const normalizedSpecs = rawSpecs.trim();
-
-    if (normalizedSpecs) {
-      try {
-        JSON.parse(normalizedSpecs);
-      } catch {
-        setSpecsError('Invalid JSON format');
-        return;
-      }
-    }
-
-    setSpecsError('');
+  const handleFormSubmit = (data: MaterialSpecFormValues) => {
+    const specifications = buildSpecificationsJson(data);
     onSubmit(
       {
         ...data,
-        specifications: normalizedSpecs,
+        specifications,
       },
       images
     );
@@ -190,7 +241,16 @@ export default function MaterialFormDialog({
                 <Controller
                   name="description"
                   control={control}
-                  render={({ field }) => <TextField {...field} label="Description" fullWidth multiline rows={3} />}
+                  render={({ field }) => (
+                    <RichTextEditor
+                      {...field}
+                      label="Description"
+                      placeholder="Enter material description with rich formatting..."
+                      minHeight={200}
+                      onUploadImage={editingData?.id ? handleRichTextImageUpload : undefined}
+                      uploading={uploadingImage}
+                    />
+                  )}
                 />
               </Grid>
             </Grid>
@@ -323,29 +383,9 @@ export default function MaterialFormDialog({
 
           <Divider />
 
-          {/* <Box>
-            <Typography variant="h6" fontWeight="600" gutterBottom>
-              Specifications (JSON)
-            </Typography>
-            <Controller
-              name="specifications"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Specifications"
-                  fullWidth
-                  multiline
-                  rows={6}
-                  placeholder='{"color": "gray", "weight": "5kg"}'
-                  error={Boolean(specsError)}
-                  helperText={specsError}
-                />
-              )}
-            />
-          </Box> */}
+          <MaterialSpecificationsSection control={control} />
 
-          {/* <Divider /> */}
+          <Divider />
 
           <ImageUpload images={images} onImagesChange={setImages} label="Material images" maxImages={10} />
 

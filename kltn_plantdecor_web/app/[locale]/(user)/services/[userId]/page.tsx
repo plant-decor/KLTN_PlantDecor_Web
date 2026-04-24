@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Typography,
-  CircularProgress,
   Alert,
   Button,
   Dialog,
@@ -34,12 +33,14 @@ import { toast } from 'react-toastify';
 import {
   cancelServiceRegistration,
   createServiceRegistration,
+  getSystemEnumValues,
   getMyServiceRegistrations,
   getServiceRegistrationDetail,
 } from '@/lib/api/careServiceService';
 import { createPaymentUrlByOrderId } from '@/lib/api/orderService';
-import type { MyServiceRegistration } from '@/types/care-service.types';
+import type { EnumOption, MyServiceRegistration } from '@/types/care-service.types';
 import { ServiceRegistrationStatusEnum } from '@/types/care-service.types';
+import { CustomLoading } from '@/components/CustomLoading';
 
 interface PageProps {
   params: Promise<{ userid: string }>;
@@ -85,15 +86,50 @@ export default function UserServicePage({ params }: PageProps) {
   const [cancelTarget, setCancelTarget] = useState<ServiceRequestViewModel | null>(null);
   const [cancelSubmitting, setCancelSubmitting] = useState(false);
   const [paymentSubmittingId, setPaymentSubmittingId] = useState<number | null>(null);
+  const [statusEnums, setStatusEnums] = useState<EnumOption[]>([]);
+
+  const normalizeStatusName = useCallback((value?: string | null) => {
+    return String(value ?? '')
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '');
+  }, []);
+
+  const formatStatusLabel = useCallback((value: string) => {
+    if (!value) {
+      return '';
+    }
+
+    return value
+      .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+      .replace(/[_-]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }, []);
+
+  const statusLabelMap = useMemo(() => {
+    return statusEnums.reduce<Record<number, string>>((accumulator, option) => {
+      accumulator[option.value] = formatStatusLabel(option.name);
+      return accumulator;
+    }, {});
+  }, [formatStatusLabel, statusEnums]);
 
   const getStatusCode = useCallback((status: ServiceRequestViewModel['status'], statusNameRaw?: string) => {
     if (typeof status === 'number') {
+      // Gộp status 0 và 1 thành PendingApproval cho customer
+      if (status === 0 || status === 1) return ServiceRegistrationStatusEnum.PendingApproval;
       return status;
     }
 
-    const normalized = String(status || statusNameRaw || '').trim().toLowerCase();
+    const numericStatus = Number(status);
+    if (!Number.isNaN(numericStatus) && String(status).trim() !== '') {
+      if (numericStatus === 0 || numericStatus === 1) return ServiceRegistrationStatusEnum.PendingApproval;
+      return numericStatus;
+    }
 
-    if (normalized === 'pendingapproval' || normalized === 'pendingconfirmation') {
+    const normalized = normalizeStatusName(status || statusNameRaw);
+
+    if (normalized === 'waitingfornursery' || normalized === 'pendingapproval' || normalized === 'pendingconfirmation') {
       return ServiceRegistrationStatusEnum.PendingApproval;
     }
     if (normalized === 'awaitpayment' || normalized === 'confirmed') {
@@ -113,7 +149,7 @@ export default function UserServicePage({ params }: PageProps) {
     }
 
     return null;
-  }, []);
+  }, [normalizeStatusName]);
 
   const canCancelByStatus = useCallback(
     (status: ServiceRequestViewModel['status'], statusNameRaw?: string): boolean => {
@@ -130,18 +166,52 @@ export default function UserServicePage({ params }: PageProps) {
     [getStatusCode]
   );
 
-  const mapStatusToViewValue = useCallback((status: number): number | ServiceRegistrationStatus => {
-    switch (status) {
-      case ServiceRegistrationStatusEnum.PendingApproval:
-      case ServiceRegistrationStatusEnum.AwaitPayment:
-      case ServiceRegistrationStatusEnum.Active:
-      case ServiceRegistrationStatusEnum.Completed:
-      case ServiceRegistrationStatusEnum.Cancelled:
-      case ServiceRegistrationStatusEnum.Rejected:
-        return status;
-      default:
-        return ServiceRegistrationStatus.PENDING_CONFIRMATION;
+  const mapStatusToViewValue = useCallback((status: number | string): number | ServiceRegistrationStatus => {
+    if (typeof status === 'number') {
+      if (status === 0 || status === 1) return ServiceRegistrationStatusEnum.PendingApproval;
+      return status;
     }
+
+    const numericStatus = Number(status);
+    if (!Number.isNaN(numericStatus) && String(status).trim() !== '') {
+      if (numericStatus === 0 || numericStatus === 1) return ServiceRegistrationStatusEnum.PendingApproval;
+      return numericStatus;
+    }
+
+    const normalized = normalizeStatusName(status);
+    if (normalized === 'waitingfornursery' || normalized === 'pendingapproval' || normalized === 'pendingconfirmation') {
+      return ServiceRegistrationStatusEnum.PendingApproval;
+    }
+    if (normalized === 'awaitpayment' || normalized === 'confirmed') {
+      return ServiceRegistrationStatusEnum.AwaitPayment;
+    }
+    if (normalized === 'active' || normalized === 'inprogress') {
+      return ServiceRegistrationStatusEnum.Active;
+    }
+    if (normalized === 'completed') {
+      return ServiceRegistrationStatusEnum.Completed;
+    }
+    if (normalized === 'cancelled') {
+      return ServiceRegistrationStatusEnum.Cancelled;
+    }
+    if (normalized === 'rejected') {
+      return ServiceRegistrationStatusEnum.Rejected;
+    }
+
+    return ServiceRegistrationStatus.PENDING_CONFIRMATION;
+  }, [normalizeStatusName]);
+
+  useEffect(() => {
+    const loadStatusEnums = async () => {
+      try {
+        const enums = await getSystemEnumValues('service-registrations', false);
+        setStatusEnums(enums);
+      } catch {
+        setStatusEnums([]);
+      }
+    };
+
+    void loadStatusEnums();
   }, []);
 
   const mapApiToViewModel = useCallback(
@@ -272,10 +342,11 @@ export default function UserServicePage({ params }: PageProps) {
     try {
       await createServiceRegistration(
         {
-          nurseryCareServiceId: data.nurseryCareServiceId,
+          careServicePackageId: data.careServicePackageId,
+          preferredNurseryId: data.preferredNurseryId,
           serviceDate: data.serviceDate,
           scheduleDaysOfWeek: data.scheduleDaysOfWeek,
-          preferredShiftId: 1,
+          preferredShiftId: data.preferredShiftId,
           address: data.address,
           phone: data.phone,
           note: data.note,
@@ -358,7 +429,7 @@ export default function UserServicePage({ params }: PageProps) {
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
-        <CircularProgress />
+        <CustomLoading size={18} />
       </Box>
     );
   }
@@ -399,6 +470,7 @@ export default function UserServicePage({ params }: PageProps) {
           onViewDetails={handleViewDetails}
           showStatus={true}
           showCaretaker={false}
+          statusLabels={statusLabelMap}
           actionButtons={(request) => {
             const found = requests.find((item) => item.id === request.id);
             const canCancel = found ? canCancelByStatus(found.status, found.statusNameRaw) : false;
@@ -406,7 +478,7 @@ export default function UserServicePage({ params }: PageProps) {
 
             return (
               <Stack direction="row" spacing={1} justifyContent="center">
-                <Button variant="outlined" size="small" onClick={() => void handleViewDetails(request)}>
+                <Button sx={hoverLiftStyle} variant="outlined" size="small" onClick={() => void handleViewDetails(request)}>
                   {tCommon('view')}
                 </Button>
                 {canPay ? (
@@ -420,16 +492,20 @@ export default function UserServicePage({ params }: PageProps) {
                     {paymentSubmittingId === request.id ? t('creatingPayment') : t('payNow')}
                   </Button>
                 ) : null}
+                {canCancel ? (
                 <Button
                   variant="outlined"
                   size="small"
                   color="error"
+                  className='bg-error! text-white!'
                   startIcon={<CancelOutlinedIcon />}
                   disabled={!canCancel}
                   onClick={() => handleOpenCancel(request)}
+                  sx={hoverLiftStyle}
                 >
                   {t('cancel')}
                 </Button>
+                ) : null}
               </Stack>
             );
           }}
@@ -451,6 +527,7 @@ export default function UserServicePage({ params }: PageProps) {
         canCancel={selectedRequestCanCancel}
         canPay={selectedRequestCanPay}
         paying={paymentSubmittingId === selectedRequest?.id}
+        statusLabels={statusLabelMap}
         onPay={selectedRequest ? () => void handlePayRegistration(selectedRequest) : undefined}
         onCancel={selectedRequestCanCancel && selectedRequest ? () => handleOpenCancel(selectedRequest) : undefined}
       />
@@ -501,6 +578,7 @@ export default function UserServicePage({ params }: PageProps) {
             variant="contained"
             disabled={cancelSubmitting}
             sx={{ ...hoverLiftStyle }}
+            className='text-white!'
           >
             {t('cancelServiceAction')}
           </Button>

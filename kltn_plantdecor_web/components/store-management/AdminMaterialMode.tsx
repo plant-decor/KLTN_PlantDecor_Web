@@ -148,7 +148,7 @@ export default function AdminMaterialMode() {
     handleCloseToggle();
   }, [handleCloseToggle, saving, toggleMaterialActive, toggleTarget]);
 
-  const handleSubmitForm = useCallback(async (data: MaterialFormData, images: ImageUploadData[]) => {
+  const handleSubmitForm = async (data: MaterialFormData, images: ImageUploadData[]) => {
     const success = await saveMaterial({
       formData: data,
       images,
@@ -158,13 +158,19 @@ export default function AdminMaterialMode() {
     });
 
     if (success) {
+      if (viewOpen && viewingData?.id) {
+        const refreshed = await fetchMaterialById(viewingData.id);
+        if (refreshed) {
+          setViewingData(refreshed);
+        }
+      }
       toast.success(editingData ? 'Material updated successfully' : 'Material created successfully');
       handleCloseForm();
       return;
     }
 
     toast.error('Failed to save material');
-  }, [editingData, handleCloseForm, saveMaterial]);
+  };
 
   return (
     <Box>

@@ -8,7 +8,6 @@ import {
   Button,
   Chip,
   Container,
-  CircularProgress,
   Avatar,
   Badge,
   LinearProgress,
@@ -18,6 +17,7 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import PhoneIcon from "@mui/icons-material/Phone";
 import { ServiceRegistration, ServiceRegistrationStatus } from "@/types/service.types";
+import { CustomLoading } from "../CustomLoading";
 
 interface CaretakerTaskListProps {
   tasks: ServiceRegistration[];
@@ -77,7 +77,7 @@ export const CaretakerTaskList: React.FC<CaretakerTaskListProps> = ({
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" py={5}>
-        <CircularProgress />
+        <CustomLoading size={18} />
       </Box>
     );
   }

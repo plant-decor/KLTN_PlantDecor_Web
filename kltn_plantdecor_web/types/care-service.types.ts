@@ -64,7 +64,8 @@ export interface NearbyNurseryQuery {
 }
 
 export interface CreateServiceRegistrationRequest {
-  nurseryCareServiceId: number;
+  careServicePackageId: number;
+  preferredNurseryId?: number;
   serviceDate: string;
   scheduleDaysOfWeek: number[];
   preferredShiftId: number;
@@ -88,6 +89,7 @@ export interface CreatedServiceRegistration {
   longitude: number;
   scheduleDaysOfWeek: string;
   createdAt: string;
+  prefferedShift: ServiceRegistrationShift | null;
   nurseryCareService: {
     id: number;
     nurseryId: number;
@@ -103,7 +105,10 @@ export interface ServiceRegistrationShift {
   endTime: string;
 }
 
+export type PublicShift = ServiceRegistrationShift;
+
 export enum ServiceRegistrationStatusEnum {
+  WaitingForNursery = 0,
   PendingApproval = 1,
   AwaitPayment = 2,
   Active = 3,

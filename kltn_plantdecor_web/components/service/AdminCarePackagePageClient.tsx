@@ -6,7 +6,6 @@ import {
   Box,
   Button,
   Typography,
-  CircularProgress,
   Alert,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
@@ -17,6 +16,7 @@ import {
   CareServicePackageFormData,
 } from "@/types/service.types";
 import { del, get, patch, post, put } from '@/lib/api/apiService';
+import { CustomLoading } from "../CustomLoading";
 
 export const AdminCarePackagePageClient: React.FC = () => {
   const [packages, setPackages] = useState<CareServicePackage[]>([]);
@@ -154,7 +154,7 @@ export const AdminCarePackagePageClient: React.FC = () => {
 
       {loading ? (
         <Box display="flex" justifyContent="center" py={5}>
-          <CircularProgress />
+          <CustomLoading size={18} />
         </Box>
       ) : (
         <CarePackageManagementTable

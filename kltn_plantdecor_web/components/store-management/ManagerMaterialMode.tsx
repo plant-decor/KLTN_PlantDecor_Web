@@ -7,7 +7,6 @@ import {
   Box,
   Button,
   Chip,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -31,6 +30,7 @@ import {
   Typography,
 } from '@mui/material';
 import { toast } from 'react-toastify';
+import { CustomLoading } from '@/components/CustomLoading';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 import {
   getMyManagerNurseryMaterials,
@@ -302,7 +302,7 @@ export default function ManagerMaterialMode() {
             {loading ? (
               <TableRow>
                 <TableCell colSpan={10} align="center" sx={{ py: 5 }}>
-                  <CircularProgress size={24} />
+                  <CustomLoading size={24} />
                 </TableCell>
               </TableRow>
             ) : items.length === 0 ? (
@@ -394,7 +394,7 @@ export default function ManagerMaterialMode() {
 
             {catalogLoading && (
               <Stack direction="row" spacing={1} alignItems="center">
-                <CircularProgress size={18} />
+                <CustomLoading size={18} />
                 <Typography variant="body2" color="text.secondary">Loading material catalog...</Typography>
               </Stack>
             )}
@@ -493,7 +493,7 @@ export default function ManagerMaterialMode() {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseToggle} disabled={submitting}>Cancel</Button>
-          <Button onClick={() => void handleSubmitToggle()} variant="contained" disabled={submitting}>
+          <Button className='bg-primary!' onClick={() => void handleSubmitToggle()} variant="contained" disabled={submitting}>
             Confirm
           </Button>
         </DialogActions>

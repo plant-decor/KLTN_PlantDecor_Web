@@ -8,7 +8,6 @@ import {
   Card,
   CardContent,
   Chip,
-  CircularProgress,
   Divider,
   Stack,
   Typography,
@@ -22,6 +21,8 @@ import {
 import { formatCurrency, formatDate } from './orderHistoryUtils';
 import FullscreenImageModal from '@/components/image-view/FullscreenImageModal';
 import { ImageOutlined } from '@mui/icons-material';
+import ClickableImageViewer from '../image-view/ClickableImageViewer';
+import { CustomLoading } from '../CustomLoading';
 
 interface MyReturnTicketsPanelProps {
   tickets: ReturnTicket[];
@@ -32,7 +33,6 @@ interface MyReturnTicketsPanelProps {
 export default function MyReturnTicketsPanel({ tickets, loading, error }: MyReturnTicketsPanelProps) {
   const [imageModalOpen, setImageModalOpen] = useState(false);
   const [activeItemImages, setActiveItemImages] = useState<string[]>([]);
-
   const handleOpenImageModal = (imageUrls: string[]) => {
     if (!imageUrls.length) {
       return;
@@ -55,7 +55,7 @@ export default function MyReturnTicketsPanel({ tickets, loading, error }: MyRetu
 
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-          <CircularProgress />
+          <CustomLoading size={18} />
         </Box>
       ) : error ? (
         <Alert severity="error">{error}</Alert>
@@ -107,6 +107,16 @@ export default function MyReturnTicketsPanel({ tickets, loading, error }: MyRetu
                         flexWrap: 'wrap',
                       }}
                     >
+                      <Box className='flex items-center gap-2'>
+                        {item.productImageUrl && (
+                          <ClickableImageViewer
+                            images={[item.productImageUrl]}
+                            alt={item.itemName}
+                            containerClassName="w-16! h-16!"
+                            className="w-full aspect-square object-cover"
+                            showZoomHint={false}
+                          />
+                        )}
                       <Box>
                         <Typography variant="body2" fontWeight={600}>
                           {item.itemName}
@@ -117,18 +127,19 @@ export default function MyReturnTicketsPanel({ tickets, loading, error }: MyRetu
                         <Typography variant="caption" display="block" color="text.secondary">
                           Reason: {item.reason}
                         </Typography>
+                        </Box>
                       </Box>
                       <Stack direction="row" spacing={1} alignItems="center">
                         <Chip
                           size="medium"
                           label={item.statusName}
                           color={RETURN_TICKET_ITEM_STATUS_CHIP_COLOR[item.status] || 'default'}
-                        />
+                          />
                         {item.imageUrls.length > 0 && (
                           <Button
-                            size="small"
-                            variant="outlined"
-                            onClick={() => handleOpenImageModal(item.imageUrls)}
+                          size="small"
+                          variant="outlined"
+                          onClick={() => handleOpenImageModal(item.imageUrls)}
                             className='bg-primary! font-semibold rounded-full!'
                           >
                             Evidence <ImageOutlined sx={{ ml: 0.5 }} />

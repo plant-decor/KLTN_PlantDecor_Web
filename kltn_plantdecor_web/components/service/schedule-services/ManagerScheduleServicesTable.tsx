@@ -5,7 +5,6 @@ import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import {
   Box,
   Chip,
-  CircularProgress,
   IconButton,
   Paper,
   Stack,
@@ -19,6 +18,7 @@ import {
   Typography,
 } from '@mui/material';
 import type { NurseryServiceScheduleItem } from '@/types/care-service.types';
+import { CustomLoading } from '@/components/CustomLoading';
 
 interface ManagerScheduleServicesTableProps {
   items: NurseryServiceScheduleItem[];
@@ -94,7 +94,7 @@ export default function ManagerScheduleServicesTable({
             <TableRow>
               <TableCell colSpan={8}>
                 <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
-                  <CircularProgress size={26} />
+                  <CustomLoading size={26} />
                 </Box>
               </TableCell>
             </TableRow>

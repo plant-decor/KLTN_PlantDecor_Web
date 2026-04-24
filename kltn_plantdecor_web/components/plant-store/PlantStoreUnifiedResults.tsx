@@ -124,7 +124,7 @@ export default function PlantStoreUnifiedResults({
       </div>
 
       {payload.items.length > 0 ? (
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {payload.items.map((item: ShopUnifiedSearchItem, index) => {
             if (item.type === 'Plant' && item.plant) {
               return (

@@ -17,42 +17,32 @@ import {
 } from '@mui/material';
 // import { Edit as EditIcon } from '@mui/icons-material';
 import type { CheckoutData } from '@/types/cart.types';
-import type { OrderCreatePayload } from '@/types/order.types';
 
 interface CheckoutReviewProps {
   checkoutData: CheckoutData;
-  cartId: string;
-  createdOrder?: OrderCreatePayload | null;
+  // cartId: string;
 }
 
 export default function CheckoutReview({
   checkoutData,
-  cartId,
-  createdOrder,
+  // cartId,
 }: CheckoutReviewProps) {
   const paymentMethodLabel = getPaymentMethodLabel(
     checkoutData.paymentMethod || ''
   );
 
-  const reviewItems =
-    createdOrder?.items?.map((item) => ({
-      id: item.id,
-      name: item.itemName,
-      quantity: item.quantity,
-      price: item.price,
-      lineTotal: item.quantity * item.price,
-    })) ??
-    checkoutData.items.map((item) => ({
-      id: item.id,
-      name: item.productName,
-      quantity: item.quantity,
-      price: item.price,
-      lineTotal: item.quantity * item.price,
-    }));
+  const reviewItems = checkoutData.items.map((item) => ({
+    id: item.id,
+    name: item.productName,
+    quantity: item.quantity,
+    price: item.price,
+    lineTotal: item.quantity * item.price,
+  }));
 
-  const reviewTotal =
-    createdOrder?.totalAmount ??
-    checkoutData.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
+  const reviewTotal = checkoutData.items.reduce(
+    (sum, item) => sum + item.quantity * item.price,
+    0
+  );
 
   return (
     <Grid container spacing={3}>
@@ -235,24 +225,11 @@ export default function CheckoutReview({
               </Typography>
             </Box>
 
-            <Box sx={{ mt: 3, p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
-              {/* <Typography variant="caption" sx={{ color: '#666' }}>
-                User ID: {userId}
-              </Typography> */}
+            {/* <Box sx={{ mt: 3, p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
               <Typography variant="caption" sx={{ display: 'block', color: '#666' }}>
                 Cart ID: {cartId}
               </Typography>
-              {createdOrder && (
-                <>
-                  <Typography variant="caption" sx={{ display: 'block', color: '#666', mt: 1 }}>
-                    Order ID: {createdOrder.id}
-                  </Typography>
-                  <Typography variant="caption" sx={{ display: 'block', color: '#666' }}>
-                    Status: {createdOrder.statusName}
-                  </Typography>
-                </>
-              )}
-            </Box>
+            </Box> */}
           </CardContent>
         </Card>
       </Grid>

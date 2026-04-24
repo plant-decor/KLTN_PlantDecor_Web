@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Avatar,
   Box,
-  CircularProgress,
   Fab,
   IconButton,
   InputBase,
@@ -26,6 +25,7 @@ import { startSupportConversation } from "@/lib/api/chatService";
 import { useAuthStore } from "@/lib/store/authStore";
 import { OPEN_SUPPORT_CHAT_EVENT } from "@/lib/constants/chat";
 import type { SupportConversationMessage } from "@/types/chat.types";
+import { CustomLoading } from "../CustomLoading";
 
 type ChatMessageView = {
   id: number;
@@ -274,7 +274,7 @@ export default function SupportChatWidget() {
                   justifyContent: "center",
                 }}
               >
-                <CircularProgress size={24} />
+                <CustomLoading size={24} />
               </Box>
             )}
 
@@ -437,7 +437,7 @@ export default function SupportChatWidget() {
                   sx={{ color: "#2563eb" }}
                 >
                   {isStarting ? (
-                    <CircularProgress size={18} />
+                    <CustomLoading size={18} />
                   ) : (
                     <SendRoundedIcon />
                   )}

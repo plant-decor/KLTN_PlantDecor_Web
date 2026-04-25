@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import ContactPageClient from "@/components/public/ContactPageClient";
+import ContactPageClient, {
+  type ContactNurseryWithMap,
+} from "@/components/public/ContactPageClient";
+import { searchAddressSuggestions } from "@/lib/utils/geocoding";
+import { sleepMs } from "@/lib/utils/osmEmbed";
 import {
   searchShopNurseries,
   type ShopNurseryListItem,
@@ -18,6 +22,30 @@ const getPayload = <T,>(
   if (!response) return null;
   return response.payload ?? response.data ?? null;
 };
+
+async function enrichNurseriesWithMapCoords(
+  items: ShopNurseryListItem[]
+): Promise<ContactNurseryWithMap[]> {
+  const out: ContactNurseryWithMap[] = [];
+  for (let i = 0; i < items.length; i += 1) {
+    if (i > 0) {
+      await sleepMs(1100);
+    }
+    const n = items[i];
+    const row: ContactNurseryWithMap = { ...n };
+    const address = n.address?.trim() ?? "";
+    if (address.length >= 3) {
+      const suggestions = await searchAddressSuggestions(address);
+      const first = suggestions[0];
+      if (first) {
+        row.mapLat = first.latitude;
+        row.mapLng = first.longitude;
+      }
+    }
+    out.push(row);
+  }
+  return out;
+}
 
 export async function generateMetadata({
   params,
@@ -47,7 +75,7 @@ export async function generateMetadata({
 }
 
 export default async function ContactPage() {
-  let nurseries: ShopNurseryListItem[] = [];
+  let nurseries: ContactNurseryWithMap[] = [];
   let hasNurseryFetchError = false;
 
   try {
@@ -58,7 +86,8 @@ export default async function ContactPage() {
     );
     const payload = getPayload(response);
     const items = payload?.items ?? [];
-    nurseries = items.filter((item) => item.isActive);
+    const active = items.filter((item) => item.isActive);
+    nurseries = await enrichNurseriesWithMapCoords(active);
   } catch (error) {
     console.error("Failed to load active nurseries for contact page:", error);
     hasNurseryFetchError = true;

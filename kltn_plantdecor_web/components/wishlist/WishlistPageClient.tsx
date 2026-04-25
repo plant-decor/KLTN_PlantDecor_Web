@@ -13,6 +13,7 @@ import {
   type WishlistPagedPayload,
 } from '@/lib/api/cartWishlistService';
 import { CustomLoading } from '../CustomLoading';
+import { DEFAULT_PAGE_SIZE } from '@/lib/utils/plant-store/constants';
 
 interface WishlistPageClientProps {
   userid: string;
@@ -28,7 +29,7 @@ export default function WishlistPageClient({ userid, initialPayload }: WishlistP
 
   const [items, setItems] = useState<WishlistListItem[]>(initialPayload?.items ?? []);
   const [pageNumber, setPageNumber] = useState(1);
-  const [pageSize] = useState(10);
+  const [pageSize] = useState(DEFAULT_PAGE_SIZE);
   const [totalPages, setTotalPages] = useState(Math.max(1, initialPayload?.totalPages ?? 1));
   const [totalCount, setTotalCount] = useState(initialPayload?.totalCount ?? 0);
   const [isLoading, setIsLoading] = useState(!initialPayload);
@@ -122,7 +123,7 @@ export default function WishlistPageClient({ userid, initialPayload }: WishlistP
           {tWishlist('noItemsOnPage', { page: pageNumber })}
         </Typography>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {items.map((item) => {
             const stockKey = buildWishlistKey(item.itemType, item.itemId);
             const isRemoving = isRemovingKey === stockKey;

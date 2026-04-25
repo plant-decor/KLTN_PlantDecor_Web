@@ -220,7 +220,7 @@ export default function Navigation({ initialStoreCategories = [] }: NavigationPr
   return (
     <nav className="bg-white shadow-sm border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="hidden sm:flex lg:flex md:flex items-center justify-around h-12">
+        <div className="hidden md:flex items-center justify-around h-12">
           <div className="flex items-center gap-1 lg:gap-6">
             {navItems.map((item: HeaderNavItem) => {
               const isStoreItem = item.icon === 'store';

@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { useEffect, useMemo, useState, type MouseEvent } from 'react';
-import { Button, Drawer } from '@mui/material';
+import { Button, Chip, Drawer } from '@mui/material';
 import { Link } from '@/i18n/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
@@ -75,19 +75,19 @@ const resolveWishlistItemHref = (item: WishlistListItem): string | null => {
   return null;
 };
 
-const formatCreatedAt = (value: string, locale: string, fallback: string): string => {
-  if (!value) return fallback;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
+// const formatCreatedAt = (value: string, locale: string, fallback: string): string => {
+//   if (!value) return fallback;
+//   const date = new Date(value);
+//   if (Number.isNaN(date.getTime())) return value;
 
-  return new Intl.DateTimeFormat(locale, {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date);
-};
+//   return new Intl.DateTimeFormat(locale, {
+//     year: 'numeric',
+//     month: '2-digit',
+//     day: '2-digit',
+//     hour: '2-digit',
+//     minute: '2-digit',
+//   }).format(date);
+// };
 
 export default function WishlistPlantCard({
   item,
@@ -290,84 +290,110 @@ export default function WishlistPlantCard({
     (item.itemType === 'Material' && !selectedNursery.nurseryMaterialId) ||
     (item.itemType === 'PlantCombo' && !selectedNursery.nurseryPlantComboId);
 
+  const cardActionButtonSx = {
+    textTransform: 'none' as const,
+    whiteSpace: 'nowrap' as const,
+    minHeight: 44,
+    px: 1.5,
+    fontSize: '0.95rem',
+    lineHeight: 1.2,
+  };
+  const primaryActionButtonSx = {
+    ...cardActionButtonSx,
+    bgcolor: 'var(--primary)',
+    '&:hover': { bgcolor: '#45a049' },
+  };
+
+  console.log(item);
   return (
     <>
-      <article className="bg-white rounded-3xl overflow-hidden shadow-md hover:shadow-lg transition-shadow min-h-115 h-full flex flex-col">
-        <div className="relative w-full basis-[60%] shrink-0">
-          {itemHref ? (
-            <Link href={itemHref} className="block relative w-full h-full">
-              <Image
-                src={item.itemImageUrl || '/img/fallbackplant.avif'}
-                alt={item.itemName}
-                fill
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                className="object-contain"
-              />
-            </Link>
-          ) : (
+      {itemHref && (
+        <Link href={itemHref}
+          className="bg-white rounded-3xl overflow-hidden shadow-md hover:shadow-lg transition-shadow min-h-115 flex flex-col"
+        >
+          {/* <article className="bg-white rounded-3xl overflow-hidden shadow-md hover:shadow-lg transition-shadow min-h-115 h-full flex flex-col"> */}
+          <div className="relative w-full basis-[60%] shrink-0">
             <Image
               src={item.itemImageUrl || '/img/fallbackplant.avif'}
               alt={item.itemName}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               className="object-contain"
+              loading='eager'
             />
-          )}
-        </div>
-
-        <div className="basis-[15%] min-h-0 p-4 sm:p-5 space-y-1 overflow-hidden">
-          {itemHref ? (
-            <Link href={itemHref} className="block">
-              <h3 className="font-semibold text-gray-900 line-clamp-2 hover:underline">
-                {item.itemName}
-              </h3>
-            </Link>
-          ) : (
-            <h3 className="font-semibold text-gray-900 line-clamp-2">{item.itemName}</h3>
-          )}
-          <p className="text-sm text-gray-600 line-clamp-1">{typeLabel}</p>
-          {item.nurseryName ? (
-            <p className="text-sm text-gray-600 line-clamp-1">
-              {tWishlist('nursery')}: {item.nurseryName}
-            </p>
-          ) : null}
-          <p className="text-sm text-gray-600 line-clamp-1">
-            {tWishlist('createdAt')}: {formatCreatedAt(item.createdAt, locale, tCommon('noData'))}
-          </p>
-          <p className="text-sm text-gray-600 line-clamp-2">
-            {tWishlist('additionalInfo')}: {item.additionalInfo || tCommon('noData')}
-          </p>
-        </div>
-
-        <div className="basis-[15%] min-h-0 p-4 sm:p-5 pt-0 flex flex-col justify-between">
-          <p className="text-green-600 font-bold text-lg">{formatCurrency(item.price, locale)}</p>
-          <div className="grid grid-cols-2 gap-2 pt-1">
-            <Button
-              variant="outlined"
-              color="error"
-              disabled={isRemoving}
-              onClick={() => void onRemoveFromWishlist(item.itemType, item.itemId)}
-            >
-              {tWishlist('removeItem')}
-            </Button>
-            <Button
-              variant="contained"
-              onClick={handlePrimaryAction}
-              sx={{
-                bgcolor: 'var(--primary)',
-                '&:hover': { bgcolor: '#45a049' },
-              }}
-            >
-              {item.itemType === 'PlantInstance'
-                ? tWishlist('proceedToCheckout')
-                : tWishlist('addToCart')}
-            </Button>
           </div>
-        </div>
-      </article>
+
+          <div className="hidden 2xl:flex 2xl:basis-[15%] min-h-0 space-y-1 p-2 sm:p-2 md:p-4 lg:p-5 flex-col overflow-hidden">
+            <div className="w-full flex flex-col gap-1">
+              <div className="flex items-start justify-between gap-2">
+                {item.itemName && (
+                  <h3 className="font-semibold text-gray-900 line-clamp-2 flex-1 min-w-0">
+                    {item.itemName}
+                  </h3>
+                )}
+
+                {/* Chỉ hiện Chip ở đây nếu không phải là PlantInstance */}
+                {!(item.nurseryName && item.itemType === 'PlantInstance') && (
+                  <Chip
+                    className="shrink-0"
+                    size="small"
+                    label={typeLabel}
+                    sx={{
+                      bgcolor: 'color-mix(in srgb, var(--primary) 14%, white)',
+                      color: 'var(--foreground)',
+                    }}
+                  />
+                )}
+              </div>
+
+              {/* Hiện Nursery ở dòng riêng bên dưới tên cây */}
+              {item.nurseryName && item.itemType === 'PlantInstance' && (
+                <p className="text-sm text-gray-500 truncate">
+                  {tWishlist('nursery')}: {item.nurseryName}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="basis-[35%] 2xl:basis-[20%] min-h-0 p-2 sm:p-2 md:p-4 lg:p-5 pt-0 flex flex-col justify-between">
+            <div>
+              <p className="text-green-600 font-bold text-lg">{formatCurrency(item.price, locale)}</p>
+            </div>
+            <div className="grid grid-cols-1 gap-3 pt-1 2xl:grid-cols-2">
+              <div>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  size="medium"
+                  fullWidth
+                  disabled={isRemoving}
+                  onClick={() => void onRemoveFromWishlist(item.itemType, item.itemId)}
+                  sx={cardActionButtonSx}
+                >
+                  {tWishlist('removeItem')}
+                </Button>
+              </div>
+              <div>
+                <Button
+                  variant="contained"
+                  size="medium"
+                  fullWidth
+                  onClick={handlePrimaryAction}
+                  sx={primaryActionButtonSx}
+                >
+                  {item.itemType === 'PlantInstance'
+                    ? tWishlist('proceedToCheckout')
+                    : tWishlist('addToCart')}
+                </Button>
+              </div>
+            </div>
+          </div>
+          {/* </article> */}
+        </Link>
+      )}
 
       <Drawer anchor="right" open={isDrawerOpen} onClose={handleCloseDrawer}>
-        <div className="w-96 max-w-[92vw] p-4 space-y-4">
+        <div className="w-90 max-w-[90vw] p-4 space-y-4">
           <h3 className="text-lg font-semibold text-gray-900">{tWishlist('selectNursery')}</h3>
           <p className="text-sm text-gray-600">{item.itemName}</p>
 
@@ -384,11 +410,10 @@ export default function WishlistPlantCard({
                     key={nursery.id}
                     type="button"
                     onClick={() => setSelectedNurseryId(nursery.id)}
-                    className={`w-full text-left rounded-lg border p-3 transition-colors ${
-                      isSelected
-                        ? 'border-green-600 bg-green-50'
-                        : 'border-gray-200 bg-white hover:border-green-300'
-                    }`}
+                    className={`w-full text-left rounded-lg border p-3 transition-colors ${isSelected
+                      ? 'border-green-600 bg-green-50'
+                      : 'border-gray-200 bg-white hover:border-green-300'
+                      }`}
                   >
                     <p className="font-medium text-gray-900">{nursery.name}</p>
                     <p className="text-sm text-gray-600">{nursery.address}</p>

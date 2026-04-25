@@ -48,6 +48,9 @@ export async function getAddressFromCoordinates(
       {
         headers: {
           'Accept-Language': 'vi,en',
+          ...(typeof window === 'undefined'
+            ? { 'User-Agent': 'KLTN_PlantDecor_Web/1.0' }
+            : {}),
         },
       }
     );
@@ -90,6 +93,9 @@ export async function searchAddressSuggestions(
       {
         headers: {
           'Accept-Language': 'vi,en',
+          ...(typeof window === 'undefined'
+            ? { 'User-Agent': 'KLTN_PlantDecor_Web/1.0' }
+            : {}),
         },
       }
     );

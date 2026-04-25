@@ -114,7 +114,7 @@ export default function OrderSummary({ items, isUpdating, userId }: OrderSummary
           onClick={handleProceedToCheckout}
           disabled={isUpdating || items.length === 0}
           sx={{
-            backgroundColor: '#4CAF50',
+            backgroundColor: 'var(--primary)',
             textTransform: 'none',
             fontSize: '1rem',
             py: 1.5,

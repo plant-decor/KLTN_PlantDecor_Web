@@ -282,9 +282,11 @@
     "fullName": "Full name",
     "phone": "Phone",
     "address": "Address",
+    "notesLabel": "Order notes",
     "city": "City",
     "zipCode": "Zip code",
     "paymentMethod": "Payment method",
+    "paymentMethodHint": "You will be redirected to VNPay. The amount charged matches “Pay this time (invoice)” above.",
     "creditCard": "Credit card",
     "cashOnDelivery": "Cash on delivery",
     "orderSummary": "Order summary",
@@ -295,7 +297,28 @@
     "backToCart": "Back to cart",
     "actions": {
       "reviewOrder": "Review Order",
-      "goToPayment": "Go to Payment"
+      "goToPayment": "Go to Payment",
+      "continueToPayment": "Continue to payment",
+      "creatingOrder": "Creating order…",
+      "creatingPayment": "Redirecting to payment…",
+      "payWithVnPay": "Pay with VNPay"
+    },
+    "orderIdLabel": "Order",
+    "paymentBreakdownTitle": "Amount to pay",
+    "orderTotalValue": "Order value",
+    "breakdownTable": {
+      "description": "Description",
+      "amount": "Amount (VND)"
+    },
+    "amountDueThisPayment": "Pay this time (invoice)",
+    "invoiceToPay": "Amount due now",
+    "depositInfo": "Deposit (order)",
+    "remainingInfo": "Remaining to pay (later)",
+    "itemsTable": {
+      "product": "Product",
+      "qty": "Qty",
+      "price": "Price",
+      "lineTotal": "Line total"
     },
     "errors": {
       "emptyCartGoBack": "Cart is empty. Please go back to cart.",
@@ -304,7 +327,9 @@
       "emptyCart": "Cart is empty.",
       "missingRequiredShippingFields": "Please enter full name, phone and shipping address.",
       "submitFailed": "Failed to submit order",
-      "orderNotCreated": "Order has not been created yet."
+      "orderNotCreated": "Order has not been created yet.",
+      "noInvoice": "No invoice is available for this order. Please try again or contact support.",
+      "paymentUrlFailed": "Could not start payment. Please try again."
     },
     "completeDetails": {
       "notAvailable": "N/A",
@@ -701,21 +726,21 @@
   "wishlist": {
     "title": "Wishlist",
     "empty": "No items in wishlist",
-    "removeItem": "Remove from wishlist",
+    "removeItem": "Remove",
     "addToCart": "Add to cart",
     "addToWishlist": "Add to wishlist",
     "addToWishlistCompact": "Wishlist",
     "subtitle": "You have {count} items in your wishlist",
     "noItemsOnPage": "No items on page {page}.",
-    "typePlant": "Type: Plant",
-    "typePlantInstance": "Type: Plant Instance",
-    "typePlantCombo": "Type: Plant Combo",
-    "typeMaterial": "Type: Material",
+    "typePlant": "Plant",
+    "typePlantInstance": "Plant Instance",
+    "typePlantCombo": "Plant Combo",
+    "typeMaterial": "Material",
     "nursery": "Nursery",
     "quantity": "Quantity",
     "createdAt": "Added at",
     "additionalInfo": "Details",
-    "proceedToCheckout": "Proceed to checkout",
+    "proceedToCheckout": "Checkout",
     "selectNursery": "Select nursery",
     "loadingNurseries": "Loading nurseries...",
     "noNurseries": "No nurseries available.",
@@ -989,8 +1014,15 @@
       }
     },
     "map": {
-      "title": "Office/Nursery Map",
-      "placeholder": "Google Maps integration will be added in a future release (Coming soon)."
+      "title": "Nursery Map",
+      "description": "OpenStreetMap pin location is approximated from the address.",
+      "unavailableOnFetchError": "The map is shown with the nursery list. The list failed to load, so the map cannot be shown here — please try again later.",
+      "emptyNurseries": "There are no active nurseries to show on the map.",
+      "iframeTitle": "Map location: {name}",
+      "fallbackNoCoords": "Could not determine coordinates from the address. You can still search on OpenStreetMap using the link below.",
+      "openInOsm": "Open on OpenStreetMap",
+      "openLargerInOsm": "Open address search on OpenStreetMap",
+      "selectNurseryAria": "Select {name} to show its location on the map"
     }
   },
   "roomDesignEnums": {

@@ -4,8 +4,6 @@ import { useState } from 'react';
 import {
   Box,
   Typography,
-  Card,
-  CardContent,
   Table,
   TableBody,
   TableCell,
@@ -112,21 +110,6 @@ export default function CustomerOrdersPage() {
           View customer order information to assist with inquiries (Read-only)
         </Typography>
       </Box>
-
-      {/* Info Alert */}
-      <Card sx={{ mb: 3, bgcolor: 'info.lighter', border: '1px solid', borderColor: 'info.light' }}>
-        <CardContent sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
-          <LockIcon sx={{ color: 'info.main', mt: 0.5 }} />
-          <Box>
-            <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-              Read-Only Access
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              You can view customer orders to assist with inquiries and support decisions. You cannot edit or modify order information.
-            </Typography>
-          </Box>
-        </CardContent>
-      </Card>
 
       {/* Orders Table */}
       <TableContainer component={Paper} sx={{ boxShadow: 2 }}>

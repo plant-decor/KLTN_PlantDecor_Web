@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Box, Button, Card, CardContent, Stack, Step, StepLabel, Stepper, Typography } from '@mui/material';
-import { useTranslations } from 'next-intl';
 import { CustomLoading } from '@/components/CustomLoading';
 import { addItemToCart } from '@/lib/api/cartWishlistService';
 import { notifyCartUpdated } from '@/lib/utils/cartEvents';
@@ -39,8 +38,6 @@ type MessageState = {
 } | null;
 
 export default function AIPlantRecommendationClient({ userId }: AIPlantRecommendationClientProps) {
-  const t = useTranslations('aiRecommendation');
-
   const [imagesByViewAngle, setImagesByViewAngle] = useState<Partial<Record<RoomViewAngle, File>>>({});
   const [imagePreviewUrlsByViewAngle, setImagePreviewUrlsByViewAngle] = useState<Partial<Record<RoomViewAngle, string>>>(
     {}
@@ -133,7 +130,8 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
       const payload = await generateLayoutImages(layoutDesignId, false, false);
       setGenerateResult(payload);
     } catch (generateError) {
-      const errorMessage = generateError instanceof Error ? generateError.message : t('generatedImages.errors.generateFailed');
+      const errorMessage =
+        generateError instanceof Error ? generateError.message : 'Failed to generate AI images.';
       setError(errorMessage);
       console.error('Generate image error:', generateError);
     } finally {
@@ -143,7 +141,7 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
 
   const handleAnalyze = async () => {
     if (!imagesByViewAngle.Front) {
-      setError('Vui lòng upload tối thiểu 1 hình ở góc Front.');
+      setError('Please upload at least 1 image from the Front view.');
       return;
     }
 
@@ -159,7 +157,7 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
       const roomImageIds = (uploadPayload?.roomImages ?? []).map((item) => item.roomImageId).filter((id) => id > 0);
 
       if (roomImageIds.length === 0) {
-        setError('Upload ảnh thất bại hoặc không nhận được roomImageIds.');
+        setError('Image upload failed or no roomImageIds were returned.');
         return;
       }
 
@@ -173,8 +171,8 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
           lightDirection: lightDirection || undefined,
           dominantDirection: dominantDirection || undefined,
           naturalLightLevel: naturalLightLevel || undefined,
-          minBudget: Number(minBudget) || 0,
-          maxBudget: Number(maxBudget) || 0,
+          minBudget: Number(minBudget) > 0 ? Number(minBudget) : undefined,
+          maxBudget: Number(maxBudget) > 0 ? Number(maxBudget) : undefined,
           careLevelType: careLevelType || undefined,
           hasAllergy,
           allergyNote,
@@ -188,7 +186,7 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
       );
 
       if (!result) {
-        setError(t('errors.noAnalysisResult'));
+        setError('No analysis result returned from server.');
         return;
       }
 
@@ -198,7 +196,8 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
         void handleGenerateImages(result.layoutDesignId);
       }
     } catch (analyzeError) {
-      const errorMessage = analyzeError instanceof Error ? analyzeError.message : t('errors.analyzeRoomFailed');
+      const errorMessage =
+        analyzeError instanceof Error ? analyzeError.message : 'Failed to analyze room image.';
       setError(errorMessage);
       console.error('Analyze room error:', analyzeError);
     } finally {
@@ -213,12 +212,12 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
     }
 
     if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-      setError(t('roomInput.errors.unsupportedFormat'));
+      setError('Unsupported image format. Please select JPEG, JPG, PNG or HEIF.');
       return;
     }
 
     if (file.size > MAX_FILE_SIZE) {
-      setError(t('roomInput.errors.fileTooLarge'));
+      setError('File size must be less than or equal to 10MB.');
       return;
     }
 
@@ -263,7 +262,7 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
       setAddingLayoutDesignPlantId(item.layoutDesignPlantId);
 
       if (!item.commonPlantId || item.commonPlantId <= 0) {
-        setError(t('recommendations.errors.missingCommonPlantId'));
+        setError('Cannot add this recommendation to cart because plant id is missing.');
         return;
       }
 
@@ -273,12 +272,11 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
       notifyCartUpdated();
       setMessage({
         type: 'success',
-        text: t('recommendations.errors.addedToCart', {
-          name: matchedRecommendation?.name ?? t('generatedImages.plantFallbackName'),
-        }),
+        text: `Added ${matchedRecommendation?.name ?? 'Recommended plant'} to cart.`,
       });
     } catch (cartError) {
-      const errorMessage = cartError instanceof Error ? cartError.message : t('recommendations.errors.addToCartFailed');
+      const errorMessage =
+        cartError instanceof Error ? cartError.message : 'Failed to add item to cart.';
       setError(errorMessage);
       console.error('Add common plant to cart error:', cartError);
     } finally {
@@ -296,18 +294,18 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
         sx={{ mb: 1 }}
       >
         <Typography variant="h4" fontWeight="bold">
-          {t('title')}
+          AI Plant Recommendation
         </Typography>
         <Button className='bg-primary! font-semibold!' variant="outlined" onClick={() => setIsMyDesignModalOpen(true)}>
-          {t('myDesign.buttonLabel')} <HistoryOutlined  sx={{ ml: 0.5 }} />
+          My Design <HistoryOutlined  sx={{ ml: 0.5 }} />
         </Button>
       </Stack>
 
       <Stepper activeStep={stepIndex} sx={{ mb: 4, pt: 4 }}>
         {[
-          t('steps.roomInput'),
-          t('steps.roomAnalysis'),
-          t('steps.results'),
+          'Room Input',
+          'Room Analysis',
+          'Results',
         ].map((label) => (
           <Step key={label}>
             <StepLabel>{label}</StepLabel>
@@ -372,7 +370,7 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
               <CustomLoading size={26} />
               </Box>
               <Typography variant="body2" color="text.secondary">
-                {t('roomInput.analyzingButton')}
+                Analyzing room...
               </Typography>
             </Box>
           </CardContent>

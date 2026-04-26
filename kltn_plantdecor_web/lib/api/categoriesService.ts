@@ -10,6 +10,16 @@ export interface CategoryCreateUpdateRequest {
   categoryType: number;
 }
 
+export interface CategoryEnumValue {
+  value: number;
+  name: string;
+}
+
+export interface CategoryEnumGroup {
+  enumName: string;
+  values: CategoryEnumValue[];
+}
+
 export interface CategoryResponse {
   id: number;
   name: string;
@@ -50,6 +60,16 @@ export interface GetCategoriesByTypeParams {
 }
 
 // ============ API Calls ============
+
+/**
+ * GET /api/system/enums/categories
+ * Get category enum values (CategoryType)
+ */
+export const getCategoryEnums = async (
+  loading = true
+): Promise<ResponseModel<CategoryEnumGroup[]>> => {
+  return apiClient.get('/system/enums/categories', undefined, loading);
+};
 
 /**
  * GET /api/admin/Categories

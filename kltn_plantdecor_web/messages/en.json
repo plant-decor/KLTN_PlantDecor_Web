@@ -80,7 +80,8 @@
     "contact": "Contact",
     "about": "About Us",
     "myPlant": "My Plant",
-    "aiRecommendation": "AI Recommendation"
+    "aiRecommendation": "AI Recommendation",
+    "aiChatSupport": "AI Chat Support"
   },
   "header": {
     "logoAlt": "Plant Decor Logo",

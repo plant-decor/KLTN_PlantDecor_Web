@@ -15,6 +15,7 @@ import {
   Phone as PhoneIcon,
   Info as InfoIcon,
   LocalFlorist as LocalFloristIcon,
+  ChatBubbleOutline as ChatBubbleOutlineIcon,
   SmartToy as SmartToyIcon,
   Menu as MenuIcon,
   Close as CloseIcon,
@@ -39,6 +40,7 @@ const NAV_LABEL_KEYS: Record<HeaderIconKey, string> = {
   about: 'about',
   myPlant: 'myPlant',
   ai: 'aiRecommendation',
+  aiChat: 'aiChatSupport',
 };
 
 const getNavLabelKey = (icon: HeaderIconKey): string => NAV_LABEL_KEYS[icon];
@@ -58,6 +60,7 @@ const ICONS: Record<HeaderIconKey, ReactNode> = {
   about: <InfoIcon sx={{ fontSize: 20 }} />,
   myPlant: <LocalFloristIcon sx={{ fontSize: 20 }} />,
   ai: <SmartToyIcon sx={{ fontSize: 20 }} />,
+  aiChat: <ChatBubbleOutlineIcon sx={{ fontSize: 20 }} />,
 };
 
 interface NavigationProps {

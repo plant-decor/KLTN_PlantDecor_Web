@@ -126,6 +126,8 @@ export interface GeneratedImageItem {
   layoutDesignPlantId?: number | null;
   commonPlantId?: number | null;
   plantInstanceId?: number | null;
+  name?: string | null;
+  price?: number | null;
   imageUrl: string | null;
   fluxPromptUsed: string | null;
   createdAt: string;

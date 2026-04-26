@@ -11,6 +11,12 @@ const CUSTOMER_NAV_ITEMS: HeaderNavItem[] = [
     icon: 'ai',
     requiresUserId: true,
   },
+  {
+    label: 'AI Chat Support',
+    href: '/ai-chatbot/[userId]',
+    icon: 'aiChat',
+    requiresUserId: true,
+  },
   { label: 'Contact', href: '/contact', icon: 'contact' },
   { label: 'About Us', href: '/about', icon: 'about' },
 ];
@@ -22,7 +28,8 @@ export type HeaderIconKey =
   | 'contact'
   | 'about'
   | 'myPlant'
-  | 'ai';
+  | 'ai'
+  | 'aiChat';
 
 export interface HeaderNavItem {
   label: string;
@@ -46,6 +53,11 @@ export const NAV_ITEMS_BY_ROLE: Record<UserRole, HeaderNavItem[]> = {
       label: 'AI Plant Recommendation',
       href: '/ai-plant-recommendation/[userId]',
       icon: 'ai',
+    },
+    {
+      label: 'AI Chat Support',
+      href: '/ai-chatbot/[userId]',
+      icon: 'aiChat',
     },
     { label: 'Contact', href: '/contact', icon: 'contact' },
     { label: 'About Us', href: '/about', icon: 'about' },

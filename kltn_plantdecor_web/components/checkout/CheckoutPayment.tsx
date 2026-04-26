@@ -20,7 +20,7 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import type { CheckoutData } from '@/types/cart.types';
 import type { OrderInvoice, OrderCreatePayload } from '@/types/order.types';
 import { createPaymentUrl } from '@/lib/api/orderService';
@@ -56,7 +56,6 @@ export default function CheckoutPayment({
   createdOrder,
   invoices,
 }: CheckoutPaymentProps) {
-  const locale = useLocale();
   const tCheckout = useTranslations('checkout');
   const [selectedMethod, setSelectedMethod] = useState(() => {
     const fromCheckout = checkoutData.paymentMethod;

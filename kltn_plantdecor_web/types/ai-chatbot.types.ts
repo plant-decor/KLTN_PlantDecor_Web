@@ -89,6 +89,9 @@ export type AIChatHistoryMessage = {
   intent?: string | null;
   isFallback?: boolean | null;
   isPolicyResponse?: boolean | null;
+  suggestedPlants?: AIChatSuggestedPlant[] | null;
+  careTips?: string[] | null;
+  followUpQuestions?: string[] | null;
   createdAt: string;
 };
 

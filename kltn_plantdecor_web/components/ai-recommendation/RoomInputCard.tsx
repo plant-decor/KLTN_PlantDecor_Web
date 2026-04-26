@@ -425,6 +425,7 @@ export default function RoomInputCard({
             fullWidth
             disabled={enumLoading}
           >
+            <MenuItem value="">{'--'}</MenuItem>
             {enumMap.lightDirections.map((option) => (
               <MenuItem key={option.value} value={option.name}>
                 {humanizeEnumName(option.name)}
@@ -440,6 +441,7 @@ export default function RoomInputCard({
             fullWidth
             disabled={enumLoading}
           >
+            <MenuItem value="">{'--'}</MenuItem>
             {enumMap.dominantDirections.map((option) => (
               <MenuItem key={option.value} value={option.name}>
                 {humanizeEnumName(option.name)}
@@ -455,6 +457,7 @@ export default function RoomInputCard({
             fullWidth
             disabled={enumLoading}
           >
+            <MenuItem value="">{'--'}</MenuItem>
             {enumMap.lightRequirements.map((option) => (
               <MenuItem key={option.value} value={option.name}>
                 {humanizeEnumName(option.name)}

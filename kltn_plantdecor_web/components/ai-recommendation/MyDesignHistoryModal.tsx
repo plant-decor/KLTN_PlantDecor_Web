@@ -21,6 +21,7 @@ import { addItemToCart } from '@/lib/api/cartWishlistService';
 import { notifyCartUpdated } from '@/lib/utils/cartEvents';
 import { formatCurrency } from '@/lib/utils/formatUtil';
 import type { GeneratedImageItem } from '@/types/ai-recommendation.types';
+import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 
 interface MyDesignHistoryModalProps {
   open: boolean;
@@ -28,19 +29,10 @@ interface MyDesignHistoryModalProps {
   onClose: () => void;
 }
 
-const normalizeDateText = (value: string, locale: string) => {
-  const parsedTime = Date.parse(value);
-  if (Number.isNaN(parsedTime)) {
-    return value;
-  }
-
-  return new Date(parsedTime).toLocaleString(locale);
-};
 
 export default function MyDesignHistoryModal({ open, userId, onClose }: MyDesignHistoryModalProps) {
   const t = useTranslations('aiRecommendation.myDesign');
   const locale = useLocale();
-  const localeTag = useMemo(() => (locale.startsWith('vi') ? 'vi-VN' : 'en-US'), [locale]);
   const currencyLocale = useMemo(() => (locale.startsWith('vi') ? 'vi' : 'en'), [locale]);
 
   const [loading, setLoading] = useState(false);
@@ -172,32 +164,32 @@ export default function MyDesignHistoryModal({ open, userId, onClose }: MyDesign
                     </Typography>
                   )}
 
-                  <Typography variant="body2" color="text.secondary">
+                  {/* <Typography variant="body2" color="text.secondary">
                     {t('generatedAt')}: {normalizeDateText(item.createdAt, localeTag)}
-                  </Typography>
+                  </Typography> */}
 
-                  <Typography variant="body2" color="text.secondary">
+                  {/* <Typography variant="body2" color="text.secondary">
                     {t('layoutDesignId')}: {item.layoutDesignId ?? '-'}
-                  </Typography>
+                  </Typography> */}
 
-                  <Typography variant="body2" color="text.secondary">
+                  {/* <Typography variant="body2" color="text.secondary">
                     {t('layoutDesignPlantId')}: {item.layoutDesignPlantId ?? '-'}
-                  </Typography>
+                  </Typography> */}
 
-                  <Typography variant="body2" color="text.secondary">
+                  {/* <Typography variant="body2" color="text.secondary">
                     Common plant ID: {item.commonPlantId ?? '-'}
-                  </Typography>
+                  </Typography> */}
 
-                  <Typography variant="body2" color="text.secondary">
+                  {/* <Typography variant="body2" color="text.secondary">
                     Plant instance ID: {item.plantInstanceId ?? '-'}
-                  </Typography>
+                  </Typography> */}
 
                   <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ pt: 0.5 }}>
                     <Button
+                      sx={{ backgroundColor: 'var(--primary)', fontWeight: '700', ...hoverLiftStyle }}
                       variant="contained"
                       disabled={!item.commonPlantId || item.commonPlantId <= 0 || addingId === item.id}
                       onClick={() => void handleAddToCart(item)}
-                      sx={{ fontWeight: 700 }}
                     >
                       {addingId === item.id ? 'Adding...' : 'Add to cart'}
                     </Button>

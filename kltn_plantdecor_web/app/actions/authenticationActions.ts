@@ -515,21 +515,21 @@ export async function confirmEmailAction(
     const payload: ConfirmEmailRequest = { email, token };
     const data = await callAuthenticationApi<ApiMessageResult>(
       '/Authentication/confirm-email',
-      'Xác thực email thất bại.',
+      'Email verification failed.',
       {
         body: payload,
       }
     );
-
+    console.log('response', data);
     const success = deriveApiSuccess(data);
     return {
       success,
-      message: data.message || (success ? 'Xác thực email thành công.' : 'Xác thực email thất bại.'),
+      message: data.message || (success ? 'Email verification successful.' : 'Email verification failed.'),
     };
   } catch (error) {
     return {
       success: false,
-      message: error instanceof Error ? error.message : 'Xác thực email thất bại.',
+      message: error instanceof Error ? error.message : 'Email verification failed.',
     };
   }
 }

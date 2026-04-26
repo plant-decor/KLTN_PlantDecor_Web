@@ -512,7 +512,7 @@ export default function ProfilePage() {
           </Card>
 
           {/* Settings Section */}
-          <Card sx={{ mb: 3, boxShadow: 2 }}>
+          {/* <Card sx={{ mb: 3, boxShadow: 2 }}>
             <CardContent>
               <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ mb: 3 }}>
                 {t('notificationSettings')}
@@ -539,7 +539,7 @@ export default function ProfilePage() {
                 }
               />
             </CardContent>
-          </Card>
+          </Card> */}
 
           {/* Save Button */}
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>

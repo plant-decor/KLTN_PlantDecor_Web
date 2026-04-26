@@ -317,6 +317,41 @@ export default async function ComboDetailPage({ params }: ComboDetailPageProps) 
                 quantityByNurseryId={quantityByNurseryId}
               />
             </div>
+
+            <div className="mt-8 w-full col-span-2">
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                {locale === 'en' ? 'Plants in this combo' : 'Các cây trong combo'}
+              </h3>
+              {combo?.comboItems && combo.comboItems.length > 0 ? (
+                <ul className="divide-y divide-gray-200 rounded-lg border border-gray-200 bg-white">
+                  {combo.comboItems.map((item, index) => (
+                    <li key={`${item.plantId}-${index}`} className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <div className="min-w-0">
+                        <Link
+                          href={`/${locale}/products/${item.plantId}`}
+                          className="font-semibold text-gray-900 hover:text-green-700 hover:underline"
+                        >
+                          {item.plantName || `Plant #${item.plantId}`}
+                        </Link>
+                        {item.notes ? (
+                          <p className="text-sm text-gray-600 mt-1">{item.notes}</p>
+                        ) : null}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-500">
+                          {locale === 'en' ? 'Quantity' : 'Số lượng'}
+                        </span>
+                        <span className="inline-flex items-center rounded-full bg-green-50 px-3 py-1 text-sm font-semibold text-green-700">
+                          {Math.max(0, Math.floor(Number(item.quantity ?? 0)))}
+                        </span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-gray-600">{tCommon('noData')}</p>
+              )}
+            </div>
             {comboDescription && (
               <div className="mb-6 w-full col-span-2"> {/* Thêm w-full */}
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Description</h3>

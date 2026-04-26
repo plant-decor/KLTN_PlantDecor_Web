@@ -31,6 +31,12 @@ export const emptyFormValue: ServicePackageFormValue = {
 export const buildFormFromDetail = (
   detail: AdminCareServicePackageDetail
 ): ServicePackageFormValue => {
+  const specializationIdsFromResponse = detail.specializationIds ?? [];
+  const specializationIds =
+    specializationIdsFromResponse.length > 0
+      ? specializationIdsFromResponse
+      : (detail.specializations ?? []).map((item) => item.id);
+
   return {
     name: detail.name,
     description: detail.description,
@@ -41,7 +47,7 @@ export const buildFormFromDetail = (
     areaLimit: detail.areaLimit,
     unitPrice: detail.unitPrice,
     isActive: detail.isActive,
-    specializationIds: detail.specializationIds ?? [],
+    specializationIds,
   };
 };
 

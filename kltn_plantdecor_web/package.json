@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "set NODE_OPTIONS=--trace-deprecation && next dev",
     "dev:ssl": "set NODE_OPTIONS='--use-system-ca' && next dev --experimental-https",
+    "dev:ssl2": "next dev --experimental-https --experimental-https-key ./localhost+2-key.pem --experimental-https-cert ./localhost+2.pem",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"

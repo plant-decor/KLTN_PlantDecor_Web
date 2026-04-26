@@ -28,6 +28,22 @@ interface ServicePackageTableProps {
   onDelete: (id: number) => Promise<void>;
 }
 
+const truncateVietnameseWords = (value: unknown, maxWords = 15) => {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+
+  const tokens = raw.split(/\s+/g);
+  const cleaned = tokens
+    .map((token) => token.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ""))
+    .filter((token) => token.length > 0);
+
+  if (cleaned.length <= maxWords) {
+    return cleaned.join(" ");
+  }
+
+  return `${cleaned.slice(0, maxWords).join(" ")}...`;
+};
+
 export default function ServicePackageTable({
   packages,
   loading,
@@ -73,12 +89,23 @@ export default function ServicePackageTable({
                 packages.map((item) => (
                   <TableRow key={item.id} hover sx={{ opacity: item.isActive ? 1 : 0.65, ...hoverGlowStyle }}>
                     <TableCell align="center">{item.id}</TableCell>
-                    <TableCell>
+                    <TableCell className="max-w-[300px]">
                       <Typography variant="body2" fontWeight={600}>
                         {item.name}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {item.description}
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{
+                          width: 300,
+                          display: "-webkit-box",
+                          WebkitBoxOrient: "vertical",
+                          WebkitLineClamp: 2,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        {truncateVietnameseWords(item.description, 15)}
                       </Typography>
                     </TableCell>
                     <TableCell align="center">
@@ -97,7 +124,7 @@ export default function ServicePackageTable({
                         label={item.isActive ? "Active" : "Inactive"}
                       />
                     </TableCell>
-                    <TableCell align="center">
+                    <TableCell className="inline-flex w-fit" align="center">
                       <Tooltip title="View Details">
                         <IconButton size="small" color="info" onClick={() => onView(item.id)}>
                           <VisibilityOutlined fontSize="small" />

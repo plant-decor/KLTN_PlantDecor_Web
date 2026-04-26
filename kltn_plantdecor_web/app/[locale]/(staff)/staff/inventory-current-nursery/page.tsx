@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Typography,
@@ -23,112 +23,183 @@ import {
   Tabs,
   Tab,
   Grid,
+  CircularProgress,
+  Alert,
+  TablePagination,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import EditIcon from '@mui/icons-material/Edit';
+import { getMyManagerNursery, getManagerCommonPlants } from '@/lib/api/managerStoreCatalogService';
+import { getMyManagerNurseryMaterials } from '@/lib/api/managerNurseryMaterialsService';
+import type { CommonPlantInventoryItem, NurseryMaterialItem } from '@/types/manager-store-catalog.types';
 
-// Mock data - Current Nursery (Green Garden - D1)
-const CURRENT_NURSERY = 'Green Garden Nursery - District 1';
+type InventoryKind = 'Plant' | 'Material';
 
-const MOCK_INVENTORY = [
-  {
-    id: 'INV-001',
-    name: 'Monstera Deliciosa',
-    category: 'Plant',
-    sku: 'PLANT-001',
-    quantity: 12,
-    minStock: 5,
-    expiryDate: '2025-12-31',
-    location: 'Shelf A1',
-    condition: 'Good',
-  },
-  {
-    id: 'INV-002',
-    name: 'Plant Pot (8cm)',
-    category: 'Material',
-    sku: 'POT-001',
-    quantity: 45,
-    minStock: 10,
-    expiryDate: null,
-    location: 'Shelf B2',
-    condition: 'Good',
-  },
-  {
-    id: 'INV-003',
-    name: 'Philodendron Pink Princess',
-    category: 'Plant',
-    sku: 'PLANT-002',
-    quantity: 6,
-    minStock: 3,
-    expiryDate: '2025-11-30',
-    location: 'Shelf A2',
-    condition: 'Fair',
-  },
-  {
-    id: 'INV-004',
-    name: 'Premium Fertilizer',
-    category: 'Material',
-    sku: 'FERT-001',
-    quantity: 28,
-    minStock: 8,
-    expiryDate: '2025-09-15',
-    location: 'Shelf C1',
-    condition: 'Good',
-  },
-  {
-    id: 'INV-005',
-    name: 'Pothos',
-    category: 'Plant',
-    sku: 'PLANT-003',
-    quantity: 2,
-    minStock: 4,
-    expiryDate: '2025-10-20',
-    location: 'Shelf A3',
-    condition: 'Poor',
-  },
-];
+type InventoryRow = {
+  kind: InventoryKind;
+  id: string;
+  name: string;
+  code: string;
+  quantity: number;
+  reservedQuantity?: number;
+  availableQuantity?: number;
+  isActive?: boolean;
+};
 
-function getStockStatus(quantity: number, minStock: number): 'success' | 'warning' | 'error' {
+function getStockStatus(quantity: number): 'success' | 'warning' | 'error' {
   if (quantity === 0) return 'error';
-  if (quantity <= minStock) return 'warning';
+  if (quantity < 10) return 'warning';
   return 'success';
-}
-
-function getConditionColor(condition: string): 'success' | 'warning' | 'error' {
-  switch (condition) {
-    case 'Good':
-      return 'success';
-    case 'Fair':
-      return 'warning';
-    case 'Poor':
-      return 'error';
-    default:
-      return 'success';
-  }
 }
 
 export default function CurrentNurseryInventoryPage() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [selectedTab, setSelectedTab] = useState(0);
-  const [selectedItem, setSelectedItem] = useState<(typeof MOCK_INVENTORY)[0] | null>(null);
+  const [selectedItem, setSelectedItem] = useState<InventoryRow | null>(null);
   const [openDetail, setOpenDetail] = useState(false);
 
-  const filteredInventory = MOCK_INVENTORY.filter((item) => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.sku.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    if (selectedTab === 0) return matchesSearch;
-    if (selectedTab === 1) return matchesSearch && item.category === 'Plant';
-    if (selectedTab === 2) return matchesSearch && item.category === 'Material';
-    if (selectedTab === 3) {
-      const quantity = item.quantity;
-      return matchesSearch && (quantity === 0 || quantity <= item.minStock);
-    }
-    return matchesSearch;
-  });
+  const [nurseryName, setNurseryName] = useState<string>('');
+  const [nurseryId, setNurseryId] = useState<number | null>(null);
 
-  const handleViewDetail = (item: (typeof MOCK_INVENTORY)[0]) => {
+  const [items, setItems] = useState<InventoryRow[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 400);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [searchTerm]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadNursery = async () => {
+      try {
+        const response = await getMyManagerNursery(false);
+        const payload = response.payload ?? response.data;
+        if (!mounted) return;
+        if (payload?.id) {
+          setNurseryId(payload.id);
+          setNurseryName(payload.name || '');
+        }
+      } catch {
+        if (mounted) {
+          setError('Failed to load nursery information.');
+        }
+      }
+    };
+
+    void loadNursery();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!nurseryId) return;
+
+    let mounted = true;
+    setLoading(true);
+    setError(null);
+
+    const loadInventory = async () => {
+      try {
+        const pageNumber = page + 1;
+        const query = { pageNumber, pageSize };
+
+        const shouldLoadPlants = selectedTab === 0 || selectedTab === 1 || selectedTab === 3;
+        const shouldLoadMaterials = selectedTab === 0 || selectedTab === 2 || selectedTab === 3;
+
+        const [plantsResponse, materialsResponse] = await Promise.all([
+          shouldLoadPlants ? getManagerCommonPlants(nurseryId, query, false).catch(() => null) : Promise.resolve(null),
+          shouldLoadMaterials ? getMyManagerNurseryMaterials(query, false).catch(() => null) : Promise.resolve(null),
+        ]);
+
+        if (!mounted) return;
+
+        const plantPayload = plantsResponse?.payload ?? plantsResponse?.data;
+        const materialPayload = materialsResponse?.payload ?? materialsResponse?.data;
+
+        const plantRows: InventoryRow[] =
+          (plantPayload?.items ?? []).map((item: CommonPlantInventoryItem) => ({
+            kind: 'Plant',
+            id: `plant-${item.id}`,
+            name: item.plantName || `Plant #${item.plantId}`,
+            code: `PLANT-${item.plantId}`,
+            quantity: Math.max(0, Math.floor(item.quantity ?? 0)),
+            reservedQuantity: Math.max(0, Math.floor(item.reservedQuantity ?? 0)),
+            availableQuantity: Math.max(0, Math.floor(item.availableQuantity ?? 0)),
+            isActive: item.isActive,
+          })) ?? [];
+
+        const materialRows: InventoryRow[] =
+          (materialPayload?.items ?? []).map((item: NurseryMaterialItem) => ({
+            kind: 'Material',
+            id: `material-${item.id}`,
+            name: item.materialName || `Material #${item.materialId}`,
+            code: item.materialCode || `MAT-${item.materialId}`,
+            quantity: Math.max(0, Math.floor(item.quantity ?? 0)),
+            reservedQuantity: Math.max(0, Math.floor(item.reservedQuantity ?? 0)),
+            availableQuantity: Math.max(0, Math.floor(item.availableQuantity ?? 0)),
+            isActive: item.isActive,
+          })) ?? [];
+
+        const merged = [...plantRows, ...materialRows];
+        setItems(merged);
+        setTotalCount(
+          Number(plantPayload?.totalCount ?? 0) + Number(materialPayload?.totalCount ?? 0)
+        );
+      } catch {
+        if (mounted) {
+          setError('Failed to load inventory.');
+          setItems([]);
+          setTotalCount(0);
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void loadInventory();
+
+    return () => {
+      mounted = false;
+    };
+  }, [nurseryId, page, pageSize, selectedTab]);
+
+  const filteredInventory = useMemo(() => {
+    const normalizedTerm = debouncedSearchTerm.trim().toLowerCase();
+    const matchesSearch = (row: InventoryRow) =>
+      !normalizedTerm ||
+      row.name.toLowerCase().includes(normalizedTerm) ||
+      row.code.toLowerCase().includes(normalizedTerm);
+
+    const matchesTab = (row: InventoryRow) => {
+      if (selectedTab === 0) return true;
+      if (selectedTab === 1) return row.kind === 'Plant';
+      if (selectedTab === 2) return row.kind === 'Material';
+      if (selectedTab === 3) {
+        const available = typeof row.availableQuantity === 'number' ? row.availableQuantity : row.quantity;
+        return available === 0;
+      }
+      return true;
+    };
+
+    return items.filter((row) => matchesSearch(row) && matchesTab(row));
+  }, [items, debouncedSearchTerm, selectedTab]);
+
+  const handleViewDetail = (item: InventoryRow) => {
     setSelectedItem(item);
     setOpenDetail(true);
   };
@@ -141,9 +212,15 @@ export default function CurrentNurseryInventoryPage() {
           Current Nursery Inventory
         </Typography>
         <Typography variant="body1" color="text.secondary" gutterBottom>
-          Search and manage inventory for {CURRENT_NURSERY}
+          View inventory for {nurseryName || 'your nursery'}
         </Typography>
       </Box>
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
 
       {/* Search Bar */}
       <TextField
@@ -165,7 +242,10 @@ export default function CurrentNurseryInventoryPage() {
       <Card sx={{ mb: 3 }}>
         <Tabs
           value={selectedTab}
-          onChange={(e, newValue) => setSelectedTab(newValue)}
+          onChange={(e, newValue) => {
+            setSelectedTab(newValue);
+            setPage(0);
+          }}
           sx={{
             borderBottom: 1,
             borderColor: 'divider',
@@ -186,38 +266,45 @@ export default function CurrentNurseryInventoryPage() {
           <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
             <TableRow>
               <TableCell sx={{ fontWeight: 'bold' }}>Product Name</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>SKU</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Code</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Category</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }} align="center">
                 Quantity
               </TableCell>
               <TableCell sx={{ fontWeight: 'bold' }} align="center">
-                Min Stock
+                Available
               </TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Location</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Condition</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }} align="center">
                 Actions
               </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredInventory.map((item) => (
-              <TableRow key={item.id} hover>
-                <TableCell sx={{ fontWeight: 'bold' }}>{item.name}</TableCell>
-                <TableCell>{item.sku}</TableCell>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
+                  <CircularProgress size={28} />
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredInventory.map((item) => (
+                <TableRow key={item.id} hover>
+                  <TableCell sx={{ fontWeight: 'bold' }}>{item.name}</TableCell>
+                  <TableCell>{item.code}</TableCell>
+                  <TableCell>
+                    <Chip label={item.kind} size="small" variant="outlined" />
+                  </TableCell>
                 <TableCell align="center">
                   <Chip
-                    label={item.quantity}
-                    color={getStockStatus(item.quantity, item.minStock)}
+                    label={item.quantity.toLocaleString('en-US')}
+                    color={getStockStatus(item.quantity)}
                     size="small"
                   />
                 </TableCell>
-                <TableCell align="center">{item.minStock}</TableCell>
-                <TableCell>{item.location}</TableCell>
-                <TableCell>
+                <TableCell align="center">
                   <Chip
-                    label={item.condition}
-                    color={getConditionColor(item.condition)}
+                    label={(item.availableQuantity ?? item.quantity).toLocaleString('en-US')}
+                    color={getStockStatus(item.availableQuantity ?? item.quantity)}
                     size="small"
                     variant="outlined"
                   />
@@ -232,21 +319,28 @@ export default function CurrentNurseryInventoryPage() {
                     >
                       View
                     </Button>
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      color="secondary"
-                      startIcon={<EditIcon />}
-                    >
-                      Edit
-                    </Button>
                   </Box>
                 </TableCell>
-              </TableRow>
-            ))}
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </TableContainer>
+
+      <TablePagination
+        component="div"
+        count={Math.max(0, totalCount)}
+        page={page}
+        onPageChange={(_, nextPage) => setPage(nextPage)}
+        rowsPerPage={pageSize}
+        onRowsPerPageChange={(event) => {
+          const next = Number(event.target.value);
+          setPageSize(Number.isFinite(next) && next > 0 ? next : 10);
+          setPage(0);
+        }}
+        rowsPerPageOptions={[5, 10, 20, 50]}
+      />
 
       {/* Detail Dialog */}
       <Dialog open={openDetail} onClose={() => setOpenDetail(false)} maxWidth="sm" fullWidth>
@@ -266,70 +360,39 @@ export default function CurrentNurseryInventoryPage() {
               </Grid>
               <Grid size={{ xs: 6 }}>
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                  SKU
+                  Code
                 </Typography>
                 <Typography variant="body2" fontWeight="bold">
-                  {selectedItem.sku}
+                  {selectedItem.code}
                 </Typography>
               </Grid>
               <Grid size={{ xs: 6 }}>
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                   Category
                 </Typography>
-                <Chip label={selectedItem.category} size="small" />
+                <Chip label={selectedItem.kind} size="small" />
               </Grid>
               <Grid size={{ xs: 6 }}>
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                   Current Stock
                 </Typography>
                 <Typography variant="body2" fontWeight="bold">
-                  {selectedItem.quantity} units
+                  {selectedItem.quantity.toLocaleString('en-US')} units
                 </Typography>
               </Grid>
               <Grid size={{ xs: 6 }}>
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                  Minimum Stock
+                  Available Stock
                 </Typography>
                 <Typography variant="body2" fontWeight="bold">
-                  {selectedItem.minStock} units
+                  {(selectedItem.availableQuantity ?? selectedItem.quantity).toLocaleString('en-US')} units
                 </Typography>
               </Grid>
-              <Grid size={{ xs: 6 }}>
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                  Location
-                </Typography>
-                <Typography variant="body2" fontWeight="bold">
-                  {selectedItem.location}
-                </Typography>
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                  Condition
-                </Typography>
-                <Chip
-                  label={selectedItem.condition}
-                  color={getConditionColor(selectedItem.condition)}
-                  size="small"
-                />
-              </Grid>
-              {selectedItem.expiryDate && (
-                <Grid size={{ xs: 12 }}>
-                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                    Expiry Date
-                  </Typography>
-                  <Typography variant="body2" fontWeight="bold">
-                    {selectedItem.expiryDate}
-                  </Typography>
-                </Grid>
-              )}
             </Grid>
           )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenDetail(false)}>Close</Button>
-          <Button variant="contained" startIcon={<EditIcon />}>
-            Edit Item
-          </Button>
         </DialogActions>
       </Dialog>
     </Box>

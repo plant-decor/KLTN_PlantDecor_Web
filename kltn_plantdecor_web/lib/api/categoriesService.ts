@@ -44,6 +44,11 @@ export interface GetCategoriesParams {
   take?: number;
 }
 
+export interface GetCategoriesByTypeParams {
+  categoryType: number;
+  activeOnly?: boolean;
+}
+
 // ============ API Calls ============
 
 /**
@@ -86,6 +91,24 @@ export const getCategoryTree = async (
   loading = true
 ): Promise<ResponseModel<CategoryTreeNode[]>> => {
   return apiClient.get('/admin/Categories/tree', undefined, loading);
+};
+
+/**
+ * GET /api/admin/Categories/by-type?categoryType={1|2|3}&activeOnly=true
+ * Get categories by type (assignable list)
+ */
+export const getCategoriesByType = async (
+  params: GetCategoriesByTypeParams,
+  loading = true
+): Promise<ResponseModel<CategoryResponse[]>> => {
+  return apiClient.get(
+    '/admin/Categories/by-type',
+    {
+      categoryType: params.categoryType,
+      ...(typeof params.activeOnly === 'boolean' ? { activeOnly: params.activeOnly } : {}),
+    },
+    loading
+  );
 };
 
 /**

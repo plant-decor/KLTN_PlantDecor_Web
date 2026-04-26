@@ -103,10 +103,10 @@ export default function ImageUpload({
         <Stack alignItems="center" spacing={1} sx={{border: '2px dashed', margin: 2, padding: 2, borderRadius: 8}}>
           <CloudUpload sx={{ fontSize: 40, color: 'primary.main' }} />
           <Typography variant="body2" color="text.secondary">
-            Kéo thả hoặc nhấp để chọn hình ảnh
+            Drag and drop or click to select images
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            Tối đa {maxImages} hình ảnh | PNG, JPG, GIF (tối đa 5MB)
+            Maximum {maxImages} images | PNG, JPG, GIF (maximum 5MB)
           </Typography>
         </Stack>
       </Box>
@@ -114,7 +114,7 @@ export default function ImageUpload({
       {images.length > 0 && (
         <Box sx={{ mt: 3 }}>
           <Typography variant="body2" fontWeight="600" color="text.secondary" gutterBottom>
-            Hình ảnh được tải lên ({images.length}/{maxImages})
+            Images uploaded ({images.length}/{maxImages})
           </Typography>
           <Grid container spacing={2}>
             {images.map((image, index) => (
@@ -192,7 +192,7 @@ export default function ImageUpload({
       )}
 
       <Dialog open={previewDialogOpen} onClose={() => setPreviewDialogOpen(false)} maxWidth="md">
-        <DialogTitle>Xem trước hình ảnh</DialogTitle>
+        <DialogTitle>Preview images</DialogTitle>
         <DialogContent>
           <Box
             component="img"
@@ -202,7 +202,7 @@ export default function ImageUpload({
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setPreviewDialogOpen(false)}>Đóng</Button>
+          <Button onClick={() => setPreviewDialogOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>
     </Box>

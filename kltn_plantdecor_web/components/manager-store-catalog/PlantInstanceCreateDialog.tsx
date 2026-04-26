@@ -94,8 +94,8 @@ export default function PlantInstanceCreateDialog({
             Please fill in all required information to create a new unique plant instance. Fields marked with * are required.
           </Typography>
 
-          <Grid container spacing={2}>
-            <Grid sx={{ xs: 12, md: 6 }}>
+          <Grid container spacing={1}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 select
                 fullWidth
@@ -125,7 +125,7 @@ export default function PlantInstanceCreateDialog({
                 )}
               </TextField>
             </Grid>
-            <Grid sx={{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
                 label="Specific Price"
@@ -138,7 +138,9 @@ export default function PlantInstanceCreateDialog({
                 required
               />
             </Grid>
-            <Grid sx={{ xs: 12, md: 4 }}>
+          </Grid>
+          <Grid container spacing={1}>
+            <Grid size={{ xs: 6, md: 3 }}>
               <TextField
                 fullWidth
                 label="Height (cm)"
@@ -148,7 +150,7 @@ export default function PlantInstanceCreateDialog({
                 required
               />
             </Grid>
-            <Grid sx={{ xs: 12, md: 4 }}>
+            <Grid size={{ xs: 6, md: 3 }}>
               <TextField
                 fullWidth
                 label="Trunk Diameter (cm)"
@@ -157,7 +159,7 @@ export default function PlantInstanceCreateDialog({
                 onChange={(event) => handleNumberChange('trunkDiameter', event.target.value)}
               />
             </Grid>
-            <Grid sx={{ xs: 12, md: 4 }}>
+            <Grid size={{ xs: 6, md: 3 }}>
               <TextField
                 fullWidth
                 label="Age"
@@ -166,16 +168,17 @@ export default function PlantInstanceCreateDialog({
                 onChange={(event) => handleNumberChange('age', event.target.value)}
               />
             </Grid>
-            <Grid sx={{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 6, md: 3 }}>
               <TextField
                 fullWidth
                 label="Health Status"
                 value={form.healthStatus}
                 onChange={(event) => setForm((prev) => ({ ...prev, healthStatus: event.target.value }))}
-                required
+                // required
               />
             </Grid>
-            <Grid sx={{ xs: 12 }}>
+            </Grid>
+            <Grid container>
               <TextField
                 fullWidth
                 multiline
@@ -185,7 +188,6 @@ export default function PlantInstanceCreateDialog({
                 onChange={(event) => setForm((prev) => ({ ...prev, description: event.target.value }))}
               />
             </Grid>
-          </Grid>
 
           <Box>
             <ImageUpload images={images} onImagesChange={setImages} label="Plant Instance Images" maxImages={8} />

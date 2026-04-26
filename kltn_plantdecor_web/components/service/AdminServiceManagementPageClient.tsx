@@ -11,6 +11,7 @@ import {
   getAllAdminCareServicePackages,
   getCareServiceTypeOptions,
   updateAdminCareServicePackage,
+  updateAdminCareServicePackageSpecializations,
 } from "@/lib/api/adminCareServicePackagesService";
 import type {
   AdminCareServicePackageCreateRequest,
@@ -167,7 +168,7 @@ export default function AdminServiceManagementPageClient() {
     if (!Number.isFinite(formValue.durationDays) || formValue.durationDays <= 0) return "Thời lượng phải lớn hơn 0";
     if (!Number.isFinite(formValue.areaLimit) || formValue.areaLimit < 0) return "Diện tích không hợp lệ";
     if (!Number.isFinite(formValue.unitPrice) || formValue.unitPrice < 0) return "Đơn giá không hợp lệ";
-    if (modalMode === "create" && formValue.specializationIds.length === 0) {
+    if ((modalMode === "create" || modalMode === "edit") && formValue.specializationIds.length === 0) {
       return "Vui lòng chọn ít nhất một chuyên môn";
     }
 
@@ -213,6 +214,7 @@ export default function AdminServiceManagementPageClient() {
         };
 
         await updateAdminCareServicePackage(selectedId, payload, false);
+        await updateAdminCareServicePackageSpecializations(selectedId, formValue.specializationIds, false);
         // toast.success("Cập nhật gói dịch vụ thành công");
       }
 
@@ -279,6 +281,10 @@ export default function AdminServiceManagementPageClient() {
         onClose={closeModal}
         onFormChange={(updater) => setFormValue(updater)}
         onSubmit={handleSubmit}
+        onRequestEdit={() => {
+          if (selectedId === null || submitting) return;
+          setModalMode("edit");
+        }}
       />
     </Box>
   );

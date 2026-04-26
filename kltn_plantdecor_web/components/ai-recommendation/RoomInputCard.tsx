@@ -26,6 +26,7 @@ import { getRoomDesignEnums, searchShopNurseries, type PlantEnumValue, type Shop
 import { getAllergyPlants } from '@/lib/api/aiRecommendationService';
 import type { AllergyPlantOption, RoomViewAngle } from '@/types/ai-recommendation.types';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
+import { formatCurrencyInput } from '@/lib/utils/formatUtil';
 import ClickableImageViewer from '../image-view/ClickableImageViewer';
 import { CustomLoading } from '../CustomLoading';
 
@@ -464,17 +465,19 @@ export default function RoomInputCard({
           <TextField
             label="Min budget"
             value={minBudget}
-            onChange={(event) => onMinBudgetChange(event.target.value)}
-            type="number"
+            onChange={(event) => onMinBudgetChange(formatCurrencyInput(event.target.value, 'en'))}
+            type="text"
             fullWidth
+            inputProps={{ inputMode: 'numeric' }}
           />
 
           <TextField
             label="Max budget"
             value={maxBudget}
-            onChange={(event) => onMaxBudgetChange(event.target.value)}
-            type="number"
+            onChange={(event) => onMaxBudgetChange(formatCurrencyInput(event.target.value, 'en'))}
+            type="text"
             fullWidth
+            inputProps={{ inputMode: 'numeric' }}
           />
 
           <TextField

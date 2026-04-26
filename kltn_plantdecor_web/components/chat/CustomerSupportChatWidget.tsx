@@ -237,14 +237,14 @@ export default function SupportChatWidget() {
                     fontFamily: "Arial, sans-serif",
                   }}
                 >
-                  Tư vấn khách hàng
+                  Chat support
                 </Typography>
               </Box>
             </Stack>
 
             <IconButton
               size="small"
-              aria-label="Đóng chat"
+              aria-label="Close chat"
               onClick={() => setIsOpen(false)}
               sx={{ color: "#475569" }}
             >
@@ -309,7 +309,7 @@ export default function SupportChatWidget() {
                     px: 3,
                   }}
                 >
-                  Hãy nhập tin nhắn đầu tiên để bắt đầu cuộc trò chuyện với
+                  Please enter the first message to start the conversation with
                   Plant Decor.
                 </Box>
               )}
@@ -447,7 +447,7 @@ export default function SupportChatWidget() {
 
             {!user && (
               <Typography sx={{ mt: 0.75, fontSize: 11.5, color: "#64748b" }}>
-                Cần đăng nhập để dùng chat hỗ trợ.
+                Need to login to use chat support.
               </Typography>
             )}
 

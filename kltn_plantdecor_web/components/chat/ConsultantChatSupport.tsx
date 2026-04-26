@@ -265,7 +265,7 @@ export default function ConsultantChatSupport() {
                   fontFamily: "Arial, sans-serif",
                 }}
               >
-                Đoạn chat
+                Chat support
               </Typography>
             </Stack>
 
@@ -286,7 +286,7 @@ export default function ConsultantChatSupport() {
               <InputBase
                 value={searchValue}
                 onChange={(event) => setSearchValue(event.target.value)}
-                placeholder="Tìm kiếm ở đây"
+                placeholder="Search here"
                 sx={{ color: "#0f172a", fontSize: 14, width: "100%" }}
               />
             </Stack>
@@ -297,14 +297,14 @@ export default function ConsultantChatSupport() {
               <Typography
                 sx={{ px: 1.5, py: 2, fontSize: 13, color: "#64748b" }}
               >
-                Đang tải danh sách...
+                Loading list...
               </Typography>
             ) : null}
             {!isLoadingConversations && chatSessions.length === 0 ? (
               <Typography
                 sx={{ px: 1.5, py: 2, fontSize: 13, color: "#64748b" }}
               >
-                Bạn chưa nhận cuộc trò chuyện nào.
+                You haven&apos;t received any conversation yet.
               </Typography>
             ) : null}
             <Stack spacing={0.6}>
@@ -369,7 +369,7 @@ export default function ConsultantChatSupport() {
                         </Typography>
                         <Typography sx={{ fontSize: 11, color: "#64748b" }}>
                           {session.waitingMinutes
-                            ? `${session.waitingMinutes} phút`
+                            ? `${session.waitingMinutes} minutes`
                             : "Hôm qua"}
                         </Typography>
                       </Stack>
@@ -383,7 +383,7 @@ export default function ConsultantChatSupport() {
 
                     {session.status === "active" ? (
                       <Chip
-                        label="Đóng"
+                        label="Close"
                         size="small"
                         clickable
                         disabled={isClosing}
@@ -433,7 +433,7 @@ export default function ConsultantChatSupport() {
                 fontSize: 14,
               }}
             >
-              Chọn một cuộc trò chuyện để bắt đầu
+              Select a conversation to start
             </Box>
           ) : (
             <>
@@ -517,7 +517,7 @@ export default function ConsultantChatSupport() {
                       fontSize: 14,
                     }}
                   >
-                    Đang tải lịch sử chat...
+                    Loading chat history...
                   </Box>
                 ) : null}
                 {isLoadingOlder ? (
@@ -539,7 +539,7 @@ export default function ConsultantChatSupport() {
                       color: "#94a3b8",
                     }}
                   >
-                    Cuộn lên để xem tin nhắn cũ hơn
+                    Scroll up to see older messages
                   </Box>
                 ) : null}
                 {error ? (
@@ -694,14 +694,14 @@ export default function ConsultantChatSupport() {
                   <Typography
                     sx={{ mt: 0.75, fontSize: 11.5, color: "#64748b" }}
                   >
-                    Cần đăng nhập để dùng chat realtime.
+                    Need to login to use realtime chat.
                   </Typography>
                 ) : null}
                 {isHubReady ? null : canUseRealtime ? (
                   <Typography
                     sx={{ mt: 0.75, fontSize: 11.5, color: "#64748b" }}
                   >
-                    Đang kết nối tới chat realtime...
+                    Connecting to realtime chat...
                   </Typography>
                 ) : null}
               </Box>

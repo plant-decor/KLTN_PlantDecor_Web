@@ -3,15 +3,15 @@ import type { PlantDetail, PlantFormData } from '@/types/store-management.types'
 import type { PlantGuideFormData } from '@/types/admin-plant-guide.types';
 // Plant Guide i18n labels
 export const PLANT_GUIDE_LABELS = {
-  lightRequirement: 'Ánh sáng',
-  lightRequirementPlaceholder: 'Chọn ánh sáng',
-  watering: 'Tưới nước',
-  fertilizing: 'Bón phân',
-  pruning: 'Cắt tỉa',
-  temperature: 'Nhiệt độ',
-  humidity: 'Độ ẩm',
-  soil: 'Đất trồng',
-  careNotes: 'Ghi chú chăm sóc',
+  lightRequirement: 'Light requirement',
+  lightRequirementPlaceholder: 'Choose light requirement',
+  watering: 'Watering',
+  fertilizing: 'Fertilizing',
+  pruning: 'Pruning',
+  temperature: 'Temperature',
+  humidity: 'Humidity',
+  soil: 'Soil',
+  careNotes: 'Care notes',
 } as const;
 
 // Boolean flags labels

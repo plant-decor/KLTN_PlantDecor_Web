@@ -42,6 +42,7 @@ export interface ShopUnifiedPlantItem {
   id: number;
   name: string;
   basePrice: number;
+  price?: number;
   isUniqueInstance: boolean;
   size?: number;
   sizeName?: string;
@@ -73,6 +74,7 @@ export interface ShopUnifiedMaterialItem {
   isActive?: boolean;
   availableQuantity?: number;
   basePrice?: number;
+  price?: number;
   primaryImageUrl?: string | null;
 }
 

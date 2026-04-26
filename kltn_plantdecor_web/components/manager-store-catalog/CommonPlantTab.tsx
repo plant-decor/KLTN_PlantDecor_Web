@@ -47,6 +47,7 @@ import CommonPlantImportDialog, { type ImportFormValue } from './CommonPlantImpo
 
 interface CommonPlantTabProps {
   nurseryId: number | null;
+  readOnly?: boolean;
 }
 
 interface PaginationState {
@@ -90,7 +91,7 @@ const getErrorMessage = (error: unknown, fallback: string): string => {
   return candidate.response?.data?.message || candidate.message || fallback;
 };
 
-export default function CommonPlantTab({ nurseryId }: CommonPlantTabProps) {
+export default function CommonPlantTab({ nurseryId, readOnly = false }: CommonPlantTabProps) {
   const [items, setItems] = useState<CommonPlantInventoryItem[]>([]);
   const [pagination, setPagination] = useState<PaginationState>(DEFAULT_PAGINATION);
   const [loading, setLoading] = useState(false);
@@ -298,14 +299,16 @@ export default function CommonPlantTab({ nurseryId }: CommonPlantTabProps) {
           >
             Refresh
           </Button> */}
-          <Button
-            startIcon={<AddIcon />}
-            variant="contained"
-            onClick={() => void handleOpenImport()}
-            sx={{ backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)' }}
-          >
-            Import Plant
-          </Button>
+          {!readOnly ? (
+            <Button
+              startIcon={<AddIcon />}
+              variant="contained"
+              onClick={() => void handleOpenImport()}
+              sx={{ backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)' }}
+            >
+              Import Plant
+            </Button>
+          ) : null}
         </Stack>
       </Stack>
 
@@ -375,22 +378,28 @@ export default function CommonPlantTab({ nurseryId }: CommonPlantTabProps) {
                     />
                   </TableCell>
                   <TableCell align="center">
-                    <Stack direction="row" spacing={0.5} justifyContent="center">
-                      <Tooltip title="Edit">
-                        <IconButton size="small" color="primary" onClick={() => handleEdit(item)}>
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title={item.isActive ? 'Deactivate' : 'Activate'}>
-                        <IconButton
-                          size="small"
-                          color={item.isActive ? 'success' : 'default'}
-                          onClick={() => handleToggle(item)}
-                        >
-                          {item.isActive ? <ToggleOnIcon fontSize="small" /> : <ToggleOffIcon fontSize="small" />}
-                        </IconButton>
-                      </Tooltip>
-                    </Stack>
+                    {!readOnly ? (
+                      <Stack direction="row" spacing={0.5} justifyContent="center">
+                        <Tooltip title="Edit">
+                          <IconButton size="small" color="primary" onClick={() => handleEdit(item)}>
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title={item.isActive ? 'Deactivate' : 'Activate'}>
+                          <IconButton
+                            size="small"
+                            color={item.isActive ? 'success' : 'default'}
+                            onClick={() => handleToggle(item)}
+                          >
+                            {item.isActive ? <ToggleOnIcon fontSize="small" /> : <ToggleOffIcon fontSize="small" />}
+                          </IconButton>
+                        </Tooltip>
+                      </Stack>
+                    ) : (
+                      <Typography variant="caption" color="text.secondary">
+                        Read-only
+                      </Typography>
+                    )}
                   </TableCell>
                 </TableRow>
               ))
@@ -409,55 +418,57 @@ export default function CommonPlantTab({ nurseryId }: CommonPlantTabProps) {
         />
       </TableContainer>
 
-      <CommonPlantImportDialog
-        open={importOpen}
-        availablePlants={availablePlants}
-        loadingAvailable={availableLoading}
-        submitting={submitting}
-        form={importForm}
-        onFormChange={setImportForm}
-        onClose={() => {
-          setImportOpen(false);
-          setImportForm(DEFAULT_IMPORT_FORM);
-        }}
-        onSubmit={handleImportSubmit}
-      />
+      {!readOnly ? (
+        <>
+          <CommonPlantImportDialog
+            open={importOpen}
+            availablePlants={availablePlants}
+            loadingAvailable={availableLoading}
+            submitting={submitting}
+            form={importForm}
+            onFormChange={setImportForm}
+            onClose={() => {
+              setImportOpen(false);
+              setImportForm(DEFAULT_IMPORT_FORM);
+            }}
+            onSubmit={handleImportSubmit}
+          />
 
-      <CommonPlantEditDialog
-        open={editOpen}
-        item={editingItem}
-        submitting={submitting}
-        form={editForm}
-        onFormChange={setEditForm}
-        onClose={() => {
-          setEditOpen(false);
-          setEditingItem(null);
-          setEditForm(DEFAULT_EDIT_FORM);
-        }}
-        onSubmit={handleEditSubmit}
-      />
+          <CommonPlantEditDialog
+            open={editOpen}
+            item={editingItem}
+            submitting={submitting}
+            form={editForm}
+            onFormChange={setEditForm}
+            onClose={() => {
+              setEditOpen(false);
+              setEditingItem(null);
+              setEditForm(DEFAULT_EDIT_FORM);
+            }}
+            onSubmit={handleEditSubmit}
+          />
 
-      <Dialog open={toggleOpen} onClose={() => setToggleOpen(false)}>
-        <DialogTitle>Confirm status change</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2">
-            {toggleItem
-              ? `Change status for ${toggleItem.plantName}?`
-              : 'Change status for this common plant?'}
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setToggleOpen(false)}>Cancel</Button>
-          <Button
-            onClick={() => void confirmToggle()}
-            variant="contained"
-            disabled={submitting}
-            sx={{ backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)' }}
-          >
-            Confirm
-          </Button>
-        </DialogActions>
-      </Dialog>
+          <Dialog open={toggleOpen} onClose={() => setToggleOpen(false)}>
+            <DialogTitle>Confirm status change</DialogTitle>
+            <DialogContent>
+              <Typography variant="body2">
+                {toggleItem ? `Change status for ${toggleItem.plantName}?` : 'Change status for this common plant?'}
+              </Typography>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setToggleOpen(false)}>Cancel</Button>
+              <Button
+                onClick={() => void confirmToggle()}
+                variant="contained"
+                disabled={submitting}
+                sx={{ backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)' }}
+              >
+                Confirm
+              </Button>
+            </DialogActions>
+          </Dialog>
+        </>
+      ) : null}
     </Box>
   );
 }

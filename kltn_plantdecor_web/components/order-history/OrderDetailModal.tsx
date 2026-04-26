@@ -23,13 +23,14 @@ import {
 import { useTranslations } from 'next-intl';
 import type { Order } from '@/types/order.types';
 import {
+  canUserCancelOrder,
   formatCurrency,
   formatDate,
   getStatusInfo,
 } from './orderHistoryUtils';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 import Image from 'next/image';
-import { canCreateReturnTicket, isPendingNurseryOrderDetail } from './returnTicket.constants';
+import { canCreateReturnTicket } from './returnTicket.constants';
 import { CustomLoading } from '@/components/CustomLoading';
 
 const SERVICE_ORDER_TYPE = 4;
@@ -66,13 +67,8 @@ export default function OrderDetailModal({
   const tOrderHistory = useTranslations('orderHistory');
   const statusInfo = order ? getStatusInfo(order.statusName) : null;
   const isServiceOrder = order?.orderType === SERVICE_ORDER_TYPE;
-  const canCancelOrder = order?.statusName === 'Pending' || order?.statusName === 'DepositPaid' || order?.statusName === 'Paid';
-  const canCreateReturn = !!order
-    && !isServiceOrder
-    && canCreateReturnTicket(order.statusName)
-    && order.nurseryOrders.some((nurseryOrder) =>
-      nurseryOrder.items.some((item) => isPendingNurseryOrderDetail(item.statusName))
-    );
+  const canCancelOrder = !!order && canUserCancelOrder(order.statusName);
+  const canCreateReturn = !!order && !isServiceOrder && canCreateReturnTicket(order.statusName);
   const isCancelling = !!order && cancelLoadingOrderId === order.id;
 
   return (

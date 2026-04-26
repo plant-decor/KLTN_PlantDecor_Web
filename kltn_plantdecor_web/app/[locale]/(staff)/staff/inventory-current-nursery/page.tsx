@@ -2,250 +2,172 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import {
+  Alert,
   Box,
-  Typography,
-  Card,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Paper,
   Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  InputAdornment,
   Tabs,
   Tab,
-  Grid,
-  CircularProgress,
-  Alert,
-  TablePagination,
+  Typography,
+  Stack,
 } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import { getMyManagerNursery, getManagerCommonPlants } from '@/lib/api/managerStoreCatalogService';
-import { getMyManagerNurseryMaterials } from '@/lib/api/managerNurseryMaterialsService';
-import type { CommonPlantInventoryItem, NurseryMaterialItem } from '@/types/manager-store-catalog.types';
+import ParkOutlinedIcon from '@mui/icons-material/ParkOutlined';
+import SpaOutlinedIcon from '@mui/icons-material/SpaOutlined';
+import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
+import WidgetsOutlinedIcon from '@mui/icons-material/WidgetsOutlined';
+import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
+import { getMyManagerNursery } from '@/lib/api/managerStoreCatalogService';
+import type { ManagerNursery } from '@/types/manager-store-catalog.types';
+import type { ResponseModel } from '@/types/api.types';
+import CommonPlantTab from '@/components/manager-store-catalog/CommonPlantTab';
+import PlantInstanceManagerTab from '@/components/manager-store-catalog/PlantInstanceManagerTab';
+import ManagerPlantComboTab from '@/components/manager-store-catalog/ManagerPlantComboTab';
+import StaffMaterialTab from '@/components/staff-inventory/StaffMaterialTab';
+import LowStockTab from '@/components/staff-inventory/LowStockTab';
+import { CustomLoading } from '@/components/CustomLoading';
 
-type InventoryKind = 'Plant' | 'Material';
-
-type InventoryRow = {
-  kind: InventoryKind;
-  id: string;
-  name: string;
-  code: string;
-  quantity: number;
-  reservedQuantity?: number;
-  availableQuantity?: number;
-  isActive?: boolean;
-};
-
-function getStockStatus(quantity: number): 'success' | 'warning' | 'error' {
-  if (quantity === 0) return 'error';
-  if (quantity < 10) return 'warning';
-  return 'success';
+interface TabPanelProps {
+  children: React.ReactNode;
+  index: number;
+  value: number;
 }
 
+function TabPanel({ children, value, index }: TabPanelProps) {
+  return (
+    <div role="tabpanel" hidden={value !== index} id={`staff-inventory-tabpanel-${index}`}>
+      {value === index ? <Box sx={{ pt: 3 }}>{children}</Box> : null}
+    </div>
+  );
+}
+
+const getPayload = <T,>(response: ResponseModel<T>): T | undefined => {
+  return response.payload ?? response.data;
+};
+
+const getErrorMessage = (error: unknown, fallback: string): string => {
+  if (!error || typeof error !== 'object') {
+    return fallback;
+  }
+
+  const candidate = error as {
+    response?: { data?: { message?: string } };
+    message?: string;
+  };
+
+  return candidate.response?.data?.message || candidate.message || fallback;
+};
+
 export default function CurrentNurseryInventoryPage() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
-  const [selectedTab, setSelectedTab] = useState(0);
-  const [selectedItem, setSelectedItem] = useState<InventoryRow | null>(null);
-  const [openDetail, setOpenDetail] = useState(false);
-
-  const [nurseryName, setNurseryName] = useState<string>('');
-  const [nurseryId, setNurseryId] = useState<number | null>(null);
-
-  const [items, setItems] = useState<InventoryRow[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-    }, 400);
-
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, [searchTerm]);
+  const [tabValue, setTabValue] = useState(0);
+  const [nursery, setNursery] = useState<ManagerNursery | null>(null);
+  const [loadingNursery, setLoadingNursery] = useState(true);
+  const [nurseryError, setNurseryError] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
 
-    const loadNursery = async () => {
+    const fetchNursery = async () => {
       try {
-        const response = await getMyManagerNursery(false);
-        const payload = response.payload ?? response.data;
+        setLoadingNursery(true);
+        setNurseryError(null);
+        const response = await getMyManagerNursery(true);
+        const payload = getPayload(response);
+
         if (!mounted) return;
-        if (payload?.id) {
-          setNurseryId(payload.id);
-          setNurseryName(payload.name || '');
+
+        if (!payload) {
+          setNursery(null);
+          setNurseryError('Could not load nursery data.');
+          return;
         }
-      } catch {
-        if (mounted) {
-          setError('Failed to load nursery information.');
-        }
+
+        setNursery(payload);
+      } catch (error) {
+        if (!mounted) return;
+        setNursery(null);
+        setNurseryError(getErrorMessage(error, 'Failed to load nursery'));
+      } finally {
+        if (mounted) setLoadingNursery(false);
       }
     };
 
-    void loadNursery();
+    void fetchNursery();
     return () => {
       mounted = false;
     };
   }, []);
 
-  useEffect(() => {
-    if (!nurseryId) return;
-
-    let mounted = true;
-    setLoading(true);
-    setError(null);
-
-    const loadInventory = async () => {
-      try {
-        const pageNumber = page + 1;
-        const query = { pageNumber, pageSize };
-
-        const shouldLoadPlants = selectedTab === 0 || selectedTab === 1 || selectedTab === 3;
-        const shouldLoadMaterials = selectedTab === 0 || selectedTab === 2 || selectedTab === 3;
-
-        const [plantsResponse, materialsResponse] = await Promise.all([
-          shouldLoadPlants ? getManagerCommonPlants(nurseryId, query, false).catch(() => null) : Promise.resolve(null),
-          shouldLoadMaterials ? getMyManagerNurseryMaterials(query, false).catch(() => null) : Promise.resolve(null),
-        ]);
-
-        if (!mounted) return;
-
-        const plantPayload = plantsResponse?.payload ?? plantsResponse?.data;
-        const materialPayload = materialsResponse?.payload ?? materialsResponse?.data;
-
-        const plantRows: InventoryRow[] =
-          (plantPayload?.items ?? []).map((item: CommonPlantInventoryItem) => ({
-            kind: 'Plant',
-            id: `plant-${item.id}`,
-            name: item.plantName || `Plant #${item.plantId}`,
-            code: `PLANT-${item.plantId}`,
-            quantity: Math.max(0, Math.floor(item.quantity ?? 0)),
-            reservedQuantity: Math.max(0, Math.floor(item.reservedQuantity ?? 0)),
-            availableQuantity: Math.max(0, Math.floor(item.availableQuantity ?? 0)),
-            isActive: item.isActive,
-          })) ?? [];
-
-        const materialRows: InventoryRow[] =
-          (materialPayload?.items ?? []).map((item: NurseryMaterialItem) => ({
-            kind: 'Material',
-            id: `material-${item.id}`,
-            name: item.materialName || `Material #${item.materialId}`,
-            code: item.materialCode || `MAT-${item.materialId}`,
-            quantity: Math.max(0, Math.floor(item.quantity ?? 0)),
-            reservedQuantity: Math.max(0, Math.floor(item.reservedQuantity ?? 0)),
-            availableQuantity: Math.max(0, Math.floor(item.availableQuantity ?? 0)),
-            isActive: item.isActive,
-          })) ?? [];
-
-        const merged = [...plantRows, ...materialRows];
-        setItems(merged);
-        setTotalCount(
-          Number(plantPayload?.totalCount ?? 0) + Number(materialPayload?.totalCount ?? 0)
-        );
-      } catch {
-        if (mounted) {
-          setError('Failed to load inventory.');
-          setItems([]);
-          setTotalCount(0);
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
+  const nurserySummary = useMemo(() => {
+    if (!nursery) return null;
+    return {
+      name: nursery.name,
+      manager: nursery.managerName,
+      address: nursery.address,
+      totalPlants: nursery.totalPlants,
+      totalMaterials: nursery.totalMaterials,
+      isActive: nursery.isActive,
     };
-
-    void loadInventory();
-
-    return () => {
-      mounted = false;
-    };
-  }, [nurseryId, page, pageSize, selectedTab]);
-
-  const filteredInventory = useMemo(() => {
-    const normalizedTerm = debouncedSearchTerm.trim().toLowerCase();
-    const matchesSearch = (row: InventoryRow) =>
-      !normalizedTerm ||
-      row.name.toLowerCase().includes(normalizedTerm) ||
-      row.code.toLowerCase().includes(normalizedTerm);
-
-    const matchesTab = (row: InventoryRow) => {
-      if (selectedTab === 0) return true;
-      if (selectedTab === 1) return row.kind === 'Plant';
-      if (selectedTab === 2) return row.kind === 'Material';
-      if (selectedTab === 3) {
-        const available = typeof row.availableQuantity === 'number' ? row.availableQuantity : row.quantity;
-        return available === 0;
-      }
-      return true;
-    };
-
-    return items.filter((row) => matchesSearch(row) && matchesTab(row));
-  }, [items, debouncedSearchTerm, selectedTab]);
-
-  const handleViewDetail = (item: InventoryRow) => {
-    setSelectedItem(item);
-    setOpenDetail(true);
-  };
+  }, [nursery]);
 
   return (
-    <Box sx={{ py: 4 }}>
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" fontWeight="bold" gutterBottom>
+    <Box sx={{ py: 3, minHeight: '100%' }}>
+      <Stack spacing={2} sx={{ mb: 4 }}>
+        <Typography variant="h4" fontWeight="700" color="primary">
           Current Nursery Inventory
         </Typography>
-        <Typography variant="body1" color="text.secondary" gutterBottom>
-          View inventory for {nurseryName || 'your nursery'}
+        <Typography variant="body1" color="text.secondary">
+          View inventory for your current nursery (read-only)
         </Typography>
-      </Box>
+      </Stack>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
+      <Stack spacing={2} sx={{ mb: 3 }}>
+        {loadingNursery ? (
+          <Stack direction="row" spacing={1} alignItems="center">
+            <CustomLoading size={18} />
+            <Typography variant="body2" color="text.secondary">
+              Loading nursery information...
+            </Typography>
+          </Stack>
+        ) : nurserySummary ? (
+          <Paper
+            elevation={0}
+            sx={{ border: '1px solid var(--card-border)', borderRadius: 2, p: 2, backgroundColor: 'var(--primary)' }}
+          >
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} justifyContent="space-between">
+              <Box>
+                <Typography variant="h6" fontWeight={700}>
+                  {nurserySummary.name}
+                </Typography>
+                <Typography variant="body2" fontWeight={600}>
+                  Manager: {nurserySummary.manager}
+                </Typography>
+                <Typography variant="body2" fontWeight={600}>
+                  {nurserySummary.address}
+                </Typography>
+              </Box>
+              <Stack direction="row" spacing={1} flexWrap="wrap" alignItems="center" fontWeight={650}>
+                <Chip label={`Plants: ${nurserySummary.totalPlants}`} sx={{ bgcolor: '#ecfff3' }} />
+                <Chip label={`Materials: ${nurserySummary.totalMaterials}`} sx={{ bgcolor: '#ecf7ff' }} />
+                <Chip
+                  label={nurserySummary.isActive ? 'Nursery Active' : 'Nursery Inactive'}
+                  color={nurserySummary.isActive ? 'success' : 'default'}
+                  variant="outlined"
+                  sx={{ bgcolor: '#ecfff3' }}
+                />
+              </Stack>
+            </Stack>
+          </Paper>
+        ) : null}
 
-      {/* Search Bar */}
-      <TextField
-        fullWidth
-        placeholder="Search by product name or SKU..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <SearchIcon />
-            </InputAdornment>
-          ),
-        }}
-        sx={{ mb: 3 }}
-      />
+        {nurseryError && <Alert severity="error">{nurseryError}</Alert>}
+      </Stack>
 
-      {/* Category Tabs */}
-      <Card sx={{ mb: 3 }}>
+      <Box className="w-full flex-col" sx={{ mx: 'auto' }}>
         <Tabs
-          value={selectedTab}
-          onChange={(e, newValue) => {
-            setSelectedTab(newValue);
-            setPage(0);
-          }}
+          value={tabValue}
+          onChange={(_, value) => setTabValue(value)}
+          variant="scrollable"
+          scrollButtons="auto"
           sx={{
             borderBottom: 1,
             borderColor: 'divider',
@@ -253,148 +175,31 @@ export default function CurrentNurseryInventoryPage() {
             '& .Mui-selected': { backgroundColor: 'var(--primary) !important', color: '#fff !important' },
           }}
         >
-          <Tab label="All Items" />
-          <Tab label="Plants" />
-          <Tab label="Materials" />
-          <Tab label="Low Stock" />
+          <Tab icon={<ParkOutlinedIcon />} iconPosition="start" label="CommonPlant" />
+          <Tab icon={<SpaOutlinedIcon />} iconPosition="start" label="PlantInstance" />
+          <Tab icon={<WidgetsOutlinedIcon />} iconPosition="start" label="PlantCombo" />
+          <Tab icon={<Inventory2OutlinedIcon />} iconPosition="start" label="Material" />
+          <Tab icon={<WarningAmberOutlinedIcon />} iconPosition="start" label="Low stock" />
         </Tabs>
-      </Card>
 
-      {/* Inventory Table */}
-      <TableContainer component={Paper} sx={{ boxShadow: 2 }}>
-        <Table>
-          <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
-            <TableRow>
-              <TableCell sx={{ fontWeight: 'bold' }}>Product Name</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Code</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Category</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }} align="center">
-                Quantity
-              </TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }} align="center">
-                Available
-              </TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }} align="center">
-                Actions
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
-                  <CircularProgress size={28} />
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredInventory.map((item) => (
-                <TableRow key={item.id} hover>
-                  <TableCell sx={{ fontWeight: 'bold' }}>{item.name}</TableCell>
-                  <TableCell>{item.code}</TableCell>
-                  <TableCell>
-                    <Chip label={item.kind} size="small" variant="outlined" />
-                  </TableCell>
-                <TableCell align="center">
-                  <Chip
-                    label={item.quantity.toLocaleString('en-US')}
-                    color={getStockStatus(item.quantity)}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell align="center">
-                  <Chip
-                    label={(item.availableQuantity ?? item.quantity).toLocaleString('en-US')}
-                    color={getStockStatus(item.availableQuantity ?? item.quantity)}
-                    size="small"
-                    variant="outlined"
-                  />
-                </TableCell>
-                <TableCell align="center">
-                  <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      startIcon={<VisibilityIcon />}
-                      onClick={() => handleViewDetail(item)}
-                    >
-                      View
-                    </Button>
-                  </Box>
-                </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      <TablePagination
-        component="div"
-        count={Math.max(0, totalCount)}
-        page={page}
-        onPageChange={(_, nextPage) => setPage(nextPage)}
-        rowsPerPage={pageSize}
-        onRowsPerPageChange={(event) => {
-          const next = Number(event.target.value);
-          setPageSize(Number.isFinite(next) && next > 0 ? next : 10);
-          setPage(0);
-        }}
-        rowsPerPageOptions={[5, 10, 20, 50]}
-      />
-
-      {/* Detail Dialog */}
-      <Dialog open={openDetail} onClose={() => setOpenDetail(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ fontWeight: 'bold' }}>
-          Item Details - {selectedItem?.name}
-        </DialogTitle>
-        <DialogContent sx={{ pt: 3 }}>
-          {selectedItem && (
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 12 }}>
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                  Product Name
-                </Typography>
-                <Typography variant="body2" fontWeight="bold">
-                  {selectedItem.name}
-                </Typography>
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                  Code
-                </Typography>
-                <Typography variant="body2" fontWeight="bold">
-                  {selectedItem.code}
-                </Typography>
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                  Category
-                </Typography>
-                <Chip label={selectedItem.kind} size="small" />
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                  Current Stock
-                </Typography>
-                <Typography variant="body2" fontWeight="bold">
-                  {selectedItem.quantity.toLocaleString('en-US')} units
-                </Typography>
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                  Available Stock
-                </Typography>
-                <Typography variant="body2" fontWeight="bold">
-                  {(selectedItem.availableQuantity ?? selectedItem.quantity).toLocaleString('en-US')} units
-                </Typography>
-              </Grid>
-            </Grid>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDetail(false)}>Close</Button>
-        </DialogActions>
-      </Dialog>
+        <Box sx={{ p: 2 }}>
+          <TabPanel value={tabValue} index={0}>
+            <CommonPlantTab nurseryId={nursery?.id ?? null} readOnly />
+          </TabPanel>
+          <TabPanel value={tabValue} index={1}>
+            <PlantInstanceManagerTab nurseryId={nursery?.id ?? null} readOnly />
+          </TabPanel>
+          <TabPanel value={tabValue} index={2}>
+            <ManagerPlantComboTab readOnly />
+          </TabPanel>
+          <TabPanel value={tabValue} index={3}>
+            <StaffMaterialTab />
+          </TabPanel>
+          <TabPanel value={tabValue} index={4}>
+            <LowStockTab />
+          </TabPanel>
+        </Box>
+      </Box>
     </Box>
   );
 }

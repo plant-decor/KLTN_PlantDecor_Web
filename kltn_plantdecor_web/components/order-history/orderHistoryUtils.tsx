@@ -18,6 +18,10 @@ export function formatDate(dateStr: string): string {
   return formatDateTime(dateStr);
 }
 
+export function canUserCancelOrder(statusName: string): boolean {
+  return statusName === 'Pending';
+}
+
 export function getStatusInfo(statusName: string): {
   color: ChipProps['color'];
   icon: ReactElement;

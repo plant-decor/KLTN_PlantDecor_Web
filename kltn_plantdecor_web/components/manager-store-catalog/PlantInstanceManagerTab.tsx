@@ -54,6 +54,7 @@ import { formatDateTime } from '@/lib/utils/dateUtils';
 
 interface PlantInstanceManagerTabProps {
   nurseryId: number | null;
+  readOnly?: boolean;
 }
 
 interface PaginationState {
@@ -93,7 +94,7 @@ const statusColorMap: Record<number, 'success' | 'warning' | 'default' | 'error'
   5: 'info',
 };
 
-export default function PlantInstanceManagerTab({ nurseryId }: PlantInstanceManagerTabProps) {
+export default function PlantInstanceManagerTab({ nurseryId, readOnly = false }: PlantInstanceManagerTabProps) {
   const [summaryItems, setSummaryItems] = useState<PlantSummaryItem[]>([]);
   // const [summaryLoading, setSummaryLoading] = useState(false);
 
@@ -269,6 +270,9 @@ export default function PlantInstanceManagerTab({ nurseryId }: PlantInstanceMana
   };
 
   const handleRowStatusUpdate = async (instanceId: number, status: number) => {
+    if (readOnly) {
+      return;
+    }
     setSubmitting(true);
     try {
       await updateManagerPlantInstanceStatus(instanceId, { status }, true);
@@ -282,6 +286,9 @@ export default function PlantInstanceManagerTab({ nurseryId }: PlantInstanceMana
   };
 
   const handleBatchStatusUpdate = async () => {
+    if (readOnly) {
+      return;
+    }
     if (selectedIds.length === 0 || batchStatus === '') {
       return;
     }
@@ -307,6 +314,9 @@ export default function PlantInstanceManagerTab({ nurseryId }: PlantInstanceMana
   };
 
   const handleCreateSubmit = async (value: PlantInstanceCreateSubmitValue) => {
+    if (readOnly) {
+      return;
+    }
     if (!nurseryId) {
       return;
     }
@@ -369,6 +379,9 @@ export default function PlantInstanceManagerTab({ nurseryId }: PlantInstanceMana
   };
 
   const handleOpenCreate = async () => {
+    if (readOnly) {
+      return;
+    }
     setCreateOpen(true);
     await fetchCreatePlantOptions();
   };
@@ -422,15 +435,17 @@ export default function PlantInstanceManagerTab({ nurseryId }: PlantInstanceMana
           >
             Refresh
           </Button> */}
-          <Button
-            startIcon={<AddIcon />}
-            variant="contained"
-            onClick={() => void handleOpenCreate()}
-            disabled={createPlantOptionsLoading}
-            sx={{ backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)' }}
-          >
-            Add Plant Instance
-          </Button>
+          {!readOnly ? (
+            <Button
+              startIcon={<AddIcon />}
+              variant="contained"
+              onClick={() => void handleOpenCreate()}
+              disabled={createPlantOptionsLoading}
+              sx={{ backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)' }}
+            >
+              Add Plant Instance
+            </Button>
+          ) : null}
         </Stack>
       </Stack>
 
@@ -452,33 +467,35 @@ export default function PlantInstanceManagerTab({ nurseryId }: PlantInstanceMana
           </Select>
         </FormControl>
 
-        <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
-          <Chip label={`Selected: ${selectedIds.length}`} variant="outlined" />
-          <FormControl size="small" sx={{ minWidth: 180 }}>
-            <InputLabel id="batch-status-label">Batch Status</InputLabel>
-            <Select
-              labelId="batch-status-label"
-              label="Batch Status"
-              value={batchStatus}
-              onChange={(event) => setBatchStatus(event.target.value as number | '')}
+        {!readOnly ? (
+          <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+            <Chip label={`Selected: ${selectedIds.length}`} variant="outlined" />
+            <FormControl size="small" sx={{ minWidth: 180 }}>
+              <InputLabel id="batch-status-label">Batch Status</InputLabel>
+              <Select
+                labelId="batch-status-label"
+                label="Batch Status"
+                value={batchStatus}
+                onChange={(event) => setBatchStatus(event.target.value as number | '')}
+              >
+                {statusOptions.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Button
+              variant="contained"
+              color="secondary"
+              startIcon={<DoneAllIcon />}
+              disabled={selectedIds.length === 0 || batchStatus === '' || submitting}
+              onClick={() => void handleBatchStatusUpdate()}
             >
-              {statusOptions.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <Button
-            variant="contained"
-            color="secondary"
-            startIcon={<DoneAllIcon />}
-            disabled={selectedIds.length === 0 || batchStatus === '' || submitting}
-            onClick={() => void handleBatchStatusUpdate()}
-          >
-            Apply Batch
-          </Button>
-        </Stack>
+              Apply Batch
+            </Button>
+          </Stack>
+        ) : null}
       </Stack>
 
       {error && (
@@ -492,12 +509,14 @@ export default function PlantInstanceManagerTab({ nurseryId }: PlantInstanceMana
           <TableHead sx={{ backgroundColor: '#f4fff8' }}>
             <TableRow>
               <TableCell padding="checkbox">
-                <Checkbox
-                  size="small"
-                  checked={allCurrentPageSelected}
-                  indeterminate={selectedIds.length > 0 && !allCurrentPageSelected}
-                  onChange={toggleSelectAllCurrentPage}
-                />
+                {!readOnly ? (
+                  <Checkbox
+                    size="small"
+                    checked={allCurrentPageSelected}
+                    indeterminate={selectedIds.length > 0 && !allCurrentPageSelected}
+                    onChange={toggleSelectAllCurrentPage}
+                  />
+                ) : null}
               </TableCell>
               <TableCell sx={{ fontWeight: 700 }}>Plant</TableCell>
               {/* <TableCell sx={{ fontWeight: 700 }}>SKU</TableCell> */}
@@ -528,11 +547,13 @@ export default function PlantInstanceManagerTab({ nurseryId }: PlantInstanceMana
               items.map((item) => (
                 <TableRow key={item.plantInstanceId} hover>
                   <TableCell padding="checkbox">
-                    <Checkbox
-                      size="small"
-                      checked={selectedSet.has(item.plantInstanceId)}
-                      onChange={() => toggleSingleSelect(item.plantInstanceId)}
-                    />
+                    {!readOnly ? (
+                      <Checkbox
+                        size="small"
+                        checked={selectedSet.has(item.plantInstanceId)}
+                        onChange={() => toggleSingleSelect(item.plantInstanceId)}
+                      />
+                    ) : null}
                   </TableCell>
                   <TableCell>
                     <Stack direction="row" spacing={1.5} alignItems="center">
@@ -559,19 +580,27 @@ export default function PlantInstanceManagerTab({ nurseryId }: PlantInstanceMana
                     {formatDateTime(item.createdAt)}
                   </TableCell>
                   <TableCell align="center">
-                    <FormControl size="small" sx={{ minWidth: 130 }}>
-                      <Select
-                        value={item.status}
-                        onChange={(event) => void handleRowStatusUpdate(item.plantInstanceId, Number(event.target.value))}
-                        disabled={submitting}
-                      >
-                        {statusOptions.map((option) => (
-                          <MenuItem key={option.value} value={option.value}>
-                            {option.name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
+                    {!readOnly ? (
+                      <FormControl size="small" sx={{ minWidth: 130 }}>
+                        <Select
+                          value={item.status}
+                          onChange={(event) =>
+                            void handleRowStatusUpdate(item.plantInstanceId, Number(event.target.value))
+                          }
+                          disabled={submitting}
+                        >
+                          {statusOptions.map((option) => (
+                            <MenuItem key={option.value} value={option.value}>
+                              {option.name}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    ) : (
+                      <Typography variant="body2" color="text.secondary">
+                        -
+                      </Typography>
+                    )}
                   </TableCell>
                 </TableRow>
               ))
@@ -591,14 +620,16 @@ export default function PlantInstanceManagerTab({ nurseryId }: PlantInstanceMana
         />
       </TableContainer>
 
-      <PlantInstanceCreateDialog
-        open={createOpen}
-        plants={createPlantOptions}
-        loadingPlants={createPlantOptionsLoading}
-        submitting={submitting}
-        onClose={() => setCreateOpen(false)}
-        onSubmit={(value) => void handleCreateSubmit(value)}
-      />
+      {!readOnly ? (
+        <PlantInstanceCreateDialog
+          open={createOpen}
+          plants={createPlantOptions}
+          loadingPlants={createPlantOptionsLoading}
+          submitting={submitting}
+          onClose={() => setCreateOpen(false)}
+          onSubmit={(value) => void handleCreateSubmit(value)}
+        />
+      ) : null}
     </Box>
   );
 }

@@ -102,7 +102,11 @@ const formatDateTime = (value: string): string => {
   return date.toLocaleString('vi-VN');
 };
 
-export default function ManagerPlantComboTab() {
+interface ManagerPlantComboTabProps {
+  readOnly?: boolean;
+}
+
+export default function ManagerPlantComboTab({ readOnly = false }: ManagerPlantComboTabProps) {
   const [items, setItems] = useState<ManagerPlantComboInventoryItem[]>([]);
   const [pagination, setPagination] = useState<PaginationState>(DEFAULT_PAGINATION);
   const [loading, setLoading] = useState(false);
@@ -193,6 +197,9 @@ export default function ManagerPlantComboTab() {
   };
 
   const handleOpenImportDialog = async () => {
+    if (readOnly) {
+      return;
+    }
     setImportOpen(true);
     const options = await fetchImportOptions();
 
@@ -205,6 +212,9 @@ export default function ManagerPlantComboTab() {
   const canSubmitImport = importForm.comboId > 0 && importForm.quantity > 0;
 
   const handleSubmitImport = async () => {
+    if (readOnly) {
+      return;
+    }
     if (!canSubmitImport) {
       return;
     }
@@ -226,6 +236,9 @@ export default function ManagerPlantComboTab() {
   };
 
   const handleOpenDecomposeDialog = (item: ManagerPlantComboInventoryItem) => {
+    if (readOnly) {
+      return;
+    }
     setDecomposeTarget(item);
     setDecomposeForm(DEFAULT_DECOMPOSE_FORM);
     setDecomposeOpen(true);
@@ -235,6 +248,9 @@ export default function ManagerPlantComboTab() {
     !!decomposeTarget && decomposeForm.quantity > 0 && decomposeForm.quantity <= decomposeTarget.quantity;
 
   const handleSubmitDecompose = async () => {
+    if (readOnly) {
+      return;
+    }
     if (!decomposeTarget || !canSubmitDecompose) {
       return;
     }
@@ -273,14 +289,16 @@ export default function ManagerPlantComboTab() {
           >
             Refresh
           </Button> */}
-          <Button
-            startIcon={<AddIcon />}
-            variant="contained"
-            onClick={() => void handleOpenImportDialog()}
-            sx={{ backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)' }}
-          >
-            Import Combo
-          </Button>
+          {!readOnly ? (
+            <Button
+              startIcon={<AddIcon />}
+              variant="contained"
+              onClick={() => void handleOpenImportDialog()}
+              sx={{ backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)' }}
+            >
+              Import Combo
+            </Button>
+          ) : null}
         </Stack>
       </Stack>
 
@@ -345,15 +363,21 @@ export default function ManagerPlantComboTab() {
                   </TableCell>
                   <TableCell>{formatDateTime(item.updatedAt)}</TableCell>
                   <TableCell align="center">
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      startIcon={<CallSplitIcon />}
-                      onClick={() => handleOpenDecomposeDialog(item)}
-                      disabled={item.quantity <= 0}
-                    >
-                      Decompose
-                    </Button>
+                    {!readOnly ? (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<CallSplitIcon />}
+                        onClick={() => handleOpenDecomposeDialog(item)}
+                        disabled={item.quantity <= 0}
+                      >
+                        Decompose
+                      </Button>
+                    ) : (
+                      <Typography variant="caption" color="text.secondary">
+                        -
+                      </Typography>
+                    )}
                   </TableCell>
                 </TableRow>
               ))
@@ -372,119 +396,129 @@ export default function ManagerPlantComboTab() {
         />
       </TableContainer>
 
-      <Dialog open={importOpen} onClose={() => setImportOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>Import Combo</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <FormControl fullWidth size="small">
-              <InputLabel id="manager-import-combo-label">Combo</InputLabel>
-              <Select
-                labelId="manager-import-combo-label"
-                label="Combo"
-                value={importForm.comboId}
-                disabled={importOptionsLoading}
-                onChange={(event) =>
-                  setImportForm((prev) => ({
-                    ...prev,
-                    comboId: Number(event.target.value),
-                  }))
-                }
+      {!readOnly ? (
+        <>
+          <Dialog open={importOpen} onClose={() => setImportOpen(false)} fullWidth maxWidth="sm">
+            <DialogTitle>Import Combo</DialogTitle>
+            <DialogContent>
+              <Stack spacing={2} sx={{ mt: 1 }}>
+                <FormControl fullWidth size="small">
+                  <InputLabel id="manager-import-combo-label">Combo</InputLabel>
+                  <Select
+                    labelId="manager-import-combo-label"
+                    label="Combo"
+                    value={importForm.comboId}
+                    disabled={importOptionsLoading}
+                    onChange={(event) =>
+                      setImportForm((prev) => ({
+                        ...prev,
+                        comboId: Number(event.target.value),
+                      }))
+                    }
+                  >
+                    {importOptions.map((combo) => (
+                      <MenuItem key={combo.id} value={combo.id}>
+                        {combo.comboCode} - {combo.comboName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                <TextField
+                  label="Quantity"
+                  type="number"
+                  size="small"
+                  fullWidth
+                  value={importForm.quantity}
+                  onChange={(event) =>
+                    setImportForm((prev) => ({
+                      ...prev,
+                      quantity: Number(event.target.value),
+                    }))
+                  }
+                  inputProps={{ min: 1 }}
+                  error={importForm.quantity <= 0}
+                  helperText={importForm.quantity <= 0 ? 'Quantity must be greater than 0' : ' '}
+                />
+
+                {!importOptionsLoading && importOptions.length === 0 && (
+                  <Alert severity="warning">No active combo available to import.</Alert>
+                )}
+              </Stack>
+            </DialogContent>
+            <DialogActions>
+              <Button
+                onClick={() => {
+                  setImportOpen(false);
+                  setImportForm(DEFAULT_IMPORT_FORM);
+                }}
               >
-                {importOptions.map((combo) => (
-                  <MenuItem key={combo.id} value={combo.id}>
-                    {combo.comboCode} - {combo.comboName}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                onClick={() => void handleSubmitImport()}
+                disabled={!canSubmitImport || submitting}
+              >
+                Submit
+              </Button>
+            </DialogActions>
+          </Dialog>
 
-            <TextField
-              label="Quantity"
-              type="number"
-              size="small"
-              fullWidth
-              value={importForm.quantity}
-              onChange={(event) =>
-                setImportForm((prev) => ({
-                  ...prev,
-                  quantity: Number(event.target.value),
-                }))
-              }
-              inputProps={{ min: 1 }}
-              error={importForm.quantity <= 0}
-              helperText={importForm.quantity <= 0 ? 'Quantity must be greater than 0' : ' '}
-            />
-
-            {!importOptionsLoading && importOptions.length === 0 && (
-              <Alert severity="warning">No active combo available to import.</Alert>
-            )}
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={() => {
-              setImportOpen(false);
-              setImportForm(DEFAULT_IMPORT_FORM);
-            }}
-          >
-            Cancel
-          </Button>
-          <Button variant="contained" onClick={() => void handleSubmitImport()} disabled={!canSubmitImport || submitting}>
-            Submit
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog open={decomposeOpen} onClose={() => setDecomposeOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>Decompose Combo</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <Typography variant="body2" color="text.secondary">
-              {decomposeTarget
-                ? `Combo: ${decomposeTarget.comboCode} - ${decomposeTarget.comboName} (Available: ${decomposeTarget.quantity})`
-                : 'Select combo to decompose'}
-            </Typography>
-            <TextField
-              label="Quantity"
-              type="number"
-              size="small"
-              fullWidth
-              value={decomposeForm.quantity}
-              onChange={(event) =>
-                setDecomposeForm({
-                  quantity: Number(event.target.value),
-                })
-              }
-              inputProps={{ min: 1 }}
-              error={
-                decomposeForm.quantity <= 0 ||
-                (!!decomposeTarget && decomposeForm.quantity > decomposeTarget.quantity)
-              }
-              helperText={
-                decomposeForm.quantity <= 0
-                  ? 'Quantity must be greater than 0'
-                  : decomposeTarget && decomposeForm.quantity > decomposeTarget.quantity
-                    ? 'Quantity exceeds current combo inventory'
-                    : ' '
-              }
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={() => {
-              setDecomposeOpen(false);
-              setDecomposeTarget(null);
-              setDecomposeForm(DEFAULT_DECOMPOSE_FORM);
-            }}
-          >
-            Cancel
-          </Button>
-          <Button variant="contained" color="warning" onClick={() => void handleSubmitDecompose()} disabled={!canSubmitDecompose || submitting}>
-            Submit
-          </Button>
-        </DialogActions>
-      </Dialog>
+          <Dialog open={decomposeOpen} onClose={() => setDecomposeOpen(false)} fullWidth maxWidth="sm">
+            <DialogTitle>Decompose Combo</DialogTitle>
+            <DialogContent>
+              <Stack spacing={2} sx={{ mt: 1 }}>
+                <Typography variant="body2" color="text.secondary">
+                  {decomposeTarget
+                    ? `Combo: ${decomposeTarget.comboCode} - ${decomposeTarget.comboName} (Available: ${decomposeTarget.quantity})`
+                    : 'Select combo to decompose'}
+                </Typography>
+                <TextField
+                  label="Quantity"
+                  type="number"
+                  size="small"
+                  fullWidth
+                  value={decomposeForm.quantity}
+                  onChange={(event) =>
+                    setDecomposeForm({
+                      quantity: Number(event.target.value),
+                    })
+                  }
+                  inputProps={{ min: 1 }}
+                  error={decomposeForm.quantity <= 0 || (!!decomposeTarget && decomposeForm.quantity > decomposeTarget.quantity)}
+                  helperText={
+                    decomposeForm.quantity <= 0
+                      ? 'Quantity must be greater than 0'
+                      : decomposeTarget && decomposeForm.quantity > decomposeTarget.quantity
+                        ? 'Quantity exceeds current combo inventory'
+                        : ' '
+                  }
+                />
+              </Stack>
+            </DialogContent>
+            <DialogActions>
+              <Button
+                onClick={() => {
+                  setDecomposeOpen(false);
+                  setDecomposeTarget(null);
+                  setDecomposeForm(DEFAULT_DECOMPOSE_FORM);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                color="warning"
+                onClick={() => void handleSubmitDecompose()}
+                disabled={!canSubmitDecompose || submitting}
+              >
+                Submit
+              </Button>
+            </DialogActions>
+          </Dialog>
+        </>
+      ) : null}
     </Box>
   );
 }

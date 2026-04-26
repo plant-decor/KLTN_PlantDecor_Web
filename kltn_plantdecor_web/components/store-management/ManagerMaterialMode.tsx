@@ -57,7 +57,12 @@ import {
   type ManagerPaginationState,
 } from './MaterialTab.shared';
 
-export default function ManagerMaterialMode() {
+interface ManagerMaterialModeProps {
+  readOnly?: boolean;
+  headerActions?: React.ReactNode;
+}
+
+export default function ManagerMaterialMode({ readOnly = false, headerActions = null }: ManagerMaterialModeProps) {
   const [items, setItems] = useState<NurseryMaterialItem[]>([]);
   const [pagination, setPagination] = useState<ManagerPaginationState>(DEFAULT_MANAGER_PAGINATION);
   const [loading, setLoading] = useState(false);
@@ -130,6 +135,9 @@ export default function ManagerMaterialMode() {
   }, []);
 
   const handleOpenImport = useCallback(async () => {
+    if (readOnly) {
+      return;
+    }
     setImportOpen(true);
     const materials = await fetchMaterialCatalog();
     setImportForm({
@@ -137,7 +145,7 @@ export default function ManagerMaterialMode() {
       quantity: 1,
       expiredDate: '',
     });
-  }, [fetchMaterialCatalog]);
+  }, [fetchMaterialCatalog, readOnly]);
 
   const handleCloseImport = useCallback(() => {
     setImportOpen(false);
@@ -145,6 +153,9 @@ export default function ManagerMaterialMode() {
   }, []);
 
   const handleSubmitImport = useCallback(async () => {
+    if (readOnly) {
+      return;
+    }
     if (submitting || catalogLoading || importForm.materialId <= 0 || importForm.quantity <= 0) {
       return;
     }
@@ -166,9 +177,12 @@ export default function ManagerMaterialMode() {
     } finally {
       setSubmitting(false);
     }
-  }, [catalogLoading, fetchItems, handleCloseImport, importForm.expiredDate, importForm.materialId, importForm.quantity, pagination.pageSize, submitting]);
+  }, [catalogLoading, fetchItems, handleCloseImport, importForm.expiredDate, importForm.materialId, importForm.quantity, pagination.pageSize, readOnly, submitting]);
 
   const handleOpenEdit = useCallback((item: NurseryMaterialItem) => {
+    if (readOnly) {
+      return;
+    }
     setEditingItem(item);
     setEditForm({
       quantity: item.quantity,
@@ -176,7 +190,7 @@ export default function ManagerMaterialMode() {
       isActive: item.isActive,
     });
     setEditOpen(true);
-  }, []);
+  }, [readOnly]);
 
   const handleCloseEdit = useCallback(() => {
     setEditOpen(false);
@@ -185,6 +199,9 @@ export default function ManagerMaterialMode() {
   }, []);
 
   const handleSubmitEdit = useCallback(async () => {
+    if (readOnly) {
+      return;
+    }
     if (!editingItem || submitting || editForm.quantity < 0) {
       return;
     }
@@ -206,12 +223,15 @@ export default function ManagerMaterialMode() {
     } finally {
       setSubmitting(false);
     }
-  }, [editForm.expiredDate, editForm.isActive, editForm.quantity, editingItem, fetchItems, handleCloseEdit, pagination.pageNumber, pagination.pageSize, submitting]);
+  }, [editForm.expiredDate, editForm.isActive, editForm.quantity, editingItem, fetchItems, handleCloseEdit, pagination.pageNumber, pagination.pageSize, readOnly, submitting]);
 
   const handleOpenToggle = useCallback((item: NurseryMaterialItem) => {
+    if (readOnly) {
+      return;
+    }
     setToggleItem(item);
     setToggleOpen(true);
-  }, []);
+  }, [readOnly]);
 
   const handleCloseToggle = useCallback(() => {
     setToggleOpen(false);
@@ -219,6 +239,9 @@ export default function ManagerMaterialMode() {
   }, []);
 
   const handleSubmitToggle = useCallback(async () => {
+    if (readOnly) {
+      return;
+    }
     if (!toggleItem || submitting) {
       return;
     }
@@ -234,7 +257,7 @@ export default function ManagerMaterialMode() {
     } finally {
       setSubmitting(false);
     }
-  }, [fetchItems, handleCloseToggle, pagination.pageNumber, pagination.pageSize, submitting, toggleItem]);
+  }, [fetchItems, handleCloseToggle, pagination.pageNumber, pagination.pageSize, readOnly, submitting, toggleItem]);
 
   const handleChangePage = useCallback((_event: unknown, newPage: number) => {
     void fetchItems(newPage + 1, pagination.pageSize);
@@ -263,16 +286,19 @@ export default function ManagerMaterialMode() {
           >
             Refresh
           </Button> */}
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={() => void handleOpenImport()}
-            sx={{ ...hoverLiftStyle }}
-            className="bg-primary!"
-            disabled={submitting}
-          >
-            Import material
-          </Button>
+          {headerActions}
+          {!readOnly ? (
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={() => void handleOpenImport()}
+              sx={{ ...hoverLiftStyle }}
+              className="bg-primary!"
+              disabled={submitting}
+            >
+              Import material
+            </Button>
+          ) : null}
         </Stack>
       </Stack>
 
@@ -336,23 +362,34 @@ export default function ManagerMaterialMode() {
                     />
                   </TableCell>
                   <TableCell align="center">
-                    <Stack direction="row" spacing={0.5} justifyContent="center">
-                      <Tooltip title="Edit">
-                        <IconButton size="small" color="primary" onClick={() => handleOpenEdit(item)} disabled={submitting}>
-                          <Edit fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title={item.isActive ? 'Deactivate' : 'Activate'}>
-                        <IconButton
-                          size="small"
-                          color={item.isActive ? 'success' : 'default'}
-                          onClick={() => handleOpenToggle(item)}
-                          disabled={submitting}
-                        >
-                          {item.isActive ? <ToggleOn fontSize="small" /> : <ToggleOff fontSize="small" />}
-                        </IconButton>
-                      </Tooltip>
-                    </Stack>
+                    {!readOnly ? (
+                      <Stack direction="row" spacing={0.5} justifyContent="center">
+                        <Tooltip title="Edit">
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => handleOpenEdit(item)}
+                            disabled={submitting}
+                          >
+                            <Edit fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title={item.isActive ? 'Deactivate' : 'Activate'}>
+                          <IconButton
+                            size="small"
+                            color={item.isActive ? 'success' : 'default'}
+                            onClick={() => handleOpenToggle(item)}
+                            disabled={submitting}
+                          >
+                            {item.isActive ? <ToggleOn fontSize="small" /> : <ToggleOff fontSize="small" />}
+                          </IconButton>
+                        </Tooltip>
+                      </Stack>
+                    ) : (
+                      <Typography variant="caption" color="text.secondary">
+                        Read-only
+                      </Typography>
+                    )}
                   </TableCell>
                 </TableRow>
               ))
@@ -372,132 +409,155 @@ export default function ManagerMaterialMode() {
         />
       </TableContainer>
 
-      <Dialog open={importOpen} onClose={submitting ? undefined : handleCloseImport} maxWidth="sm" fullWidth>
-        <DialogTitle>Import material</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <FormControl fullWidth disabled={catalogLoading || submitting}>
-              <InputLabel id="manager-material-select-label">Material</InputLabel>
-              <Select
-                labelId="manager-material-select-label"
-                value={importForm.materialId}
-                label="Material"
-                onChange={(event) => setImportForm((prev) => ({ ...prev, materialId: Number(event.target.value) }))}
-              >
-                {catalog.map((material) => (
-                  <MenuItem key={material.id} value={material.id}>
-                    {material.materialCode} - {material.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+      {!readOnly ? (
+        <>
+          <Dialog open={importOpen} onClose={submitting ? undefined : handleCloseImport} maxWidth="sm" fullWidth>
+            <DialogTitle>Import material</DialogTitle>
+            <DialogContent>
+              <Stack spacing={2} sx={{ mt: 1 }}>
+                <FormControl fullWidth disabled={catalogLoading || submitting}>
+                  <InputLabel id="manager-material-select-label">Material</InputLabel>
+                  <Select
+                    labelId="manager-material-select-label"
+                    value={importForm.materialId}
+                    label="Material"
+                    onChange={(event) =>
+                      setImportForm((prev) => ({ ...prev, materialId: Number(event.target.value) }))
+                    }
+                  >
+                    {catalog.map((material) => (
+                      <MenuItem key={material.id} value={material.id}>
+                        {material.materialCode} - {material.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
 
-            {catalogLoading && (
-              <Stack direction="row" spacing={1} alignItems="center">
-                <CustomLoading size={18} />
-                <Typography variant="body2" color="text.secondary">Loading material catalog...</Typography>
+                {catalogLoading && (
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <CustomLoading size={18} />
+                    <Typography variant="body2" color="text.secondary">
+                      Loading material catalog...
+                    </Typography>
+                  </Stack>
+                )}
+
+                {!catalogLoading && catalog.length === 0 && (
+                  <Alert severity="warning">No material available to import.</Alert>
+                )}
+
+                <TextField
+                  type="number"
+                  label="Quantity"
+                  value={importForm.quantity}
+                  onChange={(event) => setImportForm((prev) => ({ ...prev, quantity: Number(event.target.value) }))}
+                  inputProps={{ min: 1 }}
+                  fullWidth
+                  disabled={submitting || catalogLoading || catalog.length === 0}
+                />
+
+                <TextField
+                  type="date"
+                  label="Expired Date"
+                  value={importForm.expiredDate}
+                  onChange={(event) => setImportForm((prev) => ({ ...prev, expiredDate: event.target.value }))}
+                  InputLabelProps={{ shrink: true }}
+                  fullWidth
+                  disabled={submitting || catalogLoading || catalog.length === 0}
+                />
               </Stack>
-            )}
-
-            {!catalogLoading && catalog.length === 0 && (
-              <Alert severity="warning">No material available to import.</Alert>
-            )}
-
-            <TextField
-              type="number"
-              label="Quantity"
-              value={importForm.quantity}
-              onChange={(event) => setImportForm((prev) => ({ ...prev, quantity: Number(event.target.value) }))}
-              inputProps={{ min: 1 }}
-              fullWidth
-              disabled={submitting || catalogLoading || catalog.length === 0}
-            />
-
-            <TextField
-              type="date"
-              label="Expired Date"
-              value={importForm.expiredDate}
-              onChange={(event) => setImportForm((prev) => ({ ...prev, expiredDate: event.target.value }))}
-              InputLabelProps={{ shrink: true }}
-              fullWidth
-              disabled={submitting || catalogLoading || catalog.length === 0}
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseImport} disabled={submitting}>Cancel</Button>
-          <Button
-            onClick={() => void handleSubmitImport()}
-            variant="contained"
-            disabled={submitting || catalogLoading || catalog.length === 0 || importForm.materialId <= 0 || importForm.quantity <= 0}
-          >
-            Import
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog open={editOpen} onClose={submitting ? undefined : handleCloseEdit} maxWidth="sm" fullWidth>
-        <DialogTitle>Edit material quantity</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <TextField
-              type="number"
-              label="Quantity"
-              value={editForm.quantity}
-              onChange={(event) => setEditForm((prev) => ({ ...prev, quantity: Number(event.target.value) }))}
-              inputProps={{ min: 0 }}
-              fullWidth
-              disabled={submitting}
-            />
-
-            <TextField
-              type="date"
-              label="Expired Date"
-              value={editForm.expiredDate}
-              onChange={(event) => setEditForm((prev) => ({ ...prev, expiredDate: event.target.value }))}
-              InputLabelProps={{ shrink: true }}
-              fullWidth
-              disabled={submitting}
-            />
-
-            <FormControl fullWidth disabled={submitting}>
-              <InputLabel id="manager-material-status-label">Status</InputLabel>
-              <Select
-                labelId="manager-material-status-label"
-                value={editForm.isActive ? 'active' : 'inactive'}
-                label="Status"
-                onChange={(event) => setEditForm((prev) => ({ ...prev, isActive: event.target.value === 'active' }))}
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleCloseImport} disabled={submitting}>
+                Cancel
+              </Button>
+              <Button
+                onClick={() => void handleSubmitImport()}
+                variant="contained"
+                disabled={
+                  submitting ||
+                  catalogLoading ||
+                  catalog.length === 0 ||
+                  importForm.materialId <= 0 ||
+                  importForm.quantity <= 0
+                }
               >
-                <MenuItem value="active">Active</MenuItem>
-                <MenuItem value="inactive">Inactive</MenuItem>
-              </Select>
-            </FormControl>
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseEdit} disabled={submitting}>Cancel</Button>
-          <Button sx={{backgroundColor: 'var(--primary)'}} onClick={() => void handleSubmitEdit()} variant="contained" disabled={submitting || editForm.quantity < 0}>
-            Save Changes
-          </Button>
-        </DialogActions>
-      </Dialog>
+                Import
+              </Button>
+            </DialogActions>
+          </Dialog>
 
-      <Dialog open={toggleOpen} onClose={submitting ? undefined : handleCloseToggle}>
-        <DialogTitle>Confirm status change</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2">
-            {toggleItem
-              ? `Change status for ${toggleItem.materialName}?`
-              : 'Change status for this nursery material?'}
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseToggle} disabled={submitting}>Cancel</Button>
-          <Button className='bg-primary!' onClick={() => void handleSubmitToggle()} variant="contained" disabled={submitting}>
-            Confirm
-          </Button>
-        </DialogActions>
-      </Dialog>
+          <Dialog open={editOpen} onClose={submitting ? undefined : handleCloseEdit} maxWidth="sm" fullWidth>
+            <DialogTitle>Edit material quantity</DialogTitle>
+            <DialogContent>
+              <Stack spacing={2} sx={{ mt: 1 }}>
+                <TextField
+                  type="number"
+                  label="Quantity"
+                  value={editForm.quantity}
+                  onChange={(event) => setEditForm((prev) => ({ ...prev, quantity: Number(event.target.value) }))}
+                  inputProps={{ min: 0 }}
+                  fullWidth
+                  disabled={submitting}
+                />
+
+                <TextField
+                  type="date"
+                  label="Expired Date"
+                  value={editForm.expiredDate}
+                  onChange={(event) => setEditForm((prev) => ({ ...prev, expiredDate: event.target.value }))}
+                  InputLabelProps={{ shrink: true }}
+                  fullWidth
+                  disabled={submitting}
+                />
+
+                <FormControl fullWidth disabled={submitting}>
+                  <InputLabel id="manager-material-status-label">Status</InputLabel>
+                  <Select
+                    labelId="manager-material-status-label"
+                    value={editForm.isActive ? 'active' : 'inactive'}
+                    label="Status"
+                    onChange={(event) => setEditForm((prev) => ({ ...prev, isActive: event.target.value === 'active' }))}
+                  >
+                    <MenuItem value="active">Active</MenuItem>
+                    <MenuItem value="inactive">Inactive</MenuItem>
+                  </Select>
+                </FormControl>
+              </Stack>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleCloseEdit} disabled={submitting}>
+                Cancel
+              </Button>
+              <Button
+                sx={{ backgroundColor: 'var(--primary)' }}
+                onClick={() => void handleSubmitEdit()}
+                variant="contained"
+                disabled={submitting || editForm.quantity < 0}
+              >
+                Save Changes
+              </Button>
+            </DialogActions>
+          </Dialog>
+
+          <Dialog open={toggleOpen} onClose={submitting ? undefined : handleCloseToggle}>
+            <DialogTitle>Confirm status change</DialogTitle>
+            <DialogContent>
+              <Typography variant="body2">
+                {toggleItem ? `Change status for ${toggleItem.materialName}?` : 'Change status for this nursery material?'}
+              </Typography>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleCloseToggle} disabled={submitting}>
+                Cancel
+              </Button>
+              <Button className="bg-primary!" onClick={() => void handleSubmitToggle()} variant="contained" disabled={submitting}>
+                Confirm
+              </Button>
+            </DialogActions>
+          </Dialog>
+        </>
+      ) : null}
     </Box>
   );
 }

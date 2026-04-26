@@ -230,7 +230,10 @@ export default function WishlistPlantCard({
     setSelectedNurseryId(null);
   };
 
-  const handlePrimaryAction = () => {
+  const handlePrimaryAction = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+
     if (!user?.id) {
       router.push(`/${locale}/login`);
       return;
@@ -367,7 +370,11 @@ export default function WishlistPlantCard({
                   size="medium"
                   fullWidth
                   disabled={isRemoving}
-                  onClick={() => void onRemoveFromWishlist(item.itemType, item.itemId)}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    void onRemoveFromWishlist(item.itemType, item.itemId);
+                  }}
                   sx={cardActionButtonSx}
                 >
                   {tWishlist('removeItem')}

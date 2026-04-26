@@ -8,8 +8,9 @@ import { addItemToCart } from '@/lib/api/cartWishlistService';
 import { notifyCartUpdated } from '@/lib/utils/cartEvents';
 import type { ShopNurseryListItem } from '@/lib/api/shopPlantsService';
 import {
-  analyzeRoomUpload,
+  analyzeRoom,
   generateLayoutImages,
+  uploadRoomImages,
 } from '@/lib/api/aiRecommendationService';
 import type {
   AllergyPlantOption,
@@ -17,6 +18,7 @@ import type {
   GeneratedLayoutImageItem,
   GenerateLayoutImagesPayload,
   RoomPlantRecommendation,
+  RoomViewAngle,
 } from '@/types/ai-recommendation.types';
 import RoomInputCard from './RoomInputCard';
 import RoomAnalysisCard from './RoomAnalysisCard';
@@ -39,11 +41,17 @@ type MessageState = {
 export default function AIPlantRecommendationClient({ userId }: AIPlantRecommendationClientProps) {
   const t = useTranslations('aiRecommendation');
 
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const [imagesByViewAngle, setImagesByViewAngle] = useState<Partial<Record<RoomViewAngle, File>>>({});
+  const [imagePreviewUrlsByViewAngle, setImagePreviewUrlsByViewAngle] = useState<Partial<Record<RoomViewAngle, string>>>(
+    {}
+  );
   const [fengShuiElement, setFengShuiElement] = useState('');
   const [roomType, setRoomType] = useState('LivingRoom');
   const [roomStyle, setRoomStyle] = useState('Minimalist');
+  const [roomArea, setRoomArea] = useState('0');
+  const [lightDirection, setLightDirection] = useState('North');
+  const [dominantDirection, setDominantDirection] = useState('North');
+  const [naturalLightLevel, setNaturalLightLevel] = useState('LowLight');
   const [minBudget, setMinBudget] = useState('0');
   const [maxBudget, setMaxBudget] = useState('0');
   const [careLevelType, setCareLevelType] = useState('Easy');
@@ -65,18 +73,14 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
   const [isMyDesignModalOpen, setIsMyDesignModalOpen] = useState(false);
 
   useEffect(() => {
-    if (!imageFile) {
-      setImagePreviewUrl(null);
-      return;
-    }
-
-    const nextUrl = URL.createObjectURL(imageFile);
-    setImagePreviewUrl(nextUrl);
-
     return () => {
-      URL.revokeObjectURL(nextUrl);
+      Object.values(imagePreviewUrlsByViewAngle).forEach((url) => {
+        if (url) {
+          URL.revokeObjectURL(url);
+        }
+      });
     };
-  }, [imageFile]);
+  }, [imagePreviewUrlsByViewAngle]);
 
   const selectedAllergyIds = useMemo(
     () => selectedAllergies.map((item) => item.plantId),
@@ -99,10 +103,13 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
     return 0;
   }, [analysisResult, generateResult, isAnalyzing, isGenerating]);
 
-  const recommendationsByProductId = useMemo(() => {
+  const recommendationsByAnyId = useMemo(() => {
     const map = new Map<number, RoomPlantRecommendation>();
 
     (analysisResult?.recommendations ?? []).forEach((recommendation) => {
+      if (recommendation.entityId > 0 && !map.has(recommendation.entityId)) {
+        map.set(recommendation.entityId, recommendation);
+      }
       if (recommendation.productId > 0 && !map.has(recommendation.productId)) {
         map.set(recommendation.productId, recommendation);
       }
@@ -116,7 +123,7 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
       return null;
     }
 
-    return recommendationsByProductId.get(item.commonPlantId) ?? null;
+    return recommendationsByAnyId.get(item.commonPlantId) ?? null;
   };
 
   const handleGenerateImages = async (layoutDesignId: number) => {
@@ -135,8 +142,8 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
   };
 
   const handleAnalyze = async () => {
-    if (!imageFile) {
-      setError(t('roomInput.errors.selectImage'));
+    if (!imagesByViewAngle.Front) {
+      setError('Vui lòng upload tối thiểu 1 hình ở góc Front.');
       return;
     }
 
@@ -148,12 +155,24 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
 
     try {
       setIsAnalyzing(true);
-      const result = await analyzeRoomUpload(
+      const uploadPayload = await uploadRoomImages({ imagesByViewAngle }, false, false);
+      const roomImageIds = (uploadPayload?.roomImages ?? []).map((item) => item.roomImageId).filter((id) => id > 0);
+
+      if (roomImageIds.length === 0) {
+        setError('Upload ảnh thất bại hoặc không nhận được roomImageIds.');
+        return;
+      }
+
+      const result = await analyzeRoom(
         {
-          image: imageFile,
+          roomImageIds,
           fengShuiElement: fengShuiElement || undefined,
           roomType,
           roomStyle,
+          roomArea: Number(roomArea) || 0,
+          lightDirection: lightDirection || undefined,
+          dominantDirection: dominantDirection || undefined,
+          naturalLightLevel: naturalLightLevel || undefined,
           minBudget: Number(minBudget) || 0,
           maxBudget: Number(maxBudget) || 0,
           careLevelType: careLevelType || undefined,
@@ -187,7 +206,7 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
     }
   };
 
-  const handleUploadImage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUploadImage = (viewAngle: RoomViewAngle, event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) {
       return;
@@ -204,7 +223,37 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
     }
 
     setError(null);
-    setImageFile(file);
+
+    const nextUrl = URL.createObjectURL(file);
+    setImagesByViewAngle((prev) => ({ ...prev, [viewAngle]: file }));
+    setImagePreviewUrlsByViewAngle((prev) => {
+      const next = { ...prev };
+      const existingUrl = next[viewAngle];
+      if (existingUrl) {
+        URL.revokeObjectURL(existingUrl);
+      }
+      next[viewAngle] = nextUrl;
+      return next;
+    });
+    event.target.value = '';
+  };
+
+  const handleRemoveImage = (viewAngle: RoomViewAngle) => {
+    setImagesByViewAngle((prev) => {
+      const next = { ...prev };
+      delete next[viewAngle];
+      return next;
+    });
+
+    setImagePreviewUrlsByViewAngle((prev) => {
+      const next = { ...prev };
+      const existingUrl = next[viewAngle];
+      if (existingUrl) {
+        URL.revokeObjectURL(existingUrl);
+      }
+      delete next[viewAngle];
+      return next;
+    });
   };
 
   const handleAddGeneratedPlantToCart = async (item: GeneratedLayoutImageItem) => {
@@ -273,11 +322,15 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
       )}
 
       <RoomInputCard
-        imageFile={imageFile}
-        imagePreviewUrl={imagePreviewUrl}
+        imagesByViewAngle={imagesByViewAngle}
+        imagePreviewUrlsByViewAngle={imagePreviewUrlsByViewAngle}
         fengShuiElement={fengShuiElement}
         roomType={roomType}
         roomStyle={roomStyle}
+        roomArea={roomArea}
+        lightDirection={lightDirection}
+        dominantDirection={dominantDirection}
+        naturalLightLevel={naturalLightLevel}
         minBudget={minBudget}
         maxBudget={maxBudget}
         careLevelType={careLevelType}
@@ -290,9 +343,14 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
         isAnalyzing={isAnalyzing}
         error={error}
         onUploadImage={handleUploadImage}
+        onRemoveImage={handleRemoveImage}
         onFengShuiChange={setFengShuiElement}
         onRoomTypeChange={setRoomType}
         onRoomStyleChange={setRoomStyle}
+        onRoomAreaChange={setRoomArea}
+        onLightDirectionChange={setLightDirection}
+        onDominantDirectionChange={setDominantDirection}
+        onNaturalLightLevelChange={setNaturalLightLevel}
         onMinBudgetChange={setMinBudget}
         onMaxBudgetChange={setMaxBudget}
         onCareLevelChange={setCareLevelType}
@@ -309,8 +367,10 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
       {isAnalyzing && !analysisResult && (
         <Card sx={{ mb: 3, boxShadow: 2 }}>
           <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <CustomLoading size={20} />
+            <Box className='flex items-center gap-2 w-fit'>
+            <Box sx={{ width: 30, height: 30, display: 'flex', flexShrink: 0, alignItems: 'center', justifyContent: 'center', overflow: 'visible' }}>                
+              <CustomLoading size={26} />
+              </Box>
               <Typography variant="body2" color="text.secondary">
                 {t('roomInput.analyzingButton')}
               </Typography>

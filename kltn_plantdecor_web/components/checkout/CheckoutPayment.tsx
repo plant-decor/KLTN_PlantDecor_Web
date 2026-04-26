@@ -20,11 +20,12 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import type { CheckoutData } from '@/types/cart.types';
 import type { OrderInvoice, OrderCreatePayload } from '@/types/order.types';
 import { createPaymentUrl } from '@/lib/api/orderService';
 import Image from 'next/image';
+import { formatCurrency } from '@/lib/utils/formatUtil';
 
 interface CheckoutPaymentProps {
   checkoutData: CheckoutData;
@@ -55,7 +56,6 @@ export default function CheckoutPayment({
   createdOrder,
   invoices,
 }: CheckoutPaymentProps) {
-  const locale = useLocale();
   const tCheckout = useTranslations('checkout');
   const [selectedMethod, setSelectedMethod] = useState(() => {
     const fromCheckout = checkoutData.paymentMethod;
@@ -83,9 +83,6 @@ export default function CheckoutPayment({
     price: item.price,
     lineTotal: item.quantity * item.price,
   }));
-
-  const money = (n: number) =>
-    new Intl.NumberFormat(locale, { style: 'currency', currency: 'VND' }).format(n);
 
   const handlePaymentMethodChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newMethod = e.target.value;
@@ -182,12 +179,12 @@ export default function CheckoutPayment({
                       </TableCell>
                       <TableCell align="right">
                         <Typography variant="body2" sx={{ fontVariantNumeric: 'tabular-nums' }}>
-                          {money(item.price)}
+                          {formatCurrency(item.price, 'vi-VN')}
                         </Typography>
                       </TableCell>
                       <TableCell align="right">
                         <Typography variant="body2" sx={{ fontVariantNumeric: 'tabular-nums' }}>
-                          {money(item.lineTotal)}
+                          {formatCurrency(item.lineTotal, 'vi-VN')}
                         </Typography>
                       </TableCell>
                     </TableRow>
@@ -253,7 +250,7 @@ export default function CheckoutPayment({
                           variant="body2"
                           sx={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}
                         >
-                          {money(createdOrder.totalAmount)}
+                          {formatCurrency(createdOrder.totalAmount, 'vi-VN')}
                         </Typography>
                       </TableCell>
                     </TableRow>
@@ -270,7 +267,7 @@ export default function CheckoutPayment({
                             color="text.secondary"
                             sx={{ fontVariantNumeric: 'tabular-nums' }}
                           >
-                            {money(createdOrder.depositAmount)}
+                            {formatCurrency(createdOrder.depositAmount, 'vi-VN')}
                           </Typography>
                         </TableCell>
                       </TableRow>
@@ -288,7 +285,7 @@ export default function CheckoutPayment({
                             color="text.secondary"
                             sx={{ fontVariantNumeric: 'tabular-nums' }}
                           >
-                            {money(createdOrder.remainingAmount)}
+                            {formatCurrency(createdOrder.remainingAmount, 'vi-VN')}
                           </Typography>
                         </TableCell>
                       </TableRow>
@@ -307,7 +304,7 @@ export default function CheckoutPayment({
                           component="p"
                           sx={{ fontWeight: 800, fontVariantNumeric: 'tabular-nums', lineHeight: 1.3 }}
                         >
-                          {money(selectedInvoice.totalAmount)}
+                          {formatCurrency(selectedInvoice.totalAmount, 'vi-VN')}
                         </Typography>
                       </TableCell>
                     </TableRow>

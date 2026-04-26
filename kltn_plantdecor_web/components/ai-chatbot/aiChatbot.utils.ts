@@ -30,15 +30,28 @@ export const mapHistoryMessages = (
   messages: AIChatHistoryMessage[] | undefined | null,
 ): ChatMessageView[] => {
   if (!Array.isArray(messages)) return [];
-  return messages.map((m) => ({
-    id: m.messageId,
-    role:
-      m.role === "assistant" || m.role === "system" || m.role === "user"
-        ? (m.role as AIChatMessageRole)
-        : "assistant",
-    content: m.content,
-    createdAt: m.createdAt,
-  }));
+  return messages.map((m) => {
+    const suggestedPlants = Array.isArray(m.suggestedPlants)
+      ? m.suggestedPlants
+      : null;
+    const careTips = Array.isArray(m.careTips) ? m.careTips : null;
+    const followUpQuestions = Array.isArray(m.followUpQuestions)
+      ? m.followUpQuestions
+      : null;
+
+    return {
+      id: m.messageId,
+      role:
+        m.role === "assistant" || m.role === "system" || m.role === "user"
+          ? (m.role as AIChatMessageRole)
+          : "assistant",
+      content: m.content,
+      createdAt: m.createdAt,
+      suggestedPlants,
+      careTips,
+      followUpQuestions,
+    };
+  });
 };
 
 export const mergeHistoryWithLocal = (

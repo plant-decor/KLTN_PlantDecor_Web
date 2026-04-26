@@ -47,9 +47,9 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
   const [roomType, setRoomType] = useState('LivingRoom');
   const [roomStyle, setRoomStyle] = useState('Minimalist');
   const [roomArea, setRoomArea] = useState('0');
-  const [lightDirection, setLightDirection] = useState('North');
-  const [dominantDirection, setDominantDirection] = useState('North');
-  const [naturalLightLevel, setNaturalLightLevel] = useState('LowLight');
+  const [lightDirection, setLightDirection] = useState('');
+  const [dominantDirection, setDominantDirection] = useState('');
+  const [naturalLightLevel, setNaturalLightLevel] = useState('');
   const [minBudget, setMinBudget] = useState('0');
   const [maxBudget, setMaxBudget] = useState('0');
   const [careLevelType, setCareLevelType] = useState('Easy');

@@ -18,6 +18,7 @@ import {
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import type { Category } from '@/data/storeCatalogData';
+import { getCategoryEnums, type CategoryEnumValue } from '@/lib/api/categoriesService';
 
 interface ParentCategoryOption {
   id: number;
@@ -55,6 +56,7 @@ export default function CategoryModal({
 }: CategoryModalProps) {
   const [formData, setFormData] = useState<Category>(getDefaultFormData);
   const [saving, setSaving] = useState(false);
+  const [categoryTypeOptions, setCategoryTypeOptions] = useState<CategoryEnumValue[]>([]);
 
   useEffect(() => {
     if (!open) {
@@ -71,6 +73,48 @@ export default function CategoryModal({
     }
 
     setFormData(getDefaultFormData());
+  }, [open, category]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchEnums = async () => {
+      try {
+        const res = await getCategoryEnums(false);
+        const groups = res.payload ?? res.data;
+        const categoryTypeGroup = Array.isArray(groups)
+          ? groups.find((g) => g?.enumName === 'CategoryType')
+          : undefined;
+
+        const values = Array.isArray(categoryTypeGroup?.values) ? categoryTypeGroup.values : [];
+        if (cancelled) {
+          return;
+        }
+
+        setCategoryTypeOptions(values);
+
+        // Default to first enum value when creating a new category.
+        setFormData((prev) => {
+          if (category || prev.categoryType !== 0 || values.length === 0) {
+            return prev;
+          }
+          return { ...prev, categoryType: values[0]!.value };
+        });
+      } catch {
+        if (!cancelled) {
+          setCategoryTypeOptions([]);
+        }
+      }
+    };
+
+    fetchEnums();
+    return () => {
+      cancelled = true;
+    };
   }, [open, category]);
 
   const selectableParentCategories = useMemo(
@@ -117,6 +161,14 @@ export default function CategoryModal({
     setFormData((prev) => ({
       ...prev,
       parentCategoryId: value === '' ? null : Number(value),
+    }));
+  };
+
+  const handleCategoryTypeChange = (event: SelectChangeEvent<string>) => {
+    const value = event.target.value;
+    setFormData((prev) => ({
+      ...prev,
+      categoryType: value === '' ? 0 : Number(value),
     }));
   };
 
@@ -183,14 +235,24 @@ export default function CategoryModal({
             Parent category must have the same category type.
           </FormHelperText>
         </FormControl>
-        <TextField
-          label="Category Type"
-          name="categoryType"
-          type="number"
-          value={formData.categoryType || 0}
-          onChange={handleChange}
-          fullWidth
-        />
+        <FormControl fullWidth>
+          <InputLabel id="category-type-label">Category Type</InputLabel>
+          <Select
+            labelId="category-type-label"
+            label="Category Type"
+            value={formData.categoryType === 0 ? '' : String(formData.categoryType)}
+            onChange={handleCategoryTypeChange}
+          >
+            {categoryTypeOptions.map((opt) => (
+              <MenuItem key={opt.value} value={String(opt.value)}>
+                {opt.name}
+              </MenuItem>
+            ))}
+          </Select>
+          <FormHelperText>
+            Chọn loại danh mục (Plant/Material/Combo).
+          </FormHelperText>
+        </FormControl>
         <FormControlLabel
           control={
             <Checkbox

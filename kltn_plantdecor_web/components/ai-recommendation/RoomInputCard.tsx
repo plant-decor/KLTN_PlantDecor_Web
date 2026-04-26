@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { useTranslations } from 'next-intl';
 import {
   Alert,
   Autocomplete,
@@ -27,7 +26,7 @@ import { getRoomDesignEnums, searchShopNurseries, type PlantEnumValue, type Shop
 import { getAllergyPlants } from '@/lib/api/aiRecommendationService';
 import type { AllergyPlantOption, RoomViewAngle } from '@/types/ai-recommendation.types';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
-import { localizeRoomDesignEnumLabel } from '@/lib/utils/roomDesignEnumI18n';
+import { formatCurrencyInput } from '@/lib/utils/formatUtil';
 import ClickableImageViewer from '../image-view/ClickableImageViewer';
 import { CustomLoading } from '../CustomLoading';
 
@@ -36,6 +35,7 @@ const MAX_VISIBLE_ITEMS = 6;
 
 const CARE_LEVEL_OPTIONS = ['', 'Easy', 'Medium', 'Hard', 'Expert'];
 const ROOM_VIEW_ANGLES: RoomViewAngle[] = ['Front', 'Left', 'Right', 'Back'];
+const INITIAL_VIEW_ANGLES: RoomViewAngle[] = ['Front'];
 
 type RoomDesignEnumMap = {
   roomTypes: PlantEnumValue[];
@@ -151,8 +151,6 @@ export default function RoomInputCard({
   onAnalyze,
   onErrorDismiss,
 }: RoomInputCardProps) {
-  const t = useTranslations('aiRecommendation.roomInput');
-  const tRoomDesignEnum = useTranslations('roomDesignEnums');
   const [enumLoading, setEnumLoading] = useState(false);
   const [enumMap, setEnumMap] = useState<RoomDesignEnumMap>(() =>
     resolveEnumMap([])
@@ -293,11 +291,28 @@ export default function RoomInputCard({
     onSelectedAllergiesChange(newAllergies);
   };
 
+  const humanizeEnumName = (value: string) => {
+    if (!value) return value;
+    const withSpaces = value
+      .replace(/_/g, ' ')
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .replace(/\s+/g, ' ')
+      .trim();
+    return withSpaces.charAt(0).toUpperCase() + withSpaces.slice(1);
+  };
+
+  const viewAnglesToRender = useMemo<RoomViewAngle[]>(() => {
+    if (imagesByViewAngle.Front) {
+      return ROOM_VIEW_ANGLES;
+    }
+    return INITIAL_VIEW_ANGLES;
+  }, [imagesByViewAngle.Front]);
+
   return (
     <Card sx={{ mb: 3, boxShadow: 2 }}>
       <CardContent>
         <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
-          {t('title')}
+          1) Room input and preferences
         </Typography>
 
         {error && (
@@ -309,10 +324,10 @@ export default function RoomInputCard({
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
           <Box sx={{ gridColumn: { xs: '1 / -1', md: '1 / -1' } }}>
             <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1 }}>
-              {t('uploadImageButtonLabel')} (Front bắt buộc)
+              Upload room image (Front required)
             </Typography>
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 1.5 }}>
-              {ROOM_VIEW_ANGLES.map((angle) => {
+              {viewAnglesToRender.map((angle) => {
                 const file = imagesByViewAngle[angle];
                 return (
                   <Stack key={angle} direction="row" spacing={1} alignItems="center">
@@ -337,7 +352,7 @@ export default function RoomInputCard({
                       onClick={() => onRemoveImage(angle)}
                       sx={{ minWidth: 88, ...hoverLiftStyle }}
                     >
-                      Xóa
+                      Remove
                     </Button>
                   </Stack>
                 );
@@ -346,7 +361,7 @@ export default function RoomInputCard({
           </Box>
 
           <TextField
-            label={t('fengShuiElement')}
+            label="Feng Shui element"
             value={fengShuiElement}
             onChange={(event) => onFengShuiChange(event.target.value)}
             select
@@ -356,13 +371,13 @@ export default function RoomInputCard({
             <MenuItem value="">{'--'}</MenuItem>
             {enumMap.fengShuiElements.map((option) => (
               <MenuItem key={option.value} value={option.name}>
-                {localizeRoomDesignEnumLabel(option.name, tRoomDesignEnum, 'FengShuiElement')}
+                {humanizeEnumName(option.name)}
               </MenuItem>
             ))}
           </TextField>
 
           <TextField
-            label={t('roomType')}
+            label="Room type"
             value={roomType}
             onChange={(event) => onRoomTypeChange(event.target.value)}
             select
@@ -372,13 +387,13 @@ export default function RoomInputCard({
           >
             {enumMap.roomTypes.map((option) => (
               <MenuItem key={option.value} value={option.name}>
-                {localizeRoomDesignEnumLabel(option.name, tRoomDesignEnum, 'RoomType')}
+                {humanizeEnumName(option.name)}
               </MenuItem>
             ))}
           </TextField>
 
           <TextField
-            label={t('roomStyle')}
+            label="Room style"
             value={roomStyle}
             onChange={(event) => onRoomStyleChange(event.target.value)}
             select
@@ -388,13 +403,13 @@ export default function RoomInputCard({
           >
             {enumMap.roomStyles.map((option) => (
               <MenuItem key={option.value} value={option.name}>
-                {localizeRoomDesignEnumLabel(option.name, tRoomDesignEnum, 'RoomStyle')}
+                {humanizeEnumName(option.name)}
               </MenuItem>
             ))}
           </TextField>
 
           <TextField
-            label="Diện tích phòng (m²)"
+            label="Room area (m²)"
             value={roomArea}
             onChange={(event) => onRoomAreaChange(event.target.value)}
             type="number"
@@ -403,7 +418,7 @@ export default function RoomInputCard({
           />
 
           <TextField
-            label="Hướng ánh sáng"
+            label="Light direction"
             value={lightDirection}
             onChange={(event) => onLightDirectionChange(event.target.value)}
             select
@@ -412,13 +427,13 @@ export default function RoomInputCard({
           >
             {enumMap.lightDirections.map((option) => (
               <MenuItem key={option.value} value={option.name}>
-                {localizeRoomDesignEnumLabel(option.name, tRoomDesignEnum, 'LightDirection')}
+                {humanizeEnumName(option.name)}
               </MenuItem>
             ))}
           </TextField>
 
           <TextField
-            label="Hướng chủ đạo"
+            label="Dominant direction"
             value={dominantDirection}
             onChange={(event) => onDominantDirectionChange(event.target.value)}
             select
@@ -427,13 +442,13 @@ export default function RoomInputCard({
           >
             {enumMap.dominantDirections.map((option) => (
               <MenuItem key={option.value} value={option.name}>
-                {localizeRoomDesignEnumLabel(option.name, tRoomDesignEnum, 'DominantDirection')}
+                {humanizeEnumName(option.name)}
               </MenuItem>
             ))}
           </TextField>
 
           <TextField
-            label="Mức ánh sáng tự nhiên"
+            label="Natural light level"
             value={naturalLightLevel}
             onChange={(event) => onNaturalLightLevelChange(event.target.value)}
             select
@@ -442,29 +457,31 @@ export default function RoomInputCard({
           >
             {enumMap.lightRequirements.map((option) => (
               <MenuItem key={option.value} value={option.name}>
-                {localizeRoomDesignEnumLabel(option.name, tRoomDesignEnum, 'LightRequirement')}
+                {humanizeEnumName(option.name)}
               </MenuItem>
             ))}
           </TextField>
 
           <TextField
-            label={t('minBudget')}
+            label="Min budget"
             value={minBudget}
-            onChange={(event) => onMinBudgetChange(event.target.value)}
-            type="number"
+            onChange={(event) => onMinBudgetChange(formatCurrencyInput(event.target.value, 'en'))}
+            type="text"
             fullWidth
+            inputProps={{ inputMode: 'numeric' }}
           />
 
           <TextField
-            label={t('maxBudget')}
+            label="Max budget"
             value={maxBudget}
-            onChange={(event) => onMaxBudgetChange(event.target.value)}
-            type="number"
+            onChange={(event) => onMaxBudgetChange(formatCurrencyInput(event.target.value, 'en'))}
+            type="text"
             fullWidth
+            inputProps={{ inputMode: 'numeric' }}
           />
 
           <TextField
-            label={t('careLevel')}
+            label="Care level"
             value={careLevelType}
             onChange={(event) => onCareLevelChange(event.target.value)}
             select
@@ -489,8 +506,8 @@ export default function RoomInputCard({
             renderInput={(params) => (
               <TextField
                 {...params}
-                label={t('nurseries')}
-                placeholder={t('nurseriesPlaceholder')}
+                label="Preferred nurseries (optional)"
+                placeholder="Select one or more nurseries"
               />
             )}
             renderTags={(value, getTagProps) =>
@@ -503,7 +520,7 @@ export default function RoomInputCard({
 
         {Object.keys(imagePreviewUrlsByViewAngle).length > 0 && (
           <Box sx={{ mt: 2, display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
-            {ROOM_VIEW_ANGLES.map((angle) => {
+            {viewAnglesToRender.map((angle) => {
               const url = imagePreviewUrlsByViewAngle[angle];
               if (!url) {
                 return null;
@@ -541,22 +558,22 @@ export default function RoomInputCard({
                 }}
               />
             }
-            label={t('hasAllergy')}
+            label="Has allergy"
           />
           <FormControlLabel
             control={<Switch checked={petSafe} onChange={(event) => onPetSafeChange(event.target.checked)} />}
-            label={t('petSafe')}
+            label="Pet safe"
           />
           <FormControlLabel
             control={<Switch checked={childSafe} onChange={(event) => onChildSafeChange(event.target.checked)} />}
-            label={t('childSafe')}
+            label="Child safe"
           />
         </Stack>
 
         {hasAllergy && (
           <Box sx={{ mt: 2 }}>
             <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>
-              {t('allergyPlantsTitle')}
+              Allergy plants
             </Typography>
 
             <ClickAwayListener onClickAway={() => setAllergyOpen(false)}>
@@ -569,7 +586,7 @@ export default function RoomInputCard({
                     setAllergyKeyword(event.target.value);
                     setAllergyOpen(true);
                   }}
-                  placeholder={t('allergySearchPlaceholder')}
+                  placeholder="Search allergy plants"
                   slotProps={{
                     input: {
                       startAdornment: (
@@ -621,7 +638,7 @@ export default function RoomInputCard({
                       {noAllergyResults && (
                         <Box sx={{ p: 1.5 }}>
                           <Typography variant="body2" color="text.secondary">
-                            {t('noAllergyResults')}
+                            No matching plants
                           </Typography>
                         </Box>
                       )}
@@ -648,8 +665,8 @@ export default function RoomInputCard({
               fullWidth
               multiline
               rows={2}
-              label={t('allergyNote')}
-              placeholder={t('allergyNotePlaceholder')}
+              label="Allergy note"
+              placeholder="Describe allergy details (optional)"
               value={allergyNote}
               onChange={(event) => onAllergyNoteChange(event.target.value)}
             />
@@ -663,7 +680,7 @@ export default function RoomInputCard({
             disabled={isAnalyzing || !imagesByViewAngle.Front || !roomType.trim() || !roomStyle.trim()}
             sx={{ px: 3, py: 1.2, fontWeight: 'bold', ...hoverLiftStyle, backgroundColor: 'var(--primary)' }}
           >
-            {isAnalyzing ? <> <CustomLoading size={22} /> {t('analyzingButton')} </> : t('analyzeButton')}
+            {isAnalyzing ? <> <CustomLoading size={22} /> Analyzing room... </> : 'Analyze and recommend'}
           </Button>
         </Box>
       </CardContent>

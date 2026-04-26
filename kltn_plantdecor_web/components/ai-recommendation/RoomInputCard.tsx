@@ -23,9 +23,9 @@ import {
   Typography,
 } from '@mui/material';
 import { Search as SearchIcon, CloudUpload as CloudUploadIcon } from '@mui/icons-material';
-import { searchShopNurseries, type ShopNurseryListItem } from '@/lib/api/shopPlantsService';
+import { getRoomDesignEnums, searchShopNurseries, type PlantEnumValue, type ShopNurseryListItem } from '@/lib/api/shopPlantsService';
 import { getAllergyPlants } from '@/lib/api/aiRecommendationService';
-import type { AllergyPlantOption } from '@/types/ai-recommendation.types';
+import type { AllergyPlantOption, RoomViewAngle } from '@/types/ai-recommendation.types';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 import { localizeRoomDesignEnumLabel } from '@/lib/utils/roomDesignEnumI18n';
 import ClickableImageViewer from '../image-view/ClickableImageViewer';
@@ -34,46 +34,48 @@ import { CustomLoading } from '../CustomLoading';
 const SEARCH_DEBOUNCE_MS = 300;
 const MAX_VISIBLE_ITEMS = 6;
 
-const FENG_SHUI_OPTIONS = [
-  { value: '', label: '--' },
-  { value: 'Kim', label: 'Kim' },
-  { value: 'Moc', label: 'Mộc' },
-  { value: 'Thuy', label: 'Thủy' },
-  { value: 'Hoa', label: 'Hỏa' },
-  { value: 'Tho', label: 'Thổ' },
-];
-
-const ROOM_TYPE_OPTIONS = [
-  'LivingRoom',
-  'Bedroom',
-  'Kitchen',
-  'Bathroom',
-  'HomeOffice',
-  'Balcony',
-  'Corridor',
-  'DiningRoom',
-];
-
-const ROOM_STYLE_OPTIONS = [
-  'Minimalist',
-  'Scandinavian',
-  'Tropical',
-  'Industrial',
-  'Bohemian',
-  'Modern',
-  'Japanese',
-  'Mediterranean',
-  'Rustic',
-];
-
 const CARE_LEVEL_OPTIONS = ['', 'Easy', 'Medium', 'Hard', 'Expert'];
+const ROOM_VIEW_ANGLES: RoomViewAngle[] = ['Front', 'Left', 'Right', 'Back'];
+
+type RoomDesignEnumMap = {
+  roomTypes: PlantEnumValue[];
+  roomStyles: PlantEnumValue[];
+  lightRequirements: PlantEnumValue[];
+  lightDirections: PlantEnumValue[];
+  dominantDirections: PlantEnumValue[];
+  roomViewAngles: PlantEnumValue[];
+  fengShuiElements: PlantEnumValue[];
+};
+
+const resolveEnumMap = (groups: Array<{ enumName: string; values: PlantEnumValue[] }>): RoomDesignEnumMap => {
+  const map = new Map<string, PlantEnumValue[]>();
+  groups.forEach((group) => {
+    if (group?.enumName) {
+      map.set(group.enumName, Array.isArray(group.values) ? group.values : []);
+    }
+  });
+
+  return {
+    roomTypes: map.get('RoomType') ?? [],
+    roomStyles: map.get('RoomStyle') ?? [],
+    lightRequirements: map.get('LightRequirement') ?? [],
+    lightDirections: map.get('LightDirection') ?? [],
+    dominantDirections: map.get('DominantDirection') ?? [],
+    roomViewAngles: map.get('RoomViewAngle') ?? [],
+    fengShuiElements: map.get('FengShuiElement') ?? [],
+  };
+};
 
 interface RoomInputCardProps {
-  imageFile: File | null;
-  imagePreviewUrl: string | null;
+  imagesByViewAngle: Partial<Record<RoomViewAngle, File>>;
+  imagePreviewUrlsByViewAngle: Partial<Record<RoomViewAngle, string>>;
   fengShuiElement: string;
   roomType: string;
   roomStyle: string;
+  roomArea: string;
+  lightDirection: string;
+  dominantDirection: string;
+  naturalLightLevel: string;
   minBudget: string;
   maxBudget: string;
   careLevelType: string;
@@ -85,10 +87,15 @@ interface RoomInputCardProps {
   selectedNurseries: ShopNurseryListItem[];
   isAnalyzing: boolean;
   error: string | null;
-  onUploadImage: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onUploadImage: (viewAngle: RoomViewAngle, event: React.ChangeEvent<HTMLInputElement>) => void;
+  onRemoveImage: (viewAngle: RoomViewAngle) => void;
   onFengShuiChange: (value: string) => void;
   onRoomTypeChange: (value: string) => void;
   onRoomStyleChange: (value: string) => void;
+  onRoomAreaChange: (value: string) => void;
+  onLightDirectionChange: (value: string) => void;
+  onDominantDirectionChange: (value: string) => void;
+  onNaturalLightLevelChange: (value: string) => void;
   onMinBudgetChange: (value: string) => void;
   onMaxBudgetChange: (value: string) => void;
   onCareLevelChange: (value: string) => void;
@@ -103,11 +110,15 @@ interface RoomInputCardProps {
 }
 
 export default function RoomInputCard({
-  imageFile,
-  imagePreviewUrl,
+  imagesByViewAngle,
+  imagePreviewUrlsByViewAngle,
   fengShuiElement,
   roomType,
   roomStyle,
+  roomArea,
+  lightDirection,
+  dominantDirection,
+  naturalLightLevel,
   minBudget,
   maxBudget,
   careLevelType,
@@ -120,9 +131,14 @@ export default function RoomInputCard({
   isAnalyzing,
   error,
   onUploadImage,
+  onRemoveImage,
   onFengShuiChange,
   onRoomTypeChange,
   onRoomStyleChange,
+  onRoomAreaChange,
+  onLightDirectionChange,
+  onDominantDirectionChange,
+  onNaturalLightLevelChange,
   onMinBudgetChange,
   onMaxBudgetChange,
   onCareLevelChange,
@@ -137,7 +153,10 @@ export default function RoomInputCard({
 }: RoomInputCardProps) {
   const t = useTranslations('aiRecommendation.roomInput');
   const tRoomDesignEnum = useTranslations('roomDesignEnums');
-  const [imagePreviewUrlLocal, setImagePreviewUrl] = useState<string | null>(null);
+  const [enumLoading, setEnumLoading] = useState(false);
+  const [enumMap, setEnumMap] = useState<RoomDesignEnumMap>(() =>
+    resolveEnumMap([])
+  );
   const [nurseryLoading, setNurseryLoading] = useState(false);
   const [nurseryOptions, setNurseryOptions] = useState<ShopNurseryListItem[]>([]);
 
@@ -147,12 +166,36 @@ export default function RoomInputCard({
   const [allergyOptions, setAllergyOptions] = useState<AllergyPlantOption[]>([]);
 
   useEffect(() => {
-    if (!imagePreviewUrl) {
-      setImagePreviewUrl(null);
-      return;
-    }
-    setImagePreviewUrl(imagePreviewUrl);
-  }, [imagePreviewUrl]);
+    let active = true;
+
+    const loadEnums = async () => {
+      try {
+        setEnumLoading(true);
+        const response = await getRoomDesignEnums(false, false).catch(() => null);
+        if (!active) {
+          return;
+        }
+        const payload = (response?.payload ?? response?.data ?? []) as Array<{ enumName: string; values: PlantEnumValue[] }>;
+        setEnumMap(resolveEnumMap(Array.isArray(payload) ? payload : []));
+      } catch (fetchError) {
+        if (!active) {
+          return;
+        }
+        console.error('Failed to fetch room design enums:', fetchError);
+        setEnumMap(resolveEnumMap([]));
+      } finally {
+        if (active) {
+          setEnumLoading(false);
+        }
+      }
+    };
+
+    void loadEnums();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -264,15 +307,43 @@ export default function RoomInputCard({
         )}
 
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
-          <Button
-            component="label"
-            variant="outlined"
-            startIcon={<CloudUploadIcon />}
-            sx={{ justifyContent: 'flex-start', ...hoverLiftStyle }}
-          >
-            {imageFile ? imageFile.name : t('uploadImageButtonLabel')}
-            <input hidden type="file" accept="image/jpeg,image/jpg,image/png,image/heif" onChange={onUploadImage} />
-          </Button>
+          <Box sx={{ gridColumn: { xs: '1 / -1', md: '1 / -1' } }}>
+            <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1 }}>
+              {t('uploadImageButtonLabel')} (Front bắt buộc)
+            </Typography>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 1.5 }}>
+              {ROOM_VIEW_ANGLES.map((angle) => {
+                const file = imagesByViewAngle[angle];
+                return (
+                  <Stack key={angle} direction="row" spacing={1} alignItems="center">
+                    <Button
+                      component="label"
+                      variant="outlined"
+                      startIcon={<CloudUploadIcon />}
+                      sx={{ justifyContent: 'flex-start', flex: 1, ...hoverLiftStyle }}
+                    >
+                      {file ? `${angle}: ${file.name}` : `${angle}: Upload`}
+                      <input
+                        hidden
+                        type="file"
+                        accept="image/jpeg,image/jpg,image/png,image/heif"
+                        onChange={(event) => onUploadImage(angle, event)}
+                      />
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      disabled={!file}
+                      onClick={() => onRemoveImage(angle)}
+                      sx={{ minWidth: 88, ...hoverLiftStyle }}
+                    >
+                      Xóa
+                    </Button>
+                  </Stack>
+                );
+              })}
+            </Box>
+          </Box>
 
           <TextField
             label={t('fengShuiElement')}
@@ -280,10 +351,12 @@ export default function RoomInputCard({
             onChange={(event) => onFengShuiChange(event.target.value)}
             select
             fullWidth
+            disabled={enumLoading}
           >
-            {FENG_SHUI_OPTIONS.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
+            <MenuItem value="">{'--'}</MenuItem>
+            {enumMap.fengShuiElements.map((option) => (
+              <MenuItem key={option.value} value={option.name}>
+                {localizeRoomDesignEnumLabel(option.name, tRoomDesignEnum, 'FengShuiElement')}
               </MenuItem>
             ))}
           </TextField>
@@ -295,10 +368,11 @@ export default function RoomInputCard({
             select
             fullWidth
             required
+            disabled={enumLoading}
           >
-            {ROOM_TYPE_OPTIONS.map((option) => (
-              <MenuItem key={option} value={option}>
-                {localizeRoomDesignEnumLabel(option, tRoomDesignEnum, 'RoomType')}
+            {enumMap.roomTypes.map((option) => (
+              <MenuItem key={option.value} value={option.name}>
+                {localizeRoomDesignEnumLabel(option.name, tRoomDesignEnum, 'RoomType')}
               </MenuItem>
             ))}
           </TextField>
@@ -310,10 +384,65 @@ export default function RoomInputCard({
             select
             fullWidth
             required
+            disabled={enumLoading}
           >
-            {ROOM_STYLE_OPTIONS.map((option) => (
-              <MenuItem key={option} value={option}>
-                {localizeRoomDesignEnumLabel(option, tRoomDesignEnum, 'RoomStyle')}
+            {enumMap.roomStyles.map((option) => (
+              <MenuItem key={option.value} value={option.name}>
+                {localizeRoomDesignEnumLabel(option.name, tRoomDesignEnum, 'RoomStyle')}
+              </MenuItem>
+            ))}
+          </TextField>
+
+          <TextField
+            label="Diện tích phòng (m²)"
+            value={roomArea}
+            onChange={(event) => onRoomAreaChange(event.target.value)}
+            type="number"
+            fullWidth
+            inputProps={{ step: '0.1', min: 0 }}
+          />
+
+          <TextField
+            label="Hướng ánh sáng"
+            value={lightDirection}
+            onChange={(event) => onLightDirectionChange(event.target.value)}
+            select
+            fullWidth
+            disabled={enumLoading}
+          >
+            {enumMap.lightDirections.map((option) => (
+              <MenuItem key={option.value} value={option.name}>
+                {localizeRoomDesignEnumLabel(option.name, tRoomDesignEnum, 'LightDirection')}
+              </MenuItem>
+            ))}
+          </TextField>
+
+          <TextField
+            label="Hướng chủ đạo"
+            value={dominantDirection}
+            onChange={(event) => onDominantDirectionChange(event.target.value)}
+            select
+            fullWidth
+            disabled={enumLoading}
+          >
+            {enumMap.dominantDirections.map((option) => (
+              <MenuItem key={option.value} value={option.name}>
+                {localizeRoomDesignEnumLabel(option.name, tRoomDesignEnum, 'DominantDirection')}
+              </MenuItem>
+            ))}
+          </TextField>
+
+          <TextField
+            label="Mức ánh sáng tự nhiên"
+            value={naturalLightLevel}
+            onChange={(event) => onNaturalLightLevelChange(event.target.value)}
+            select
+            fullWidth
+            disabled={enumLoading}
+          >
+            {enumMap.lightRequirements.map((option) => (
+              <MenuItem key={option.value} value={option.name}>
+                {localizeRoomDesignEnumLabel(option.name, tRoomDesignEnum, 'LightRequirement')}
               </MenuItem>
             ))}
           </TextField>
@@ -372,14 +501,29 @@ export default function RoomInputCard({
           />
         </Box>
 
-        {imagePreviewUrlLocal && (
-          <ClickableImageViewer
-            images={[imagePreviewUrlLocal]}
-            alt="Uploaded room"
-            containerClassName=""
-            className="object-cover"
-            showZoomHint={true}
-          />
+        {Object.keys(imagePreviewUrlsByViewAngle).length > 0 && (
+          <Box sx={{ mt: 2, display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
+            {ROOM_VIEW_ANGLES.map((angle) => {
+              const url = imagePreviewUrlsByViewAngle[angle];
+              if (!url) {
+                return null;
+              }
+              return (
+                <Box key={angle}>
+                  <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 0.75 }}>
+                    {angle}
+                  </Typography>
+                  <ClickableImageViewer
+                    images={[url]}
+                    alt={`Uploaded room ${angle}`}
+                    containerClassName=""
+                    className="object-cover"
+                    showZoomHint={true}
+                  />
+                </Box>
+              );
+            })}
+          </Box>
         )}
 
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mt: 2 }}>
@@ -516,10 +660,10 @@ export default function RoomInputCard({
           <Button
             variant="contained"
             onClick={onAnalyze}
-            disabled={isAnalyzing || !imageFile || !roomType.trim() || !roomStyle.trim()}
+            disabled={isAnalyzing || !imagesByViewAngle.Front || !roomType.trim() || !roomStyle.trim()}
             sx={{ px: 3, py: 1.2, fontWeight: 'bold', ...hoverLiftStyle, backgroundColor: 'var(--primary)' }}
           >
-            {isAnalyzing ? t('analyzingButton') : t('analyzeButton')}
+            {isAnalyzing ? <> <CustomLoading size={22} /> {t('analyzingButton')} </> : t('analyzeButton')}
           </Button>
         </Box>
       </CardContent>

@@ -2,7 +2,14 @@ type TranslationFn = ((key: string) => string) & {
   has?: (key: string) => boolean;
 };
 
-export type RoomDesignEnumName = 'RoomType' | 'RoomStyle' | 'LightRequirement';
+export type RoomDesignEnumName =
+  | 'RoomType'
+  | 'RoomStyle'
+  | 'LightRequirement'
+  | 'LightDirection'
+  | 'DominantDirection'
+  | 'RoomViewAngle'
+  | 'FengShuiElement';
 
 const ROOM_DESIGN_KEYS: Record<RoomDesignEnumName, Record<string, string>> = {
   RoomType: {
@@ -42,6 +49,10 @@ const ROOM_DESIGN_KEYS: Record<RoomDesignEnumName, Record<string, string>> = {
     shade: 'lightRequirement.shade',
     fullsun: 'lightRequirement.fullSun',
   },
+  LightDirection: {},
+  DominantDirection: {},
+  RoomViewAngle: {},
+  FengShuiElement: {},
 };
 
 const normalizeToken = (value: string): string => {

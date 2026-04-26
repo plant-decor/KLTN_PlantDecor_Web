@@ -15,7 +15,7 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { useTranslations } from 'next-intl';
 import type { Order, OrderInvoiceDetail } from '@/types/order.types';
-import { formatCurrency, formatDate, getStatusInfo } from './orderHistoryUtils';
+import { canUserCancelOrder, formatCurrency, formatDate, getStatusInfo } from './orderHistoryUtils';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 import Image from 'next/image';
 import { CustomLoading } from '@/components/CustomLoading';
@@ -125,7 +125,7 @@ export default function OrderHistoryList({
         const remainingItems = totalDisplayItems - displayItems.length;
         const retryOrderId = order.statusName === 'Pending' ? order.id : null;
         const isRetrying = retryOrderId !== null && retryLoadingOrderId === retryOrderId;
-        const canCancelOrder = order.statusName === 'Pending' || order.statusName === 'DepositPaid' || order.statusName === 'Paid';
+        const canCancelOrder = canUserCancelOrder(order.statusName);
         const isCancelling = canCancelOrder && cancelLoadingOrderId === order.id;
         console.log('items', displayItems.map((item) => item.imageUrl));
         return (

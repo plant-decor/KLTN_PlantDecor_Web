@@ -410,7 +410,7 @@ function FilterFormContent({
           }
           className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
         >
-          <option value="">{texts.all}</option>
+          {/* <option value="">{texts.all}</option> */}
           {seasonOptions.map((option) => (
             <option key={option.value} value={String(option.value)}>
               {option.name}

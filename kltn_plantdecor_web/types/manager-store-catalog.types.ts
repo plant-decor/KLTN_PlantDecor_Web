@@ -111,6 +111,31 @@ export interface UpdateNurseryMaterialRequest {
   isActive: boolean;
 }
 
+export type LowStockProductType = 'Plant' | 'PlantInstance' | 'PlantCombo' | 'Material';
+
+export interface LowStockProductItem {
+  productType: LowStockProductType;
+  productId: number;
+  productName: string;
+  totalQuantity: number;
+  reservedQuantity: number;
+  availableQuantity: number;
+  threshold: number;
+}
+
+export interface ExpiringSoonMaterialItem {
+  nurseryMaterialId: number;
+  materialId: number;
+  materialName: string;
+  materialCode: string;
+  unit: string;
+  quantity: number;
+  reservedQuantity: number;
+  availableQuantity: number;
+  expiredDate: string;
+  daysToExpire: number;
+}
+
 export interface PlantSummaryItem {
   plantId: number;
   plantName: string;

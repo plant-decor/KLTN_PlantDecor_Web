@@ -5,6 +5,7 @@ import { Alert, Box, Button, Card, CardContent, Stack, Step, StepLabel, Stepper,
 import { CustomLoading } from '@/components/CustomLoading';
 import { addItemToCart } from '@/lib/api/cartWishlistService';
 import { notifyCartUpdated } from '@/lib/utils/cartEvents';
+import { parseCurrencyInput } from '@/lib/utils/formatUtil';
 import type { ShopNurseryListItem } from '@/lib/api/shopPlantsService';
 import {
   analyzeRoom,
@@ -171,8 +172,8 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
           lightDirection: lightDirection || undefined,
           dominantDirection: dominantDirection || undefined,
           naturalLightLevel: naturalLightLevel || undefined,
-          minBudget: Number(minBudget) > 0 ? Number(minBudget) : undefined,
-          maxBudget: Number(maxBudget) > 0 ? Number(maxBudget) : undefined,
+          minBudget: parseCurrencyInput(minBudget) > 0 ? parseCurrencyInput(minBudget) : undefined,
+          maxBudget: parseCurrencyInput(maxBudget) > 0 ? parseCurrencyInput(maxBudget) : undefined,
           careLevelType: careLevelType || undefined,
           hasAllergy,
           allergyNote,

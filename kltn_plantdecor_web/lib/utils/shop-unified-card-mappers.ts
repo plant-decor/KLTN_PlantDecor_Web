@@ -42,7 +42,7 @@ export const toMaterialCardMaterial = (material: ShopUnifiedMaterialItem): ShopM
   id: material.materialId ?? material.id,
   materialCode: material.materialCode ?? '',
   name: material.materialName,
-  basePrice: material.basePrice ?? 0,
+  basePrice: material.basePrice ?? material.price ?? 0,
   unit: material.unit ?? '',
   brand: material.nurseryName ?? '',
   isActive: material.isActive ?? true,

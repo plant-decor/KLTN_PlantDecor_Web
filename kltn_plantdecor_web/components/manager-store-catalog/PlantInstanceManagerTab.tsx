@@ -50,6 +50,7 @@ import type {
 import { toast } from 'react-toastify';
 import { formatCurrency } from '@/lib/utils/formatUtil';
 import PlantInstanceCreateDialog, { type PlantInstanceCreateSubmitValue } from './PlantInstanceCreateDialog';
+import { formatDateTime } from '@/lib/utils/dateUtils';
 
 interface PlantInstanceManagerTabProps {
   nurseryId: number | null;
@@ -499,7 +500,7 @@ export default function PlantInstanceManagerTab({ nurseryId }: PlantInstanceMana
                 />
               </TableCell>
               <TableCell sx={{ fontWeight: 700 }}>Plant</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>SKU</TableCell>
+              {/* <TableCell sx={{ fontWeight: 700 }}>SKU</TableCell> */}
               <TableCell sx={{ fontWeight: 700 }} align="right">Price</TableCell>
               <TableCell sx={{ fontWeight: 700 }} align="right">Height</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>Health</TableCell>
@@ -542,7 +543,7 @@ export default function PlantInstanceManagerTab({ nurseryId }: PlantInstanceMana
                       </Box>
                     </Stack>
                   </TableCell>
-                  <TableCell>{item.sku ?? '-'}</TableCell>
+                  {/* <TableCell>{item.sku ?? '-'}</TableCell> */}
                   <TableCell align="right">{formatCurrency(item.specificPrice, 'vi')}</TableCell>
                   <TableCell align="right">{item.height} cm</TableCell>
                   <TableCell>{item.healthStatus}</TableCell>
@@ -555,7 +556,7 @@ export default function PlantInstanceManagerTab({ nurseryId }: PlantInstanceMana
                     />
                   </TableCell>
                   <TableCell>
-                    {new Date(item.createdAt).toLocaleDateString('vi-VN')}
+                    {formatDateTime(item.createdAt)}
                   </TableCell>
                   <TableCell align="center">
                     <FormControl size="small" sx={{ minWidth: 130 }}>

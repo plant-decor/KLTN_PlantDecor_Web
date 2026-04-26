@@ -260,7 +260,7 @@ export default function Navigation({ initialStoreCategories = [] }: NavigationPr
 
             {isStoreHoverOpen && (
               <div className="absolute left-0 top-full z-50 w-96 pt-2">
-                <div className="rounded-xl border border-gray-100 bg-white p-3 shadow-xl">
+                <div className="rounded-xl border border-gray-100 bg-white p-3 shadow-xl max-h-[60vh] overflow-y-auto">
             {filteredStoreCategories.length > 0 ? (
               renderStoreCategoryTree(filteredStoreCategories)
             ) : (

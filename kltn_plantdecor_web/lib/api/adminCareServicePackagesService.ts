@@ -288,6 +288,22 @@ export const updateAdminCareServicePackage = async (
   return normalizeDetail(raw);
 };
 
+export const updateAdminCareServicePackageSpecializations = async (
+  id: number,
+  specializationIds: number[],
+  loading = true
+): Promise<AdminCareServicePackageDetail> => {
+  const response = await apiClient.put<WrappedResponse<AdminCareServicePackageDetail> | unknown>(
+    `care-service-packages/${id}/specializations`,
+    { specializationIds },
+    loading,
+    MUTATION_CONFIG
+  );
+
+  const raw = unwrapPayloadData(response as WrappedResponse<unknown>);
+  return normalizeDetail(raw);
+};
+
 export const deleteAdminCareServicePackage = async (id: number, loading = true): Promise<void> => {
   await apiClient.del<unknown>(`care-service-packages/${id}`, loading, MUTATION_CONFIG);
 };

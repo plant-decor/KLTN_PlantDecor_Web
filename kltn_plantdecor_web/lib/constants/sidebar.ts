@@ -68,7 +68,7 @@ export const SIDEBAR_ITEMS_BY_ROLE: Record<UserRole, SidebarItem[]> = {
     { label: 'Cross-Nursery Inventory', href: '/staff/inventory-cross-nursery', icon: 'store' },
   ],
   consultant: [
-    { label: 'Dashboard', href: '/consultant', icon: 'dashboard' },
+    // { label: 'Dashboard', href: '/consultant', icon: 'dashboard' },
     { label: 'Chat Support', href: '/consultant/chat-support', icon: 'chat' },
     { label: 'Customer Orders', href: '/consultant/customer-orders', icon: 'orders' },
     { label: 'Products & Inventory', href: '/consultant/products-inventory', icon: 'products' },

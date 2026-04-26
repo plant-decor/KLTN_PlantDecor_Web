@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Typography,
@@ -23,62 +23,35 @@ import {
   Tab,
   Grid,
   Divider,
+  CircularProgress,
+  Alert,
+  TablePagination,
 } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import LockIcon from '@mui/icons-material/Lock';
 import StorageIcon from '@mui/icons-material/Storage';
+import {
+  searchShopUnified,
+  type ShopUnifiedComboItem,
+  type ShopUnifiedMaterialItem,
+  type ShopUnifiedPlantItem,
+  type ShopUnifiedSearchItem,
+  type UnifiedItemType,
+} from '@/lib/api/shopUnifiedService';
 
-// Mock data
-const MOCK_PRODUCTS = [
-  {
-    id: 'PRD-001',
-    name: 'Monstera Deliciosa',
-    category: 'Plant',
-    price: 150000,
-    description: 'Large tropical plant with split leaves',
-    inventory: [
-      { nursery: 'Green Garden - D1', stock: 12, status: 'In Stock' },
-      { nursery: 'Tropical Plants - D3', stock: 5, status: 'Low Stock' },
-      { nursery: 'Urban Garden - D7', stock: 0, status: 'Out of Stock' },
-    ],
-  },
-  {
-    id: 'PRD-002',
-    name: 'Plant Pot (8cm)',
-    category: 'Material',
-    price: 50000,
-    description: 'Ceramic pot for small plants',
-    inventory: [
-      { nursery: 'Green Garden - D1', stock: 45, status: 'In Stock' },
-      { nursery: 'Tropical Plants - D3', stock: 28, status: 'In Stock' },
-      { nursery: 'Urban Garden - D7', stock: 15, status: 'In Stock' },
-    ],
-  },
-  {
-    id: 'PRD-003',
-    name: 'Premium Plant Combo',
-    category: 'Combo',
-    price: 300000,
-    description: 'Bundle with plant, pot, and soil',
-    inventory: [
-      { nursery: 'Green Garden - D1', stock: 3, status: 'Low Stock' },
-      { nursery: 'Tropical Plants - D3', stock: 8, status: 'In Stock' },
-      { nursery: 'Urban Garden - D7', stock: 2, status: 'Low Stock' },
-    ],
-  },
-  {
-    id: 'PRD-004',
-    name: 'Philodendron Pink Princess',
-    category: 'Plant',
-    price: 180000,
-    description: 'Beautiful pink variegated philodendron',
-    inventory: [
-      { nursery: 'Green Garden - D1', stock: 6, status: 'Low Stock' },
-      { nursery: 'Tropical Plants - D3', stock: 9, status: 'In Stock' },
-      { nursery: 'Urban Garden - D7', stock: 0, status: 'Out of Stock' },
-    ],
-  },
-];
+type InventoryNurseryRow = { nursery: string; stock: number; status: string };
+
+type ProductsInventoryRow = {
+  id: string;
+  numericId: number;
+  name: string;
+  category: UnifiedItemType;
+  price: number;
+  description?: string;
+  totalStock: number;
+  inventoryByNursery?: InventoryNurseryRow[];
+  raw?: ShopUnifiedPlantItem | ShopUnifiedMaterialItem | ShopUnifiedComboItem;
+};
 
 function getStockStatus(stock: number): 'success' | 'warning' | 'error' {
   if (stock === 0) return 'error';
@@ -86,20 +59,158 @@ function getStockStatus(stock: number): 'success' | 'warning' | 'error' {
   return 'success';
 }
 
+const resolveUnifiedPrice = (
+  item: ShopUnifiedPlantItem | ShopUnifiedMaterialItem | ShopUnifiedComboItem
+): number => {
+  const candidate =
+    'basePrice' in item
+      ? (item.basePrice ?? (item as ShopUnifiedPlantItem | ShopUnifiedMaterialItem).price)
+      : (item as ShopUnifiedComboItem).price;
+
+  const numeric = typeof candidate === 'string' ? Number(candidate) : Number(candidate ?? 0);
+  return Number.isFinite(numeric) ? numeric : 0;
+};
+
 export default function ProductsInventoryPage() {
   const [selectedTab, setSelectedTab] = useState(0);
-  const [selectedProduct, setSelectedProduct] = useState<(typeof MOCK_PRODUCTS)[0] | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<ProductsInventoryRow | null>(null);
   const [openDetail, setOpenDetail] = useState(false);
+  const [keyword, setKeyword] = useState('');
+  const [debouncedKeyword, setDebouncedKeyword] = useState('');
 
-  const filteredProducts = MOCK_PRODUCTS.filter((p) => {
-    if (selectedTab === 0) return true;
-    if (selectedTab === 1) return p.category === 'Plant';
-    if (selectedTab === 2) return p.category === 'Material';
-    if (selectedTab === 3) return p.category === 'Combo';
-    return true;
-  });
+  const [rows, setRows] = useState<ProductsInventoryRow[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleViewDetail = (product: (typeof MOCK_PRODUCTS)[0]) => {
+  const includePlants = selectedTab === 0 || selectedTab === 1;
+  const includeMaterials = selectedTab === 0 || selectedTab === 2;
+  const includeCombos = selectedTab === 0 || selectedTab === 3;
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedKeyword(keyword);
+      setPage(0);
+    }, 400);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [keyword]);
+
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    setError(null);
+
+    const load = async () => {
+      try {
+        const response = await searchShopUnified(
+          {
+            pagination: { pageNumber: page + 1, pageSize },
+            keyword: debouncedKeyword.trim() ? debouncedKeyword.trim() : undefined,
+            includePlants,
+            includeMaterials,
+            includeCombos,
+            sortBy: 'CreatedAt',
+            sortDirection: 'Desc',
+          },
+          false,
+          true
+        );
+
+        if (!mounted) return;
+
+        const payload = response.payload ?? response.data;
+        const items = payload?.items?.items ?? [];
+
+        const mapped: ProductsInventoryRow[] = items
+          .map((item: ShopUnifiedSearchItem): ProductsInventoryRow | null => {
+            if (item.type === 'Plant' && item.plant) {
+              const stock = Math.max(0, Math.floor(item.plant.totalAvailableStock ?? 0));
+              return {
+                id: `PLANT-${item.plant.id}`,
+                numericId: item.plant.id,
+                name: item.plant.name,
+                category: 'Plant',
+                price: resolveUnifiedPrice(item.plant),
+                totalStock: stock,
+                raw: item.plant,
+              };
+            }
+
+            if (item.type === 'Material' && item.material) {
+              const stock = Math.max(0, Math.floor(item.material.availableQuantity ?? item.material.quantity ?? 0));
+              return {
+                id: item.material.materialCode || `MAT-${item.material.id}`,
+                numericId: item.material.id,
+                name: item.material.materialName,
+                category: 'Material',
+                price: resolveUnifiedPrice(item.material),
+                totalStock: stock,
+                raw: item.material,
+              };
+            }
+
+            if (item.type === 'Combo' && item.combo) {
+              const nurseries = item.combo.nurseries ?? [];
+              const totalStock = nurseries.reduce((sum, n) => sum + Math.max(0, Math.floor(n.quantity ?? 0)), 0);
+              const inventoryByNursery: InventoryNurseryRow[] = nurseries.map((n) => {
+                const stock = Math.max(0, Math.floor(n.quantity ?? 0));
+                return {
+                  nursery: n.nurseryName,
+                  stock,
+                  status: stock === 0 ? 'Out of Stock' : stock < 10 ? 'Low Stock' : 'In Stock',
+                };
+              });
+
+              return {
+                id: `COMBO-${item.combo.id}`,
+                numericId: item.combo.id,
+                name: item.combo.name,
+                category: 'Combo',
+                price: resolveUnifiedPrice(item.combo),
+                description: item.combo.description,
+                totalStock,
+                inventoryByNursery,
+                raw: item.combo,
+              };
+            }
+
+            return null;
+          })
+          .filter((row): row is ProductsInventoryRow => Boolean(row));
+
+        setRows(mapped);
+        setTotalCount(Number(payload?.items?.totalCount ?? mapped.length ?? 0));
+      } catch {
+        if (mounted) {
+          setError('Failed to load products inventory.');
+          setRows([]);
+          setTotalCount(0);
+        }
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    void load();
+
+    return () => {
+      mounted = false;
+    };
+  }, [debouncedKeyword, includeCombos, includeMaterials, includePlants, page, pageSize, selectedTab]);
+
+  const filteredProducts = useMemo(() => {
+    if (selectedTab === 1) return rows.filter((p) => p.category === 'Plant');
+    if (selectedTab === 2) return rows.filter((p) => p.category === 'Material');
+    if (selectedTab === 3) return rows.filter((p) => p.category === 'Combo');
+    return rows;
+  }, [rows, selectedTab]);
+
+  const handleViewDetail = (product: ProductsInventoryRow) => {
     setSelectedProduct(product);
     setOpenDetail(true);
   };
@@ -115,6 +226,12 @@ export default function ProductsInventoryPage() {
           View product information and inventory availability across all nurseries (Read-only)
         </Typography>
       </Box>
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
 
       {/* Info Alert */}
       <Card sx={{ mb: 3, bgcolor: 'info.lighter', border: '1px solid', borderColor: 'info.light' }}>
@@ -135,7 +252,10 @@ export default function ProductsInventoryPage() {
       <Card sx={{ mb: 3 }}>
         <Tabs
           value={selectedTab}
-          onChange={(e, newValue) => setSelectedTab(newValue)}
+          onChange={(e, newValue) => {
+            setSelectedTab(newValue);
+            setPage(0);
+          }}
           sx={{
             borderBottom: 1,
             borderColor: 'divider',
@@ -148,6 +268,25 @@ export default function ProductsInventoryPage() {
           <Tab label="Materials" />
           <Tab label="Combos" />
         </Tabs>
+      </Card>
+
+      <Card sx={{ mb: 3 }}>
+        <CardContent sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+          <Typography variant="subtitle2" color="text.secondary">
+            Search
+          </Typography>
+          <input
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            placeholder="Search by product name..."
+            className="flex-1 min-w-[260px] rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-200"
+          />
+          {loading ? (
+            <Typography variant="caption" color="text.secondary">
+              Searching...
+            </Typography>
+          ) : null}
+        </CardContent>
       </Card>
 
       {/* Products Table */}
@@ -170,10 +309,14 @@ export default function ProductsInventoryPage() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredProducts.map((product) => {
-              const totalStock = product.inventory.reduce((sum, inv) => sum + inv.stock, 0);
-
-              return (
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
+                  <CircularProgress size={28} />
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredProducts.map((product) => (
                 <TableRow key={product.id} hover>
                   <TableCell sx={{ fontWeight: 'bold' }}>{product.id}</TableCell>
                   <TableCell>{product.name}</TableCell>
@@ -181,14 +324,10 @@ export default function ProductsInventoryPage() {
                     <Chip label={product.category} size="small" variant="outlined" />
                   </TableCell>
                   <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                    {product.price.toLocaleString('vi-VN')} VND
+                    {Number(product.price ?? 0).toLocaleString('vi-VN')} VND
                   </TableCell>
                   <TableCell align="center">
-                    <Chip
-                      label={totalStock}
-                      color={getStockStatus(totalStock)}
-                      size="small"
-                    />
+                    <Chip label={product.totalStock} color={getStockStatus(product.totalStock)} size="small" />
                   </TableCell>
                   <TableCell align="center">
                     <Button
@@ -201,11 +340,25 @@ export default function ProductsInventoryPage() {
                     </Button>
                   </TableCell>
                 </TableRow>
-              );
-            })}
+              ))
+            )}
           </TableBody>
         </Table>
       </TableContainer>
+
+      <TablePagination
+        component="div"
+        count={Math.max(0, totalCount)}
+        page={page}
+        onPageChange={(_, nextPage) => setPage(nextPage)}
+        rowsPerPage={pageSize}
+        onRowsPerPageChange={(event) => {
+          const next = Number(event.target.value);
+          setPageSize(Number.isFinite(next) && next > 0 ? next : 10);
+          setPage(0);
+        }}
+        rowsPerPageOptions={[5, 10, 20, 50]}
+      />
 
       {/* Product Detail Dialog */}
       <Dialog open={openDetail} onClose={() => setOpenDetail(false)} maxWidth="md" fullWidth>
@@ -245,7 +398,7 @@ export default function ProductsInventoryPage() {
                     Total Stock
                   </Typography>
                   <Typography variant="body2" fontWeight="bold">
-                    {selectedProduct.inventory.reduce((sum, inv) => sum + inv.stock, 0)} units
+                    {selectedProduct.totalStock} units
                   </Typography>
                 </Grid>
               </Grid>
@@ -256,7 +409,7 @@ export default function ProductsInventoryPage() {
                 Description
               </Typography>
               <Typography variant="body2" paragraph>
-                {selectedProduct.description}
+                {selectedProduct.description || '-'}
               </Typography>
 
               <Divider sx={{ my: 2 }} />
@@ -267,36 +420,38 @@ export default function ProductsInventoryPage() {
                 Inventory by Nursery
               </Typography>
 
-              <TableContainer component={Paper} variant="outlined">
-                <Table size="small">
-                  <TableHead>
-                    <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Nursery</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }} align="center">
-                        Stock
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {selectedProduct.inventory.map((inv, idx) => (
-                      <TableRow key={idx}>
-                        <TableCell>{inv.nursery}</TableCell>
-                        <TableCell align="center" sx={{ fontWeight: 'bold' }}>
-                          {inv.stock}
+              {selectedProduct.inventoryByNursery && selectedProduct.inventoryByNursery.length > 0 ? (
+                <TableContainer component={Paper} variant="outlined">
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Nursery</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }} align="center">
+                          Stock
                         </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={inv.status}
-                            size="small"
-                            color={getStockStatus(inv.stock)}
-                          />
-                        </TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                    </TableHead>
+                    <TableBody>
+                      {selectedProduct.inventoryByNursery.map((inv, idx) => (
+                        <TableRow key={`${inv.nursery}-${idx}`}>
+                          <TableCell>{inv.nursery}</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 'bold' }}>
+                            {inv.stock}
+                          </TableCell>
+                          <TableCell>
+                            <Chip label={inv.status} size="small" color={getStockStatus(inv.stock)} />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  This item does not provide per-nursery stock breakdown. Showing total stock only.
+                </Typography>
+              )}
             </Box>
           )}
         </DialogContent>

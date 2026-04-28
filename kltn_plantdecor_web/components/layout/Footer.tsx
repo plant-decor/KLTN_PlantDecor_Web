@@ -88,17 +88,17 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/" className="text-gray-400 hover:text-green-600 transition-colors duration-200">
+                <Link href="/return-policy" className="text-gray-400 hover:text-green-600 transition-colors duration-200">
                   {t('returnPolicy')}
                 </Link>
               </li>
               <li>
-                <Link href="/" className="text-gray-400 hover:text-green-600 transition-colors duration-200">
-                  {t('privacyPolicy')}
+                <Link href="/user-policy" className="text-gray-400 hover:text-green-600 transition-colors duration-200">
+                  {t('userPolicy')}
                 </Link>
               </li>
               <li>
-                <Link href="/" className="text-gray-400 hover:text-green-600 transition-colors duration-200">
+                <Link href="/terms" className="text-gray-400 hover:text-green-600 transition-colors duration-200">
                   {t('termsOfService')}
                 </Link>
               </li>
@@ -132,8 +132,8 @@ export default function Footer() {
               &copy; 2026 Plant Decor. {t('rights')}
             </p>
             <div className="flex space-x-6 mt-4 md:mt-0">
-              <Link href="/privacy" className="text-gray-400 hover:text-green-600 text-sm transition-colors duration-200">
-                {t('privacyPolicy')}
+              <Link href="/user-policy" className="text-gray-400 hover:text-green-600 text-sm transition-colors duration-200">
+                {t('userPolicy')}
               </Link>
               <Link href="/terms" className="text-gray-400 hover:text-green-600 text-sm transition-colors duration-200">
                 {t('termsOfService')}

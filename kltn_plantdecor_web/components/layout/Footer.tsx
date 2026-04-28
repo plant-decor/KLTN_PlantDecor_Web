@@ -88,17 +88,17 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/" className="text-gray-400 hover:text-green-600 transition-colors duration-200">
+                <Link href="/return-policy" className="text-gray-400 hover:text-green-600 transition-colors duration-200">
                   {t('returnPolicy')}
                 </Link>
               </li>
               <li>
-                <Link href="/" className="text-gray-400 hover:text-green-600 transition-colors duration-200">
+                <Link href="/privacy" className="text-gray-400 hover:text-green-600 transition-colors duration-200">
                   {t('privacyPolicy')}
                 </Link>
               </li>
               <li>
-                <Link href="/" className="text-gray-400 hover:text-green-600 transition-colors duration-200">
+                <Link href="/terms" className="text-gray-400 hover:text-green-600 transition-colors duration-200">
                   {t('termsOfService')}
                 </Link>
               </li>

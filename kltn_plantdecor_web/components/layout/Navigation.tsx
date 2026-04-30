@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import CartBadge from '@/components/cart/CartBadge';
-import LanguageSwitcher from './LanguageSwitcher';
 import HeaderUnifiedSearch from './HeaderUnifiedSearch';
 import { getCategoryTree, type CategoryResponse } from '@/lib/api/categoriesService';
 import {
@@ -291,7 +290,6 @@ export default function Navigation({ initialStoreCategories = [] }: NavigationPr
 
           <div className="flex items-center gap-3">
             <CartBadge />
-            <LanguageSwitcher />
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="text-gray-700 hover:text-green-600 focus:outline-none p-1"

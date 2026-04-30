@@ -111,7 +111,7 @@ export default function CommonPlantTab({ nurseryId, readOnly = false }: CommonPl
   const [toggleItem, setToggleItem] = useState<CommonPlantInventoryItem | null>(null);
 
   const fetchCommonPlants = useCallback(
-    async (nextPage = pagination.pageNumber, nextSize = pagination.pageSize) => {
+    async (nextPage: number, nextSize: number) => {
       if (!nurseryId) {
         return;
       }
@@ -144,7 +144,7 @@ export default function CommonPlantTab({ nurseryId, readOnly = false }: CommonPl
         setLoading(false);
       }
     },
-    [nurseryId, pagination.pageNumber, pagination.pageSize]
+    [nurseryId]
   );
 
   useEffect(() => {
@@ -229,7 +229,7 @@ export default function CommonPlantTab({ nurseryId, readOnly = false }: CommonPl
       setEditOpen(false);
       setEditingItem(null);
       setEditForm(DEFAULT_EDIT_FORM);
-      await fetchCommonPlants();
+      await fetchCommonPlants(pagination.pageNumber, pagination.pageSize);
     } catch {
       // Error toast is handled globally by axios interceptor.
     } finally {
@@ -252,7 +252,7 @@ export default function CommonPlantTab({ nurseryId, readOnly = false }: CommonPl
       await toggleManagerCommonPlantActive(nurseryId, toggleItem.id, true);
       setToggleOpen(false);
       setToggleItem(null);
-      await fetchCommonPlants();
+      await fetchCommonPlants(pagination.pageNumber, pagination.pageSize);
     } catch {
       // Error toast is handled globally by axios interceptor.
     } finally {

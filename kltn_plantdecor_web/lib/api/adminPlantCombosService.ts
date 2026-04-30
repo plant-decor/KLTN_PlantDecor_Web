@@ -43,7 +43,7 @@ export const getAdminPlantCombos = async (
   params: AdminPlantComboListParams,
   loading = true
 ): Promise<ResponseModel<PlantComboListPayload>> => {
-  return apiClient.get('/admin/PlantCombos', params, loading, {showToast: true});
+  return apiClient.get('/admin/PlantCombos', params, loading);
 };
 
 export const getPlantComboById = async (

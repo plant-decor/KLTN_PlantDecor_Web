@@ -20,7 +20,7 @@ export default function DashboardShell({ children, role }: DashboardShellProps) 
 
   return (
     <div className="h-screen overflow-hidden bg-gray-50">
-      <div className="mx-auto h-full w-full py-6">
+      <div className="mx-auto h-full w-full">
         {hasSidebar && (
           <div className="mb-4 flex items-center gap-3 lg:hidden">
             <button

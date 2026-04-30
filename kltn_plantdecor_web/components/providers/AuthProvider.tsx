@@ -5,6 +5,7 @@ import { useAuthStore } from '@/lib/store/authStore';
 import type { User } from '@/types/auth.types';
 import { refreshTokenAction } from '@/app/actions/authenticationActions';
 import { useTokenRefresh } from '@/hooks/useTokenRefresh';
+import { chatHubService } from '@/lib/signalr/chatHubService';
 import {
   getClientAccessToken,
   getClientRefreshToken,
@@ -25,9 +26,32 @@ let isBootstrapRefreshing = false;
 export function AuthProvider({ children, initialUser }: { children: React.ReactNode; initialUser: User | null }) {
   const { setUser, setAuthBootstrapCompleted, isAuthenticated, isAuthBootstrapCompleted } = useAuthStore();
   const initializedRef = useRef(false);
+  const debugAuthEnabled = process.env.NEXT_PUBLIC_DEBUG_AUTH === "1";
 
   useTokenRefresh({
     enabled: isAuthenticated && isAuthBootstrapCompleted,
+    onRefresh: async (refreshToken) => {
+      if (debugAuthEnabled) {
+        console.log("[auth] useTokenRefresh: calling refreshTokenAction", {
+          hasRefreshToken: Boolean(refreshToken),
+        });
+      }
+
+      const refreshed = refreshToken
+        ? await refreshTokenAction({ refreshToken })
+        : await refreshTokenAction();
+
+      if (refreshed.success && refreshed.token && chatHubService.isConnected()) {
+        if (debugAuthEnabled) {
+          console.log("[auth] useTokenRefresh: refreshed token -> restarting SignalR hub");
+        }
+        // Restart the hub so the refreshed token is used immediately,
+        // and re-join previous conversations.
+        void chatHubService.restart();
+      }
+
+      return refreshed;
+    },
   });
 
   useEffect(() => {

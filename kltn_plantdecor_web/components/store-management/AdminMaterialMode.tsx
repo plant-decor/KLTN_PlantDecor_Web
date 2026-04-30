@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Add } from '@mui/icons-material';
 import {
   Alert,
@@ -55,12 +55,25 @@ export default function AdminMaterialMode() {
     fetchTags,
   } = useAdminTags();
 
+  const didInitFetchRef = useRef(false);
+  const didInitCategoriesRef = useRef(false);
+
   useEffect(() => {
+    if (didInitFetchRef.current) {
+      return;
+    }
+    didInitFetchRef.current = true;
+
     void fetchMaterials({ pagination: { pageNumber: 1, pageSize: 10 } });
     void fetchTags({ pageNumber: 1, pageSize: 1000 });
   }, [fetchMaterials, fetchTags]);
 
   useEffect(() => {
+    if (didInitCategoriesRef.current) {
+      return;
+    }
+    didInitCategoriesRef.current = true;
+
     let mounted = true;
 
     const loadCategories = async () => {

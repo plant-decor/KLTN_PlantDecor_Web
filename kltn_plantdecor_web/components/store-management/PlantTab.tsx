@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Box,
@@ -67,6 +67,8 @@ export default function PlantTab({}: PlantTabProps) {
     clearError,
   } = useAdminPlants();
 
+  const didInitFetchRef = useRef(false);
+
   const {
     tags,
     error: tagError,
@@ -74,6 +76,11 @@ export default function PlantTab({}: PlantTabProps) {
   } = useAdminTags();
 
   useEffect(() => {
+    if (didInitFetchRef.current) {
+      return;
+    }
+    didInitFetchRef.current = true;
+
     void loadEnums();
     void fetchPlants({
       pagination: { pageNumber: 1, pageSize: 10 },

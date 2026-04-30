@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Box,
@@ -62,6 +62,8 @@ export default function PlantComboTab({}: PlantComboTabProps) {
     clearError,
   } = useAdminPlantCombos();
 
+  const didInitFetchRef = useRef(false);
+
   const {
     tags,
     error: tagError,
@@ -69,10 +71,17 @@ export default function PlantComboTab({}: PlantComboTabProps) {
   } = useAdminTags();
 
   useEffect(() => {
-    void loadEnums();
-    void fetchCombos({ pageNumber: 1, pageSize: 10 });
-    void fetchComboPlants();
-    void fetchTags({ pageNumber: 1, pageSize: 1000 });
+    if (didInitFetchRef.current) {
+      return;
+    }
+    didInitFetchRef.current = true;
+
+    void (async () => {
+      void loadEnums();
+      void fetchCombos({ pageNumber: 1, pageSize: 10 });
+      void fetchComboPlants();
+      void fetchTags({ pageNumber: 1, pageSize: 1000 });
+    })();
   }, [fetchComboPlants, fetchCombos, fetchTags, loadEnums]);
 
   const tagOptions = useMemo<OptionItem[]>(() => {

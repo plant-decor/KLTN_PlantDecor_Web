@@ -15,6 +15,8 @@ import {
   TextField,
 } from '@mui/material';
 import { useTranslations } from 'next-intl';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useAuthStore } from '@/lib/store/authStore';
 import {
   DifficultyLevel,
   ServiceRegistration,
@@ -41,6 +43,7 @@ import { createPaymentUrlByOrderId } from '@/lib/api/orderService';
 import type { EnumOption, MyServiceRegistration } from '@/types/care-service.types';
 import { ServiceRegistrationStatusEnum } from '@/types/care-service.types';
 import { CustomLoading } from '@/components/CustomLoading';
+import { useServicePageQueryAction } from '@/hooks/services/useServicePageQueryAction';
 
 interface PageProps {
   params: Promise<{ userid: string }>;
@@ -87,6 +90,37 @@ export default function UserServicePage({ params }: PageProps) {
   const [cancelSubmitting, setCancelSubmitting] = useState(false);
   const [paymentSubmittingId, setPaymentSubmittingId] = useState<number | null>(null);
   const [statusEnums, setStatusEnums] = useState<EnumOption[]>([]);
+  const [bookingInitialPackageId, setBookingInitialPackageId] = useState<number | null>(null);
+  const [autoBookConsumed, setAutoBookConsumed] = useState(false);
+
+  const {
+    initialPackageId: queryPackageId,
+    shouldAutoBook,
+    clearAction,
+  } = useServicePageQueryAction();
+
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const isAuthBootstrapCompleted = useAuthStore(
+    (state) => state.isAuthBootstrapCompleted,
+  );
+
+  useEffect(() => {
+    if (!isAuthBootstrapCompleted) return;
+    if (isAuthenticated) return;
+
+    const search = searchParams.toString();
+    const fullPath = search ? `${pathname}?${search}` : pathname;
+    router.replace(`/login?redirectTo=${encodeURIComponent(fullPath)}`);
+  }, [
+    isAuthBootstrapCompleted,
+    isAuthenticated,
+    pathname,
+    router,
+    searchParams,
+  ]);
 
   const normalizeStatusName = useCallback((value?: string | null) => {
     return String(value ?? '')
@@ -284,8 +318,31 @@ export default function UserServicePage({ params }: PageProps) {
   }, [mapApiToViewModel, t]);
 
   useEffect(() => {
+    if (isAuthBootstrapCompleted && !isAuthenticated) {
+      return;
+    }
     void loadMyRegistrations();
-  }, [loadMyRegistrations]);
+  }, [loadMyRegistrations, isAuthBootstrapCompleted, isAuthenticated]);
+
+  useEffect(() => {
+    if (loading) return;
+    if (autoBookConsumed) return;
+    if (!shouldAutoBook || !queryPackageId) return;
+    if (isAuthBootstrapCompleted && !isAuthenticated) return;
+
+    setBookingInitialPackageId(queryPackageId);
+    setBookingOpen(true);
+    setAutoBookConsumed(true);
+    clearAction();
+  }, [
+    loading,
+    shouldAutoBook,
+    queryPackageId,
+    autoBookConsumed,
+    clearAction,
+    isAuthBootstrapCompleted,
+    isAuthenticated,
+  ]);
 
   const handleViewDetails = async (request: ServiceRegistration) => {
     try {
@@ -336,6 +393,7 @@ export default function UserServicePage({ params }: PageProps) {
 
   const handleCloseBooking = () => {
     setBookingOpen(false);
+    setBookingInitialPackageId(null);
   };
 
   const handleSubmitBooking = async (data: ServiceBookingData) => {
@@ -537,6 +595,7 @@ export default function UserServicePage({ params }: PageProps) {
         open={bookingOpen}
         onClose={handleCloseBooking}
         onSubmit={handleSubmitBooking}
+        initialPackageId={bookingInitialPackageId}
       />
 
       {/* Success Snackbar */}

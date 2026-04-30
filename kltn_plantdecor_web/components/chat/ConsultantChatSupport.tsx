@@ -152,6 +152,7 @@ export default function ConsultantChatSupport() {
     hasOlderMessages,
     isSending,
     isHubReady,
+    showConnectingBanner,
     isOtherUserTyping,
     error,
     loadOlderMessages,
@@ -428,6 +429,7 @@ export default function ConsultantChatSupport() {
                 canUseRealtime={canUseRealtime}
                 isSending={isSending}
                 isHubReady={isHubReady}
+                showConnectingBanner={showConnectingBanner}
                 onChange={(value) => void handleChange(value)}
                 onSubmit={() => void submit()}
               />

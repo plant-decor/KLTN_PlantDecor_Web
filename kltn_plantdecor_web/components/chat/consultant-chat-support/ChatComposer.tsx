@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { SendRounded as SendRoundedIcon } from "@mui/icons-material";
 import { Box, IconButton, InputBase, Stack, Typography } from "@mui/material";
 
@@ -10,6 +9,7 @@ export type ChatComposerProps = {
   canUseRealtime: boolean;
   isSending: boolean;
   isHubReady: boolean;
+  showConnectingBanner: boolean;
   onChange: (value: string) => void;
   onSubmit: () => void;
 };
@@ -20,35 +20,10 @@ export function ChatComposer({
   canUseRealtime,
   isSending,
   isHubReady,
+  showConnectingBanner,
   onChange,
   onSubmit,
 }: ChatComposerProps) {
-  const [hasConnectedOnce, setHasConnectedOnce] = useState(false);
-  const [showConnectingBanner, setShowConnectingBanner] = useState(false);
-
-  useEffect(() => {
-    const CONNECTING_BANNER_DELAY_MS = 1500;
-    if (!canUseRealtime) {
-      setHasConnectedOnce(false);
-      setShowConnectingBanner(false);
-      return;
-    }
-
-    if (isHubReady) {
-      setHasConnectedOnce(true);
-      setShowConnectingBanner(false);
-      return;
-    }
-
-    if (hasConnectedOnce) {
-      setShowConnectingBanner(false);
-      return;
-    }
-
-    const timer = setTimeout(() => setShowConnectingBanner(true), CONNECTING_BANNER_DELAY_MS);
-    return () => clearTimeout(timer);
-  }, [canUseRealtime, hasConnectedOnce, isHubReady]);
-
   return (
     <Box sx={{ px: 0.5, py: 1, bgcolor: "#ffffff" }}>
       <Stack direction="row" spacing={1} alignItems="center">

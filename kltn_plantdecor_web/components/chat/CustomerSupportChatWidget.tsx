@@ -91,7 +91,6 @@ export default function SupportChatWidget() {
     messages,
     isInitialLoading,
     isSending,
-    isHubReady,
     hasConnectedOnce,
     showConnectingBanner,
     isOtherUserTyping,

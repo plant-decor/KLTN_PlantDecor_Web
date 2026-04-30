@@ -41,6 +41,7 @@ interface ServiceBookingDialogProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (data: ServiceBookingData) => void;
+  initialPackageId?: number | null;
 }
 
 export interface ServiceBookingData {
@@ -66,7 +67,7 @@ const getLocalDateInputValue = (date: Date = new Date()) => {
   return `${year}-${month}-${day}`;
 };
 
-export default function ServiceBookingDialog({ open, onClose, onSubmit }: ServiceBookingDialogProps) {
+export default function ServiceBookingDialog({ open, onClose, onSubmit, initialPackageId }: ServiceBookingDialogProps) {
   const t = useTranslations('services');
   const tError = useTranslations('profile');
   const tCommon = useTranslations('common');
@@ -172,6 +173,43 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit }: Servic
 
     void loadData();
   }, [open, t]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    if (!initialPackageId) {
+      return;
+    }
+
+    if (!packages.length) {
+      return;
+    }
+
+    const matched = packages.find((pkg) => pkg.id === initialPackageId);
+    if (!matched) {
+      return;
+    }
+
+    setSelectedPackageId((prev) => (prev === initialPackageId ? prev : initialPackageId));
+    setFormData((prev) =>
+      prev.careServicePackageId === initialPackageId
+        ? prev
+        : {
+            ...prev,
+            careServicePackageId: initialPackageId,
+            preferredNurseryId: undefined,
+            scheduleDaysOfWeek: [],
+          },
+    );
+    setErrors((prev) => {
+      if (!prev.careServicePackageId) return prev;
+      const next = { ...prev };
+      delete next.careServicePackageId;
+      return next;
+    });
+  }, [open, initialPackageId, packages]);
 
   useEffect(() => {
     if (!open) {

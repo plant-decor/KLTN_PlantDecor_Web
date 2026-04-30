@@ -26,6 +26,7 @@ import { useAuthStore } from "@/lib/store/authStore";
 import { OPEN_SUPPORT_CHAT_EVENT } from "@/lib/constants/chat";
 import type { SupportConversationMessage } from "@/types/chat.types";
 import { CustomLoading } from "../CustomLoading";
+import { SupportRichMessage } from "./customer-chat-widget/SupportRichMessage";
 
 type ChatMessageView = {
   id: number;
@@ -38,7 +39,7 @@ type ChatMessageView = {
 const formatMessageTime = (value: string) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat("vi-VN", {
+  return new Intl.DateTimeFormat("en-US", {
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
@@ -81,7 +82,7 @@ export default function SupportChatWidget() {
   const consultantName =
     consultantParticipant?.fullName ??
     consultantParticipant?.email?.split("@")[0] ??
-    "Tư vấn viên";
+    "Consultant";
   const consultantAvatar = consultantParticipant?.avatarUrl ?? undefined;
 
   const canUseRealtime = Boolean(user && conversationId);
@@ -90,7 +91,8 @@ export default function SupportChatWidget() {
     messages,
     isInitialLoading,
     isSending,
-    isHubReady,
+    hasConnectedOnce,
+    showConnectingBanner,
     isOtherUserTyping,
     error: chatError,
     sendMessage,
@@ -123,14 +125,10 @@ export default function SupportChatWidget() {
     if (!conversationId) {
       setIsStarting(true);
       try {
-        const response = await startSupportConversation(
-          { firstMessage: trimmed },
-          false,
-        );
-        if (response.payload) {
-          reset();
-          await reloadConversation();
-        }
+        await startSupportConversation({ firstMessage: trimmed }, false);
+
+        reset();
+        await reloadConversation();
       } catch (err) {
         console.error(err);
       } finally {
@@ -149,6 +147,15 @@ export default function SupportChatWidget() {
     const handlePointerDown = (event: MouseEvent | TouchEvent) => {
       const target = event.target as Node | null;
       if (!target) return;
+      // MUI Dialog is rendered in a portal (outside widgetRef).
+      // Clicking inside the modal content should NOT close the widget.
+      if (
+        target instanceof Element &&
+        (target.closest(".MuiDialog-root") || target.closest(".MuiModal-root"))
+      ) {
+        return;
+      }
+
       if (!widgetRef.current?.contains(target)) setIsOpen(false);
     };
 
@@ -309,7 +316,7 @@ export default function SupportChatWidget() {
                     px: 3,
                   }}
                 >
-                  Please enter the first message to start the conversation with
+                  Please enter your first message to start a conversation with
                   Plant Decor.
                 </Box>
               )}
@@ -359,9 +366,7 @@ export default function SupportChatWidget() {
                         borderTopRightRadius: entry.isMine ? 1 : 3,
                       }}
                     >
-                      <Typography sx={{ fontSize: 14, lineHeight: 1.5 }}>
-                        {entry.text}
-                      </Typography>
+                      <SupportRichMessage text={entry.text} isMine={entry.isMine} />
                     </Box>
 
                     <Typography
@@ -373,7 +378,7 @@ export default function SupportChatWidget() {
                       }}
                     >
                       {entry.time}
-                      {entry.isMine && entry.isLast ? " • Đã gửi" : ""}
+                      {entry.isMine && entry.isLast ? " • Sent" : ""}
                     </Typography>
                   </Box>
 
@@ -396,7 +401,7 @@ export default function SupportChatWidget() {
 
               {isOtherUserTyping && (
                 <Typography sx={{ fontSize: 12, color: "#64748b" }}>
-                  Tư vấn viên đang nhập...
+                  Consultant is typing...
                 </Typography>
               )}
             </Stack>
@@ -427,13 +432,26 @@ export default function SupportChatWidget() {
                       void handleSend();
                     }
                   }}
+                  multiline
+                  minRows={1}
+                  maxRows={4}
                   placeholder="Aa"
-                  sx={{ color: "#0f172a", width: "100%", fontSize: 14 }}
+                  sx={{
+                    color: "#0f172a",
+                    width: "100%",
+                    fontSize: 14,
+                    "& .MuiInputBase-input": { whiteSpace: "pre-wrap" },
+                  }}
                 />
 
                 <IconButton
                   onClick={() => void handleSend()}
-                  disabled={!input.trim() || !user || isSending || isStarting}
+                  disabled={
+                    !input.trim() ||
+                    !user ||
+                    isSending ||
+                    isStarting
+                  }
                   sx={{ color: "#2563eb" }}
                 >
                   {isStarting ? (
@@ -447,13 +465,17 @@ export default function SupportChatWidget() {
 
             {!user && (
               <Typography sx={{ mt: 0.75, fontSize: 11.5, color: "#64748b" }}>
-                Need to login to use chat support.
+                Please log in to use chat support.
               </Typography>
             )}
 
-            {conversationId && !isHubReady && (
+            {conversationId &&
+              canUseRealtime &&
+              !hasConnectedOnce &&
+              showConnectingBanner &&
+              !chatError && (
               <Typography sx={{ mt: 0.75, fontSize: 11.5, color: "#64748b" }}>
-                Đang kết nối tới chat realtime...
+                Connecting to realtime chat...
               </Typography>
             )}
           </Box>
@@ -461,7 +483,7 @@ export default function SupportChatWidget() {
       ) : (
         <Fab
           onClick={() => setIsOpen(true)}
-          aria-label="Mở chat hỗ trợ"
+          aria-label="Open chat support"
           sx={{
             width: 66,
             height: 66,

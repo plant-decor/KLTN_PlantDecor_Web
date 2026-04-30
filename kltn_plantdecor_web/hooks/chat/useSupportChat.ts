@@ -30,6 +30,8 @@ export function useSupportChat(options: UseSupportChatOptions) {
 
   const [isSending, setIsSending] = useState(false);
   const [isHubReady, setIsHubReady] = useState(false);
+  const [hasConnectedOnce, setHasConnectedOnce] = useState(false);
+  const [showConnectingBanner, setShowConnectingBanner] = useState(false);
   const [isOtherUserTyping, setIsOtherUserTyping] = useState(false);
   const [hubError, setHubError] = useState<string | null>(null);
 
@@ -100,6 +102,44 @@ export function useSupportChat(options: UseSupportChatOptions) {
       void sendStopTyping();
     }, 1200);
   }, [conversationId, sendStopTyping, sendTyping]);
+
+  useEffect(() => {
+    // Reset when switching conversations or disabling realtime.
+    setIsHubReady(false);
+    setHasConnectedOnce(false);
+    setShowConnectingBanner(false);
+  }, [conversationId, enabled]);
+
+  useEffect(() => {
+    if (isHubReady) {
+      setHasConnectedOnce(true);
+    }
+  }, [isHubReady]);
+
+  useEffect(() => {
+    const CONNECTING_BANNER_DELAY_MS = 1500;
+    if (!enabled || !conversationId) {
+      setShowConnectingBanner(false);
+      return;
+    }
+
+    if (isHubReady) {
+      setShowConnectingBanner(false);
+      return;
+    }
+
+    // Hide the banner forever after the hub has connected successfully at least once.
+    if (hasConnectedOnce) {
+      setShowConnectingBanner(false);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setShowConnectingBanner(true);
+    }, CONNECTING_BANNER_DELAY_MS);
+
+    return () => clearTimeout(timer);
+  }, [conversationId, enabled, hasConnectedOnce, isHubReady]);
 
   useEffect(() => {
     if (!conversationId || !enabled) return;
@@ -212,6 +252,8 @@ export function useSupportChat(options: UseSupportChatOptions) {
     hasOlderMessages,
     isSending,
     isHubReady,
+    hasConnectedOnce,
+    showConnectingBanner,
     isOtherUserTyping,
     error,
     reloadMessages: fetchMessages,

@@ -122,7 +122,7 @@ export default function ManagerPlantComboTab({ readOnly = false }: ManagerPlantC
   const [decomposeTarget, setDecomposeTarget] = useState<ManagerPlantComboInventoryItem | null>(null);
   const [decomposeForm, setDecomposeForm] = useState<DecomposeFormValue>(DEFAULT_DECOMPOSE_FORM);
 
-  const fetchCombos = useCallback(async (nextPage = pagination.pageNumber, nextSize = pagination.pageSize) => {
+  const fetchCombos = useCallback(async (nextPage: number, nextSize: number) => {
     setLoading(true);
     setError(null);
 
@@ -158,7 +158,7 @@ export default function ManagerPlantComboTab({ readOnly = false }: ManagerPlantC
     } finally {
       setLoading(false);
     }
-  }, [pagination.pageNumber, pagination.pageSize]);
+  }, []);
 
   useEffect(() => {
     void fetchCombos(1, pagination.pageSize);

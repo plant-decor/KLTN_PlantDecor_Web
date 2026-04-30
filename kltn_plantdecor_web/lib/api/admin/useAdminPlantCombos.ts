@@ -31,6 +31,7 @@ import {
   uploadAdminPlantComboImages,
   uploadAdminPlantComboThumbnail,
 } from '@/lib/api/adminPlantCombosService';
+import { toast } from 'react-toastify';
 
 interface PaginationState {
   totalCount: number;
@@ -69,7 +70,7 @@ interface UseAdminPlantCombosReturn {
   error: string | null;
   pagination: PaginationState;
   filters: ListFilters;
-  fetchCombos: (params?: { pageNumber?: number; pageSize?: number }) => Promise<void>;
+  fetchCombos: (params?: { pageNumber?: number; pageSize?: number }) => Promise<boolean>;
   fetchComboById: (id: number) => Promise<PlantCombo | null>;
   fetchComboPlants: (keyword?: string) => Promise<void>;
   loadEnums: () => Promise<void>;
@@ -98,6 +99,21 @@ const EMPTY_ENUMS: ComboEnums = {
 
 const getResponsePayload = <T,>(response: { data?: T; payload?: T }): T | undefined => {
   return response.payload ?? response.data;
+};
+
+type UnknownRecord = Record<string, unknown>;
+
+const stripEmptyStringFields = <T extends UnknownRecord>(value: T): T => {
+  const next: UnknownRecord = {};
+
+  Object.entries(value).forEach(([key, raw]) => {
+    if (typeof raw === 'string' && raw.trim() === '') {
+      return;
+    }
+    next[key] = raw;
+  });
+
+  return next as T;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -218,7 +234,7 @@ export const useAdminPlantCombos = (): UseAdminPlantCombosReturn => {
   });
   const plantSearchRequestRef = useRef(0);
 
-  const fetchCombos = useCallback(async (params?: { pageNumber?: number; pageSize?: number }) => {
+  const fetchCombos = useCallback(async (params?: { pageNumber?: number; pageSize?: number }): Promise<boolean> => {
     setLoading(true);
     setError(null);
 
@@ -234,10 +250,10 @@ export const useAdminPlantCombos = (): UseAdminPlantCombosReturn => {
         },
         true
       );
-
+      toast.success(response.message);
       const payload = getResponsePayload(response);
       if (!payload) {
-        return;
+        return false;
       }
 
       setCombos(payload.items ?? []);
@@ -249,8 +265,10 @@ export const useAdminPlantCombos = (): UseAdminPlantCombosReturn => {
         hasPrevious: payload.hasPrevious ?? false,
         hasNext: payload.hasNext ?? false,
       });
+      return true;
     } catch (err) {
       setError(normalizeError(err));
+      return false;
     } finally {
       setLoading(false);
     }
@@ -279,7 +297,7 @@ export const useAdminPlantCombos = (): UseAdminPlantCombosReturn => {
     try {
       const normalizedKeyword = keyword.trim();
       const response = await searchAdminPlantsForCombo(
-        {
+        stripEmptyStringFields({
           pagination: {
             pageNumber: 1,
             pageSize: 1000,
@@ -289,7 +307,7 @@ export const useAdminPlantCombos = (): UseAdminPlantCombosReturn => {
           isUniqueInstance: false,
           sortBy: '',
           sortDirection: '',
-        },
+        }),
         false
       );
       const payload = getResponsePayload(response);

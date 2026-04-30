@@ -7,6 +7,7 @@ import { SupportConversationStatus } from "@/types/chat.types";
 export type ChatSession = {
   id: string;
   conversationId: number;
+  customerId: number | null;
   customerName: string;
   customerEmail: string;
   customerAvatarUrl: string | null;
@@ -55,6 +56,7 @@ export const mapConversationToSession = (
     customer?.fullName ?? customer?.email ?? `Khách #${conv.id}`;
   const customerEmail = customer?.email ?? "";
   const customerAvatarUrl = customer?.avatarUrl ?? null;
+  const customerId = customer?.userId ?? null;
 
   const startedAt = new Date(conv.startedAt);
   const waitingMinutes = Math.floor((Date.now() - startedAt.getTime()) / 60000);
@@ -68,6 +70,7 @@ export const mapConversationToSession = (
   return {
     id: String(conv.id),
     conversationId: conv.id,
+    customerId,
     customerName,
     customerEmail,
     customerAvatarUrl,

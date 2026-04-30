@@ -1,9 +1,22 @@
-export type SupportRichMessageKind = "plain" | "careTips" | "suggestedPlants";
+import { extractServiceBookingUrl } from "@/lib/utils/serviceBookingLink";
+
+export type SupportRichMessageKind =
+  | "plain"
+  | "careTips"
+  | "suggestedPlants"
+  | "serviceBooking";
 
 export type SupportRichMessage = {
   kind: SupportRichMessageKind;
   summaryText: string;
   fullText: string;
+  serviceBooking?: {
+    url: string;
+    pathname: string;
+    locale: string | null;
+    userId: number;
+    packageId: number;
+  };
 };
 
 const splitLines = (text: string) =>
@@ -38,6 +51,22 @@ const takeFirstNonEmptyLines = (lines: string[], maxLines: number) => {
 export function parseSupportRichMessage(text: string): SupportRichMessage {
   const fullText = text ?? "";
   const lines = splitLines(fullText);
+
+  const bookingUrl = extractServiceBookingUrl(fullText);
+  if (bookingUrl) {
+    return {
+      kind: "serviceBooking",
+      summaryText: "Service recommendation",
+      fullText,
+      serviceBooking: {
+        url: bookingUrl.rawUrl,
+        pathname: bookingUrl.pathname,
+        locale: bookingUrl.locale,
+        userId: bookingUrl.userId,
+        packageId: bookingUrl.packageId,
+      },
+    };
+  }
 
   const bulletCount = countBulletLines(lines);
   const looksLikeCareTips = bulletCount >= 2;

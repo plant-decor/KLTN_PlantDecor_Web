@@ -17,6 +17,7 @@ const defaultTitleByKind: Record<SupportRichMessageKind, string> = {
   plain: "Details",
   careTips: "Care tips",
   suggestedPlants: "Suggested plants",
+  serviceBooking: "Service recommendation",
 };
 
 export function SupportRichMessageDialog({ open, kind, title, content, onClose }: Props) {

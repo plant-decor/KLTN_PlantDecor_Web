@@ -16,6 +16,7 @@ import { ChatComposer } from "./consultant-chat-support/ChatComposer";
 import { ChatHeader } from "./consultant-chat-support/ChatHeader";
 import { ConversationListPanel } from "./consultant-chat-support/ConversationListPanel";
 import { MessageList } from "./consultant-chat-support/MessageList";
+import { RecommendationSidebar } from "./consultant-chat-support/recommendation-sidebar/RecommendationSidebar";
 import {
   mapConversationToSession,
   mapRealtimeMessages,
@@ -338,7 +339,11 @@ export default function ConsultantChatSupport() {
           borderRadius: { xs: 2, md: 4 },
           overflow: "hidden",
           display: "grid",
-          gridTemplateColumns: { xs: "1fr", lg: "360px minmax(0, 1fr)" },
+          gridTemplateColumns: {
+            xs: "1fr",
+            lg: "320px minmax(0, 1fr) 340px",
+            xl: "360px minmax(0, 1fr) 380px",
+          },
           border: "1px solid rgba(15, 23, 42, 0.08)",
           bgcolor: "#ffffff",
         }}
@@ -435,6 +440,22 @@ export default function ConsultantChatSupport() {
               />
             </>
           )}
+        </Box>
+
+        <Box
+          sx={{
+            display: { xs: "none", lg: "flex" },
+            flexDirection: "column",
+            minHeight: 0,
+            overflow: "hidden",
+          }}
+        >
+          <RecommendationSidebar
+            activeSession={activeSession}
+            isSending={isSending}
+            disabled={!canUseRealtime}
+            onSendBookingLink={(content) => sendMessage(content)}
+          />
         </Box>
       </Paper>
     </Box>

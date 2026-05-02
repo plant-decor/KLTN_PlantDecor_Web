@@ -197,10 +197,10 @@ const getTotalAvailableStock = (plant: PlantDetailResponse): number => {
 
 const buildProductTitle = (plant: PlantDetailResponse, locale: string): string => {
   if (locale === 'en') {
-    return `${plant.name} - ${plant.size || 'Unknown size'} - Care ${plant.careLevelTypeName || 'Unknown'} | ${SITE_NAME}`;
+    return `${plant.name} - ${plant.sizeName || 'Unknown size'} - Care ${plant.careLevelTypeName || 'Unknown'} | ${SITE_NAME}`;
   }
 
-  return `${plant.name} - ${plant.size || 'Kích thước chưa rõ'} - Chăm sóc ${plant.careLevelTypeName || 'chưa rõ'} | ${SITE_NAME}`;
+  return `${plant.name} - ${plant.sizeName || 'Kích thước chưa rõ'} - Chăm sóc ${plant.careLevelTypeName || 'chưa rõ'} | ${SITE_NAME}`;
 };
 
 const buildProductDescription = (plant: PlantDetailResponse, locale: string): string => {
@@ -277,7 +277,7 @@ const mapPlantDetailToSamplePlant = (plant: PlantDetailResponse, imageUrl: strin
     id: plant.id,
     name: plant.name,
     basePrice: plant.basePrice ?? 0,
-    size: plant.size || 'Unknown',
+    size: plant.sizeName || 'Unknown',
     careLevel: plant.careLevelTypeName || 'Unknown',
     isActive: Boolean(plant.isActive),
     primaryImageUrl: imageUrl || null,
@@ -327,6 +327,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
     getPlantEnums(true, false).catch(() => null),
   ]);
   const plant = getPayload<PlantDetailResponse>(response);
+  console.log('plant',plant);
   if (!plant) {
     notFound();
   }
@@ -501,7 +502,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
               </div>
               <div className="bg-gray-50 rounded-lg p-4">
                 <p className="text-sm text-gray-500 mb-1">{t('size')}</p>
-                <p className="font-semibold text-gray-900">{plant.size || t('notAvailable')}</p>
+                <p className="font-semibold text-gray-900">{plant.sizeName || t('notAvailable')}</p>
               </div>
               <div className="bg-gray-50 rounded-lg p-4">
                 <p className="text-sm text-gray-500 mb-1">{t('careLevel')}</p>
@@ -512,8 +513,8 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                 <p className="font-semibold text-gray-900">{growthRateLabel || t('notAvailable')}</p>
               </div>
               <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-sm text-gray-500 mb-1">{t('uniqueInstance')}</p>
-                <p className="font-semibold text-gray-900">{booleanLabel(plant.isUniqueInstance)}</p>
+                <p className="text-sm text-gray-500 mb-1">{t('potSize')}</p>
+                <p className="font-semibold text-gray-900">{plant.potSize || t('notAvailable')}</p>
               </div>
               <div className="bg-gray-50 rounded-lg p-4 col-span-2">
                 <p className="text-sm text-gray-500 mb-1">{t('roomType')}</p>

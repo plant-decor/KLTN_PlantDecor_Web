@@ -111,7 +111,7 @@ export default function ServicePackageTable({
                     <TableCell align="center">
                       {item.serviceTypeLabel ||
                         serviceTypeLabelMap.get(item.serviceType) ||
-                        `Loại ${item.serviceType}`}
+                        `Type ${item.serviceType}`}
                     </TableCell>
                     <TableCell align="center">{item.visitPerWeek}</TableCell>
                     <TableCell align="center">{item.durationDays}</TableCell>

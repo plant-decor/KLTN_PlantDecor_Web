@@ -11,11 +11,11 @@ import {
   type MaterialNursery,
 } from '@/lib/api/shopMaterialsService';
 import { formatCurrency } from '@/lib/utils/formatUtil';
+import { getTranslations } from 'next-intl/server';
 
 interface PageProps {
   params: Promise<{ locale: string; id: string }>;
 }
-
 const FALLBACK_IMAGE = '/img/fallbackplant.avif';
 const DEFAULT_OG_IMAGE = '/img/landingPageImage(1).jpg';
 const SITE_NAME = 'PlantDecor';
@@ -91,6 +91,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function MaterialDetailPage({ params }: PageProps) {
   const { locale, id } = await params;
   const materialId = Number(id);
+  const t = await getTranslations({ locale, namespace: 'productDetail' });
 
   if (!Number.isFinite(materialId) || materialId <= 0) {
     notFound();
@@ -135,12 +136,10 @@ export default async function MaterialDetailPage({ params }: PageProps) {
       />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <nav className="mb-8 flex items-center text-sm text-gray-500">
-          <Link href={`/${locale}`} className="hover:text-green-600">
-            Home
-          </Link>
+        <Link href={`/${locale}`} className="hover:text-green-600">{t('home')}</Link>
           <span className="mx-2">/</span>
           <Link href={`/${locale}/plant-store?tab=materials`} className="hover:text-green-600">
-            Planting Supplies
+          {t('store')}
           </Link>
           <span className="mx-2">/</span>
           <span className="text-gray-900">{material.name}</span>

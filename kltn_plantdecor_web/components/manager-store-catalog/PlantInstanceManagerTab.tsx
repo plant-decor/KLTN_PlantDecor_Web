@@ -9,6 +9,7 @@ import {
   Checkbox,
   Chip,
   FormControl,
+  IconButton,
   InputLabel,
   MenuItem,
   Paper,
@@ -26,6 +27,8 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 // import AutorenewIcon from '@mui/icons-material/Autorenew';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import { CustomLoading } from '@/components/CustomLoading';
 import {
   batchUpdateManagerPlantInstanceStatus,
@@ -34,10 +37,12 @@ import {
   getManagerPlantsSummary,
   getPlantInstanceEnums,
   searchSystemPlants,
+  updateManagerPlantInstance,
   updateManagerPlantInstanceStatus,
   uploadManagerPlantInstanceImages,
   uploadManagerPlantInstanceThumbnail,
 } from '@/lib/api/managerStoreCatalogService';
+import { generatePlantInstanceSku } from '@/lib/utils/plantInstanceSku';
 import type { ResponseModel } from '@/types/api.types';
 import type {
   PaginatedPayload,
@@ -50,11 +55,14 @@ import type {
 import { toast } from 'react-toastify';
 import { formatCurrency } from '@/lib/utils/formatUtil';
 import PlantInstanceCreateDialog, { type PlantInstanceCreateSubmitValue } from './PlantInstanceCreateDialog';
-import { formatDateTime } from '@/lib/utils/dateUtils';
+import PlantInstanceDetailDialog from './PlantInstanceDetailDialog';
+// import { formatDateTime } from '@/lib/utils/dateUtils';
 
 interface PlantInstanceManagerTabProps {
   nurseryId: number | null;
   readOnly?: boolean;
+  /** Tên manager vườn — dùng khi sinh SKU tự động */
+  managerName?: string;
 }
 
 interface PaginationState {
@@ -86,15 +94,19 @@ const getErrorMessage = (error: unknown, fallback: string): string => {
   return candidate.response?.data?.message || candidate.message || fallback;
 };
 
-const statusColorMap: Record<number, 'success' | 'warning' | 'default' | 'error' | 'info'> = {
-  1: 'success',
-  2: 'default',
-  3: 'warning',
-  4: 'error',
-  5: 'info',
-};
+// const statusColorMap: Record<number, 'success' | 'warning' | 'default' | 'error' | 'info'> = {
+//   1: 'success',
+//   2: 'default',
+//   3: 'warning',
+//   4: 'error',
+//   5: 'info',
+// };
 
-export default function PlantInstanceManagerTab({ nurseryId, readOnly = false }: PlantInstanceManagerTabProps) {
+export default function PlantInstanceManagerTab({
+  nurseryId,
+  readOnly = false,
+  managerName = '',
+}: PlantInstanceManagerTabProps) {
   const [summaryItems, setSummaryItems] = useState<PlantSummaryItem[]>([]);
   // const [summaryLoading, setSummaryLoading] = useState(false);
 
@@ -113,6 +125,10 @@ export default function PlantInstanceManagerTab({ nurseryId, readOnly = false }:
   const [createOpen, setCreateOpen] = useState(false);
   const [createPlantOptions, setCreatePlantOptions] = useState<SystemPlantSearchItem[]>([]);
   const [createPlantOptionsLoading, setCreatePlantOptionsLoading] = useState(false);
+
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [selectedInstanceId, setSelectedInstanceId] = useState<number | null>(null);
+  const [detailDefaultMode, setDetailDefaultMode] = useState<'view' | 'edit'>('view');
 
   const fetchPlantSummary = useCallback(async () => {
     if (!nurseryId) {
@@ -368,6 +384,30 @@ export default function PlantInstanceManagerTab({ nurseryId, readOnly = false }:
         toast.warning('Plant instance created with partial image upload errors');
       }
 
+      const created = payload?.instances?.[0];
+      if (created && (!created.sku || !String(created.sku).trim())) {
+        try {
+          await updateManagerPlantInstance(
+            created.id,
+            {
+              sku: generatePlantInstanceSku({
+                plantName: created.plantName,
+                managerName,
+              }),
+              specificPrice: created.specificPrice,
+              height: created.height,
+              trunkDiameter: created.trunkDiameter ?? null,
+              healthStatus: created.healthStatus,
+              age: created.age,
+              description: created.description ?? '',
+            },
+            true
+          );
+        } catch {
+          // Error toast is handled globally by axios interceptor.
+        }
+      }
+
       setCreateOpen(false);
       await fetchPlantInstances(1, pagination.pageSize, selectedStatusFilter);
       await fetchPlantSummary();
@@ -399,6 +439,23 @@ export default function PlantInstanceManagerTab({ nurseryId, readOnly = false }:
     setSelectedStatusFilter(value);
     setSelectedIds([]);
     void fetchPlantInstances(1, pagination.pageSize, value);
+  };
+
+  const handleOpenDetail = (instanceId: number, mode: 'view' | 'edit' = 'view') => {
+    setDetailDefaultMode(mode);
+    setSelectedInstanceId(instanceId);
+    setDetailOpen(true);
+  };
+
+  const handleCloseDetail = () => {
+    setDetailOpen(false);
+    setSelectedInstanceId(null);
+    setDetailDefaultMode('view');
+  };
+
+  const handleDetailUpdated = () => {
+    void fetchPlantInstances(pagination.pageNumber, pagination.pageSize, selectedStatusFilter);
+    void fetchPlantSummary();
   };
 
   if (!nurseryId) {
@@ -506,7 +563,7 @@ export default function PlantInstanceManagerTab({ nurseryId, readOnly = false }:
 
       <TableContainer component={Paper} sx={{ border: '1px solid var(--card-border)' }}>
         <Table size="small">
-          <TableHead sx={{ backgroundColor: '#f4fff8' }}>
+          <TableHead sx={{ backgroundColor: 'var(--primary)' }}>
             <TableRow>
               <TableCell padding="checkbox">
                 {!readOnly ? (
@@ -519,25 +576,25 @@ export default function PlantInstanceManagerTab({ nurseryId, readOnly = false }:
                 ) : null}
               </TableCell>
               <TableCell sx={{ fontWeight: 700 }}>Plant</TableCell>
-              {/* <TableCell sx={{ fontWeight: 700 }}>SKU</TableCell> */}
-              <TableCell sx={{ fontWeight: 700 }} align="right">Price</TableCell>
-              <TableCell sx={{ fontWeight: 700 }} align="right">Height</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Health</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Created</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="center">SKU</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="center">Price</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="center">Height</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="center">Health</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="center">Status</TableCell>
+              {/* <TableCell sx={{ fontWeight: 700 }} align="center">Updated</TableCell> */}
               <TableCell sx={{ fontWeight: 700 }} align="center">Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={9} align="center" sx={{ py: 5 }}>
+                <TableCell colSpan={8} align="center" sx={{ py: 5 }}>
                   <CustomLoading size={24} />
                 </TableCell>
               </TableRow>
             ) : items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} align="center" sx={{ py: 5 }}>
+                <TableCell colSpan={8} align="center" sx={{ py: 5 }}>
                   <Typography variant="body2" color="text.secondary">
                     No plant instances found.
                   </Typography>
@@ -564,43 +621,48 @@ export default function PlantInstanceManagerTab({ nurseryId, readOnly = false }:
                       </Box>
                     </Stack>
                   </TableCell>
-                  {/* <TableCell>{item.sku ?? '-'}</TableCell> */}
-                  <TableCell align="right">{formatCurrency(item.specificPrice, 'vi')}</TableCell>
-                  <TableCell align="right">{item.height} cm</TableCell>
-                  <TableCell>{item.healthStatus}</TableCell>
-                  <TableCell>
-                    <Chip
-                      size="small"
-                      label={item.statusName}
-                      color={statusColorMap[item.status] ?? 'default'}
-                      variant="outlined"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    {formatDateTime(item.createdAt)}
+                  <TableCell align="center">{item.sku ?? '-'}</TableCell>
+                  <TableCell align="center">{formatCurrency(item.specificPrice, 'vi')}</TableCell>
+                  <TableCell align="center">{item.height} cm</TableCell>
+                  <TableCell align="center">{item.healthStatus}</TableCell>
+                  <TableCell align="center">
+                      {!readOnly ? (
+                        <FormControl size="small" sx={{ minWidth: 140, maxWidth: 220 }}>
+                          <Select
+                            value={item.status}
+                            onChange={(event) =>
+                              void handleRowStatusUpdate(item.plantInstanceId, Number(event.target.value))
+                            }
+                            disabled={submitting}
+                          >
+                            {statusOptions.map((option) => (
+                              <MenuItem key={option.value} value={option.value}>
+                                {option.name}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      ) : null}
                   </TableCell>
                   <TableCell align="center">
-                    {!readOnly ? (
-                      <FormControl size="small" sx={{ minWidth: 130 }}>
-                        <Select
-                          value={item.status}
-                          onChange={(event) =>
-                            void handleRowStatusUpdate(item.plantInstanceId, Number(event.target.value))
-                          }
-                          disabled={submitting}
+                    <Stack direction="row" spacing={0.5} alignItems="center" justifyContent="center">
+                      <IconButton
+                        size="small"
+                        title="View details"
+                        onClick={() => handleOpenDetail(item.plantInstanceId, 'view')}
+                      >
+                        <VisibilityIcon fontSize="small" />
+                      </IconButton>
+                      {!readOnly ? (
+                        <IconButton
+                          size="small"
+                          title="Edit instance"
+                          onClick={() => handleOpenDetail(item.plantInstanceId, 'edit')}
                         >
-                          {statusOptions.map((option) => (
-                            <MenuItem key={option.value} value={option.value}>
-                              {option.name}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    ) : (
-                      <Typography variant="body2" color="text.secondary">
-                        -
-                      </Typography>
-                    )}
+                          <EditOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      ) : null}
+                    </Stack>
                   </TableCell>
                 </TableRow>
               ))
@@ -630,6 +692,17 @@ export default function PlantInstanceManagerTab({ nurseryId, readOnly = false }:
           onSubmit={(value) => void handleCreateSubmit(value)}
         />
       ) : null}
+
+      <PlantInstanceDetailDialog
+        open={detailOpen}
+        instanceId={selectedInstanceId}
+        readOnly={readOnly}
+        defaultMode={detailDefaultMode}
+        managerName={managerName}
+        statusOptions={statusOptions}
+        onClose={handleCloseDetail}
+        onUpdated={handleDetailUpdated}
+      />
     </Box>
   );
 }

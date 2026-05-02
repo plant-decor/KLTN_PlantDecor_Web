@@ -194,7 +194,7 @@ export default function StoreCatalogPage() {
             <CommonPlantTab nurseryId={nursery?.id ?? null} />
           </TabPanel>
           <TabPanel value={tabValue} index={1}>
-            <PlantInstanceManagerTab nurseryId={nursery?.id ?? null} />
+            <PlantInstanceManagerTab nurseryId={nursery?.id ?? null} managerName={nursery?.managerName ?? ''} />
           </TabPanel>
           <TabPanel value={tabValue} index={2}>
             <ManagerPlantComboTab />

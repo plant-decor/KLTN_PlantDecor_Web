@@ -15,9 +15,24 @@ export interface AdminCareServicePackageListItem {
   updatedAt?: string;
 }
 
+export interface AdminCareServicePackageSuitabilityRule {
+  id?: number;
+  careServicePackageId?: number;
+  categoryId?: number | null;
+  categoryName?: string | null;
+  careDifficultyLevel?: number | null;
+  careDifficultyLevelName?: string | null;
+}
+
+export interface AdminCareServicePackageSuitabilityRuleCreateRequest {
+  categoryId?: number;
+  careDifficultyLevel?: number;
+}
+
 export interface AdminCareServicePackageDetail extends AdminCareServicePackageListItem {
   specializationIds?: number[];
   specializations?: AdminSpecializationOption[];
+  suitabilityRules?: AdminCareServicePackageSuitabilityRule[];
 }
 
 export interface AdminCareServicePackageCreateRequest {
@@ -30,6 +45,7 @@ export interface AdminCareServicePackageCreateRequest {
   areaLimit: number;
   unitPrice: number;
   specializationIds: number[];
+  suitabilityRules?: AdminCareServicePackageSuitabilityRuleCreateRequest[];
 }
 
 export interface AdminCareServicePackageUpdateRequest {

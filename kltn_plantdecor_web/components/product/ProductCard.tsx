@@ -595,8 +595,16 @@ export default function ProductCard({
                       }`}
                     >
                       <p className="font-medium text-gray-900">SKU: {instance.sku}</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="flex flex-col gap-2">
                       <p className="text-sm text-gray-600">Height: {instance.height} cm</p>
                       <p className="text-sm text-gray-600">Health: {instance.healthStatus}</p>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                      <p className="text-sm text-gray-600">Status: {instance.trunkDiameter}</p>
+                      <p className="text-sm text-gray-600">Age: {instance.age}</p>
+                        </div>
+                      </div>
                       <p className="text-sm font-semibold text-green-700">{formatCurrency(instance.specificPrice, locale)}</p>
                     </button>
                   ))}

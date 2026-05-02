@@ -9,11 +9,13 @@ import {
   DialogContent,
   DialogTitle,
   FormControl,
+  FormControlLabel,
   InputLabel,
   ListItemText,
   MenuItem,
   Select,
   Stack,
+  Switch,
   TextField,
   Typography,
   Chip,
@@ -23,9 +25,11 @@ import type {
   AdminSpecializationOption,
   CareServiceTypeOption,
 } from "@/types/admin-service-package.types";
-import type { ModalMode, ServicePackageFormValue } from "./types";
+import type { CategoryResponse } from "@/lib/api/categoriesService";
+import type { EnumOption } from "@/types/care-service.types";
+import { MAX_VISITS_PER_WEEK, type ModalMode, type ServicePackageFormValue } from "./types";
 import { CustomLoading } from "@/components/CustomLoading";
-import { formatCurrency } from "@/lib/utils/formatUtil";
+import { formatCurrency, formatCurrencyInput, parseCurrencyInput } from "@/lib/utils/formatUtil";
 
 interface ServicePackageModalProps {
   open: boolean;
@@ -37,6 +41,8 @@ interface ServicePackageModalProps {
   formValue: ServicePackageFormValue;
   serviceTypeOptions: CareServiceTypeOption[];
   specializationOptions: AdminSpecializationOption[];
+  categoryOptions: CategoryResponse[];
+  careLevelOptions: EnumOption[];
   submitting: boolean;
   onClose: () => void;
   onFormChange: (updater: (prev: ServicePackageFormValue) => ServicePackageFormValue) => void;
@@ -54,6 +60,8 @@ export default function ServicePackageModal({
   formValue,
   serviceTypeOptions,
   specializationOptions,
+  categoryOptions,
+  careLevelOptions,
   submitting,
   onClose,
   onFormChange,
@@ -65,6 +73,9 @@ export default function ServicePackageModal({
   const canEditSpecializations = !isView;
   const serviceTypeLabel =
     serviceTypeOptions.find((option) => option.value === formValue.serviceType)?.label ?? String(formValue.serviceType);
+  const isServiceTypeFixed = formValue.serviceType === 1;
+  const isCategoryDisabled = formValue.careDifficultyLevels.length > 0;
+  const isCareLevelDisabled = formValue.categoryIds.length > 0;
 
   const title = isCreate
     ? "Create New Service Package"
@@ -80,6 +91,17 @@ export default function ServicePackageModal({
   };
 
   const readonlySpecializations = detail?.specializations ?? [];
+  const readonlySuitabilityRules = detail?.suitabilityRules ?? [];
+
+  const ITEM_HEIGHT = 48;
+  const ITEM_PADDING_TOP = 8;
+  const selectMenuProps = {
+    PaperProps: {
+      style: {
+        maxHeight: ITEM_HEIGHT * 5 + ITEM_PADDING_TOP,
+      },
+    },
+  } as const;
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
@@ -161,7 +183,14 @@ export default function ServicePackageModal({
                     label="Service Type"
                     value={formValue.serviceType}
                     disabled={submitting}
-                    onChange={(event) => handleChangeField("serviceType", Number(event.target.value))}
+                    onChange={(event) => {
+                      const nextType = Number(event.target.value);
+                      onFormChange((prev) => ({
+                        ...prev,
+                        serviceType: nextType,
+                        ...(nextType === 1 ? { visitPerWeek: 1, durationDays: 1 } : {}),
+                      }));
+                    }}
                   >
                     {serviceTypeOptions.map((option) => (
                       <MenuItem key={option.value} value={option.value}>
@@ -184,11 +213,21 @@ export default function ServicePackageModal({
                   value={formValue.visitPerWeek ?? ""}
                   onChange={(event) => {
                     const raw = event.target.value;
-                    handleChangeField("visitPerWeek", raw === "" ? null : Number(raw));
+                    if (raw === "") {
+                      handleChangeField("visitPerWeek", null);
+                      return;
+                    }
+                    const parsed = Number(raw);
+                    if (!Number.isFinite(parsed)) {
+                      return;
+                    }
+                    const clamped = Math.min(MAX_VISITS_PER_WEEK, Math.max(0, Math.trunc(parsed)));
+                    handleChangeField("visitPerWeek", clamped);
                   }}
-                  disabled={submitting}
+                  disabled={submitting || isServiceTypeFixed}
                   fullWidth
-                  inputProps={{ min: 0 }}
+                  inputProps={{ min: 0, max: MAX_VISITS_PER_WEEK }}
+                  helperText={`Maximum ${MAX_VISITS_PER_WEEK} visits per week`}
                 />
               )}
             </Stack>
@@ -204,7 +243,7 @@ export default function ServicePackageModal({
                   type="number"
                   value={formValue.durationDays}
                   onChange={(event) => handleChangeField("durationDays", Number(event.target.value))}
-                  disabled={submitting}
+                  disabled={submitting || isServiceTypeFixed}
                   fullWidth
                   inputProps={{ min: 1 }}
                 />
@@ -234,37 +273,104 @@ export default function ServicePackageModal({
               ) : (
                 <TextField
                   label="Unit Price"
-                  type="number"
-                  value={formValue.unitPrice}
-                  onChange={(event) => handleChangeField("unitPrice", Number(event.target.value))}
+                  type="text"
+                  value={formatCurrencyInput(formValue.unitPrice, "vi")}
+                  onChange={(event) => handleChangeField("unitPrice", parseCurrencyInput(event.target.value))}
                   disabled={submitting}
                   fullWidth
-                  inputProps={{ min: 0 }}
                 />
               )}
             </Stack>
 
             {isView ? (
-              <Box className="flex items-center gap-2">
+              <Box>
                 <Typography fontWeight={600} sx={{ mb: 1 }}>
-                  Status
+                  Suitability Rules
                 </Typography>
-                <Chip size="small" color={detail?.isActive ? "success" : "default"} label={detail?.isActive ? "Active" : "Inactive"} />
+                {readonlySuitabilityRules.length > 0 ? (
+                  <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                    {readonlySuitabilityRules.map((rule) => {
+                      const label =
+                        rule.categoryId != null
+                          ? `Category: ${rule.categoryName ?? rule.categoryId}`
+                          : rule.careDifficultyLevel != null
+                            ? `Care level: ${rule.careDifficultyLevelName ?? rule.careDifficultyLevel}`
+                            : "Unknown";
+                      return <Chip key={rule.id ?? `${label}`} label={label} size="small" />;
+                    })}
+                  </Stack>
+                ) : (
+                  <Typography variant="body2" color="text.secondary">
+                    -
+                  </Typography>
+                )}
               </Box>
             ) : (
-              <FormControl fullWidth>
-                <InputLabel id="active-label">Status</InputLabel>
-                <Select
-                  labelId="active-label"
-                  label="Status"
-                  value={formValue.isActive ? 1 : 0}
-                  disabled={submitting}
-                  onChange={(event) => handleChangeField("isActive", Number(event.target.value) === 1)}
-                >
-                  <MenuItem value={1}>Active</MenuItem>
-                  <MenuItem value={0}>Inactive</MenuItem>
-                </Select>
-              </FormControl>
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+                <FormControl fullWidth>
+                  <InputLabel id="suitability-category-label">Category</InputLabel>
+                  <Select
+                    labelId="suitability-category-label"
+                    multiple
+                    value={formValue.categoryIds}
+                    label="Category"
+                    disabled={submitting || isCategoryDisabled}
+                    MenuProps={selectMenuProps}
+                    onChange={(event) => {
+                      const next = (event.target.value as number[]).map(Number);
+                      onFormChange((prev) => ({
+                        ...prev,
+                        categoryIds: next,
+                        ...(next.length > 0 ? { careDifficultyLevels: [] } : {}),
+                      }));
+                    }}
+                    renderValue={(selected) =>
+                      (selected as number[])
+                        .map((id) => categoryOptions.find((item) => item.id === id)?.name ?? id)
+                        .join(", ")
+                    }
+                  >
+                    {categoryOptions.map((option) => (
+                      <MenuItem key={option.id} value={option.id}>
+                        <Checkbox checked={formValue.categoryIds.includes(option.id)} />
+                        <ListItemText primary={option.name} />
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                <FormControl fullWidth>
+                  <InputLabel id="suitability-carelevel-label">Care Difficulty Level</InputLabel>
+                  <Select
+                    labelId="suitability-carelevel-label"
+                    multiple
+                    value={formValue.careDifficultyLevels}
+                    label="Care Difficulty Level"
+                    disabled={submitting || isCareLevelDisabled}
+                    MenuProps={selectMenuProps}
+                    onChange={(event) => {
+                      const next = (event.target.value as number[]).map(Number);
+                      onFormChange((prev) => ({
+                        ...prev,
+                        careDifficultyLevels: next,
+                        ...(next.length > 0 ? { categoryIds: [] } : {}),
+                      }));
+                    }}
+                    renderValue={(selected) =>
+                      (selected as number[])
+                        .map((value) => careLevelOptions.find((item) => item.value === value)?.name ?? value)
+                        .join(", ")
+                    }
+                  >
+                    {careLevelOptions.map((option) => (
+                      <MenuItem key={option.value} value={option.value}>
+                        <Checkbox checked={formValue.careDifficultyLevels.includes(option.value)} />
+                        <ListItemText primary={option.name} />
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Stack>
             )}
 
             {canEditSpecializations ? (
@@ -276,6 +382,7 @@ export default function ServicePackageModal({
                   value={formValue.specializationIds}
                   label="Specializations"
                   disabled={submitting}
+                  MenuProps={selectMenuProps}
                   onChange={(event) =>
                     handleChangeField("specializationIds", event.target.value as number[])
                   }
@@ -311,12 +418,47 @@ export default function ServicePackageModal({
                 </Stack>
               </Box>
             )}
+
+            {isView ? (
+              <FormControlLabel
+                sx={{ mt: 0.5, mx: 0 }}
+                control={
+                  <Switch
+                    checked={Boolean(detail?.isActive)}
+                    disabled
+                    color="success"
+                  />
+                }
+                label={
+                  <Typography component="span" fontWeight={600}>
+                    Active
+                  </Typography>
+                }
+              />
+            ) : (
+              <FormControlLabel
+                sx={{ mt: 0.5, mx: 0 }}
+                control={
+                  <Switch
+                    checked={formValue.isActive}
+                    onChange={(event) => handleChangeField("isActive", event.target.checked)}
+                    disabled={submitting}
+                    color="success"
+                  />
+                }
+                label={
+                  <Typography component="span" fontWeight={600}>
+                    Active
+                  </Typography>
+                }
+              />
+            )}
           </Stack>
         )}
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={submitting}>
-          Đóng
+          Close
         </Button>
         {isView && mode === "view" && onRequestEdit && (
           <Button onClick={onRequestEdit} variant="contained" disabled={submitting || detailLoading}>

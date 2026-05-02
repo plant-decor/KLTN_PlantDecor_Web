@@ -49,7 +49,7 @@ export const getAdminPlantGuideById = async (
   id: number,
   loading = true
 ): Promise<ResponseModel<AdminPlantGuideDetail>> => {
-  return apiClient.get(`/admin/PlantGuides/${id}`, undefined, loading, { showToast: false, showErrorToast: false });
+  return apiClient.get(`/PlantGuides/${id}`, undefined, loading, { showToast: false, showErrorToast: false });
 };
 
 export const getAdminPlantGuideByPlantId = async (

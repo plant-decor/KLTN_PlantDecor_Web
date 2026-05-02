@@ -212,6 +212,44 @@ export interface UpdatePlantInstanceStatusRequest {
   status: number;
 }
 
+export interface PlantInstanceImage {
+  id: number;
+  imageUrl: string;
+  isPrimary: boolean;
+}
+
+export interface PlantInstanceDetail {
+  id: number;
+  plantId: number;
+  plantName: string;
+  currentNurseryId: number;
+  nurseryName: string;
+  nurseryAddress: string;
+  nurseryPhone: string;
+  sku: string | null;
+  specificPrice: number;
+  height: number;
+  trunkDiameter: number | null;
+  healthStatus: string;
+  age: number;
+  description: string;
+  status: number;
+  statusName: string;
+  createdAt: string;
+  updatedAt: string;
+  images: PlantInstanceImage[];
+}
+
+export interface UpdatePlantInstanceRequest {
+  sku: string;
+  specificPrice: number;
+  height: number;
+  trunkDiameter: number | null;
+  healthStatus: string;
+  age: number;
+  description: string;
+}
+
 export interface BatchUpdatePlantInstanceStatusRequest {
   instanceIds: number[];
   status: number;

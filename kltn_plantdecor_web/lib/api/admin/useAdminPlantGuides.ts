@@ -81,6 +81,20 @@ const getResponsePayload = <T,>(response: { data?: T; payload?: T }): T | undefi
 
 const toNullableTrimmedString = (value: string): string => value.trim();
 
+const normalizePageNumberFromApi = (apiPageNumber: number | undefined, requestedPageNumber: number): number => {
+  if (typeof apiPageNumber !== 'number' || !Number.isFinite(apiPageNumber)) {
+    return requestedPageNumber;
+  }
+
+  // Backend đôi khi trả pageNumber theo 0-based (0,1,2,...) trong khi UI dùng 1-based (1,2,3,...).
+  // Heuristic an toàn: nếu apiPageNumber đúng bằng requestedPageNumber - 1 thì coi như 0-based và +1.
+  if (apiPageNumber === requestedPageNumber - 1) {
+    return apiPageNumber + 1;
+  }
+
+  return apiPageNumber;
+};
+
 const toUpsertPayload = (formData: AdminPlantGuideFormData): AdminPlantGuideUpsertRequest => ({
   plantId: Number(formData.plantId),
   lightRequirement: toNullableTrimmedString(formData.lightRequirement),
@@ -138,9 +152,10 @@ export const useAdminPlantGuides = (): UseAdminPlantGuidesReturn => {
       }
 
       setPlantGuides(payload.items ?? []);
+      const requestedPageNumber = requestBody.pagination.pageNumber;
       setPagination({
         totalCount: payload.totalCount ?? 0,
-        pageNumber: payload.pageNumber ?? requestBody.pagination.pageNumber,
+        pageNumber: normalizePageNumberFromApi(payload.pageNumber, requestedPageNumber),
         pageSize: payload.pageSize ?? requestBody.pagination.pageSize,
         totalPages: payload.totalPages ?? 1,
         hasPrevious: payload.hasPrevious ?? false,

@@ -2,6 +2,9 @@ import type { AdminCareServicePackageDetail } from "@/types/admin-service-packag
 
 export type ModalMode = "view" | "edit" | "create";
 
+/** Maximum visits per week allowed by business rules. */
+export const MAX_VISITS_PER_WEEK = 6;
+
 export interface ServicePackageFormValue {
   name: string;
   description: string;
@@ -13,6 +16,8 @@ export interface ServicePackageFormValue {
   unitPrice: number;
   isActive: boolean;
   specializationIds: number[];
+  categoryIds: number[];
+  careDifficultyLevels: number[];
 }
 
 export const emptyFormValue: ServicePackageFormValue = {
@@ -26,6 +31,8 @@ export const emptyFormValue: ServicePackageFormValue = {
   unitPrice: 0,
   isActive: true,
   specializationIds: [],
+  categoryIds: [],
+  careDifficultyLevels: [],
 };
 
 export const buildFormFromDetail = (
@@ -37,17 +44,32 @@ export const buildFormFromDetail = (
       ? specializationIdsFromResponse
       : (detail.specializations ?? []).map((item) => item.id);
 
+  const categoryIds = (detail.suitabilityRules ?? [])
+    .map((rule) => rule.categoryId)
+    .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+
+  const careDifficultyLevels = (detail.suitabilityRules ?? [])
+    .map((rule) => rule.careDifficultyLevel)
+    .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+
+  const visitPerWeek =
+    detail.visitPerWeek == null || !Number.isFinite(detail.visitPerWeek)
+      ? detail.visitPerWeek
+      : Math.min(MAX_VISITS_PER_WEEK, Math.max(0, Math.trunc(detail.visitPerWeek)));
+
   return {
     name: detail.name,
     description: detail.description,
     features: detail.features,
     serviceType: detail.serviceType,
-    visitPerWeek: detail.visitPerWeek,
+    visitPerWeek,
     durationDays: detail.durationDays,
     areaLimit: detail.areaLimit,
     unitPrice: detail.unitPrice,
     isActive: detail.isActive,
     specializationIds,
+    categoryIds: [...new Set(categoryIds)],
+    careDifficultyLevels: [...new Set(careDifficultyLevels)],
   };
 };
 

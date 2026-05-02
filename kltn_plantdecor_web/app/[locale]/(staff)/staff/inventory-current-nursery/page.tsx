@@ -187,7 +187,11 @@ export default function CurrentNurseryInventoryPage() {
             <CommonPlantTab nurseryId={nursery?.id ?? null} readOnly />
           </TabPanel>
           <TabPanel value={tabValue} index={1}>
-            <PlantInstanceManagerTab nurseryId={nursery?.id ?? null} readOnly />
+            <PlantInstanceManagerTab
+              nurseryId={nursery?.id ?? null}
+              readOnly
+              managerName={nursery?.managerName ?? ''}
+            />
           </TabPanel>
           <TabPanel value={tabValue} index={2}>
             <ManagerPlantComboTab readOnly />

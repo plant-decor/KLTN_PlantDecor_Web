@@ -20,8 +20,10 @@ import type {
   ManagerPlantComboOperationRequest,
   PaginatedPayload,
   PaginationQuery,
+  PlantInstanceDetail,
   SystemPlantSearchPayload,
   SystemPlantSearchRequest,
+  UpdatePlantInstanceRequest,
   UpdatePlantInstanceStatusRequest,
   UpdateCommonPlantRequest,
 } from '@/types/manager-store-catalog.types';
@@ -54,9 +56,7 @@ export const updateMyManagerNursery = async (
 };
 export const getCompatiblePlantCombosForNursery = async (
   loading: false): Promise<ResponseModel<PlantComboListPayload>> => {
-  const response: ResponseModel<PlantComboListPayload> = await apiClient.get('/manager/plant-combos/compatible', undefined, loading);
-  console.log('Raw response for compatible combos:', response);
-  return response;
+  return apiClient.get('/manager/plant-combos/compatible', undefined, loading);
 };
 export const getManagerCommonPlants = async (
   nurseryId: number,
@@ -184,6 +184,64 @@ export const updateManagerPlantInstanceStatus = async (
   loading = true
 ): Promise<ResponseModel<unknown>> => {
   return apiClient.patch(`/manager/plant-instances/${instanceId}/status`, request, loading);
+};
+
+export const getManagerPlantInstanceById = async (
+  instanceId: number,
+  loading = true
+): Promise<ResponseModel<PlantInstanceDetail>> => {
+  return apiClient.get(`/manager/plant-instances/${instanceId}`, undefined, loading);
+};
+
+export const updateManagerPlantInstance = async (
+  instanceId: number,
+  request: UpdatePlantInstanceRequest,
+  loading = true
+): Promise<ResponseModel<PlantInstanceDetail>> => {
+  return apiClient.patch(`/manager/plant-instances/${instanceId}`, request, loading);
+};
+
+export const replaceManagerPlantInstanceImage = async (
+  instanceId: number,
+  imageId: number,
+  file: File,
+  loading = true
+): Promise<ResponseModel<PlantInstanceDetail>> => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  return apiClient.put(
+    `/manager/plant-instances/${instanceId}/images/${imageId}`,
+    formData,
+    loading,
+    {
+      showToast: false,
+      showErrorToast: false,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }
+  );
+};
+
+export const deleteManagerPlantInstanceImage = async (
+  instanceId: number,
+  imageId: number,
+  loading = true
+): Promise<ResponseModel<PlantInstanceDetail>> => {
+  return apiClient.del(`/manager/plant-instances/${instanceId}/images/${imageId}`, loading);
+};
+
+export const setPrimaryManagerPlantInstanceImage = async (
+  instanceId: number,
+  imageId: number,
+  loading = true
+): Promise<ResponseModel<PlantInstanceDetail>> => {
+  return apiClient.patch(
+    `/manager/plant-instances/${instanceId}/images/${imageId}/set-primary`,
+    undefined,
+    loading
+  );
 };
 
 export const batchUpdateManagerPlantInstanceStatus = async (

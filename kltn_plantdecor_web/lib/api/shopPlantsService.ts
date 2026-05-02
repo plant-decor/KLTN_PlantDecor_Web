@@ -74,7 +74,9 @@ export interface NurseryPlantInstanceItem {
   sku: string;
   specificPrice: number;
   height: number;
+  trunkDiameter: number;
   healthStatus: string;
+  age: number;
   status: number;
   statusName: string;
   primaryImageUrl: string | null;

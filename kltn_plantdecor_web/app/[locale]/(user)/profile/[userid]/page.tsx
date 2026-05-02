@@ -55,11 +55,17 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{ username?: string; phoneNumber?: string }>({});
   const [openChangePassword, setOpenChangePassword] = useState(false);
   const [openSetPassword, setOpenSetPassword] = useState(false);
   const [addressSuggestions, setAddressSuggestions] = useState<AddressSuggestion[]>([]);
   const [loadingAddressSuggestions, setLoadingAddressSuggestions] = useState(false);
   const [addressInputValue, setAddressInputValue] = useState('');
+
+  const isFullNameInvalid = !(profile.fullName ?? '').trim();
+  const isUsernameInvalid = !(profile.username ?? '').trim();
+  const phoneNumberTrimmed = (profile.phoneNumber ?? '').trim();
+  const isPhoneNumberInvalid = !isValidPhoneNumber10Digits(phoneNumberTrimmed);
 
   // Fetch profile on mount
   const fetchProfile = useCallback(async () => {
@@ -130,6 +136,13 @@ export default function ProfilePage() {
       ...prev,
       [field]: value,
     }));
+
+    if (field === 'username' || field === 'phoneNumber') {
+      setFieldErrors((prev) => ({
+        ...prev,
+        [field]: undefined,
+      }));
+    }
   };
 
   const handleSelectAddressSuggestion = (value: AddressSuggestion | string | null) => {
@@ -183,10 +196,29 @@ export default function ProfilePage() {
 
   const handleSaveChanges = async () => {
     try {
+      const fullName = (profile.fullName || '').trim();
+      const username = (profile.username || '').trim();
       const phoneNumber = (profile.phoneNumber || '').trim();
 
+      setFieldErrors({});
+
+      if (!fullName) {
+        setError(t('fullNameRequired'));
+        return;
+      }
+
+      if (!username) {
+        setFieldErrors({ username: t('usernameRequired') });
+        return;
+      }
+
+      if (!phoneNumber) {
+        setFieldErrors({ phoneNumber: t('phoneNumberRequired') });
+        return;
+      }
+
       if (!isValidPhoneNumber10Digits(phoneNumber)) {
-        setError(t('phoneNumberInvalid'));
+        setFieldErrors({ phoneNumber: t('phoneNumberInvalid') });
         return;
       }
 
@@ -195,9 +227,9 @@ export default function ProfilePage() {
 
       // Build request matching API format
       const request: UpdateUserProfileRequest = {
-        userName: profile.username || '',
+        userName: username,
         phoneNumber,
-        fullName: profile.fullName || '',
+        fullName,
         address: profile.address || '',
         birthYear: profile.birthYear || 0,
         gender: normalizeGender(profile.gender),
@@ -405,6 +437,8 @@ export default function ProfilePage() {
                   label={t('username') || 'Username'}
                   value={profile.username || ''}
                   onChange={(e) => handleInputChange('username', e.target.value)}
+                  error={Boolean(fieldErrors.username)}
+                  helperText={fieldErrors.username || ' '}
                   fullWidth
                   disabled={isSaving}
                 />
@@ -425,6 +459,8 @@ export default function ProfilePage() {
                   type='number'
                   value={profile.phoneNumber || ''}
                   onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
+                  error={Boolean(fieldErrors.phoneNumber)}
+                  helperText={fieldErrors.phoneNumber || ' '}
                   fullWidth
                   disabled={isSaving}
                 />
@@ -555,7 +591,7 @@ export default function ProfilePage() {
               size="large"
               startIcon={isSaving ? <CustomLoading size={20} /> : <SaveIcon />}
               onClick={handleSaveChanges}
-              disabled={isSaving}
+              disabled={isSaving || isFullNameInvalid || isUsernameInvalid || isPhoneNumberInvalid}
               sx={{
                 px: 4,
                 py: 1.5,

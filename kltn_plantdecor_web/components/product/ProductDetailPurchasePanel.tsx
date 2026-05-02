@@ -120,7 +120,7 @@ export default function ProductDetailPurchasePanel({
         );
 
         if (!isMounted) return;
-
+        console.log('response', response);
         const payloadItems = response.payload?.items ?? [];
         setInstanceItems(payloadItems);
 
@@ -264,9 +264,17 @@ export default function ProductDetailPurchasePanel({
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className="font-medium text-gray-900">{t('purchasePanel.sku')}: {instance.sku}</p>
-                      <p className="text-sm text-gray-600">{t('purchasePanel.height')}: {instance.height} cm</p>
-                      <p className="text-sm text-gray-600">{t('purchasePanel.health')}: {instance.healthStatus}</p>
+                    <p className="font-medium text-gray-900">SKU: {instance.sku}</p>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-2">
+                      <p className="text-sm text-gray-600">Height: {instance.height} cm</p>
+                      <p className="text-sm text-gray-600">Health: {instance.healthStatus}</p>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                      <p className="text-sm text-gray-600">Trunk Diameter: {instance.trunkDiameter} cm</p>
+                      <p className="text-sm text-gray-600">Age: {instance.age}</p>
+                        </div>
+                      </div>
                     </div>
                     <p className="text-base font-semibold text-green-700">
                       {instance.specificPrice.toLocaleString('vi-VN')} VND

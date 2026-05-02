@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Autocomplete,
@@ -60,6 +60,10 @@ export interface ServiceBookingData {
 const SERVICE_TYPE_ONETIME = 1;
 const DAY_OF_WEEK_SUNDAY = 0;
 
+/** ~chiều cao một dòng option gói (2 dòng typography); dùng cho maxHeight khi >4 option */
+const SERVICE_PACKAGE_MENU_ROW_HEIGHT_PX = 72;
+const SERVICE_PACKAGE_MENU_MAX_VISIBLE_OPTIONS = 4;
+
 const getLocalDateInputValue = (date: Date = new Date()) => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -101,6 +105,9 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit, initialP
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof ServiceBookingData, string>>>({});
+
+  const servicePackageSelectRef = useRef<HTMLDivElement>(null);
+  const [servicePackageMenuPaperWidth, setServicePackageMenuPaperWidth] = useState<number | undefined>();
 
   const selectedPackage = useMemo(
     () => packages.find((pkg) => pkg.id === selectedPackageId) ?? null,
@@ -528,26 +535,58 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit, initialP
           </Box>
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
-            <FormControl fullWidth>
-              <InputLabel>{t('selectServicePackage')}</InputLabel>
-              <Select
-                value={selectedPackageId}
-                onChange={(e) => {
-                  const packageId = Number(e.target.value);
-                  setSelectedPackageId(packageId);
-                  setPackageNurseryServices([]);
-                  handleChange('careServicePackageId', packageId);
-                  handleChange('preferredNurseryId', undefined);
-                  handleChange('scheduleDaysOfWeek', []);
-                }}
-                label={t('selectServicePackage')}
-              >
+            <Box ref={servicePackageSelectRef} sx={{ width: '100%' }}>
+              <FormControl fullWidth>
+                <InputLabel>{t('selectServicePackage')}</InputLabel>
+                <Select
+                  value={selectedPackageId}
+                  onOpen={() => {
+                    let attempts = 0;
+                    const measure = () => {
+                      attempts += 1;
+                      const combo = servicePackageSelectRef.current?.querySelector('[role="combobox"]');
+                      if (combo instanceof HTMLElement && combo.offsetWidth > 0) {
+                        setServicePackageMenuPaperWidth(combo.offsetWidth);
+                      } else if (attempts < 12) {
+                        requestAnimationFrame(measure);
+                      }
+                    };
+                    requestAnimationFrame(measure);
+                  }}
+                  onClose={() => setServicePackageMenuPaperWidth(undefined)}
+                  onChange={(e) => {
+                    const packageId = Number(e.target.value);
+                    setSelectedPackageId(packageId);
+                    setPackageNurseryServices([]);
+                    handleChange('careServicePackageId', packageId);
+                    handleChange('preferredNurseryId', undefined);
+                    handleChange('scheduleDaysOfWeek', []);
+                  }}
+                  label={t('selectServicePackage')}
+                  MenuProps={{
+                    PaperProps: {
+                      sx: {
+                        ...(servicePackageMenuPaperWidth != null && {
+                          width: servicePackageMenuPaperWidth,
+                          minWidth: servicePackageMenuPaperWidth,
+                          maxWidth: servicePackageMenuPaperWidth,
+                          boxSizing: 'border-box',
+                        }),
+                        ...(packages.length > SERVICE_PACKAGE_MENU_MAX_VISIBLE_OPTIONS && {
+                          maxHeight:
+                            SERVICE_PACKAGE_MENU_MAX_VISIBLE_OPTIONS * SERVICE_PACKAGE_MENU_ROW_HEIGHT_PX,
+                          overflowY: 'auto',
+                        }),
+                      },
+                    },
+                  }}
+                >
                 <MenuItem value={0} disabled>
                   <em>{t('selectServicePackage')}</em>
                 </MenuItem>
                 {packages.map((pkg) => (
                   <MenuItem key={pkg.id} value={pkg.id}>
-                    <Box>
+                    <Box className="flex flex-col gap-2">
                       <Typography variant="body1" fontWeight="bold">
                         {pkg.name}
                       </Typography>
@@ -557,8 +596,9 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit, initialP
                     </Box>
                   </MenuItem>
                 ))}
-              </Select>
-            </FormControl>
+                </Select>
+              </FormControl>
+            </Box>
 
             {selectedPackage && (
               <Alert severity="info">

@@ -119,8 +119,8 @@ export function MessageList({
                     color: "#0f172a",
                     boxShadow: isMine ? "none" : "0 6px 18px rgba(15,23,42,0.08)",
                     border: isMine ? "none" : "1px solid rgba(15,23,42,0.08)",
-                    borderTopLeftRadius: isMine ? 3 : 1,
-                    borderTopRightRadius: isMine ? 1 : 3,
+                    // borderTopLeftRadius: isMine ? 3 : 1,
+                    // borderTopRightRadius: isMine ? 1 : 3,
                   }}
                 >
                   <Typography

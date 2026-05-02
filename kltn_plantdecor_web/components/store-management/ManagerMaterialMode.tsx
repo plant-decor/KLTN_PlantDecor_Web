@@ -268,14 +268,14 @@ export default function ManagerMaterialMode({ readOnly = false, headerActions = 
     void fetchItems(1, nextPageSize);
   }, [fetchItems]);
 
-  const pageQuantitySum = useMemo(() => items.reduce((sum, item) => sum + item.quantity, 0), [items]);
+  // const pageQuantitySum = useMemo(() => items.reduce((sum, item) => sum + item.quantity, 0), [items]);
 
   return (
     <Box>
       <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={2} sx={{ mb: 3 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
           <Chip label={`Total rows: ${pagination.totalCount}`} sx={{ bgcolor: '#ecfff3' }} />
-          <Chip label={`Page quantity sum: ${pageQuantitySum}`} sx={{ bgcolor: '#ecf7ff' }} />
+          {/* <Chip label={`Page quantity sum: ${pageQuantitySum}`} sx={{ bgcolor: '#ecf7ff' }} /> */}
         </Stack>
 
         <Stack direction="row" spacing={1}>

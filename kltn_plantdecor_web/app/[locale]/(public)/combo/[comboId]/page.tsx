@@ -133,6 +133,7 @@ export async function generateMetadata({ params }: ComboDetailPageProps): Promis
     getShopComboById(numericComboId, true, false).catch(() => null),
     getFallbackCombo(numericComboId),
   ]);
+  console.log('comboResponse',comboResponse);
   const roomDesignEnumsResponse = await getRoomDesignEnums(true, false).catch(() => null);
 
   const combo = getPayload<PlantCombo>(comboResponse);
@@ -173,6 +174,7 @@ export async function generateMetadata({ params }: ComboDetailPageProps): Promis
 export default async function ComboDetailPage({ params }: ComboDetailPageProps) {
   const { locale, comboId } = await params;
   const tCommon = await getTranslations({ locale, namespace: 'common' });
+  const t = await getTranslations({ locale, namespace: 'productDetail' });
   const tProducts = await getTranslations({ locale, namespace: 'products' });
   const tCombo = await getTranslations({ locale, namespace: 'combo' });
   const tRoomDesignEnum = await getTranslations({ locale, namespace: 'roomDesignEnums' });
@@ -200,7 +202,7 @@ export default async function ComboDetailPage({ params }: ComboDetailPageProps) 
   const seasonName = combo?.seasonName || '';
   const themeName = combo?.themeName || '';
   const themeDescription = combo?.themeDescription || '';
-  const suitableSpaceLabel = lightRequirementById.get(Number(combo?.suitableSpace)) || '';
+  const suitableSpaceLabel = (combo?.suitableSpace) || '';
   const suitableRooms = Array.isArray(combo?.suitableRooms) ? combo.suitableRooms : [];
   const suitableRoomLabels = suitableRooms.map((roomId) => roomTypeById.get(Number(roomId)) || String(roomId));
   const comboPrice = combo?.comboPrice ?? fallbackCombo?.price ?? 0;
@@ -257,9 +259,9 @@ export default async function ComboDetailPage({ params }: ComboDetailPageProps) 
       />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <nav className="mb-8 flex items-center text-sm text-gray-500">
-          <Link href={`/${locale}`} className="hover:text-green-600">{tCommon('menu')}</Link>
-          <span className="mx-2">/</span>
-          <Link href={`/${locale}/plant-store`} className="hover:text-green-600">{tCommon('search')}</Link>
+        <Link href={`/${locale}`} className="hover:text-green-600">{t('home')}</Link>
+        <span className="mx-2">/</span>
+          <Link href={`/${locale}/plant-store`} className="hover:text-green-600">{t('store')}</Link>
           <span className="mx-2">/</span>
           <span className="text-gray-900">{comboName}</span>
         </nav>

@@ -781,6 +781,7 @@
     "roomStyle": "Room style",
     "growthRate": "Growth rate",
     "uniqueInstance": "Unique instance",
+    "potSize": "Pot size",
     "categories": "Categories",
     "tags": "Tags",
     "categoryFallback": "Category {index}",

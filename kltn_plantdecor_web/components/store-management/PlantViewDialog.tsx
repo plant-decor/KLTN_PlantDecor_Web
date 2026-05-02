@@ -195,16 +195,6 @@ export default function PlantViewDialog({ open, plant, enums, onClose }: PlantVi
                 </Typography>
               </Grid>
               <Grid size={{ xs: 12, sm: 4 }}>
-                <Typography variant="body2" color="text.secondary">Care level</Typography>
-                <Typography variant="body1" fontWeight="600">{plant.careLevel}</Typography>
-              </Grid>
-              <Grid size={{ xs: 12, sm: 4 }}>
-                <Typography variant="body2" color="text.secondary">Base price</Typography>
-                <Typography variant="body1" fontWeight="600">
-                  {formatCurrency(plant.basePrice, 'vi')}
-                </Typography>
-              </Grid>
-              <Grid size={{ xs: 12, sm: 4 }}>
                 <Typography variant="body2" color="text.secondary">Growth rate</Typography>
                 <Typography variant="body1" fontWeight="600">
                   {typeof plant.growthRate === 'number'
@@ -212,27 +202,23 @@ export default function PlantViewDialog({ open, plant, enums, onClose }: PlantVi
                     : '-'}
                 </Typography>
               </Grid>
-              <Grid size={{ xs: 12, sm: 4 }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="body2" color="text.secondary">Base price</Typography>
+                <Typography variant="body1" fontWeight="600">
+                  {formatCurrency(plant.basePrice, 'vi')}
+                </Typography>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="body2" color="text.secondary">Pot size</Typography>
                 <Typography variant="body1" fontWeight="600">{plant.potSize || '-'}</Typography>
               </Grid>
-              <Grid size={{ xs: 12, sm: 4 }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="body2" color="text.secondary">Total instances</Typography>
                 <Typography variant="body1" fontWeight="600">{plant.totalInstances ?? 0}</Typography>
               </Grid>
-              <Grid size={{ xs: 12, sm: 4 }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="body2" color="text.secondary">Available instances</Typography>
                 <Typography variant="body1" fontWeight="600">{plant.availableInstances ?? 0}</Typography>
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>Room type</Typography>
-                {renderEnumChips(
-                  plant.roomType,
-                  enums.roomTypes.map((item) => ({
-                    ...item,
-                    name: localizeRoomDesignEnumLabel(item.name, tRoomDesignEnum, 'RoomType'),
-                  }))
-                )}
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>Room style</Typography>
@@ -241,6 +227,16 @@ export default function PlantViewDialog({ open, plant, enums, onClose }: PlantVi
                   enums.roomStyles.map((item) => ({
                     ...item,
                     name: localizeRoomDesignEnumLabel(item.name, tRoomDesignEnum, 'RoomStyle'),
+                  }))
+                )}
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>Room type</Typography>
+                {renderEnumChips(
+                  plant.roomType,
+                  enums.roomTypes.map((item) => ({
+                    ...item,
+                    name: localizeRoomDesignEnumLabel(item.name, tRoomDesignEnum, 'RoomType'),
                   }))
                 )}
               </Grid>

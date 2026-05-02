@@ -784,6 +784,7 @@
     "roomStyle": "Phong cách phòng",
     "growthRate": "Tốc độ phát triển",
     "uniqueInstance": "Cây đặc biệt",
+    "potSize": "Kích thước chậu",
     "categories": "Danh mục",
     "tags": "Thẻ",
     "categoryFallback": "Danh mục {index}",

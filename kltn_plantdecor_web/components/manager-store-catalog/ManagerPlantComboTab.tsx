@@ -80,6 +80,28 @@ const getPayload = <T,>(response: ResponseModel<T>): T | undefined => {
   return response.payload ?? response.data;
 };
 
+type CompatibleComboListPayload = PlantComboListPayload | { items?: PlantCombo[]; Items?: PlantCombo[] };
+
+/** Compatible endpoint có thể trả về mảng trực tiếp, hoặc `{ items }` / `{ Items }` (PascalCase). */
+const extractCompatibleComboItems = (
+  payload: CompatibleComboListPayload | PlantCombo[] | undefined
+): PlantCombo[] => {
+  if (!payload) {
+    return [];
+  }
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+  const record = payload as { items?: PlantCombo[]; Items?: PlantCombo[] };
+  const list = record.items ?? record.Items;
+  return Array.isArray(list) ? list : [];
+};
+
+const isComboSelectableForImport = (combo: PlantCombo & { IsActive?: boolean }): boolean => {
+  const active = combo.isActive ?? combo.IsActive;
+  return active !== false;
+};
+
 const getErrorMessage = (error: unknown, fallback: string): string => {
   if (!error || typeof error !== 'object') {
     return fallback;
@@ -169,10 +191,9 @@ export default function ManagerPlantComboTab({ readOnly = false }: ManagerPlantC
 
     try {
       const response = await getCompatiblePlantCombosForNursery(false);
-      console.log('Raw response for compatible combos:', response);
-      const payload = getPayload<PlantComboListPayload>(response);
-      console.log('Fetched compatible combos for import:', payload);
-      const activeItems = (payload?.items ?? []).filter((combo) => combo.isActive);
+      const payload = getPayload<CompatibleComboListPayload | PlantCombo[]>(response);
+      const rawItems = extractCompatibleComboItems(payload);
+      const activeItems = rawItems.filter(isComboSelectableForImport);
       setImportOptions(activeItems);
       return activeItems;
     } catch {
@@ -183,9 +204,9 @@ export default function ManagerPlantComboTab({ readOnly = false }: ManagerPlantC
     }
   }, []);
 
-  const totalPageQuantity = useMemo(() => {
-    return items.reduce((sum, item) => sum + item.quantity, 0);
-  }, [items]);
+  // const totalPageQuantity = useMemo(() => {
+  //   return items.reduce((sum, item) => sum + item.quantity, 0);
+  // }, [items]);
 
   const handleChangePage = (_event: unknown, newPage: number) => {
     void fetchCombos(newPage + 1, pagination.pageSize);
@@ -277,7 +298,7 @@ export default function ManagerPlantComboTab({ readOnly = false }: ManagerPlantC
       <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={2} sx={{ mb: 2 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
           <Chip label={`Total rows: ${pagination.totalCount}`} sx={{ bgcolor: '#ecfff3' }} />
-          <Chip label={`Page quantity sum: ${totalPageQuantity}`} sx={{ bgcolor: '#ecf7ff' }} />
+          {/* <Chip label={`Page quantity sum: ${totalPageQuantity}`} sx={{ bgcolor: '#ecf7ff' }} /> */}
         </Stack>
 
         <Stack direction="row" spacing={1}>
@@ -310,20 +331,20 @@ export default function ManagerPlantComboTab({ readOnly = false }: ManagerPlantC
 
       <TableContainer component={Paper} sx={{ border: '1px solid var(--card-border)' }}>
         <Table size="small">
-          <TableHead sx={{ backgroundColor: '#f4fff8' }}>
+          <TableHead sx={{ backgroundColor: 'var(--primary)' }}>
             <TableRow>
-              <TableCell sx={{ fontWeight: 700 }}>ID</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="center">ID</TableCell>
               {/* <TableCell sx={{ fontWeight: 700 }}>Combo Code</TableCell> */}
               <TableCell sx={{ fontWeight: 700 }}>Combo Name</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>Combo Type</TableCell>
-              <TableCell sx={{ fontWeight: 700 }} align="right">
+              <TableCell sx={{ fontWeight: 700 }} align="center">
                 Price
               </TableCell>
-              <TableCell sx={{ fontWeight: 700 }} align="right">
+              <TableCell sx={{ fontWeight: 700 }} align="center">
                 Quantity
               </TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Updated At</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="center">Status</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="center">Updated At</TableCell>
               <TableCell sx={{ fontWeight: 700 }} align="center">
                 Actions
               </TableCell>
@@ -347,13 +368,13 @@ export default function ManagerPlantComboTab({ readOnly = false }: ManagerPlantC
             ) : (
               items.map((item) => (
                 <TableRow key={item.id} hover>
-                  <TableCell>{item.id}</TableCell>
+                  <TableCell align="center">{item.id}</TableCell>
                   {/* <TableCell>{item.comboCode}</TableCell> */}
                   <TableCell>{item.comboName}</TableCell>
                   <TableCell>{item.comboTypeName}</TableCell>
-                  <TableCell align="right">{formatCurrency(item.price, 'vi')}</TableCell>
-                  <TableCell align="right">{item.quantity}</TableCell>
-                  <TableCell>
+                  <TableCell align="center">{formatCurrency(item.price, 'vi')}</TableCell>
+                  <TableCell align="center">{item.quantity}</TableCell>
+                  <TableCell align="center">
                     <Chip
                       size="small"
                       label={item.isActive ? 'Active' : 'Inactive'}
@@ -361,7 +382,7 @@ export default function ManagerPlantComboTab({ readOnly = false }: ManagerPlantC
                       variant="outlined"
                     />
                   </TableCell>
-                  <TableCell>{formatDateTime(item.updatedAt)}</TableCell>
+                  <TableCell align="center">{formatDateTime(item.updatedAt)}</TableCell>
                   <TableCell align="center">
                     {!readOnly ? (
                       <Button

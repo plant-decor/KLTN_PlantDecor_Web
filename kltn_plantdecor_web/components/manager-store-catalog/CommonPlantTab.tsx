@@ -260,10 +260,10 @@ export default function CommonPlantTab({ nurseryId, readOnly = false }: CommonPl
     }
   };
 
-  const totalQuantity = useMemo(
-    () => items.reduce((sum, item) => sum + item.quantity, 0),
-    [items]
-  );
+  // const totalQuantity = useMemo(
+  //   () => items.reduce((sum, item) => sum + item.quantity, 0),
+  //   [items]
+  // );
 
   const handleChangePage = (_event: unknown, newPage: number) => {
     void fetchCommonPlants(newPage + 1, pagination.pageSize);
@@ -287,7 +287,7 @@ export default function CommonPlantTab({ nurseryId, readOnly = false }: CommonPl
       <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={2} sx={{ mb: 2 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
           <Chip label={`Total rows: ${pagination.totalCount}`} sx={{ bgcolor: '#ecfff3' }} />
-          <Chip label={`Page quantity sum: ${totalQuantity}`} sx={{ bgcolor: '#ecf7ff' }} />
+          {/* <Chip label={`Page quantity sum: ${totalQuantity}`} sx={{ bgcolor: '#ecf7ff' }} /> */}
         </Stack>
 
         <Stack direction="row" spacing={1}>
@@ -320,20 +320,14 @@ export default function CommonPlantTab({ nurseryId, readOnly = false }: CommonPl
 
       <TableContainer component={Paper} sx={{ border: '1px solid var(--card-border)' }}>
         <Table size="small">
-          <TableHead sx={{ backgroundColor: '#f4fff8' }}>
+          <TableHead sx={{ backgroundColor: 'var(--primary)' }}>
             <TableRow>
-              <TableCell sx={{ fontWeight: 700 }}>ID</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="center">ID</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>Plant Name</TableCell>
-              <TableCell sx={{ fontWeight: 700 }} align="right">
-                Quantity
-              </TableCell>
-              <TableCell sx={{ fontWeight: 700 }} align="right">
-                Reserved
-              </TableCell>
-              <TableCell sx={{ fontWeight: 700 }} align="right">
-                Available
-              </TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="center">Quantity</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="center">Reserved</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="center">Available</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="center">Status</TableCell>
               <TableCell sx={{ fontWeight: 700 }} align="center">
                 Actions
               </TableCell>
@@ -357,7 +351,7 @@ export default function CommonPlantTab({ nurseryId, readOnly = false }: CommonPl
             ) : (
               items.map((item) => (
                 <TableRow key={item.id} hover>
-                  <TableCell>{item.id}</TableCell>
+                  <TableCell align="center">{item.id}</TableCell>
                   <TableCell>
                     <Typography variant="body2" fontWeight={600}>
                       {item.plantName}
@@ -366,10 +360,10 @@ export default function CommonPlantTab({ nurseryId, readOnly = false }: CommonPl
                       Plant ID: {item.plantId}
                     </Typography>
                   </TableCell>
-                  <TableCell align="right">{item.quantity}</TableCell>
-                  <TableCell align="right">{item.reservedQuantity}</TableCell>
-                  <TableCell align="right">{item.availableQuantity}</TableCell>
-                  <TableCell>
+                  <TableCell align="center">{item.quantity}</TableCell>
+                  <TableCell align="center">{item.reservedQuantity}</TableCell>
+                  <TableCell align="center">{item.availableQuantity}</TableCell>
+                  <TableCell align="center">
                     <Chip
                       size="small"
                       label={item.isActive ? 'Active' : 'Inactive'}

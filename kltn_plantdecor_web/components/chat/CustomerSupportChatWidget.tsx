@@ -362,8 +362,8 @@ export default function SupportChatWidget() {
                         border: entry.isMine
                           ? "none"
                           : "1px solid rgba(15,23,42,0.08)",
-                        borderTopLeftRadius: entry.isMine ? 3 : 1,
-                        borderTopRightRadius: entry.isMine ? 1 : 3,
+                        // borderTopLeftRadius: entry.isMine ? 3 : 1,
+                        // borderTopRightRadius: entry.isMine ? 1 : 3,
                       }}
                     >
                       <SupportRichMessage text={entry.text} isMine={entry.isMine} />

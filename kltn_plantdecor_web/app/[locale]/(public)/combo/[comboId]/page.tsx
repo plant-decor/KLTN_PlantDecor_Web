@@ -193,7 +193,7 @@ export default async function ComboDetailPage({ params }: ComboDetailPageProps) 
 
   const combo = getPayload<PlantCombo>(comboResponse);
   const roomDesignEnums = getPayload(roomDesignEnumsResponse) ?? [];
-  const { lightRequirementById, roomTypeById } = getRoomDesignLabelMaps(roomDesignEnums, tRoomDesignEnum);
+  const { roomTypeById } = getRoomDesignLabelMaps(roomDesignEnums, tRoomDesignEnum);
   const nurseries = getPayload(nurseriesResponse) ?? [];
 
   const comboName = combo?.comboName || fallbackCombo?.name || `Combo #${comboId}`;

@@ -56,7 +56,7 @@ import { toast } from 'react-toastify';
 import { formatCurrency } from '@/lib/utils/formatUtil';
 import PlantInstanceCreateDialog, { type PlantInstanceCreateSubmitValue } from './PlantInstanceCreateDialog';
 import PlantInstanceDetailDialog from './PlantInstanceDetailDialog';
-import { formatDateTime } from '@/lib/utils/dateUtils';
+// import { formatDateTime } from '@/lib/utils/dateUtils';
 
 interface PlantInstanceManagerTabProps {
   nurseryId: number | null;
@@ -94,13 +94,13 @@ const getErrorMessage = (error: unknown, fallback: string): string => {
   return candidate.response?.data?.message || candidate.message || fallback;
 };
 
-const statusColorMap: Record<number, 'success' | 'warning' | 'default' | 'error' | 'info'> = {
-  1: 'success',
-  2: 'default',
-  3: 'warning',
-  4: 'error',
-  5: 'info',
-};
+// const statusColorMap: Record<number, 'success' | 'warning' | 'default' | 'error' | 'info'> = {
+//   1: 'success',
+//   2: 'default',
+//   3: 'warning',
+//   4: 'error',
+//   5: 'info',
+// };
 
 export default function PlantInstanceManagerTab({
   nurseryId,

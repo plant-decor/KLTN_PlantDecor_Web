@@ -13,6 +13,7 @@ import {
   Typography,
 } from '@mui/material';
 import type { ServiceProgressDetail } from '@/types/care-service.types';
+import ServiceRatingReadOnlySection from '@/components/service/ServiceRatingReadOnlySection';
 
 interface ServiceProgressDetailDialogProps {
   open: boolean;
@@ -125,6 +126,16 @@ export default function ServiceProgressDetailDialog({
                 />
               </Box>
             )}
+
+            <Divider sx={{ my: 0.5 }} />
+
+            <Typography variant='subtitle1' fontWeight={700}>
+              Service rating
+            </Typography>
+            <ServiceRatingReadOnlySection
+              registrationId={detail.serviceRegistrationId}
+              enabled={open && Boolean(detail.serviceRegistrationId) && !loading && !error}
+            />
           </Stack>
         )}
       </DialogContent>

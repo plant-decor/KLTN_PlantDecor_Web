@@ -8,7 +8,6 @@ import HourglassTopIcon from '@mui/icons-material/HourglassTop';
 import ReplayIcon from '@mui/icons-material/Replay';
 import type { ReactElement } from 'react';
 import type { ChipProps } from '@mui/material/Chip';
-import { formatDateTime } from '@/lib/utils/dateUtils';
 
 export function formatCurrency(value: number): string {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);

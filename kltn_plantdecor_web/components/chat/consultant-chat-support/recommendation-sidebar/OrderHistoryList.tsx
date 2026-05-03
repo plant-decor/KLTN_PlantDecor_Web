@@ -2,6 +2,7 @@
 
 import { Box, Chip, Stack, Typography } from "@mui/material";
 import type { OrderByEmail } from "@/types/order.types";
+import { formatDate } from "@/lib/utils/dateUtils";
 
 type Props = {
   orders: OrderByEmail[];
@@ -11,16 +12,6 @@ type Props = {
 
 const formatCurrency = (value: number) =>
   value.toLocaleString("vi-VN", { style: "currency", currency: "VND" });
-
-const formatDate = (value: string) => {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat("vi-VN", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(date);
-};
 
 export function OrderHistoryList({
   orders,

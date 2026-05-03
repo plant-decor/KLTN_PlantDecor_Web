@@ -15,10 +15,11 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { useTranslations } from 'next-intl';
 import type { Order, OrderInvoiceDetail } from '@/types/order.types';
-import { canUserCancelOrder, formatCurrency, formatDate, getStatusInfo } from './orderHistoryUtils';
+import { canUserCancelOrder, formatCurrency, getStatusInfo } from './orderHistoryUtils';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 import Image from 'next/image';
 import { CustomLoading } from '@/components/CustomLoading';
+import { formatDate } from '@/lib/utils/dateUtils';
 
 const SERVICE_ORDER_TYPE = 4;
 const ORDER_ITEM_FALLBACK_IMAGE = '/img/fallbackplant.avif';

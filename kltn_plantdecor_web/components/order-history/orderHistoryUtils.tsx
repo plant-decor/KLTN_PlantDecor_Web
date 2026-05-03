@@ -14,9 +14,6 @@ export function formatCurrency(value: number): string {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
 }
 
-export function formatDate(dateStr: string): string {
-  return formatDateTime(dateStr);
-}
 
 export function canUserCancelOrder(statusName: string): boolean {
   return statusName === 'Pending';

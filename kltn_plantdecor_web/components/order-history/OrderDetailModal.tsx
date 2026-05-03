@@ -25,13 +25,13 @@ import type { Order } from '@/types/order.types';
 import {
   canUserCancelOrder,
   formatCurrency,
-  formatDate,
   getStatusInfo,
 } from './orderHistoryUtils';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 import Image from 'next/image';
 import { canCreateReturnTicket } from './returnTicket.constants';
 import { CustomLoading } from '@/components/CustomLoading';
+import { formatDateTime } from '@/lib/utils/dateUtils';
 
 const SERVICE_ORDER_TYPE = 4;
 
@@ -116,13 +116,13 @@ export default function OrderDetailModal({
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                   Created at
                 </Typography>
-                <Typography variant="body1">{formatDate(order.createdAt)}</Typography>
+                <Typography variant="body1">{formatDateTime(order.createdAt)}</Typography>
               </Box>
               <Box>
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                   Updated at
                 </Typography>
-                <Typography variant="body1">{formatDate(order.updatedAt)}</Typography>
+                <Typography variant="body1">{formatDateTime(order.updatedAt)}</Typography>
               </Box>
             </Box>
 
@@ -253,7 +253,7 @@ export default function OrderDetailModal({
                       <Chip label={invoice.statusName} size="small" />
                     </Box>
                     <Typography variant="body2" color="text.secondary">
-                      Type: {invoice.typeName} - Date: {formatDate(invoice.issuedDate)}
+                      Type: {invoice.typeName} - Date: {formatDateTime(invoice.issuedDate)}
                     </Typography>
                     <Typography variant="body1" fontWeight="bold" sx={{ mt: 1 }}>
                       {formatCurrency(invoice.totalAmount)}

@@ -6,12 +6,14 @@ import MaterialCard from '@/components/product/MaterialCard';
 import ComboCard from '@/components/product/ComboCard';
 import {
   FormControl,
+  IconButton,
   InputLabel,
   MenuItem,
   Pagination,
   PaginationItem,
   Select,
 } from '@mui/material';
+import { ArrowDownward, ArrowUpward } from '@mui/icons-material';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import type {
   ShopUnifiedSearchItem,
@@ -22,7 +24,7 @@ import { buildPaginationHref } from '@/lib/utils/plant-store/url';
 import { cloneQuery } from '@/lib/utils/plant-store/query';
 import { toMaterialCardMaterial, toProductCardPlant } from '@/lib/utils/shop-unified-card-mappers';
 
-interface SortOption {
+export interface PlantStoreSortByOption {
   value: string;
   label: string;
 }
@@ -32,8 +34,9 @@ interface PlantStoreUnifiedResultsProps {
   query: PlantStorePageQuery;
   payload: ShopUnifiedPagedItems;
   pageSize: number;
-  selectedSort: string;
-  sortOptions: SortOption[];
+  sortBy: string;
+  sortDirection: string;
+  sortByOptions: PlantStoreSortByOption[];
   foundText: string;
   pageOfText: string;
   previousLabel: string;
@@ -41,19 +44,31 @@ interface PlantStoreUnifiedResultsProps {
   noProductsLabel: string;
   itemsPerPageLabel: string;
   sortLabel: string;
+  sortDirectionAriaAscending: string;
+  sortDirectionAriaDescending: string;
   initialWishlistState?: Record<string, boolean>;
 }
 
 const buildWishlistKey = (itemType: 'Plant' | 'Material' | 'PlantCombo', itemId: number): string =>
   `${itemType}:${itemId}`;
 
+const applySortQueryParams = (params: URLSearchParams, nextSortBy: string, nextSortDirection: string) => {
+  const normalizedBy = nextSortBy.trim();
+  const normalizedDir =
+    nextSortDirection.trim().toLowerCase() === 'asc' ? 'Asc' : 'Desc';
+  params.set('sort', `${normalizedBy}:${normalizedDir}`);
+  params.set('sortBy', normalizedBy);
+  params.set('sortDirection', normalizedDir);
+};
+
 export default function PlantStoreUnifiedResults({
   locale,
   query,
   payload,
   pageSize,
-  selectedSort,
-  sortOptions,
+  sortBy,
+  sortDirection,
+  sortByOptions,
   foundText,
   pageOfText,
   previousLabel,
@@ -61,6 +76,8 @@ export default function PlantStoreUnifiedResults({
   noProductsLabel,
   itemsPerPageLabel,
   sortLabel,
+  sortDirectionAriaAscending,
+  sortDirectionAriaDescending,
   initialWishlistState = {},
 }: PlantStoreUnifiedResultsProps) {
   const router = useRouter();
@@ -77,26 +94,30 @@ export default function PlantStoreUnifiedResults({
     router.replace(`/plant-store?${params.toString()}`, { locale, scroll: false });
   };
 
-  const handleSortChange = (event: SelectChangeEvent<string>) => {
-    const nextSort = event.target.value;
+  const normalizedDirection = sortDirection.trim().toLowerCase() === 'asc' ? 'Asc' : 'Desc';
+  const isAscending = normalizedDirection === 'Asc';
+
+  const handleSortByChange = (event: SelectChangeEvent<string>) => {
+    const nextSortBy = event.target.value.trim();
+    if (!nextSortBy) return;
+
     const params = cloneQuery(query);
-
-    if (!nextSort || nextSort === ':') {
-      params.delete('sort');
-      params.delete('sortBy');
-      params.delete('sortDirection');
-      params.set('sortBy', 'CreatedAt');
-      params.set('sortDirection', 'Desc');
-    } else {
-      const [sortBy = '', sortDirection = ''] = nextSort.split(':');
-      params.set('sort', nextSort);
-      params.set('sortBy', sortBy);
-      params.set('sortDirection', sortDirection);
-    }
-
+    applySortQueryParams(params, nextSortBy, normalizedDirection);
     params.set('page', '1');
     router.replace(`/plant-store?${params.toString()}`, { locale, scroll: false });
   };
+
+  const handleSortDirectionToggle = () => {
+    const nextDir = isAscending ? 'Desc' : 'Asc';
+    const params = cloneQuery(query);
+    applySortQueryParams(params, sortBy.trim() || 'CreatedAt', nextDir);
+    params.set('page', '1');
+    router.replace(`/plant-store?${params.toString()}`, { locale, scroll: false });
+  };
+
+  const sortBySelectValue = sortByOptions.some((o) => o.value === sortBy)
+    ? sortBy
+    : sortByOptions[0]?.value ?? '';
 
   return (
     <div className="md:col-span-4">
@@ -104,22 +125,35 @@ export default function PlantStoreUnifiedResults({
         <p>{foundText}</p>
         <div className="flex items-center gap-3">
           <p>{pageOfText}</p>
-          <FormControl size="small" sx={{ minWidth: 220 }}>
-            <InputLabel id="unified-sort-label">{sortLabel}</InputLabel>
-            <Select
-              labelId="unified-sort-label"
-              id="unified-sort"
-              value={selectedSort}
-              label={sortLabel}
-              onChange={handleSortChange}
-            >
-              {sortOptions.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          {sortByOptions.length > 0 ? (
+            <div className="flex items-center gap-1">
+              <FormControl size="small" sx={{ minWidth: 200 }}>
+                <InputLabel id="unified-sort-by-label">{sortLabel}</InputLabel>
+                <Select
+                  labelId="unified-sort-by-label"
+                  id="unified-sort-by"
+                  value={sortBySelectValue}
+                  label={sortLabel}
+                  onChange={handleSortByChange}
+                >
+                  {sortByOptions.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <IconButton
+                type="button"
+                size="small"
+                color="primary"
+                onClick={handleSortDirectionToggle}
+                aria-label={isAscending ? sortDirectionAriaAscending : sortDirectionAriaDescending}
+              >
+                {isAscending ? <ArrowUpward /> : <ArrowDownward />}
+              </IconButton>
+            </div>
+          ) : null}
         </div>
       </div>
 

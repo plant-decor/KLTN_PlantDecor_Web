@@ -49,11 +49,14 @@ export default function PlantComboTab({}: PlantComboTabProps) {
     enumError,
     saving,
     plantsLoading,
+    plantsSearchLoading,
+    comboPlantSearchResults,
     error,
     pagination,
     fetchCombos,
     fetchComboById,
-    fetchComboPlants,
+    fetchComboPlantCatalog,
+    searchPlantsForComboForm,
     loadEnums,
     savePlantCombo,
     toggleComboActive,
@@ -79,10 +82,10 @@ export default function PlantComboTab({}: PlantComboTabProps) {
     void (async () => {
       void loadEnums();
       void fetchCombos({ pageNumber: 1, pageSize: 10 });
-      void fetchComboPlants();
+      void fetchComboPlantCatalog();
       void fetchTags({ pageNumber: 1, pageSize: 1000 });
     })();
-  }, [fetchComboPlants, fetchCombos, fetchTags, loadEnums]);
+  }, [fetchComboPlantCatalog, fetchCombos, fetchTags, loadEnums]);
 
   const tagOptions = useMemo<OptionItem[]>(() => {
     return tags.map((tag) => ({ id: tag.id, name: tag.tagName }));
@@ -173,8 +176,8 @@ export default function PlantComboTab({}: PlantComboTabProps) {
   }, [setPageSize]);
 
   const handlePlantSearch = useCallback((keyword: string) => {
-    void fetchComboPlants(keyword);
-  }, [fetchComboPlants]);
+    void searchPlantsForComboForm(keyword);
+  }, [searchPlantsForComboForm]);
 
   return (
     <Box>
@@ -209,7 +212,9 @@ export default function PlantComboTab({}: PlantComboTabProps) {
         open={formOpen}
         editingData={editingData}
         plants={comboPlants}
+        searchPlants={comboPlantSearchResults}
         plantsLoading={plantsLoading}
+        searchPlantsLoading={plantsSearchLoading}
         tags={tagOptions}
         lightRequirementOptions={enums.lightRequirements}
         roomTypeOptions={enums.roomTypes}

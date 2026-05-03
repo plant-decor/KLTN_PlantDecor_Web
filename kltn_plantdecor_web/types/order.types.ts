@@ -66,12 +66,13 @@ export type OrderCreateRequest =
 
 export interface OrderInvoiceDetail {
   id: number;
-  imageUrl: string | null;
+  /** Consultant / một số API chỉ trả các field cơ bản */
+  imageUrl?: string | null;
   itemName: string;
   unitPrice: number;
   quantity: number;
   amount: number;
-  statusName: string;
+  statusName?: string;
 }
 
 export interface OrderInvoice {

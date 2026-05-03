@@ -95,6 +95,31 @@ const normalizePageNumberFromApi = (apiPageNumber: number | undefined, requested
   return apiPageNumber;
 };
 
+/** Chỉ gộp field hợp lệ — tránh spread `params` làm lọt sortBy/sortDirection hoặc field lạ vào ref/request. */
+const mergeAdminPlantGuideSearchRequest = (
+  base: AdminPlantGuideSearchRequest,
+  patch?: Partial<AdminPlantGuideSearchRequest>
+): AdminPlantGuideSearchRequest => {
+  const pageNumber = patch?.pagination?.pageNumber ?? base.pagination.pageNumber;
+  const pageSize = patch?.pagination?.pageSize ?? base.pagination.pageSize;
+
+  const next: AdminPlantGuideSearchRequest = {
+    pagination: { pageNumber, pageSize },
+  };
+
+  const plantId = patch?.plantId !== undefined ? patch.plantId : base.plantId;
+  if (plantId !== undefined && Number.isFinite(plantId)) {
+    next.plantId = plantId;
+  }
+
+  const keyword = patch?.keyword !== undefined ? patch.keyword : base.keyword;
+  if (keyword !== undefined && String(keyword).trim() !== '') {
+    next.keyword = String(keyword).trim();
+  }
+
+  return next;
+};
+
 const toUpsertPayload = (formData: AdminPlantGuideFormData): AdminPlantGuideUpsertRequest => ({
   plantId: Number(formData.plantId),
   lightRequirement: toNullableTrimmedString(formData.lightRequirement),
@@ -124,27 +149,25 @@ export const useAdminPlantGuides = (): UseAdminPlantGuidesReturn => {
       pageNumber: defaultPagination.pageNumber,
       pageSize: defaultPagination.pageSize,
     },
-    sortBy: 'createdAt',
-    sortDirection: 'desc',
   });
 
+  const plantGuidesListRequestIdRef = useRef(0);
+
   const fetchPlantGuides = useCallback(async (params?: Partial<AdminPlantGuideSearchRequest>) => {
+    const requestId = ++plantGuidesListRequestIdRef.current;
     setLoading(true);
     setError(null);
 
-    const requestBody: AdminPlantGuideSearchRequest = {
-      ...lastRequestRef.current,
-      ...params,
-      pagination: {
-        pageNumber: params?.pagination?.pageNumber ?? lastRequestRef.current.pagination.pageNumber,
-        pageSize: params?.pagination?.pageSize ?? lastRequestRef.current.pagination.pageSize,
-      },
-    };
+    const requestBody = mergeAdminPlantGuideSearchRequest(lastRequestRef.current, params);
 
     lastRequestRef.current = requestBody;
 
     try {
       const response = await getAdminPlantGuides(requestBody, true);
+      if (requestId !== plantGuidesListRequestIdRef.current) {
+        return;
+      }
+
       const payload = getResponsePayload(response);
 
       if (!payload) {
@@ -162,9 +185,13 @@ export const useAdminPlantGuides = (): UseAdminPlantGuidesReturn => {
         hasNext: payload.hasNext ?? false,
       });
     } catch (err) {
-      setError(normalizeError(err));
+      if (requestId === plantGuidesListRequestIdRef.current) {
+        setError(normalizeError(err));
+      }
     } finally {
-      setLoading(false);
+      if (requestId === plantGuidesListRequestIdRef.current) {
+        setLoading(false);
+      }
     }
   }, []);
 

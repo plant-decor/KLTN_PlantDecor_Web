@@ -49,8 +49,6 @@ export default function PlantGuideManagementPageClient() {
     void loadLightRequirementOptions();
     void fetchPlantGuides({
       pagination: { pageNumber: 1, pageSize: 10 },
-      sortBy: 'createdAt',
-      sortDirection: 'desc',
     });
   }, [fetchPlantGuides, loadLightRequirementOptions]);
 

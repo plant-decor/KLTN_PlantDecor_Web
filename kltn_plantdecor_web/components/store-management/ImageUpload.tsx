@@ -171,7 +171,7 @@ export default function ImageUpload({
                       }}
                       sx={{ flex: 1, fontSize: '0.7rem'}}
                     >
-                      {image.isThumbnail ? '✓ Chính' : 'Đặt làm ảnh chính'}
+                      {image.isThumbnail ? '✓ Thumbnail' : 'Set as Thumbnail'}
                     </Button>
                     <IconButton
                       size="small"

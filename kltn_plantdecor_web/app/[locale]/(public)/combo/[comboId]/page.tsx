@@ -355,9 +355,8 @@ export default async function ComboDetailPage({ params }: ComboDetailPageProps) 
               )}
             </div>
             {comboDescription && (
-              <div className="mb-6 w-full col-span-2"> {/* Thêm w-full */}
+              <div className="mb-6 w-full col-span-2">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Description</h3>
-                {/* Loại bỏ prose ở div này, chỉ để bên trong RichTextDisplay xử lý */}
                 <div className="w-full overflow-hidden text-gray-600">
                   <RichTextDisplay content={comboDescription} />
                 </div>

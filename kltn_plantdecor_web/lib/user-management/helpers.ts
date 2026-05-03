@@ -1,6 +1,37 @@
 import type { UserRole } from '@/lib/constants/header';
 import type { SampleUser } from '@/data/sampledata';
 
+const KNOWN_ROLES: UserRole[] = [
+  'guest',
+  'customer',
+  'admin',
+  'manager',
+  'staff',
+  'consultant',
+  'shipper',
+  'caretaker',
+];
+
+/** Map API role string (e.g. Customer) to app UserRole */
+export const mapApiRoleToUserRole = (role: string): UserRole => {
+  const normalized = role?.trim().toLowerCase();
+  if (KNOWN_ROLES.includes(normalized as UserRole)) {
+    return normalized as UserRole;
+  }
+  return 'customer';
+};
+
+/** Map API status Active/Inactive to UI literal used by chips */
+export const mapApiUserStatusToUi = (status: string): 'active' | 'inactive' =>
+  status?.trim().toLowerCase() === 'inactive' ? 'inactive' : 'active';
+
+/** UserRole -> API role string (e.g. Customer) */
+export const formatUserRoleForApi = (role: UserRole): string =>
+  role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
+
+export const formatStatusForApi = (status: 'active' | 'inactive'): 'Active' | 'Inactive' =>
+  status === 'inactive' ? 'Inactive' : 'Active';
+
 export const getRoleColor = (role: UserRole): 'default' | 'primary' | 'secondary' | 'error' | 'warning' | 'info' | 'success' => {
   const colorMap: Record<UserRole, 'default' | 'primary' | 'secondary' | 'error' | 'warning' | 'info' | 'success'> = {
     guest: 'secondary',

@@ -625,6 +625,7 @@ export default function PlantInstanceManagerTab({
                   <TableCell align="center">{formatCurrency(item.specificPrice, 'vi')}</TableCell>
                   <TableCell align="center">{item.height} cm</TableCell>
                   <TableCell align="center">{item.healthStatus}</TableCell>
+                  <TableCell align="center">{item.statusName}</TableCell>
                   <TableCell align="center">
                       {!readOnly ? (
                         <FormControl size="small" sx={{ minWidth: 140, maxWidth: 220 }}>
@@ -643,8 +644,8 @@ export default function PlantInstanceManagerTab({
                           </Select>
                         </FormControl>
                       ) : null}
-                  </TableCell>
-                  <TableCell align="center">
+                  {/* </TableCell>
+                  <TableCell align="center"> */}
                     <Stack direction="row" spacing={0.5} alignItems="center" justifyContent="center">
                       <IconButton
                         size="small"

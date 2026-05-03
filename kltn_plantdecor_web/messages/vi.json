@@ -176,6 +176,15 @@
       "apply": "Áp dụng"
     },
     "sort": {
+      "fieldName": "Tên",
+      "fieldPrice": "Giá",
+      "fieldCreatedAt": "Ngày tạo",
+      "fieldSize": "Kích thước",
+      "fieldAvailableInstances": "Sẵn có",
+      "fieldUpdatedAt": "Cập nhật",
+      "fieldCareLevel": "Độ chăm sóc",
+      "ariaSortAscending": "Đang sắp xếp tăng dần. Nhấn để chuyển sang giảm dần.",
+      "ariaSortDescending": "Đang sắp xếp giảm dần. Nhấn để chuyển sang tăng dần.",
       "default": "Mặc định",
       "nameAsc": "Tên A-Z",
       "nameDesc": "Tên Z-A",

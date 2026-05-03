@@ -90,7 +90,9 @@ interface PlantComboFormDialogProps {
   open: boolean;
   editingData?: PlantCombo;
   plants: Plant[];
+  searchPlants: Plant[];
   plantsLoading?: boolean;
+  searchPlantsLoading?: boolean;
   tags: OptionItem[];
   lightRequirementOptions: EnumOptionItem[];
   roomTypeOptions: EnumOptionItem[];
@@ -157,7 +159,9 @@ export default function PlantComboFormDialog({
   open,
   editingData,
   plants,
+  searchPlants,
   plantsLoading = false,
+  searchPlantsLoading = false,
   tags,
   lightRequirementOptions,
   roomTypeOptions,
@@ -251,11 +255,11 @@ export default function PlantComboFormDialog({
   }, [comboItems, plantOptions, selectedPlantMap]);
 
   const hasKeyword = keyword.trim().length > 0;
-  const items = plants;
-  const showSuggestionDropdown = searchOpen && (hasKeyword || plantsLoading);
+  const items = searchPlants;
+  const showSuggestionDropdown = searchOpen && (hasKeyword || searchPlantsLoading);
   const noResults = useMemo(
-    () => hasKeyword && !plantsLoading && items.length === 0,
-    [hasKeyword, items.length, plantsLoading]
+    () => hasKeyword && !searchPlantsLoading && items.length === 0,
+    [hasKeyword, items.length, searchPlantsLoading]
   );
 
   useEffect(() => {
@@ -782,7 +786,7 @@ export default function PlantComboFormDialog({
                     }}
                   >
                     <List disablePadding>
-                      {plantsLoading && (
+                      {searchPlantsLoading && (
                         <Box sx={{ px: 2, py: 1.25, display: 'flex', alignItems: 'center', gap: 1.25 }}>
                           <CustomLoading size={18} ariaLabel="Searching plants" />
                         </Box>

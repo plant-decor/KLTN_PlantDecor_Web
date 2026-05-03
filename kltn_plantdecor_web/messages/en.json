@@ -176,6 +176,15 @@
       "apply": "Apply"
     },
     "sort": {
+      "fieldName": "Name",
+      "fieldPrice": "Price",
+      "fieldCreatedAt": "Date created",
+      "fieldSize": "Size",
+      "fieldAvailableInstances": "Availability",
+      "fieldUpdatedAt": "Updated",
+      "fieldCareLevel": "Care level",
+      "ariaSortAscending": "Sorted ascending. Click to sort descending.",
+      "ariaSortDescending": "Sorted descending. Click to sort ascending.",
       "default": "Default",
       "nameAsc": "Name A-Z",
       "nameDesc": "Name Z-A",

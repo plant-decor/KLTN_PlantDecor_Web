@@ -18,24 +18,45 @@ import {
   DialogActions,
   Button,
   Divider,
-  TextField,
-  InputAdornment,
   Alert,
   TablePagination,
+  FormControl,
+  IconButton,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import LockIcon from '@mui/icons-material/Lock';
-import SearchIcon from '@mui/icons-material/Search';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import { useLocale } from 'next-intl';
 import type { OrderInvoiceDetail, OrderItem } from '@/types/order.types';
-import type { ConsultantOrder } from '@/types/consultant-order.types';
+import {
+  INITIAL_CONSULTANT_ORDER_FILTER_APPLIED,
+  INITIAL_CONSULTANT_ORDER_FILTER_DRAFT,
+  type ConsultantOrder,
+} from '@/types/consultant-order.types';
 import { getConsultantOrderById, searchConsultantOrders } from '@/lib/api/consultantOrdersService';
 import { getSystemEnumByName } from '@/lib/api/systemEnumsService';
 import { formatCurrency } from '@/lib/utils/formatUtil';
+import {
+  consultantFilterDraftToApplied,
+  localDateOnlyEndToIso,
+  localDateOnlyStartToIso,
+} from '@/lib/utils/consultantOrderFilters';
 import { CustomLoading } from '@/components/CustomLoading';
+import ConsultantCustomerOrdersFilter from '@/components/consultant/ConsultantCustomerOrdersFilter';
+import ManagementHeader from '@/components/layout/ManagementHeader';
 
-const SEARCH_DEBOUNCE_MS = 500;
+/** Đổi tên nếu Swagger backend khác */
+const ORDER_STATUSES_ENUM = 'OrderStatuses';
+const ORDER_TYPES_ENUM = 'OrderTypes';
 const PAYMENT_STRATEGIES_ENUM = 'PaymentStrategies';
+
+/** Giá trị sortBy — xác nhận với API nếu backend chỉ hỗ trợ một subset */
+const SORT_BY_OPTIONS = ['CreatedAt', 'TotalAmount', 'UpdatedAt'] as const;
+type SortByOption = (typeof SORT_BY_OPTIONS)[number];
 
 type LineRow = {
   key: string;
@@ -127,8 +148,12 @@ function formatDateTime(iso: string): string {
 
 export default function CustomerOrdersPage() {
   const locale = useLocale();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedEmail, setDebouncedEmail] = useState('');
+  const [filterDraft, setFilterDraft] = useState(() => ({
+    ...INITIAL_CONSULTANT_ORDER_FILTER_DRAFT,
+  }));
+  const [filterApplied, setFilterApplied] = useState(() => ({
+    ...INITIAL_CONSULTANT_ORDER_FILTER_APPLIED,
+  }));
 
   const [items, setItems] = useState<ConsultantOrder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -143,24 +168,37 @@ export default function CustomerOrdersPage() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
 
+  const [orderStatusByValue, setOrderStatusByValue] = useState<Record<number, string>>({});
+  const [orderTypeByValue, setOrderTypeByValue] = useState<Record<number, string>>({});
   const [paymentStrategyByValue, setPaymentStrategyByValue] = useState<Record<number, string>>({});
+
+  const [sortBy, setSortBy] = useState<SortByOption>('CreatedAt');
+  const [sortDirection, setSortDirection] = useState<'Asc' | 'Desc'>('Asc');
 
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      try {
-        const values = await getSystemEnumByName(PAYMENT_STRATEGIES_ENUM, false);
-        if (cancelled) return;
-        const map: Record<number, string> = {};
-        for (const v of values) {
-          map[v.value] = v.name;
-        }
-        setPaymentStrategyByValue(map);
-      } catch {
-        if (!cancelled) {
-          setPaymentStrategyByValue({});
-        }
+      const results = await Promise.allSettled([
+        getSystemEnumByName(ORDER_STATUSES_ENUM, false),
+        getSystemEnumByName(ORDER_TYPES_ENUM, false),
+        getSystemEnumByName(PAYMENT_STRATEGIES_ENUM, false),
+      ]);
+      if (cancelled) {
+        return;
       }
+      const toMap = (idx: number) => {
+        const r = results[idx];
+        const map: Record<number, string> = {};
+        if (r.status === 'fulfilled') {
+          for (const v of r.value) {
+            map[v.value] = v.name;
+          }
+        }
+        return map;
+      };
+      setOrderStatusByValue(toMap(0));
+      setOrderTypeByValue(toMap(1));
+      setPaymentStrategyByValue(toMap(2));
     })();
     return () => {
       cancelled = true;
@@ -173,15 +211,12 @@ export default function CustomerOrdersPage() {
   );
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setDebouncedEmail(searchTerm.trim());
-    }, SEARCH_DEBOUNCE_MS);
-    return () => window.clearTimeout(timer);
-  }, [searchTerm]);
-
-  useEffect(() => {
     setPage(0);
-  }, [debouncedEmail]);
+  }, [filterApplied, sortBy, sortDirection]);
+
+  const handleApplyFilters = useCallback(() => {
+    setFilterApplied(consultantFilterDraftToApplied(filterDraft));
+  }, [filterDraft]);
 
   const loadList = useCallback(async () => {
     try {
@@ -189,12 +224,22 @@ export default function CustomerOrdersPage() {
       setError(null);
 
       const pageNumber = page + 1;
+      const createdFromIso = localDateOnlyStartToIso(filterApplied.createdFrom);
+      const createdToIso = localDateOnlyEndToIso(filterApplied.createdTo);
+
       const payload = await searchConsultantOrders(
         {
           pagination: { pageNumber, pageSize },
-          customerEmail: debouncedEmail || undefined,
-          sortBy: 'CreatedAt',
-          sortDirection: 'Desc',
+          customerEmail: filterApplied.email || undefined,
+          status: filterApplied.status,
+          orderType: filterApplied.orderType,
+          paymentStrategy: filterApplied.payment,
+          createdFrom: createdFromIso,
+          createdTo: createdToIso,
+          minTotalAmount: filterApplied.minTotal,
+          maxTotalAmount: filterApplied.maxTotal,
+          sortBy,
+          sortDirection,
         },
         true
       );
@@ -215,7 +260,15 @@ export default function CustomerOrdersPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, debouncedEmail]);
+  }, [page, pageSize, filterApplied, sortBy, sortDirection]);
+
+  const handleResetFilters = useCallback(() => {
+    setFilterDraft({ ...INITIAL_CONSULTANT_ORDER_FILTER_DRAFT });
+    setFilterApplied({ ...INITIAL_CONSULTANT_ORDER_FILTER_APPLIED });
+    setSortBy('CreatedAt');
+    setSortDirection('Asc');
+    setPage(0);
+  }, []);
 
   useEffect(() => {
     void loadList();
@@ -252,31 +305,22 @@ export default function CustomerOrdersPage() {
 
   return (
     <Box sx={{ py: 4 }}>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" fontWeight="bold" gutterBottom>
-          Customer Orders
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          View customer order information to assist with inquiries (Read-only)
-        </Typography>
-      </Box>
+      <ManagementHeader
+        title="Customer Orders"
+        description="View customer order information to assist with inquiries"
+        entityLabel="customer order"
+        count={totalCount}
+      />
 
-      <Box sx={{ mb: 2, maxWidth: 400 }}>
-        <TextField
-          fullWidth
-          size="small"
-          placeholder="Filter by customer email"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          slotProps={{
-            input: {
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" color="action" />
-                </InputAdornment>
-              ),
-            },
-          }}
+      <Box sx={{ mb: 2 }}>
+        <ConsultantCustomerOrdersFilter
+          value={filterDraft}
+          onChange={setFilterDraft}
+          orderStatusByValue={orderStatusByValue}
+          orderTypeByValue={orderTypeByValue}
+          paymentStrategyByValue={paymentStrategyByValue}
+          onApply={handleApplyFilters}
+          onReset={handleResetFilters}
         />
       </Box>
 
@@ -286,9 +330,45 @@ export default function CustomerOrdersPage() {
         </Alert>
       )}
 
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          alignItems: 'center',
+          gap: 2,
+          flexWrap: 'wrap',
+          mb: 2,
+        }}
+      >
+        <FormControl size="small" sx={{ minWidth: 160 }}>
+          <InputLabel id="consultant-order-sort-by">Sort by</InputLabel>
+          <Select
+            labelId="consultant-order-sort-by"
+            label="Sort by"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortByOption)}
+          >
+            {SORT_BY_OPTIONS.map((opt) => (
+              <MenuItem key={opt} value={opt}>
+                {opt}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <IconButton
+          size="small"
+          color="primary"
+          onClick={() => setSortDirection((d) => (d === 'Asc' ? 'Desc' : 'Asc'))}
+          aria-label={sortDirection === 'Asc' ? 'Ascending, click for descending' : 'Descending, click for ascending'}
+          title={sortDirection === 'Asc' ? 'Ascending' : 'Descending'}
+        >
+          {sortDirection === 'Asc' ? <ArrowUpwardIcon /> : <ArrowDownwardIcon />}
+        </IconButton>
+      </Box>
+
       <TableContainer component={Paper} sx={{ boxShadow: 2 }}>
         <Table>
-          <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
+          <TableHead sx={{ backgroundColor: 'var(--primary)' }}>
             <TableRow>
               <TableCell sx={{ fontWeight: 'bold' }}>ID</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Customer</TableCell>

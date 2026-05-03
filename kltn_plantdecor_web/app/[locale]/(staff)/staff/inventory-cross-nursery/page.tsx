@@ -48,6 +48,7 @@ import {
 import { formatCurrency } from '@/lib/utils/formatUtil';
 import { getMaterialNurseries } from '@/lib/api/shopMaterialsService';
 import { CustomLoading } from '@/components/CustomLoading';
+import ManagementHeader from '@/components/layout/ManagementHeader';
 
 type CrossInventoryRow = {
   id: string;
@@ -450,14 +451,12 @@ export default function CrossNurseryInventoryPage() {
   return (
     <Box sx={{ py: 4 }}>
       {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" fontWeight="bold" gutterBottom>
-          Cross-Nursery Inventory
-        </Typography>
-        <Typography variant="body1" color="text.secondary" gutterBottom>
-          Search inventory across all nurseries to coordinate stock and reorder
-        </Typography>
-      </Box>
+      <ManagementHeader
+        title="Cross-Nursery Inventory"
+        description="Search inventory across all nurseries to coordinate stock and reorder"
+        entityLabel="cross-nursery inventory"
+        count={totalCount}
+      />
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>

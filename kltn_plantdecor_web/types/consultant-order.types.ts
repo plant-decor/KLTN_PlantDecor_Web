@@ -53,3 +53,49 @@ export interface ConsultantOrderSearchPayload {
   hasPrevious: boolean;
   hasNext: boolean;
 }
+
+/** Form filter (draft) trước khi bấm Apply */
+export interface ConsultantOrderFilterDraft {
+  email: string;
+  status: number;
+  orderType: number;
+  payment: number;
+  createdFrom: string;
+  createdTo: string;
+  minAmount: string;
+  maxAmount: string;
+}
+
+/** Filter đã Apply — map sang body search */
+export interface ConsultantOrderFilterApplied {
+  email: string;
+  status: number;
+  orderType: number;
+  payment: number;
+  createdFrom: string;
+  createdTo: string;
+  minTotal: number;
+  maxTotal: number;
+}
+
+export const INITIAL_CONSULTANT_ORDER_FILTER_DRAFT: ConsultantOrderFilterDraft = {
+  email: '',
+  status: 0,
+  orderType: 0,
+  payment: 0,
+  createdFrom: '',
+  createdTo: '',
+  minAmount: '',
+  maxAmount: '',
+};
+
+export const INITIAL_CONSULTANT_ORDER_FILTER_APPLIED: ConsultantOrderFilterApplied = {
+  email: '',
+  status: 0,
+  orderType: 0,
+  payment: 0,
+  createdFrom: '',
+  createdTo: '',
+  minTotal: 0,
+  maxTotal: 0,
+};

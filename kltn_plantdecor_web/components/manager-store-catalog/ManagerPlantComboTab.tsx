@@ -195,6 +195,7 @@ export default function ManagerPlantComboTab({ readOnly = false }: ManagerPlantC
       const rawItems = extractCompatibleComboItems(payload);
       const activeItems = rawItems.filter(isComboSelectableForImport);
       setImportOptions(activeItems);
+      console.log('activeItems', activeItems);
       return activeItems;
     } catch {
       setImportOptions([]);
@@ -278,10 +279,11 @@ export default function ManagerPlantComboTab({ readOnly = false }: ManagerPlantC
 
     setSubmitting(true);
     try {
+      console.log('decomposeTarget', decomposeTarget);
       const request: ManagerPlantComboOperationRequest = {
         quantity: decomposeForm.quantity,
       };
-      await decomposeManagerPlantCombo(decomposeTarget.id, request, true);
+      await decomposeManagerPlantCombo(decomposeTarget.plantComboId, request, true);
       setDecomposeOpen(false);
       setDecomposeTarget(null);
       setDecomposeForm(DEFAULT_DECOMPOSE_FORM);

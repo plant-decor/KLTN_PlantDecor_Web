@@ -247,7 +247,7 @@ export default function PlantComboViewDialog({
 
           <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom>
-              Cây trong combo
+              Plants in this combo
             </Typography>
             {(combo.comboItems || []).length === 0 ? (
               <Typography variant="body2" color="text.secondary">
@@ -261,10 +261,10 @@ export default function PlantComboViewDialog({
                       {item.plantName || `Plant #${item.plantId}`}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Số lượng: {item.quantity}
+                      Quantity: {item.quantity}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Ghi chú: {item.notes || '-'}
+                      Notes: {item.notes || '-'}
                     </Typography>
                   </Box>
                 ))}
@@ -276,18 +276,18 @@ export default function PlantComboViewDialog({
 
           <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom>
-              Danh sách vựa đang bán combo
+              List of nurseries selling this combo
             </Typography>
             {nurseriesLoading ? (
               <Stack direction="row" spacing={1} alignItems="center">
                 <CustomLoading size={18} />
                 <Typography variant="body2" color="text.secondary">
-                  Đang tải danh sách vựa...
+                  Loading list of nurseries...
                 </Typography>
               </Stack>
             ) : nurseries.length === 0 ? (
               <Typography variant="body2" color="text.secondary">
-                Chưa có vựa nào đang bán combo này.
+                No nursery is selling this combo.
               </Typography>
             ) : (
               <Stack spacing={1.25}>
@@ -307,7 +307,7 @@ export default function PlantComboViewDialog({
                       </Box>
                       <Chip
                         size="small"
-                        label={nursery.isActive ? 'Đang hoạt động' : 'Ngưng hoạt động'}
+                        label={nursery.isActive ? 'Active' : 'Inactive'}
                         color={nursery.isActive ? 'success' : 'default'}
                         variant="outlined"
                       />
@@ -320,7 +320,7 @@ export default function PlantComboViewDialog({
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Đóng</Button>
+        <Button onClick={onClose}>Close</Button>
       </DialogActions>
     </Dialog>
   );

@@ -12,39 +12,62 @@ import {
   TableRow,
   TablePagination,
   Typography,
+  Box,
+  Stack,
+  Tooltip,
 } from '@mui/material';
-import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import type { SampleUser } from '@/data/sampledata';
-import { getRoleColor, getStatusColor, formatRoleLabel } from '@/lib/user-management/helpers';
+import {
+  Visibility as VisibilityIcon,
+  ToggleOn as ToggleOnIcon,
+  ToggleOff as ToggleOffIcon,
+} from '@mui/icons-material';
+import type { AdminUser } from '@/types/admin-user.types';
+import {
+  getRoleColor,
+  getStatusColor,
+  formatRoleLabel,
+  mapApiRoleToUserRole,
+  mapApiUserStatusToUi,
+} from '@/lib/user-management/helpers';
 import { ROWS_PER_PAGE_OPTIONS } from '@/lib/user-management/constants';
 
 interface UserTableProps {
-  users: SampleUser[];
-  page: number;
-  rowsPerPage: number;
-  onPageChange: (event: unknown, newPage: number) => void;
-  onRowsPerPageChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  onEdit: (user: SampleUser) => void;
-  onDelete: (user: SampleUser) => void;
+  users: AdminUser[];
+  loading: boolean;
+  pageNumber: number;
+  pageSize: number;
+  totalCount: number;
+  onPageChange: (pageNumber: number) => void;
+  onRowsPerPageChange: (pageSize: number) => void;
+  onView: (user: AdminUser) => void;
+  onToggleClick: (user: AdminUser) => void;
 }
 
 export default function UserTable({
   users,
-  page,
-  rowsPerPage,
+  loading,
+  pageNumber,
+  pageSize,
+  totalCount,
   onPageChange,
   onRowsPerPageChange,
-  onEdit,
-  onDelete,
+  onView,
+  onToggleClick,
 }: UserTableProps) {
-  const paginatedUsers = users.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const handleChangePage = (_event: unknown, newPage: number) => {
+    onPageChange(newPage + 1);
+  };
+
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    onRowsPerPageChange(parseInt(event.target.value, 10));
+  };
 
   return (
-    <>
+    <Box>
       <TableContainer component={Paper} sx={{ boxShadow: 1 }}>
         <Table>
           <TableHead>
-            <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+            <TableRow sx={{ backgroundColor: 'var(--primary)' }}>
               <TableCell sx={{ fontWeight: 'bold' }}>ID</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Username</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Email</TableCell>
@@ -61,49 +84,69 @@ export default function UserTable({
             </TableRow>
           </TableHead>
           <TableBody>
-            {paginatedUsers.length > 0 ? (
-              paginatedUsers.map((user) => (
-                <TableRow key={user.id} hover>
-                  <TableCell>{user.id}</TableCell>
-                  <TableCell>{user.userName}</TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>{user.phoneNumber}</TableCell>
-                  <TableCell align="center">
-                    <Chip
-                      label={formatRoleLabel(user.role)}
-                      size="small"
-                      color={getRoleColor(user.role)}
-                      variant="outlined"
-                    />
-                  </TableCell>
-                  <TableCell align="center">
-                    <Chip
-                      label={formatRoleLabel(user.status)}
-                      size="small"
-                      color={getStatusColor(user.status)}
-                      variant="filled"
-                    />
-                  </TableCell>
-                  <TableCell align="center">
-                    <IconButton
-                      size="small"
-                      color="primary"
-                      onClick={() => onEdit(user)}
-                      title="Edit"
-                    >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => onDelete(user)}
-                      title="Delete"
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
+                  <Typography color="text.secondary">Loading data...</Typography>
+                </TableCell>
+              </TableRow>
+            ) : users.length > 0 ? (
+              users.map((user) => {
+                const uiRole = mapApiRoleToUserRole(user.role);
+                const uiStatus = mapApiUserStatusToUi(user.status);
+                const isActive = uiStatus === 'active';
+
+                return (
+                  <TableRow key={user.id} hover>
+                    <TableCell>{user.id}</TableCell>
+                    <TableCell>{user.username}</TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>{user.phoneNumber}</TableCell>
+                    <TableCell align="center">
+                      <Chip
+                        label={formatRoleLabel(user.role)}
+                        size="small"
+                        color={getRoleColor(uiRole)}
+                        variant="outlined"
+                      />
+                    </TableCell>
+                    <TableCell align="center">
+                      <Chip
+                        label={formatRoleLabel(uiStatus)}
+                        size="small"
+                        color={getStatusColor(uiStatus)}
+                        variant="filled"
+                      />
+                    </TableCell>
+                    <TableCell align="center">
+                      <Stack direction="row" spacing={0} justifyContent="center">
+                        <Tooltip title="View details">
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => onView(user)}
+                          >
+                            <VisibilityIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title={isActive ? 'Deactivate' : 'Activate'}>
+                          <IconButton
+                            size="small"
+                            color={isActive ? 'success' : 'default'}
+                            onClick={() => onToggleClick(user)}
+                          >
+                            {isActive ? (
+                              <ToggleOnIcon fontSize="small" />
+                            ) : (
+                              <ToggleOffIcon fontSize="small" />
+                            )}
+                          </IconButton>
+                        </Tooltip>
+                      </Stack>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             ) : (
               <TableRow>
                 <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
@@ -113,18 +156,17 @@ export default function UserTable({
             )}
           </TableBody>
         </Table>
+        <TablePagination
+          rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
+          component="div"
+          count={totalCount}
+          rowsPerPage={pageSize}
+          page={Math.max(pageNumber - 1, 0)}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          labelRowsPerPage="Rows per page:"
+        />
       </TableContainer>
-
-      {/* Pagination */}
-      <TablePagination
-        rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
-        component="div"
-        count={users.length}
-        rowsPerPage={rowsPerPage}
-        page={page}
-        onPageChange={onPageChange}
-        onRowsPerPageChange={onRowsPerPageChange}
-      />
-    </>
+    </Box>
   );
 }

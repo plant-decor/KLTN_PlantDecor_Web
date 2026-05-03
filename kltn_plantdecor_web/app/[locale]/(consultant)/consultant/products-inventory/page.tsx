@@ -463,7 +463,7 @@ export default function ProductsInventoryPage() {
         <Grid size={{ xs: 12, sm: 8 }}>
           <TextField
             fullWidth
-            placeholder="Search by product name or SKU..."
+            placeholder="Search by product name ..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             InputProps={{

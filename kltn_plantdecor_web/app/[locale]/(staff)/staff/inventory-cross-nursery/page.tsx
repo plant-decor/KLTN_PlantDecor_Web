@@ -470,7 +470,7 @@ export default function CrossNurseryInventoryPage() {
         <Grid size={{ xs: 12, sm: 8 }}>
           <TextField
             fullWidth
-            placeholder="Search by product name or SKU..."
+            placeholder="Search by product name ..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             InputProps={{
@@ -534,7 +534,7 @@ export default function CrossNurseryInventoryPage() {
       {/* Inventory Table */}
       <TableContainer component={Paper} sx={{ boxShadow: 2, mb: 3 }}>
         <Table>
-          <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
+          <TableHead sx={{ backgroundColor: 'var(--primary)' }}>
             <TableRow>
               <TableCell sx={{ fontWeight: 'bold' }}>Product Name</TableCell>
               {/* <TableCell sx={{ fontWeight: 'bold' }}>SKU</TableCell> */}

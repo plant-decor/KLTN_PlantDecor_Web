@@ -288,6 +288,7 @@ export type SystemPlantSearchPayload = PaginatedPayload<SystemPlantSearchItem>;
 
 export interface ManagerPlantComboInventoryItem {
   id: number;
+  plantComboId: number;
   comboCode: string;
   comboName: string;
   comboType: number;

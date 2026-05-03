@@ -1,198 +1,158 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { Box } from '@mui/material';
-import { SAMPLE_USERS } from '@/data/sampledata';
-import type { SampleUser } from '@/data/sampledata';
+import { useCallback, useEffect, useState } from 'react';
+import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material';
+import { toast } from 'react-toastify';
 import type { UserRole } from '@/lib/constants/header';
 import {
-  DEFAULT_FORM_DATA,
-  validateUserForm,
-  type UserFormData,
-  type ValidationErrors,
-} from '@/lib/user-management/validation';
-import {
-  getStatsData,
-  generateNextUserId,
+  formatStatusForApi,
+  formatUserRoleForApi,
+  mapApiUserStatusToUi,
 } from '@/lib/user-management/helpers';
-import { DEFAULT_ROWS_PER_PAGE } from '@/lib/user-management/constants';
-import UserStatsCard from '@/components/user-management/UserStatsCard';
 import UserFilterPanel from '@/components/user-management/UserFilterPanel';
-import UserFormDialog from '@/components/user-management/UserFormDialog';
-import DeleteConfirmationDialog from '@/components/user-management/DeleteConfirmationDialog';
+import UserDetailDialog from '@/components/user-management/UserDetailDialog';
 import UserTable from '@/components/user-management/UserTable';
-import UserPageHeader from '@/components/user-management/UserPageHeader';
-import MessageAlert from '@/components/user-management/MessageAlert';
+import ManagementHeader from '@/components/layout/ManagementHeader';
+import { useAdminUsers } from '@/lib/api/admin/useAdminUsers';
+import type { AdminUser } from '@/types/admin-user.types';
+
+const SEARCH_DEBOUNCE_MS = 500;
 
 export default function UserManagementPage() {
-  // State
-  const [users, setUsers] = useState<SampleUser[]>(SAMPLE_USERS);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<UserRole | ''>('');
   const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | ''>('');
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
-  const [openDialog, setOpenDialog] = useState(false);
-  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-  const [editingUser, setEditingUser] = useState<SampleUser | null>(null);
-  const [userToDelete, setUserToDelete] = useState<SampleUser | null>(null);
-  const [formData, setFormData] = useState<UserFormData>(DEFAULT_FORM_DATA);
-  const [errors, setErrors] = useState<ValidationErrors>({});
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(
-    null
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailUserId, setDetailUserId] = useState<number | null>(null);
+  const [toggleOpen, setToggleOpen] = useState(false);
+  const [toggleTarget, setToggleTarget] = useState<AdminUser | null>(null);
+
+  const {
+    users,
+    loading,
+    saving,
+    error,
+    pagination,
+    userDetail,
+    detailLoading,
+    fetchUsers,
+    setPage,
+    setPageSize,
+    loadUserDetail,
+    clearUserDetail,
+    toggleUserActive,
+    clearError,
+  } = useAdminUsers();
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, SEARCH_DEBOUNCE_MS);
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [searchTerm]);
+
+  useEffect(() => {
+    void fetchUsers({
+      pagination: { pageNumber: 1, pageSize: pagination.pageSize },
+      keyword: debouncedSearchTerm.trim() || undefined,
+      role: roleFilter ? formatUserRoleForApi(roleFilter) : undefined,
+      status: statusFilter ? formatStatusForApi(statusFilter) : undefined,
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ refetch khi đổi filter/tìm kiếm (đã debounce); dùng pagination.pageSize mà không liệt kê pagination để tránh refetch khi đổi trang
+  }, [debouncedSearchTerm, roleFilter, statusFilter, fetchUsers]);
+
+  const handlePageChange = useCallback(
+    (pageNumber: number) => {
+      void setPage(pageNumber);
+    },
+    [setPage]
   );
 
-  // Filtered users
-  const filteredUsers = useMemo(() => {
-    return users.filter((user) => {
-      const matchesSearch =
-        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.phoneNumber.includes(searchTerm);
+  const handleRowsPerPageChange = useCallback(
+    (rows: number) => {
+      void setPageSize(rows);
+    },
+    [setPageSize]
+  );
 
-      const matchesRole = !roleFilter || user.role === roleFilter;
-      const matchesStatus = !statusFilter || user.status === statusFilter;
+  const handleView = useCallback(
+    async (user: AdminUser) => {
+      setDetailUserId(user.id);
+      setDetailOpen(true);
+      await loadUserDetail(user.id);
+    },
+    [loadUserDetail]
+  );
 
-      return matchesSearch && matchesRole && matchesStatus;
-    });
-  }, [users, searchTerm, roleFilter, statusFilter]);
+  const handleCloseDetail = useCallback(() => {
+    setDetailOpen(false);
+    setDetailUserId(null);
+    clearUserDetail();
+  }, [clearUserDetail]);
 
-  // Dialog handlers
-  const handleOpenDialog = (user?: SampleUser) => {
-    if (user) {
-      setEditingUser(user);
-      setFormData({
-        role: user.role,
-        email: user.email,
-        phoneNumber: user.phoneNumber,
-        password: user.password,
-        userName: user.userName,
-        avatarUrl: user.avatarUrl,
-        status: user.status,
-      });
-    } else {
-      setEditingUser(null);
-      setFormData(DEFAULT_FORM_DATA);
+  const handleToggleClick = useCallback((user: AdminUser) => {
+    setToggleTarget(user);
+    setToggleOpen(true);
+  }, []);
+
+  const confirmToggle = useCallback(async () => {
+    if (!toggleTarget) {
+      return;
     }
-    setErrors({});
-    setMessage(null);
-    setOpenDialog(true);
-  };
 
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-    setEditingUser(null);
-    setFormData(DEFAULT_FORM_DATA);
-    setErrors({});
-  };
-
-  const handleSave = () => {
-    const validationErrors = validateUserForm(formData, !!editingUser);
-    setErrors(validationErrors);
-
-    if (Object.keys(validationErrors).length > 0) return;
-
-    const now = new Date().toISOString();
-
-    if (editingUser) {
-      // Update - only update password if provided
-      const updatedUser: SampleUser = {
-        ...editingUser,
-        ...formData,
-        updateAt: now,
-      };
-      // Only update password if it's not empty (for edit mode)
-      if (!formData.password) {
-        updatedUser.password = editingUser.password;
+    const success = await toggleUserActive(toggleTarget.id);
+    if (success) {
+      const wasActive = mapApiUserStatusToUi(toggleTarget.status) === 'active';
+      toast.success(`User ${wasActive ? 'deactivated' : 'activated'} successfully`);
+      if (detailOpen && detailUserId === toggleTarget.id) {
+        await loadUserDetail(toggleTarget.id);
       }
-
-      setUsers((prevUsers) =>
-        prevUsers.map((user) => (user.id === editingUser.id ? updatedUser : user))
-      );
-      setMessage({ type: 'success', text: 'User updated successfully!' });
     } else {
-      // Create
-      const newUser: SampleUser = {
-        ...formData,
-        id: generateNextUserId(users),
-        createAt: now,
-        updateAt: now,
-      };
-      setUsers((prevUsers) => [...prevUsers, newUser]);
-      setMessage({ type: 'success', text: 'User created successfully!' });
+      toast.error('Failed to update user status');
     }
 
-    setTimeout(() => {
-      handleCloseDialog();
-      setMessage(null);
-    }, 1500);
-  };
+    setToggleOpen(false);
+    setToggleTarget(null);
+  }, [toggleUserActive, toggleTarget, detailOpen, detailUserId, loadUserDetail]);
 
-  const handleDeleteClick = (user: SampleUser) => {
-    setUserToDelete(user);
-    setOpenDeleteDialog(true);
-  };
-
-  const handleConfirmDelete = () => {
-    if (userToDelete) {
-      setUsers((prevUsers) => prevUsers.filter((u) => u.id !== userToDelete.id));
-      setOpenDeleteDialog(false);
-      setUserToDelete(null);
-      setMessage({ type: 'success', text: 'User deleted successfully!' });
-      setTimeout(() => setMessage(null), 2000);
+  const handleDetailToggle = useCallback(() => {
+    if (userDetail) {
+      setToggleTarget(userDetail);
+      setToggleOpen(true);
     }
-  };
-
-  const handleChangePage = (_event: unknown, newPage: number) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
-  const handleFormChange = (field: keyof UserFormData, value: UserFormData[keyof UserFormData]) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[field];
-        return newErrors;
-      });
-    }
-  };
+  }, [userDetail]);
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
-    setPage(0);
   };
 
   const handleRoleFilterChange = (value: UserRole | '') => {
     setRoleFilter(value);
-    setPage(0);
   };
 
   const handleStatusFilterChange = (value: 'active' | 'inactive' | '') => {
     setStatusFilter(value);
-    setPage(0);
   };
 
-  // Get stats
-  const stats = getStatsData(users);
 
   return (
     <Box sx={{ p: 3 }}>
-      {/* Header */}
-      <UserPageHeader onAddNewClick={() => handleOpenDialog()} />
+      <ManagementHeader
+        title="User Management"
+        description="Search users, view details, and activate or deactivate accounts."
+        entityLabel="user"
+        count={pagination.totalCount}
+      />
 
-      {/* Message Alert */}
-      <MessageAlert message={message} onClose={() => setMessage(null)} />
+      {error && (
+        <Alert severity="error" onClose={clearError} sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
 
-      {/* Stats Cards */}
-      <UserStatsCard stats={stats} />
-
-      {/* Filters */}
       <UserFilterPanel
         searchTerm={searchTerm}
         roleFilter={roleFilter}
@@ -202,35 +162,45 @@ export default function UserManagementPage() {
         onStatusFilterChange={handleStatusFilterChange}
       />
 
-      {/* Table */}
       <UserTable
-        users={filteredUsers}
-        page={page}
-        rowsPerPage={rowsPerPage}
-        onPageChange={handleChangePage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
-        onEdit={handleOpenDialog}
-        onDelete={handleDeleteClick}
+        users={users}
+        loading={loading}
+        pageNumber={pagination.pageNumber}
+        pageSize={pagination.pageSize}
+        totalCount={pagination.totalCount}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+        onView={handleView}
+        onToggleClick={handleToggleClick}
       />
 
-      {/* Add/Edit Dialog */}
-      <UserFormDialog
-        open={openDialog}
-        editingUser={editingUser}
-        formData={formData}
-        errors={errors}
-        onClose={handleCloseDialog}
-        onSave={handleSave}
-        onFormChange={handleFormChange}
+      <UserDetailDialog
+        open={detailOpen}
+        user={userDetail}
+        loading={detailLoading}
+        saving={saving}
+        onClose={handleCloseDetail}
+        onToggleActive={handleDetailToggle}
       />
 
-      {/* Delete Confirmation Dialog */}
-      <DeleteConfirmationDialog
-        open={openDeleteDialog}
-        user={userToDelete}
-        onClose={() => setOpenDeleteDialog(false)}
-        onConfirm={handleConfirmDelete}
-      />
+      <Dialog open={toggleOpen} onClose={() => setToggleOpen(false)}>
+        <DialogTitle>Confirm status change</DialogTitle>
+        <DialogContent>
+          <Typography>
+            {toggleTarget
+              ? `Do you want to ${
+                  mapApiUserStatusToUi(toggleTarget.status) === 'active' ? 'deactivate' : 'activate'
+                } this user?`
+              : 'Do you want to change this user status?'}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setToggleOpen(false)}>Cancel</Button>
+          <Button onClick={confirmToggle} variant="contained" disabled={saving} className="bg-primary!">
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

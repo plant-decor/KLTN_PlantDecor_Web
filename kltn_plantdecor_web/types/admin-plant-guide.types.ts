@@ -50,8 +50,6 @@ export interface AdminPlantGuideSearchRequest {
   };
   plantId?: number;
   keyword?: string;
-  sortBy?: string;
-  sortDirection?: string;
 }
 
 export interface AdminLightRequirementOption {

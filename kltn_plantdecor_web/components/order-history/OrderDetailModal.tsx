@@ -70,7 +70,6 @@ export default function OrderDetailModal({
   const canCancelOrder = !!order && canUserCancelOrder(order.statusName);
   const canCreateReturn = !!order && !isServiceOrder && canCreateReturnTicket(order.statusName);
   const isCancelling = !!order && cancelLoadingOrderId === order.id;
-
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
       <DialogTitle>

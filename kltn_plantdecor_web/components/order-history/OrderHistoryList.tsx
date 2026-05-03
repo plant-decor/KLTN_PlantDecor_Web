@@ -19,7 +19,7 @@ import { canUserCancelOrder, formatCurrency, getStatusInfo } from './orderHistor
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 import Image from 'next/image';
 import { CustomLoading } from '@/components/CustomLoading';
-import { formatDate } from '@/lib/utils/dateUtils';
+import { formatDateTime } from '@/lib/utils/dateUtils';
 
 const SERVICE_ORDER_TYPE = 4;
 const ORDER_ITEM_FALLBACK_IMAGE = '/img/fallbackplant.avif';
@@ -128,7 +128,6 @@ export default function OrderHistoryList({
         const isRetrying = retryOrderId !== null && retryLoadingOrderId === retryOrderId;
         const canCancelOrder = canUserCancelOrder(order.statusName);
         const isCancelling = canCancelOrder && cancelLoadingOrderId === order.id;
-        console.log('items', displayItems.map((item) => item.imageUrl));
         return (
           <Card key={order.id} sx={{ boxShadow: 2, '&:hover': { boxShadow: 4 } }}>
             <CardContent>
@@ -161,7 +160,7 @@ export default function OrderHistoryList({
               </Box>
 
               <Typography variant="body2" color="text.secondary" gutterBottom>
-                {tOrderHistory('orderedAt')}: {formatDate(order.createdAt)}
+                {tOrderHistory('orderedAt')}: {formatDateTime(order.createdAt)}
               </Typography>
 
               <Divider sx={{ my: 2 }} />

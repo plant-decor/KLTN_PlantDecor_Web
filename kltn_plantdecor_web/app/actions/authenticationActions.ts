@@ -3,6 +3,7 @@
 import { cookies } from 'next/headers';
 import type {
   ConfirmEmailRequest,
+  CreateConsultantRequest,
   CreateManagerRequest,
   ForgotPasswordRequest,
   GoogleLoginRequest,
@@ -585,6 +586,42 @@ export async function resetPasswordAction(
   }
 }
 
+const toCreateManagerApiBody = (payload: CreateManagerRequest): Record<string, unknown> => {
+  const { nurseryId, ...rest } = payload;
+  const body: Record<string, unknown> = { ...rest };
+  if (nurseryId != null && Number.isFinite(nurseryId)) {
+    body.nurseryId = nurseryId;
+  }
+  return body;
+};
+
+export async function createConsultantAction(
+  payload: CreateConsultantRequest
+): Promise<ActionResult> {
+  try {
+    const data = await callAuthenticationApi<ApiMessageResult>(
+      '/Authentication/create-consultant',
+      'Create consultant account failed.',
+      {
+        auth: 'required',
+        body: payload,
+      }
+    );
+
+    const success = deriveApiSuccess(data);
+    return {
+      success,
+      message:
+        data.message || (success ? 'Create consultant account successful.' : 'Create consultant account failed.'),
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Create consultant account failed.',
+    };
+  }
+}
+
 export async function createManagerAction(
   payload: CreateManagerRequest
 ): Promise<ActionResult> {
@@ -594,7 +631,7 @@ export async function createManagerAction(
       'Create manager account failed.',
       {
         auth: 'required',
-        body: payload,
+        body: toCreateManagerApiBody(payload),
       }
     );
 

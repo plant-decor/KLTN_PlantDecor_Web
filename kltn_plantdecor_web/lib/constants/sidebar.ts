@@ -40,7 +40,7 @@ export const SIDEBAR_ITEMS_BY_ROLE: Record<UserRole, SidebarItem[]> = {
     { label: 'Product Management', href: '/admin/store-management', icon: 'store' },
     { label: 'Plant Care Management', href: '/admin/plant-guide-management', icon: 'tasks' },
     { label: 'Service Package Management', href: '/admin/service-management', icon: 'services' },
-    // { label: 'Design Template Management', href: '/admin/design-template-management', icon: 'catalog' },
+    { label: 'Design Template Management', href: '/admin/design-template-management', icon: 'catalog' },
     { label: 'Specialization Management', href: '/admin/specializations-management', icon: 'catalog' },
     { label: 'Categories & Tags', href: '/admin/categories-tags', icon: 'tags' },
     // { label: 'Reminder Management', href: '/admin/reminder-management', icon: 'reminder' },

@@ -18,11 +18,12 @@ import {
   RETURN_TICKET_ITEM_STATUS_CHIP_COLOR,
   RETURN_TICKET_STATUS_CHIP_COLOR,
 } from './returnTicket.constants';
-import { formatCurrency, formatDate } from './orderHistoryUtils';
+import { formatCurrency } from './orderHistoryUtils';
 import FullscreenImageModal from '@/components/image-view/FullscreenImageModal';
 import { ImageOutlined } from '@mui/icons-material';
 import ClickableImageViewer from '../image-view/ClickableImageViewer';
 import { CustomLoading } from '../CustomLoading';
+import { formatDateTime } from '@/lib/utils/dateUtils';
 
 interface MyReturnTicketsPanelProps {
   tickets: ReturnTicket[];
@@ -72,7 +73,7 @@ export default function MyReturnTicketsPanel({ tickets, loading, error }: MyRetu
                       Ticket #{ticket.id}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Order #{ticket.orderId} - Created: {formatDate(ticket.createdAt)}
+                      Order #{ticket.orderId} - Created: {formatDateTime(ticket.createdAt)}
                     </Typography>
                     <Typography variant="body2" sx={{ mt: 0.5 }}>
                       Reason: {ticket.reason || '-'}

@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import {
   getManagerNurseryOrderDetail,
   getManagerNurseryOrders,
+  markManagerNurseryOrderAsAssigned,
 } from '@/lib/api/managerSalesOrdersService';
 import type {
   ManagerNurseryOrder,
@@ -112,6 +113,16 @@ export default function ManagerSalesOrdersTabContent() {
     }
   };
 
+  const handleRedelivery = async (item: ManagerNurseryOrder) => {
+    try {
+      await markManagerNurseryOrderAsAssigned(item.id);
+      toast.success('Order marked for redelivery successfully');
+      await loadList();
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to mark order for redelivery'));
+    }
+  };
+
   return (
     <>
       <ManagerSalesOrdersHeader
@@ -149,6 +160,7 @@ export default function ManagerSalesOrdersTabContent() {
             }}
             onViewDetail={(item) => void handleViewDetail(item)}
             onAssignShipper={(item) => void handleAssignShipper(item)}
+            onRedelivery={(item) => void handleRedelivery(item)}
           />
         )}
       </Paper>

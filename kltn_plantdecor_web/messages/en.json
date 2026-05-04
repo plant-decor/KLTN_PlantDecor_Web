@@ -490,6 +490,8 @@
     "serviceDatePast": "Service date cannot be in the past",
     "oneTimeScheduleHint": "One-time package can only select one weekday.",
     "periodicScheduleHint": "Periodic package requires exactly {count} weekdays and excludes Sunday.",
+    "bookingLeadTimeOneTime": "One-time orders must be registered at least 6 hours in advance (based on the shift start time).",
+    "bookingLeadTimePeriodic": "Periodic orders must be registered at least 24 hours in advance (based on the first shift start time).",
     "shift": "Shift",
     "scheduleDays": "Scheduled weekdays",
     "orderId": "Order ID",

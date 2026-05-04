@@ -12,6 +12,7 @@ import {
 import UserFilterPanel from '@/components/user-management/UserFilterPanel';
 import UserDetailDialog from '@/components/user-management/UserDetailDialog';
 import UserTable from '@/components/user-management/UserTable';
+import CreateConsultantManagerDialog from '@/components/user-management/CreateConsultantManagerDialog';
 import ManagementHeader from '@/components/layout/ManagementHeader';
 import { useAdminUsers } from '@/lib/api/admin/useAdminUsers';
 import type { AdminUser } from '@/types/admin-user.types';
@@ -27,6 +28,7 @@ export default function UserManagementPage() {
   const [detailUserId, setDetailUserId] = useState<number | null>(null);
   const [toggleOpen, setToggleOpen] = useState(false);
   const [toggleTarget, setToggleTarget] = useState<AdminUser | null>(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   const {
     users,
@@ -55,13 +57,18 @@ export default function UserManagementPage() {
   }, [searchTerm]);
 
   useEffect(() => {
-    void fetchUsers({
-      pagination: { pageNumber: 1, pageSize: pagination.pageSize },
-      keyword: debouncedSearchTerm.trim() || undefined,
-      role: roleFilter ? formatUserRoleForApi(roleFilter) : undefined,
-      status: statusFilter ? formatStatusForApi(statusFilter) : undefined,
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ refetch khi đổi filter/tìm kiếm (đã debounce); dùng pagination.pageSize mà không liệt kê pagination để tránh refetch khi đổi trang
+    const controller = new AbortController();
+    void fetchUsers(
+      {
+        pagination: { pageNumber: 1, pageSize: pagination.pageSize },
+        keyword: debouncedSearchTerm.trim() || undefined,
+        role: roleFilter ? formatUserRoleForApi(roleFilter) : undefined,
+        status: statusFilter ? formatStatusForApi(statusFilter) : undefined,
+      },
+      { signal: controller.signal }
+    );
+    return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ refetch khi đổi filter/tìm kiếm (đã debounce); dùng pagination.pageSize mà không liệt kê pagination để tránh refetch khi đổi trang
   }, [debouncedSearchTerm, roleFilter, statusFilter, fetchUsers]);
 
   const handlePageChange = useCallback(
@@ -137,6 +144,20 @@ export default function UserManagementPage() {
     setStatusFilter(value);
   };
 
+  const handleStaffCreated = useCallback(async () => {
+    await fetchUsers({
+      pagination: { pageNumber: 1, pageSize: pagination.pageSize },
+      keyword: debouncedSearchTerm.trim() || undefined,
+      role: roleFilter ? formatUserRoleForApi(roleFilter) : undefined,
+      status: statusFilter ? formatStatusForApi(statusFilter) : undefined,
+    });
+  }, [
+    fetchUsers,
+    pagination.pageSize,
+    debouncedSearchTerm,
+    roleFilter,
+    statusFilter,
+  ]);
 
   return (
     <Box sx={{ p: 3 }}>
@@ -145,6 +166,8 @@ export default function UserManagementPage() {
         description="Search users, view details, and activate or deactivate accounts."
         entityLabel="user"
         count={pagination.totalCount}
+        actionLabel="Create consultant / manager"
+        onAction={() => setCreateDialogOpen(true)}
       />
 
       {error && (
@@ -181,6 +204,12 @@ export default function UserManagementPage() {
         saving={saving}
         onClose={handleCloseDetail}
         onToggleActive={handleDetailToggle}
+      />
+
+      <CreateConsultantManagerDialog
+        open={createDialogOpen}
+        onClose={() => setCreateDialogOpen(false)}
+        onCreated={handleStaffCreated}
       />
 
       <Dialog open={toggleOpen} onClose={() => setToggleOpen(false)}>

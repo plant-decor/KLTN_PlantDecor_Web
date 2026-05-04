@@ -104,7 +104,7 @@ export interface MenuItem {
 export const ROLE_DEFAULT_PATHS: Record<string, string> = {
   Admin: "/admin",
   Manager: "/manager",
-  Staff: "/staff",
+  Staff: "/staff/service-request",
   Consultant: "/consultant/chat-support",
   Caretaker: "/caretaker",
   Shipper: "/shipper",

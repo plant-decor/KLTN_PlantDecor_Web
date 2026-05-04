@@ -107,6 +107,10 @@ const getDefaultErrorMessage = (): string => {
   return "Request failed. Please try again.";
 };
 
+const isCanceledRequestError = (error: unknown): boolean => {
+  return axios.isAxiosError(error) && error.code === "ERR_CANCELED";
+};
+
 const isRefreshEndpoint = (url?: string): boolean => {
   return !!url?.includes("/Authentication/refreshToken");
 };
@@ -231,7 +235,7 @@ axiosClient.interceptors.response.use(
 
     const originalRequest = error?.config as AuthAwareRequestConfig | undefined;
     const statusCode = error?.response?.status as number | undefined;
-    if (shouldToastError(originalRequest, statusCode)) {
+    if (!isCanceledRequestError(error) && shouldToastError(originalRequest, statusCode)) {
       const errorMessage = extractMessage(error?.response?.data) || getDefaultErrorMessage();
       toast.error(errorMessage);
     }

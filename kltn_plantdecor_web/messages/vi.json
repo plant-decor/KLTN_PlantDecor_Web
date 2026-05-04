@@ -490,6 +490,8 @@
     "selectScheduleDays": "Chọn ngày thực hiện trong tuần",
     "oneTimeScheduleHint": "Gói một lần chỉ chọn được 1 ngày trong tuần.",
     "periodicScheduleHint": "Gói định kỳ cần chọn đúng {count} ngày và không bao gồm Chủ nhật.",
+    "bookingLeadTimeOneTime": "Đơn một lần phải đăng ký trước ít nhất 6 tiếng (tính theo giờ bắt đầu ca).",
+    "bookingLeadTimePeriodic": "Đơn định kỳ phải đăng ký trước ít nhất 24 tiếng (tính theo giờ bắt đầu ca buổi đầu tiên).",
     "shift": "Ca làm việc",
     "scheduleDays": "Ngày thực hiện trong tuần",
     "orderId": "Mã đơn hàng",

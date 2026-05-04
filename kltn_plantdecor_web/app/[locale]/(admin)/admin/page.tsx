@@ -24,7 +24,8 @@ export default function AdminPage() {
           '& .Mui-selected': { backgroundColor: 'var(--primary) !important', color: '#fff !important' },
         }}
       >
-        <Tab label="Business Dashboard" />`r`n        <Tab label="System Dashboard" />
+        <Tab label="Business Dashboard" />
+        <Tab label="System Dashboard" />
       </Tabs>
       <Box>
         {currentTab === 0 && <AdminBusinessDashboard />}

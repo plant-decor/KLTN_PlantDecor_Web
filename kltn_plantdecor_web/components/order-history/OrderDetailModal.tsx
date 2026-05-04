@@ -70,7 +70,6 @@ export default function OrderDetailModal({
   const canCancelOrder = !!order && canUserCancelOrder(order.statusName);
   const canCreateReturn = !!order && !isServiceOrder && canCreateReturnTicket(order.statusName);
   const isCancelling = !!order && cancelLoadingOrderId === order.id;
-
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
       <DialogTitle>
@@ -132,12 +131,16 @@ export default function OrderDetailModal({
               Customer information
             </Typography>
             <Box sx={{ mb: 3 }}>
-              <Typography variant="body2" color="text.secondary">
-                Customer
-              </Typography>
-              <Typography variant="body1" gutterBottom>
-                {order.customerName || '-'}
-              </Typography>
+              {order.customerName && (
+                <>
+                  <Typography variant="body2" color="text.secondary">
+                    Customer
+                  </Typography>
+                  <Typography variant="body1" gutterBottom>
+                    {order.customerName || '-'}
+                  </Typography>
+                </>
+              )}
               <Typography variant="body2" color="text.secondary">
                 Phone
               </Typography>
@@ -302,22 +305,22 @@ export default function OrderDetailModal({
                       </TableContainer>
                     ) : null}
                     <Box
-                      className='w-full flex justify-end'> 
-                    {invoice.statusName === 'Pending' ? (
-                      <Button
-                        variant="contained"
-                        className='font-semibold!'
-                        size="small"
-                        sx={{ px: 2, py: 1, backgroundColor: 'var(--primary)', ...hoverLiftStyle }}
-                        onClick={() => void onPayInvoice(invoice.id)}
-                        disabled={paymentLoadingInvoiceId === invoice.id || isCancelling}
-                      >
-                        {paymentLoadingInvoiceId === invoice.id
-                          ? tOrderHistory('retryingPayment')
-                          : tOrderHistory('payNow')}
-                      </Button>
-                    ) : null}
-                </Box>
+                      className='w-full flex justify-end'>
+                      {invoice.statusName === 'Pending' ? (
+                        <Button
+                          variant="contained"
+                          className='font-semibold!'
+                          size="small"
+                          sx={{ px: 2, py: 1, backgroundColor: 'var(--primary)', ...hoverLiftStyle }}
+                          onClick={() => void onPayInvoice(invoice.id)}
+                          disabled={paymentLoadingInvoiceId === invoice.id || isCancelling}
+                        >
+                          {paymentLoadingInvoiceId === invoice.id
+                            ? tOrderHistory('retryingPayment')
+                            : tOrderHistory('payNow')}
+                        </Button>
+                      ) : null}
+                    </Box>
                   </Card>
                 ))}
               </>

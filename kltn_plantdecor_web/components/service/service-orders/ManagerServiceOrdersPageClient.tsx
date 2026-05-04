@@ -1,10 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Divider, FormControl, IconButton, InputLabel, MenuItem, Paper, Select, Stack, Tab, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tabs, TextField, Tooltip, Typography } from '@mui/material';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
-import VisibilityIcon from '@mui/icons-material/Visibility';
+import { Alert, Box, Paper, Tab, TableContainer, Tabs } from '@mui/material';
 import { toast } from 'react-toastify';
 import { CustomLoading } from '@/components/CustomLoading';
 import {
@@ -50,8 +47,10 @@ import ServiceOrderRejectDialog from './ServiceOrderRejectDialog';
 import ServiceOrderCancelDialog from './ServiceOrderCancelDialog';
 import ServiceOrderAssignDialog from './ServiceOrderAssignDialog';
 import ServiceOrderRescheduleDialog, { type ServiceOrderRescheduleValues } from './ServiceOrderRescheduleDialog';
+import DesignServiceTab from './DesignServiceTab';
 import ManagementHeader from '@/components/layout/ManagementHeader';
-import { formatCurrency } from '@/lib/utils/formatUtil';
+import { formatEnumLabel } from '@/lib/utils/enumLabelUtil';
+import { DESIGN_STATUS } from './utils/designStatusConstants';
 
 interface ManagerServiceOrdersPageClientProps {
   pageTitle?: string;
@@ -59,76 +58,11 @@ interface ManagerServiceOrdersPageClientProps {
   entityLabel?: string;
 }
 
-const DESIGN_STATUS = {
-  PendingApproval: 1,
-  AwaitDeposit: 2,
-  DepositPaid: 3,
-  InProgress: 4,
-  AwaitFinalPayment: 5,
-  Completed: 6,
-  Rejected: 7,
-  Cancelled: 8,
-} as const;
-
-const DESIGN_TASK_STATUS = {
-  Completed: 3,
-  Cancelled: 4,
-} as const;
-
-const FINAL_DESIGN_STATUSES = new Set<number>([
-  DESIGN_STATUS.Completed,
-  DESIGN_STATUS.Rejected,
-  DESIGN_STATUS.Cancelled,
-]);
-
-const formatEnumLabel = (value: string) => {
-  if (!value) {
-    return '';
-  }
-
-  return value
-    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-    .replace(/[_-]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-};
-
-const formatDate = (value?: string | null) => {
-  if (!value) {
-    return '-';
-  }
-
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return value;
-  }
-
-  return parsed.toLocaleDateString('vi-VN', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  });
-};
-
 const getLocalDateInputValue = () => {
   const now = new Date();
   const offset = now.getTimezoneOffset();
   const local = new Date(now.getTime() - offset * 60 * 1000);
   return local.toISOString().slice(0, 10);
-};
-
-const getDesignStatusChipColor = (status: number): 'default' | 'warning' | 'success' | 'error' | 'info' => {
-  if (status === DESIGN_STATUS.PendingApproval) return 'warning';
-  if (status === DESIGN_STATUS.AwaitDeposit || status === DESIGN_STATUS.AwaitFinalPayment) return 'info';
-  if (status === DESIGN_STATUS.DepositPaid || status === DESIGN_STATUS.InProgress || status === DESIGN_STATUS.Completed) return 'success';
-  if (status === DESIGN_STATUS.Rejected || status === DESIGN_STATUS.Cancelled) return 'error';
-  return 'default';
-};
-
-const canApproveOrRejectDesign = (status: number) => status === DESIGN_STATUS.PendingApproval;
-const canManagerCancelDesign = (status: number) => !FINAL_DESIGN_STATUSES.has(status);
-const canAssignDesignTask = (task: DesignRegistrationTask) => {
-  return task.status !== DESIGN_TASK_STATUS.Completed && task.status !== DESIGN_TASK_STATUS.Cancelled;
 };
 
 export default function ManagerServiceOrdersPageClient({
@@ -263,13 +197,6 @@ export default function ManagerServiceOrdersPageClient({
       active: designOrders.filter((item) => item.status === DESIGN_STATUS.DepositPaid || item.status === DESIGN_STATUS.InProgress).length,
     };
   }, [designOrders]);
-
-  const designAvailabilityByStaffId = useMemo(() => {
-    return eligibleDesignAvailability.reduce<Record<number, DesignEligibleCaretakerAvailability>>((accumulator, item) => {
-      accumulator[item.staff.id] = item;
-      return accumulator;
-    }, {});
-  }, [eligibleDesignAvailability]);
 
   const getDesignRegistrationStatusLabel = useCallback(
     (item: Pick<CustomerDesignRegistrationListItem, 'status' | 'statusName'>) => {
@@ -419,11 +346,6 @@ export default function ManagerServiceOrdersPageClient({
     }
   };
 
-  const handleOpenDesignCancelDialog = (item: CustomerDesignRegistrationListItem) => {
-    setDesignCancelTarget(item);
-    setDesignCancelReason('');
-  };
-
   const handleDesignCancel = async () => {
     if (!designCancelTarget) {
       return;
@@ -541,11 +463,6 @@ export default function ManagerServiceOrdersPageClient({
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const handleOpenDesignRejectDialog = (item: CustomerDesignRegistrationListItem) => {
-    setDesignRejectTarget(item);
-    setDesignRejectReason('');
   };
 
   const handleDesignReject = async () => {
@@ -877,426 +794,64 @@ export default function ManagerServiceOrdersPageClient({
           />
         </>
       ) : (
-        <>
-          <ServiceOrdersHeader
-            statusFilter={designStatusFilter}
-            statusOptions={designStatusOptions}
-            activeFilterLabel={activeDesignFilterLabel}
-            pendingCount={designStats.pending}
-            awaitingPaymentCount={designStats.awaitingPayment}
-            activeCount={designStats.active}
-            loading={designLoading}
-            onStatusFilterChange={(value) => {
-              setDesignStatusFilter(value);
-            }}
-            onRefresh={() => void loadDesignOrders()}
-          />
-
-          {designError && (
-            <Alert severity="error" sx={{ mb: 2 }} onClose={() => setDesignError(null)}>
-              {designError}
-            </Alert>
-          )}
-
-          <Paper sx={{ border: '1px solid var(--card-border)', overflow: 'hidden' }}>
-            {designLoading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-                <CustomLoading />
-              </Box>
-            ) : (
-              <TableContainer>
-                <Table size="small">
-                  <TableHead sx={{ backgroundColor: 'var(--primary)' }}>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 700 }}>ID</TableCell>
-                      <TableCell sx={{ fontWeight: 700 }}>Customer</TableCell>
-                      <TableCell sx={{ fontWeight: 700 }}>Design Template</TableCell>
-                      <TableCell sx={{ fontWeight: 700 }}>Nursery</TableCell>
-                      <TableCell sx={{ fontWeight: 700 }} align='center'>Status</TableCell>
-                      <TableCell sx={{ fontWeight: 700 }} align="center">
-                        Total Price
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 700 }}>Created At</TableCell>
-                      <TableCell sx={{ fontWeight: 700 }} align="center">
-                        Actions
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {designOrders.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
-                          No design service orders found.
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      designOrders.map((order) => (
-                        <TableRow key={order.id} hover>
-                          <TableCell>#{order.id}</TableCell>
-                          <TableCell>
-                            <Typography variant="body2" fontWeight={600}>
-                              {order.customer?.fullName || '-'}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {order.customer?.email || '-'}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2" fontWeight={600}>
-                              {order.designTemplateTier.designTemplate.name || '-'}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {order.designTemplateTier.tierName || '-'}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>{order.nursery?.name || 'Optional'}</TableCell>
-                          <TableCell align="center">
-                            <Chip
-                              size="small"
-                              color={getDesignStatusChipColor(order.status)}
-                              label={getDesignRegistrationStatusLabel(order)}
-                            />
-                          </TableCell>
-                          <TableCell align="center">
-                            {formatCurrency(order.totalPrice, 'vi-VN')}
-                          </TableCell>
-                          <TableCell>{formatDate(order.createdAt)}</TableCell>
-                          <TableCell align="center" >
-                            <Stack direction="row" spacing={1} justifyContent="center" useFlexGap flexWrap="nowrap" maxHeight={40}>
-                              <Tooltip title="View details and tasks">
-                                <IconButton size="small" onClick={() => void handleViewDesignDetail(order.id)}>
-                                  <VisibilityIcon fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-                              {canApproveOrRejectDesign(order.status) && (
-                                <>
-                                  <Button
-                                    size="small"
-                                    variant='contained'
-                                    className='bg-primary! aspect-square! rounded-full!'
-                                    disabled={submitting}
-                                    title="Approve"
-                                    onClick={() => void handleDesignApprove(order.id)}
-                                    sx={{ ml: 1 }}
-                                  >
-                                    <CheckCircleOutlineIcon />
-                                  </Button>
-                                  <Button
-                                    size="small"
-                                    variant='contained'
-                                    className='bg-error! aspect-square! rounded-full!'
-                                    disabled={submitting}
-                                    title="Reject"
-                                    onClick={() => handleOpenDesignRejectDialog(order)}
-                                    sx={{ ml: 1 }}
-                                  >
-                                    <CancelOutlinedIcon />
-                                  </Button>
-                                </>
-                              )}
-                              {canManagerCancelDesign(order.status) && (
-                                <Button
-                                  size="small"
-                                  variant="contained"
-                                  color="error"
-                                  className='bg-error! aspect-square! rounded-full!'
-                                  disabled={submitting}
-                                  title="Cancel"
-                                  onClick={() => handleOpenDesignCancelDialog(order)}
-                                  sx={{ ml: 1 }}
-                                >
-                                  <CancelOutlinedIcon />
-                                </Button>
-                              )}
-                            </Stack>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            )}
-          </Paper>
-
-          <Dialog open={designDetailOpen} onClose={() => setDesignDetailOpen(false)} fullWidth maxWidth="md">
-            <DialogTitle>{designDetailItem ? `Design Registration #${designDetailItem.id}` : 'Design Registration'}</DialogTitle>
-            <DialogContent dividers>
-              {designDetailLoading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                  <CustomLoading />
-                </Box>
-              ) : designDetailItem ? (
-                <Stack spacing={1.5}>
-                  <Box>
-                    <strong>Status:</strong>{' '}
-                    <Chip
-                      size="small"
-                      color={getDesignStatusChipColor(designDetailItem.status)}
-                      label={getDesignRegistrationStatusLabel(designDetailItem)}
-                    />
-                  </Box>
-                  {designDetailItem.customer && (
-                    <Typography variant="body2">
-                      <strong>Customer:</strong> {designDetailItem.customer.fullName} ({designDetailItem.customer.email || '-'})
-                    </Typography>
-                  )}
-                  <Typography variant="body2"><strong>Phone:</strong> {designDetailItem.phone || '-'}</Typography>
-                  <Typography variant="body2"><strong>Address:</strong> {designDetailItem.address || '-'}</Typography>
-                  <Typography variant="body2"><strong>Nursery:</strong> {designDetailItem.nursery?.name || 'Optional'}</Typography>
-                  <Typography variant="body2"><strong>Template:</strong> {designDetailItem.designTemplateTier.designTemplate.name || '-'}</Typography>
-                  <Typography variant="body2"><strong>Tier:</strong> {designDetailItem.designTemplateTier.tierName || '-'}</Typography>
-                  <Typography variant="body2"><strong>Total price:</strong> {formatCurrency(designDetailItem.totalPrice, 'vi-VN')}</Typography>
-                  <Typography variant="body2"><strong>Deposit:</strong> {formatCurrency(designDetailItem.depositAmount, 'vi-VN')}</Typography>
-                  <Typography variant="body2"><strong>Order ID:</strong> {designDetailItem.orderId ? `#${designDetailItem.orderId}` : '-'}</Typography>
-                  <Typography variant="body2"><strong>Assigned caretaker:</strong> {designDetailItem.assignedCaretaker?.fullName || '-'}</Typography>
-                  <Typography variant="body2"><strong>Customer note:</strong> {designDetailItem.customerNote || '-'}</Typography>
-                  <Typography variant="body2"><strong>Created at:</strong> {formatDate(designDetailItem.createdAt)}</Typography>
-                  <Typography variant="body2"><strong>Approved at:</strong> {formatDate(designDetailItem.approvedAt)}</Typography>
-                  {designDetailItem.cancelReason && (
-                    <Typography variant="body2" color="error">
-                      <strong>Cancel Reason:</strong> {designDetailItem.cancelReason}
-                    </Typography>
-                  )}
-
-                  <Divider sx={{ my: 1 }} />
-
-                  <Typography variant="h6" fontWeight={700}>
-                    Design Tasks
-                  </Typography>
-                  {designDetailItem.designTasks.length === 0 ? (
-                    <Alert severity="info">No design tasks found for this registration.</Alert>
-                  ) : (
-                    <TableContainer component={Paper} variant="outlined">
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>Task</TableCell>
-                            <TableCell>Status</TableCell>
-                            <TableCell>Scheduled Date</TableCell>
-                            <TableCell>Assigned Staff</TableCell>
-                            <TableCell align="center">Actions</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {designDetailItem.designTasks.map((task) => (
-                            <TableRow key={task.id}>
-                              <TableCell>{getDesignTaskTypeLabel(task)}</TableCell>
-                              <TableCell>
-                                <Chip size="small" label={getDesignTaskStatusLabel(task)} />
-                              </TableCell>
-                              <TableCell>{formatDate(task.scheduledDate)}</TableCell>
-                              <TableCell>{task.assignedStaff?.fullName || '-'}</TableCell>
-                              <TableCell align="center">
-                                {canAssignDesignTask(task) ? (
-                                  <Button
-                                    size="small"
-                                    variant="outlined"
-                                    onClick={() => void openDesignTaskAssignDialog(task, designDetailItem)}
-                                    disabled={submitting}
-                                  >
-                                    Assign
-                                  </Button>
-                                ) : (
-                                  '-'
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  )}
-                </Stack>
-              ) : (
-                <Typography>No detail data available.</Typography>
-              )}
-            </DialogContent>
-            <DialogActions sx={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
-              <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-                {designDetailItem && canApproveOrRejectDesign(designDetailItem.status) && (
-                  <Button
-                    variant="contained"
-                    color="success"
-                    className="bg-primary!"
-                    onClick={() => void handleDesignApprove(designDetailItem.id)}
-                    disabled={submitting}
-                  >
-                    Approve
-                  </Button>
-                )}
-                {designDetailItem && canApproveOrRejectDesign(designDetailItem.status) && (
-                  <Button
-                    variant="outlined"
-                    color="error"
-                    className="bg-error!"
-                    onClick={() => handleOpenDesignRejectDialog(designDetailItem)}
-                    disabled={submitting}
-                  >
-                    Reject
-                  </Button>
-                )}
-                {designDetailItem && canManagerCancelDesign(designDetailItem.status) && (
-                  <Button
-                    variant="outlined"
-                    color="error"
-                    className="bg-error!"
-                    onClick={() => handleOpenDesignCancelDialog(designDetailItem)}
-                    disabled={submitting}
-                  >
-                    Cancel
-                  </Button>
-                )}
-              </Stack>
-              <Button onClick={() => setDesignDetailOpen(false)} disabled={designDetailLoading}>
-                Close
-              </Button>
-            </DialogActions>
-          </Dialog>
-
-          <Dialog open={Boolean(designCancelTarget)} onClose={() => setDesignCancelTarget(null)} fullWidth maxWidth="sm">
-            <DialogTitle>
-              {designCancelTarget ? `Cancel design order #${designCancelTarget.id}` : 'Cancel design order'}
-            </DialogTitle>
-            <DialogContent dividers>
-              <TextField
-                label="Cancellation reason"
-                fullWidth
-                multiline
-                minRows={3}
-                value={designCancelReason}
-                onChange={(event) => setDesignCancelReason(event.target.value)}
-                disabled={submitting}
-                placeholder="Enter cancellation reason"
-              />
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setDesignCancelTarget(null)} disabled={submitting}>
-                Close
-              </Button>
-              <Button onClick={() => void handleDesignCancel()} disabled={submitting || designCancelReason.trim().length === 0} variant="contained" color="error">
-                {submitting ? 'Processing...' : 'Confirm cancellation'}
-              </Button>
-            </DialogActions>
-          </Dialog>
-
-          <Dialog open={Boolean(designRejectTarget)} onClose={() => setDesignRejectTarget(null)} fullWidth maxWidth="sm">
-            <DialogTitle>
-              {designRejectTarget ? `Reject design order #${designRejectTarget.id}` : 'Reject design order'}
-            </DialogTitle>
-            <DialogContent dividers>
-              <TextField
-                label="Rejection reason"
-                fullWidth
-                multiline
-                minRows={3}
-                value={designRejectReason}
-                onChange={(event) => setDesignRejectReason(event.target.value)}
-                disabled={submitting}
-                placeholder="Enter rejection reason"
-              />
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setDesignRejectTarget(null)} disabled={submitting}>
-                Close
-              </Button>
-              <Button onClick={() => void handleDesignReject()} disabled={submitting || designRejectReason.trim().length === 0} variant="contained" color="error">
-                {submitting ? 'Processing...' : 'Confirm rejection'}
-              </Button>
-            </DialogActions>
-          </Dialog>
-
-          <Dialog
-            open={Boolean(designTaskAssignTarget)}
-            onClose={() => {
-              setDesignTaskAssignTarget(null);
-              setDesignTaskAssignRegistration(null);
-              setEligibleDesignCaretakers([]);
-              setEligibleDesignAvailability([]);
-            }}
-            fullWidth
-            maxWidth="md"
-          >
-            <DialogTitle>
-              Assign {designTaskAssignTarget ? getDesignTaskTypeLabel(designTaskAssignTarget) : 'design task'}
-            </DialogTitle>
-            <DialogContent dividers>
-              <Stack spacing={2}>
-                <TextField
-                  label="Scheduled date"
-                  type="date"
-                  value={designTaskScheduledDate}
-                  onChange={(event) => void handleDesignTaskScheduledDateChange(event.target.value)}
-                  InputLabelProps={{ shrink: true }}
-                  disabled={submitting}
-                  fullWidth
-                />
-
-                {designAssignLoading ? (
-                  <Box sx={{ py: 3, display: 'flex', justifyContent: 'center' }}>
-                    <CustomLoading />
-                  </Box>
-                ) : eligibleDesignCaretakers.length === 0 ? (
-                  <Alert severity="warning">No eligible caretakers found for this design task.</Alert>
-                ) : (
-                  <FormControl fullWidth>
-                    <InputLabel id="design-task-caretaker-label">Eligible Staff</InputLabel>
-                    <Select
-                      labelId="design-task-caretaker-label"
-                      label="Eligible Staff"
-                      value={selectedDesignCaretakerId || ''}
-                      onChange={(event) => setSelectedDesignCaretakerId(Number(event.target.value))}
-                    >
-                      <MenuItem value="">
-                        <em>Select a staff member</em>
-                      </MenuItem>
-                    {eligibleDesignCaretakers.map((caretaker) => (
-                        <MenuItem key={caretaker.id} value={caretaker.id}>
-                          <Box>
-                            <Typography variant="body2" fontWeight={700}>
-                              {caretaker.username} - {caretaker.email}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {caretaker.phoneNumber || '-'}
-                              {designAvailabilityByStaffId[caretaker.id]
-                                ? designAvailabilityByStaffId[caretaker.id].isAvailable
-                                  ? ' - Available'
-                                  : ` - Conflicts: ${designAvailabilityByStaffId[caretaker.id].conflictDates.join(', ') || 'yes'}`
-                                : ''}
-                            </Typography>
-                          </Box>
-                        </MenuItem>
-                    ))}
-                    </Select>
-                  </FormControl>
-                )}
-                <Typography variant="body2" color="text.secondary">
-                  Availability is checked against the selected date when the API returns conflict information.
-                </Typography>
-              </Stack>
-            </DialogContent>
-            <DialogActions>
-              <Button
-                onClick={() => {
-                  setDesignTaskAssignTarget(null);
-                  setDesignTaskAssignRegistration(null);
-                  setEligibleDesignCaretakers([]);
-                  setEligibleDesignAvailability([]);
-                }}
-                disabled={submitting || designAssignLoading}
-              >
-                Close
-              </Button>
-              <Button
-                onClick={() => void handleDesignAssign()}
-                disabled={submitting || designAssignLoading || eligibleDesignCaretakers.length === 0 || !selectedDesignCaretakerId}
-                variant="contained"
-              >
-                {submitting ? 'Processing...' : 'Confirm assignment'}
-              </Button>
-            </DialogActions>
-          </Dialog>
-        </>
+        <DesignServiceTab
+          designOrders={designOrders}
+          designLoading={designLoading}
+          designError={designError}
+          designStatusFilter={designStatusFilter}
+          designStatusOptions={designStatusOptions}
+          activeDesignFilterLabel={activeDesignFilterLabel}
+          designStats={designStats}
+          submitting={submitting}
+          designDetailOpen={designDetailOpen}
+          designDetailLoading={designDetailLoading}
+          designDetailItem={designDetailItem}
+          designCancelTarget={designCancelTarget}
+          designCancelReason={designCancelReason}
+          designRejectTarget={designRejectTarget}
+          designRejectReason={designRejectReason}
+          designTaskAssignTarget={designTaskAssignTarget}
+          designTaskAssignRegistration={designTaskAssignRegistration}
+          eligibleDesignCaretakers={eligibleDesignCaretakers}
+          eligibleDesignAvailability={eligibleDesignAvailability}
+          designAssignLoading={designAssignLoading}
+          selectedDesignCaretakerId={selectedDesignCaretakerId}
+          designTaskScheduledDate={designTaskScheduledDate}
+          getDesignRegistrationStatusLabel={getDesignRegistrationStatusLabel}
+          getDesignTaskStatusLabel={getDesignTaskStatusLabel}
+          getDesignTaskTypeLabel={getDesignTaskTypeLabel}
+          onStatusFilterChange={(value) => {
+            setDesignStatusFilter(value);
+          }}
+          onRefresh={() => void loadDesignOrders()}
+          onViewDetail={(id) => void handleViewDesignDetail(id)}
+          onApprove={(id) => void handleDesignApprove(id)}
+          onOpenRejectDialog={(item) => {
+            setDesignRejectTarget(item);
+            setDesignRejectReason('');
+          }}
+          onOpenCancelDialog={(item) => {
+            setDesignCancelTarget(item);
+            setDesignCancelReason('');
+          }}
+          onOpenTaskAssignDialog={(task, registration) => void openDesignTaskAssignDialog(task, registration)}
+          onCloseDetail={() => setDesignDetailOpen(false)}
+          onCloseCancel={() => setDesignCancelTarget(null)}
+          onCloseReject={() => setDesignRejectTarget(null)}
+          onCloseTaskAssign={() => {
+            setDesignTaskAssignTarget(null);
+            setDesignTaskAssignRegistration(null);
+            setEligibleDesignCaretakers([]);
+            setEligibleDesignAvailability([]);
+          }}
+          onConfirmCancel={() => void handleDesignCancel()}
+          onConfirmReject={() => void handleDesignReject()}
+          onConfirmAssign={() => void handleDesignAssign()}
+          onScheduledDateChange={(date) => void handleDesignTaskScheduledDateChange(date)}
+          onSelectedCaretakerIdChange={setSelectedDesignCaretakerId}
+          onCancelReasonChange={setDesignCancelReason}
+          onRejectReasonChange={setDesignRejectReason}
+        />
       )}
     </Box>
   );

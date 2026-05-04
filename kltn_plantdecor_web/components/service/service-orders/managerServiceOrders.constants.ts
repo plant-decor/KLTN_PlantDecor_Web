@@ -80,5 +80,5 @@ export const getErrorMessage = (error: unknown, fallback: string) => {
 
 export const canApproveOrReject = (status: number) => status === 1 || status === 0;
 export const canReschedule = (status: number) => status === 0;
-export const canAssignCaretaker = (status: number) => status === 2 || status === 3;
+export const canAssignCaretaker = (status: number) => status === 3;
 export const canManagerCancel = (status: number) => status === 3;

@@ -21,7 +21,7 @@ import Image from 'next/image';
 import { CustomLoading } from '@/components/CustomLoading';
 import { formatDateTime } from '@/lib/utils/dateUtils';
 
-const SERVICE_ORDER_TYPE = 4;
+const SERVICE_ORDER_TYPE = [4, 5]; 
 const ORDER_ITEM_FALLBACK_IMAGE = '/img/fallbackplant.avif';
 
 type OrderDisplayItem = {
@@ -42,7 +42,7 @@ function mapInvoiceDetailToDisplayItem(detail: OrderInvoiceDetail): OrderDisplay
 }
 
 function getDisplayItems(order: Order): OrderDisplayItem[] {
-  if (order.orderType !== SERVICE_ORDER_TYPE) {
+  if (!SERVICE_ORDER_TYPE.includes(order.orderType)) {
     return order.items;
   }
 
@@ -79,7 +79,9 @@ export default function OrderHistoryList({
         return tOrderHistory('orderType.uniquePlant');
       case 3:
         return tOrderHistory('orderType.buyNow');
-      case SERVICE_ORDER_TYPE:
+      case SERVICE_ORDER_TYPE[0]:
+        return tOrderHistory('orderType.service');
+      case SERVICE_ORDER_TYPE[1]:
         return tOrderHistory('orderType.service');
       default:
         return tOrderHistory('orderType.product');
@@ -87,8 +89,8 @@ export default function OrderHistoryList({
   };
 
   const getOrderItemIcon = (orderType: number) => {
-    if (orderType === SERVICE_ORDER_TYPE) {
-      return <MiscellaneousServicesIcon />;
+    if (SERVICE_ORDER_TYPE.includes(orderType)) {
+      return <MiscellaneousServicesIcon sx={{color: 'var(--primary)'}} fontSize='large' />;
     }
 
     return <ShoppingCartIcon />;
@@ -176,7 +178,7 @@ export default function OrderHistoryList({
                       mb: index < displayItems.length - 1 ? 1.5 : 0,
                     }}
                   >
-                    {order.orderType === SERVICE_ORDER_TYPE ? (
+                    {SERVICE_ORDER_TYPE.includes(order.orderType) ? (
                       <Avatar variant="rounded" sx={{ width: 60, height: 60, bgcolor: 'grey.200' }}>
                         {getOrderItemIcon(order.orderType)}
                       </Avatar>

@@ -7,6 +7,7 @@ import type {
   AdminDesignTemplateDetail,
   AdminDesignTemplateListItem,
   AdminDesignTemplateTierCreateRequest,
+  AdminDesignTemplateTierItemsUpdateRequest,
   AdminDesignTemplateTierUpdateRequest,
   AdminDesignTemplateUpdateInput,
   DesignTemplateNurseryOffering,
@@ -145,12 +146,17 @@ const normalizeTierItem = (value: unknown): DesignTemplateTierItem | null => {
   const id = value.id == null ? undefined : toNumber(value.id, Number.NaN);
   const designTemplateTierId = value.designTemplateTierId == null ? undefined : toNumber(value.designTemplateTierId, Number.NaN);
 
+  const itemTypeName = toText(value.itemTypeName);
+  const displayName = toText(value.name);
+
   return {
     id: id != null && Number.isFinite(id) ? id : undefined,
     designTemplateTierId: designTemplateTierId != null && Number.isFinite(designTemplateTierId) ? designTemplateTierId : undefined,
     materialId: value.materialId == null ? null : toNumber(value.materialId),
     plantId: value.plantId == null ? null : toNumber(value.plantId),
     itemType: toNumber(value.itemType),
+    ...(itemTypeName ? { itemTypeName } : {}),
+    ...(displayName ? { name: displayName } : {}),
     quantity: toNumber(value.quantity, 1),
     createdAt: toText(value.createdAt) || undefined,
   };
@@ -449,6 +455,32 @@ export const updateAdminDesignTemplateTier = async (
     scopedOfWork: payload.scopedOfWork,
     estimatedDays: payload.estimatedDays,
     isActive: payload.isActive,
+    items: [],
+  };
+};
+
+export const updateAdminDesignTemplateTierItems = async (
+  id: number,
+  payload: AdminDesignTemplateTierItemsUpdateRequest,
+  loading = true
+): Promise<DesignTemplateTier> => {
+  const response = await apiClient.put<WrappedResponse<unknown>>(
+    `admin/design-template-tiers/${id}/items`,
+    payload,
+    loading,
+    MUTATION_CONFIG
+  );
+  const tier = normalizeTier(unwrapPayloadData(response));
+  return tier ?? {
+    id,
+    designTemplateId: 0,
+    tierName: '',
+    minArea: 0,
+    maxArea: 0,
+    packagePrice: 0,
+    scopedOfWork: '',
+    estimatedDays: 0,
+    isActive: true,
     items: [],
   };
 };

@@ -1,8 +1,7 @@
 'use client';
 
-import { Button, FormControl, InputLabel, MenuItem, Select, Stack, Typography } from '@mui/material';
+import {FormControl, InputLabel, MenuItem, Select, Stack } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material/Select';
-import RefreshIcon from '@mui/icons-material/Refresh';
 import { RETURN_TICKET_ASSIGNMENT_STATUS_OPTIONS } from './managerReturnTicket.constants';
 
 interface ManagerReturnTicketHeaderProps {

@@ -12,14 +12,17 @@ import {
   DialogContent,
   DialogTitle,
   FormControl,
+  IconButton,
   InputLabel,
   ListItemText,
   MenuItem,
   Select,
   Stack,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material';
+import { Visibility } from '@mui/icons-material';
 import type {
   AdminDesignTemplateDetail,
   AdminDesignTemplateListItem,
@@ -36,19 +39,9 @@ import {
   formControlDisabledSelectBlackTextSx,
   textFieldDisabledBlackInputSx,
 } from './designTemplateManagement.constants';
+import { resolveDesignSampleImageSrc } from '@/lib/utils/designTemplateSampleImage';
 
 const MULTI_SELECT_MENU_MAX_HEIGHT = 280;
-
-/** Preview: blob/data/https work as-is; relative API paths join NEXT_PUBLIC_API_URL (Next/Image does not support blob:). */
-const resolveDesignSampleImageSrc = (src: string): string => {
-  const trimmed = src.trim();
-  if (!trimmed) return '';
-  if (trimmed.startsWith('blob:') || trimmed.startsWith('data:')) return trimmed;
-  if (/^https?:\/\//i.test(trimmed)) return trimmed;
-  const base = (process.env.NEXT_PUBLIC_API_URL ?? '').replace(/\/$/, '');
-  const path = trimmed.replace(/^\/+/, '');
-  return base ? `${base}/${path}` : `/${path}`;
-};
 
 const multiSelectMenuProps = {
   PaperProps: {
@@ -82,6 +75,8 @@ interface DesignTemplateFormDialogProps {
   onAddTier?: () => void;
   onEditTier?: (tier: DesignTemplateTier) => void;
   onDeactivateTier?: (tier: DesignTemplateTier) => void;
+  /** View mode only: open read-only tier detail (e.g. manager workspace). */
+  onViewTier?: (tier: DesignTemplateTier) => void;
 }
 
 export default function DesignTemplateFormDialog({
@@ -101,6 +96,7 @@ export default function DesignTemplateFormDialog({
   onAddTier,
   onEditTier,
   onDeactivateTier,
+  onViewTier,
 }: DesignTemplateFormDialogProps) {
   const isView = mode === 'view';
   const isCreate = mode === 'create';
@@ -320,22 +316,31 @@ export default function DesignTemplateFormDialog({
                             {formatCurrency(tier.packagePrice)} · {tier.minArea}–{tier.maxArea} m² · {tier.estimatedDays} day(s)
                           </Typography>
                         </Box>
-                        {!isView && onEditTier && onDeactivateTier ? (
-                          <Stack direction="row" spacing={1} flexShrink={0}>
-                            <Button size="small" variant="outlined" onClick={() => onEditTier(tier)} disabled={submitting}>
-                              Edit
-                            </Button>
-                            <Button
-                              size="small"
-                              color="warning"
-                              variant="outlined"
-                              onClick={() => onDeactivateTier(tier)}
-                              disabled={submitting || !tier.isActive}
-                            >
-                              Deactivate
-                            </Button>
-                          </Stack>
-                        ) : null}
+                        <Stack direction="row" spacing={1} flexShrink={0} alignItems="center">
+                          {isView && onViewTier ? (
+                            <Tooltip title="View tier detail">
+                              <IconButton size="small" color="primary" onClick={() => onViewTier(tier)} disabled={submitting} aria-label="View tier detail">
+                                <Visibility fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          ) : null}
+                          {!isView && onEditTier && onDeactivateTier ? (
+                            <>
+                              <Button size="small" variant="outlined" onClick={() => onEditTier(tier)} disabled={submitting}>
+                                Edit
+                              </Button>
+                              <Button
+                                size="small"
+                                color="warning"
+                                variant="outlined"
+                                onClick={() => onDeactivateTier(tier)}
+                                disabled={submitting || !tier.isActive}
+                              >
+                                Deactivate
+                              </Button>
+                            </>
+                          ) : null}
+                        </Stack>
                       </Stack>
                     ))
                   ) : (

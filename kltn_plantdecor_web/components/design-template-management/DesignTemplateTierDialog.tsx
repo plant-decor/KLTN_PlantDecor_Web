@@ -1,10 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Box,
   Button,
+  Chip,
+  ClickAwayListener,
   Dialog,
   DialogActions,
   DialogContent,
@@ -12,17 +14,35 @@ import {
   FormControl,
   FormControlLabel,
   IconButton,
+  InputAdornment,
   InputLabel,
+  List,
+  ListItemButton,
+  ListItemText,
   MenuItem,
+  Paper,
   Select,
   Stack,
   Switch,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   TextField,
   Tooltip,
   Typography,
 } from '@mui/material';
-import { DeleteOutline, Add, EditNoteOutlined, VisibilityOutlined } from '@mui/icons-material';
-import type { AdminDesignTemplateDetail, DesignTemplateTier, DesignTemplateTierItemCreateRequest } from '@/types/admin-design-template.types';
+import { DeleteOutline, Add, EditNoteOutlined, Search as SearchIcon, VisibilityOutlined } from '@mui/icons-material';
+import Image from 'next/image';
+import { useLocale, useTranslations } from 'next-intl';
+import type {
+  AdminDesignTemplateDetail,
+  DesignTemplateTier,
+  DesignTemplateTierItem,
+  DesignTemplateTierItemCreateRequest,
+} from '@/types/admin-design-template.types';
 import {
   DESIGN_TEMPLATE_TIER_ITEM_TYPE_OPTIONS,
   formatCurrency,
@@ -30,8 +50,53 @@ import {
   formControlLabelDisabledBlackTextSx,
   textFieldDisabledBlackInputSx,
 } from './designTemplateManagement.constants';
-import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils/formatUtil';
+import { formatCurrency as formatCurrencyLocale, formatCurrencyInput, parseCurrencyInput } from '@/lib/utils/formatUtil';
 import { CustomLoading } from '@/components/CustomLoading';
+import { searchAdminPlantsForCombo } from '@/lib/api/adminPlantCombosService';
+import { searchAdminMaterials } from '@/lib/api/adminMaterialsService';
+import type { Material, Plant } from '@/types/store-management.types';
+
+const ITEM_TYPE_PLANT = 1;
+const ITEM_TYPE_MATERIAL = 2;
+
+const SEARCH_DEBOUNCE_MS = 500;
+const PLANT_CATALOG_PAGE_SIZE = 1000;
+const PLANT_SEARCH_PAGE_SIZE = 50;
+const MATERIAL_CATALOG_PAGE_SIZE = 1000;
+const MATERIAL_SEARCH_PAGE_SIZE = 20;
+const MAX_VISIBLE_SUGGESTIONS = 5;
+const FALLBACK_IMAGE = '/img/fallbackplant.avif';
+
+const plantSelectMenuProps = {
+  PaperProps: {
+    sx: {
+      maxHeight: 48 * 5,
+      overflowY: 'auto',
+    },
+  },
+};
+
+type UnknownRecord = Record<string, unknown>;
+
+const stripEmptyStringFields = <T extends UnknownRecord>(value: T): T => {
+  const next: UnknownRecord = {};
+  Object.entries(value).forEach(([key, raw]) => {
+    if (typeof raw === 'string' && raw.trim() === '') {
+      return;
+    }
+    next[key] = raw;
+  });
+  return next as T;
+};
+
+const readPayload = <T,>(response: { data?: T; payload?: T }): T | undefined => {
+  return response.payload ?? response.data;
+};
+
+export type DesignTemplateTierItemFormRow = DesignTemplateTierItemCreateRequest & {
+  plantDisplayName?: string;
+  materialDisplayName?: string;
+};
 
 export interface DesignTemplateTierFormValue {
   tierName: string;
@@ -41,7 +106,7 @@ export interface DesignTemplateTierFormValue {
   scopedOfWork: string;
   estimatedDays: number;
   isActive: boolean;
-  items: DesignTemplateTierItemCreateRequest[];
+  items: DesignTemplateTierItemFormRow[];
 }
 
 interface DesignTemplateTierDialogProps {
@@ -70,12 +135,555 @@ interface DesignTemplateTierDialogProps {
   onCancelCreateTierForm?: () => void;
 }
 
-const createEmptyTierItem = (): DesignTemplateTierItemCreateRequest => ({
+const createEmptyTierItem = (): DesignTemplateTierItemFormRow => ({
   materialId: null,
   plantId: null,
-  itemType: 1,
+  itemType: ITEM_TYPE_PLANT,
   quantity: 1,
 });
+
+const formatTierItemTypeLabel = (item: DesignTemplateTierItem): string => {
+  const fromApi = item.itemTypeName?.trim();
+  if (fromApi) {
+    return fromApi;
+  }
+  return DESIGN_TEMPLATE_TIER_ITEM_TYPE_OPTIONS.find((option) => option.value === item.itemType)?.label ?? `Type ${item.itemType}`;
+};
+
+const formatTierItemQuantity = (quantity: number): string => {
+  if (!Number.isFinite(quantity)) {
+    return '—';
+  }
+  const n = Number(quantity);
+  return Number.isInteger(n) ? String(n) : String(n);
+};
+
+interface TierCreateItemPlantMaterialFieldsProps {
+  item: DesignTemplateTierItemFormRow;
+  disabled: boolean;
+  catalogPlants: Plant[];
+  catalogPlantsLoading: boolean;
+  catalogMaterials: Material[];
+  catalogMaterialsLoading: boolean;
+  onPatch: (patch: Partial<DesignTemplateTierItemFormRow>) => void;
+}
+
+function TierCreateItemPlantMaterialFields({
+  item,
+  disabled,
+  catalogPlants,
+  catalogPlantsLoading,
+  catalogMaterials,
+  catalogMaterialsLoading,
+  onPatch,
+}: TierCreateItemPlantMaterialFieldsProps) {
+  const locale = useLocale();
+  const tCommon = useTranslations('common');
+
+  const plantSearchRootRef = useRef<HTMLDivElement | null>(null);
+  const plantSearchRequestRef = useRef(0);
+  const lastPlantKeywordRef = useRef<string | null>(null);
+
+  const [plantKeyword, setPlantKeyword] = useState('');
+  const [plantSearchOpen, setPlantSearchOpen] = useState(false);
+  const [plantSearchItems, setPlantSearchItems] = useState<Plant[]>([]);
+  const [plantSearchLoading, setPlantSearchLoading] = useState(false);
+
+  const materialSearchRootRef = useRef<HTMLDivElement | null>(null);
+  const materialSearchRequestRef = useRef(0);
+  const lastMaterialKeywordRef = useRef<string | null>(null);
+
+  const [materialKeyword, setMaterialKeyword] = useState('');
+  const [materialSearchOpen, setMaterialSearchOpen] = useState(false);
+  const [materialSearchItems, setMaterialSearchItems] = useState<Material[]>([]);
+  const [materialSearchLoading, setMaterialSearchLoading] = useState(false);
+
+  const hasPlantKeyword = plantKeyword.trim().length > 0;
+  const showPlantDropdown = plantSearchOpen && (hasPlantKeyword || plantSearchLoading);
+  const plantNoResults = hasPlantKeyword && !plantSearchLoading && plantSearchItems.length === 0;
+
+  const hasMaterialKeyword = materialKeyword.trim().length > 0;
+  const showMaterialDropdown = materialSearchOpen && (hasMaterialKeyword || materialSearchLoading);
+  const materialNoResults = hasMaterialKeyword && !materialSearchLoading && materialSearchItems.length === 0;
+
+  /** Select: full catalog only (API without keyword); không gộp kết quả ô tìm kiếm. */
+  const selectPlantOptions = useMemo(() => {
+    const map = new Map<number, string>();
+    catalogPlants.forEach((p) => map.set(p.id, p.name));
+    const pid = item.plantId != null ? Number(item.plantId) : 0;
+    if (pid > 0 && !map.has(pid)) {
+      map.set(pid, item.plantDisplayName?.trim() || `Plant #${pid}`);
+    }
+    return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
+  }, [catalogPlants, item.plantDisplayName, item.plantId]);
+
+  const selectMaterialOptions = useMemo(() => {
+    const map = new Map<number, { name: string; code?: string }>();
+    catalogMaterials.forEach((m) => map.set(m.id, { name: m.name, code: m.materialCode }));
+    const mid = item.materialId != null ? Number(item.materialId) : 0;
+    if (mid > 0 && !map.has(mid)) {
+      map.set(mid, { name: item.materialDisplayName?.trim() || `Material #${mid}` });
+    }
+    return Array.from(map.entries()).map(([id, meta]) => ({ id, name: meta.name, code: meta.code }));
+  }, [catalogMaterials, item.materialDisplayName, item.materialId]);
+
+  useEffect(() => {
+    if (item.itemType !== ITEM_TYPE_PLANT) {
+      return;
+    }
+    if (!hasPlantKeyword) {
+      lastPlantKeywordRef.current = null;
+      setPlantSearchItems([]);
+      setPlantSearchOpen(false);
+      return;
+    }
+
+    let active = true;
+    const timer = window.setTimeout(() => {
+      if (!active) {
+        return;
+      }
+      const normalized = plantKeyword.trim();
+      if (normalized === lastPlantKeywordRef.current) {
+        setPlantSearchOpen(true);
+        return;
+      }
+      lastPlantKeywordRef.current = normalized;
+      const requestId = ++plantSearchRequestRef.current;
+      setPlantSearchLoading(true);
+      void (async () => {
+        try {
+          const response = await searchAdminPlantsForCombo(
+            stripEmptyStringFields({
+              pagination: { pageNumber: 1, pageSize: PLANT_SEARCH_PAGE_SIZE },
+              keyword: normalized,
+              isActive: true,
+              isUniqueInstance: false,
+              sortBy: '',
+              sortDirection: '',
+            }),
+            false
+          );
+          const payload = readPayload(response);
+          if (requestId === plantSearchRequestRef.current) {
+            setPlantSearchItems(payload?.items ?? []);
+          }
+        } finally {
+          if (requestId === plantSearchRequestRef.current) {
+            setPlantSearchLoading(false);
+          }
+        }
+      })();
+      setPlantSearchOpen(true);
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [hasPlantKeyword, item.itemType, plantKeyword]);
+
+  useEffect(() => {
+    if (item.itemType !== ITEM_TYPE_MATERIAL) {
+      return;
+    }
+    if (!hasMaterialKeyword) {
+      lastMaterialKeywordRef.current = null;
+      setMaterialSearchItems([]);
+      setMaterialSearchOpen(false);
+      return;
+    }
+
+    let active = true;
+    const timer = window.setTimeout(() => {
+      if (!active) {
+        return;
+      }
+      const normalized = materialKeyword.trim();
+      if (normalized === lastMaterialKeywordRef.current) {
+        setMaterialSearchOpen(true);
+        return;
+      }
+      lastMaterialKeywordRef.current = normalized;
+      const requestId = ++materialSearchRequestRef.current;
+      setMaterialSearchLoading(true);
+      void (async () => {
+        try {
+          const response = await searchAdminMaterials(
+            {
+              pagination: { pageNumber: 1, pageSize: MATERIAL_SEARCH_PAGE_SIZE },
+              keyword: normalized,
+              isActive: true,
+            },
+            false
+          );
+          const payload = readPayload(response);
+          if (requestId === materialSearchRequestRef.current) {
+            setMaterialSearchItems(payload?.items ?? []);
+          }
+        } finally {
+          if (requestId === materialSearchRequestRef.current) {
+            setMaterialSearchLoading(false);
+          }
+        }
+      })();
+      setMaterialSearchOpen(true);
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [hasMaterialKeyword, item.itemType, materialKeyword]);
+
+  const handlePickPlant = useCallback(
+    (plant: Plant) => {
+      onPatch({ plantId: plant.id, plantDisplayName: plant.name });
+      setPlantKeyword('');
+      setPlantSearchOpen(false);
+    },
+    [onPatch]
+  );
+
+  const handlePickMaterial = useCallback(
+    (material: Material) => {
+      onPatch({ materialId: material.id, materialDisplayName: material.name });
+      setMaterialKeyword('');
+      setMaterialSearchOpen(false);
+    },
+    [onPatch]
+  );
+
+  if (item.itemType === ITEM_TYPE_PLANT) {
+    return (
+      <Stack spacing={1.5} sx={{ flex: 1, minWidth: 0 }}>
+        <ClickAwayListener onClickAway={() => setPlantSearchOpen(false)}>
+          <Box ref={plantSearchRootRef} sx={{ position: 'relative', backgroundColor: '#f5f5f5', borderRadius: 1, px: 1 }}>
+            <TextField
+              placeholder={tCommon('searchPlaceholder')}
+              variant="standard"
+              fullWidth
+              value={plantKeyword}
+              disabled={disabled}
+              onFocus={() => {
+                if (hasPlantKeyword) {
+                  setPlantSearchOpen(true);
+                }
+              }}
+              onChange={(event) => setPlantKeyword(event.target.value)}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon fontSize="small" sx={{ color: 'var(--foreground)' }} />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+              sx={{ mb: 0 }}
+            />
+            {showPlantDropdown && (
+              <Paper
+                elevation={8}
+                sx={{
+                  position: 'absolute',
+                  top: 'calc(100% + 8px)',
+                  left: 0,
+                  right: 0,
+                  zIndex: 1300,
+                  borderRadius: '12px',
+                  border: '1px solid var(--card-border)',
+                  bgcolor: 'var(--background) ',
+                  maxHeight: `calc(${MAX_VISIBLE_SUGGESTIONS} * 64px)`,
+                  overflowY: 'auto',
+                }}
+              >
+                <List disablePadding>
+                  {plantSearchLoading && (
+                    <Box sx={{ px: 2, py: 1.25, display: 'flex', alignItems: 'center', gap: 1.25 }}>
+                      <CustomLoading size={18} ariaLabel="Searching plants" />
+                    </Box>
+                  )}
+                  {plantSearchItems.map((plant, idx) => (
+                    <ListItemButton
+                      key={`${plant.id}-${idx}`}
+                      onClick={() => handlePickPlant(plant)}
+                      sx={{
+                        alignItems: 'flex-start',
+                        borderBottom: idx === plantSearchItems.length - 1 ? 'none' : '1px solid var(--card-border)',
+                        '&:hover': {
+                          bgcolor: 'color-mix(in srgb, var(--primary) 50%, white)',
+                        },
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          width: '10%',
+                          minWidth: 0,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                        }}
+                      >
+                        <Image
+                          src={plant.primaryImageUrl ?? FALLBACK_IMAGE}
+                          alt={plant.name}
+                          width={40}
+                          height={40}
+                          style={{ borderRadius: 4, objectFit: 'cover' }}
+                        />
+                        <Chip
+                          size="small"
+                          label="Plant"
+                          sx={{
+                            height: 22,
+                            fontSize: '0.7rem',
+                            bgcolor: 'color-mix(in srgb, var(--primary) 18%, white)',
+                            color: 'var(--foreground)',
+                          }}
+                        />
+                      </Box>
+                      <Box sx={{ width: '90%', minWidth: 0, display: 'flex', alignItems: 'center' }}>
+                        <ListItemText
+                          primary={
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                color: 'var(--foreground)',
+                                fontWeight: 500,
+                                fontSize: '14px',
+                                display: '-webkit-box',
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical',
+                                overflow: 'hidden',
+                              }}
+                            >
+                              {plant.name}
+                            </Typography>
+                          }
+                          secondary={
+                            plant.basePrice ? (
+                              <Typography component="span" variant="caption" sx={{ color: 'var(--foreground)', fontWeight: 700 }}>
+                                {formatCurrencyLocale(plant.basePrice, locale)}
+                              </Typography>
+                            ) : null
+                          }
+                        />
+                      </Box>
+                    </ListItemButton>
+                  ))}
+                  {plantNoResults && (
+                    <Box className="px-3 py-2">
+                      <Typography variant="body2" sx={{ color: 'var(--foreground)' }}>
+                        {tCommon('noData')}
+                      </Typography>
+                    </Box>
+                  )}
+                </List>
+              </Paper>
+            )}
+          </Box>
+        </ClickAwayListener>
+
+        <FormControl fullWidth sx={{ ...formControlDisabledSelectBlackTextSx, minWidth: { xs: '100%', sm: 260 }, mt: 0.5 }}>
+          <InputLabel>Plant</InputLabel>
+          <Select
+            value={item.plantId != null && item.plantId > 0 ? item.plantId : 0}
+            label="Plant"
+            disabled={disabled || catalogPlantsLoading}
+            onChange={(event) => {
+              const nextId = Number(event.target.value);
+              if (!nextId) {
+                onPatch({ plantId: null, plantDisplayName: undefined });
+                return;
+              }
+              const name =
+                selectPlantOptions.find((o) => o.id === nextId)?.name ||
+                item.plantDisplayName ||
+                `Plant #${nextId}`;
+              onPatch({ plantId: nextId, plantDisplayName: name });
+            }}
+            MenuProps={plantSelectMenuProps}
+          >
+            <MenuItem value={0}>
+              <em>Select plant</em>
+            </MenuItem>
+            {selectPlantOptions.map((p) => (
+              <MenuItem key={p.id} value={p.id}>
+                {p.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Stack>
+    );
+  }
+
+  return (
+    <Stack spacing={1.5} sx={{ flex: 1, minWidth: 0 }}>
+      <ClickAwayListener onClickAway={() => setMaterialSearchOpen(false)}>
+        <Box ref={materialSearchRootRef} sx={{ position: 'relative', backgroundColor: '#f5f5f5', borderRadius: 1, px: 1 }}>
+          <TextField
+            placeholder={tCommon('searchPlaceholder')}
+            variant="standard"
+            fullWidth
+            value={materialKeyword}
+            disabled={disabled}
+            onFocus={() => {
+              if (hasMaterialKeyword) {
+                setMaterialSearchOpen(true);
+              }
+            }}
+            onChange={(event) => setMaterialKeyword(event.target.value)}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" sx={{ color: 'var(--foreground)' }} />
+                  </InputAdornment>
+                ),
+              },
+            }}
+            sx={{ mb: 0 }}
+          />
+          {showMaterialDropdown && (
+            <Paper
+              elevation={8}
+              sx={{
+                position: 'absolute',
+                top: 'calc(100% + 8px)',
+                left: 0,
+                right: 0,
+                zIndex: 1300,
+                borderRadius: '12px',
+                border: '1px solid var(--card-border)',
+                bgcolor: 'var(--background) ',
+                maxHeight: `calc(${MAX_VISIBLE_SUGGESTIONS} * 64px)`,
+                overflowY: 'auto',
+              }}
+            >
+              <List disablePadding>
+                {materialSearchLoading && (
+                  <Box sx={{ px: 2, py: 1.25, display: 'flex', alignItems: 'center', gap: 1.25 }}>
+                    <CustomLoading size={18} ariaLabel="Searching materials" />
+                  </Box>
+                )}
+                {materialSearchItems.map((material, idx) => (
+                  <ListItemButton
+                    key={`${material.id}-${idx}`}
+                    onClick={() => handlePickMaterial(material)}
+                    sx={{
+                      alignItems: 'flex-start',
+                      borderBottom: idx === materialSearchItems.length - 1 ? 'none' : '1px solid var(--card-border)',
+                      '&:hover': {
+                        bgcolor: 'color-mix(in srgb, var(--primary) 50%, white)',
+                      },
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: '10%',
+                        minWidth: 0,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <Image
+                        src={material.primaryImageUrl ?? FALLBACK_IMAGE}
+                        alt={material.name}
+                        width={40}
+                        height={40}
+                        style={{ borderRadius: 4, objectFit: 'cover' }}
+                      />
+                      <Chip
+                        size="small"
+                        label="Material"
+                        sx={{
+                          height: 22,
+                          fontSize: '0.7rem',
+                          bgcolor: 'color-mix(in srgb, var(--primary) 18%, white)',
+                          color: 'var(--foreground)',
+                        }}
+                      />
+                    </Box>
+                    <Box sx={{ width: '90%', minWidth: 0, display: 'flex', alignItems: 'center' }}>
+                      <ListItemText
+                        primary={
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              color: 'var(--foreground)',
+                              fontWeight: 500,
+                              fontSize: '14px',
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden',
+                            }}
+                          >
+                            {material.name}
+                          </Typography>
+                        }
+                        secondary={
+                          <Typography component="span" variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                            {[material.materialCode, material.basePrice != null ? formatCurrencyLocale(material.basePrice, locale) : '']
+                              .filter(Boolean)
+                              .join(' · ')}
+                          </Typography>
+                        }
+                      />
+                    </Box>
+                  </ListItemButton>
+                ))}
+                {materialNoResults && (
+                  <Box className="px-3 py-2">
+                    <Typography variant="body2" sx={{ color: 'var(--foreground)' }}>
+                      {tCommon('noData')}
+                    </Typography>
+                  </Box>
+                )}
+              </List>
+            </Paper>
+          )}
+        </Box>
+      </ClickAwayListener>
+
+      <FormControl fullWidth sx={{ ...formControlDisabledSelectBlackTextSx, minWidth: { xs: '100%', sm: 260 }, mt: 0.5 }}>
+        <InputLabel>Material</InputLabel>
+        <Select
+          value={item.materialId != null && item.materialId > 0 ? item.materialId : 0}
+          label="Material"
+          disabled={disabled || catalogMaterialsLoading}
+          onChange={(event) => {
+            const nextId = Number(event.target.value);
+            if (!nextId) {
+              onPatch({ materialId: null, materialDisplayName: undefined });
+              return;
+            }
+            const name =
+              selectMaterialOptions.find((o) => o.id === nextId)?.name ||
+              item.materialDisplayName ||
+              `Material #${nextId}`;
+            onPatch({ materialId: nextId, materialDisplayName: name });
+          }}
+          MenuProps={plantSelectMenuProps}
+        >
+          <MenuItem value={0}>
+            <em>Select material</em>
+          </MenuItem>
+          {selectMaterialOptions.map((m) => (
+            <MenuItem key={m.id} value={m.id}>
+              {m.code ? `${m.code} — ${m.name}` : m.name}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+    </Stack>
+  );
+}
 
 export default function DesignTemplateTierDialog({
   open,
@@ -100,17 +708,102 @@ export default function DesignTemplateTierDialog({
 }: DesignTemplateTierDialogProps) {
   const isView = mode === 'view';
   const isCreate = mode === 'create';
+  const isEdit = mode === 'edit';
   /** Main tier fields: add form (create+visible) or edit/view with selected tier. */
   const showTierMainFields = (isCreate && showCreateTierForm) || (!isCreate && Boolean(tier));
+  /** Chỉnh tier items: tạo tier mới hoặc đang sửa tier (không phải view). */
+  const showTierItemsEditor = !isView && ((isCreate && showCreateTierForm) || (isEdit && Boolean(tier)));
+
+  const [catalogPlants, setCatalogPlants] = useState<Plant[]>([]);
+  const [catalogPlantsLoading, setCatalogPlantsLoading] = useState(false);
+  const [catalogMaterials, setCatalogMaterials] = useState<Material[]>([]);
+  const [catalogMaterialsLoading, setCatalogMaterialsLoading] = useState(false);
+
+  const shouldLoadItemCatalogs = open && showTierItemsEditor;
+
+  useEffect(() => {
+    if (!shouldLoadItemCatalogs) {
+      return;
+    }
+
+    let active = true;
+    setCatalogPlantsLoading(true);
+    void (async () => {
+      try {
+        const response = await searchAdminPlantsForCombo(
+          stripEmptyStringFields({
+            pagination: { pageNumber: 1, pageSize: PLANT_CATALOG_PAGE_SIZE },
+            isActive: true,
+            isUniqueInstance: false,
+            sortBy: '',
+            sortDirection: '',
+          }),
+          false
+        );
+        const payload = readPayload(response);
+        if (active) {
+          setCatalogPlants(payload?.items ?? []);
+        }
+      } catch {
+        if (active) {
+          setCatalogPlants([]);
+        }
+      } finally {
+        if (active) {
+          setCatalogPlantsLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [shouldLoadItemCatalogs]);
+
+  useEffect(() => {
+    if (!shouldLoadItemCatalogs) {
+      return;
+    }
+
+    let active = true;
+    setCatalogMaterialsLoading(true);
+    void (async () => {
+      try {
+        const response = await searchAdminMaterials(
+          {
+            pagination: { pageNumber: 1, pageSize: MATERIAL_CATALOG_PAGE_SIZE },
+            isActive: true,
+          },
+          false
+        );
+        const payload = readPayload(response);
+        if (active) {
+          setCatalogMaterials(payload?.items ?? []);
+        }
+      } catch {
+        if (active) {
+          setCatalogMaterials([]);
+        }
+      } finally {
+        if (active) {
+          setCatalogMaterialsLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [shouldLoadItemCatalogs]);
 
   const handleChangeField = <K extends keyof DesignTemplateTierFormValue>(field: K, value: DesignTemplateTierFormValue[K]) => {
     onFormChange((prev) => ({ ...prev, [field]: value }));
   };
 
-  const updateItem = (index: number, value: Partial<DesignTemplateTierItemCreateRequest>) => {
+  const updateItem = (index: number, value: Partial<DesignTemplateTierItemFormRow>) => {
     onFormChange((prev) => ({
       ...prev,
-      items: prev.items.map((item, itemIndex) => (itemIndex === index ? { ...item, ...value } : item)),
+      items: prev.items.map((row, itemIndex) => (itemIndex === index ? { ...row, ...value } : row)),
     }));
   };
 
@@ -123,6 +816,22 @@ export default function DesignTemplateTierDialog({
       ...prev,
       items: prev.items.filter((_, itemIndex) => itemIndex !== index),
     }));
+  };
+
+  const handleItemTypeChange = (index: number, nextType: number) => {
+    if (nextType === ITEM_TYPE_PLANT) {
+      updateItem(index, {
+        itemType: ITEM_TYPE_PLANT,
+        materialId: null,
+        materialDisplayName: undefined,
+      });
+      return;
+    }
+    updateItem(index, {
+      itemType: ITEM_TYPE_MATERIAL,
+      plantId: null,
+      plantDisplayName: undefined,
+    });
   };
 
   return (
@@ -151,17 +860,19 @@ export default function DesignTemplateTierDialog({
             <Box>
               <Stack direction="row" alignItems="center" justifyContent="space-between" flexWrap="wrap" useFlexGap gap={1} sx={{ mb: 1 }}>
                 <Typography variant="subtitle2">Existing Tiers</Typography>
-                <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap" useFlexGap>
+                <Box className="flex-col">
+                  <Box className="flex justify-end">
                   {isView && onBackToTierList ? (
-                    <Button size="small" variant="outlined" onClick={() => onBackToTierList()} disabled={submitting}>
+                    <Button size="small" sx={{ mr: 1 }} variant="outlined" onClick={() => onBackToTierList()} disabled={submitting}>
                       Back to list
                     </Button>
                   ) : null}
                   {onStartCreateNewTier && !(isCreate && showCreateTierForm) ? (
-                    <Button size="small" variant="contained" startIcon={<Add />} onClick={() => onStartCreateNewTier()} disabled={submitting}>
+                    <Button size="small" variant="contained" sx={{bgcolor: 'var(--primary)'}} startIcon={<Add />} onClick={() => onStartCreateNewTier()} disabled={submitting}>
                       Add tier
                     </Button>
                   ) : null}
+                  </Box>
                   {!isView ? (
                     <Typography variant="caption" color="text.secondary">
                       {isCreate && !showCreateTierForm
@@ -169,11 +880,13 @@ export default function DesignTemplateTierDialog({
                         : 'Use View / Edit / Deactivate to manage tiers.'}
                     </Typography>
                   ) : (
+                    <Box>
                     <Typography variant="caption" color="text.secondary">
                       Viewing tier detail. Use View on another row to switch, or Back to list.
                     </Typography>
+                    </Box>
                   )}
-                </Stack>
+                </Box>
               </Stack>
               <Stack spacing={1.5}>
                 {existingTiers.length === 0 ? (
@@ -335,7 +1048,7 @@ export default function DesignTemplateTierDialog({
               </>
             ) : null}
 
-            {isCreate && showCreateTierForm ? (
+            {showTierItemsEditor ? (
               <Box>
                 <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
                   <Typography variant="subtitle2">Tier Items</Typography>
@@ -350,58 +1063,55 @@ export default function DesignTemplateTierDialog({
                     </Typography>
                   ) : (
                     formValue.items.map((item, index) => (
-                      <Box key={`${index}-${item.itemType}`} sx={{ border: '1px solid var(--card-border)', borderRadius: 2, p: 2 }}>
+                      <Box
+                        key={`${index}-${item.itemType}-${item.plantId ?? ''}-${item.materialId ?? ''}`}
+                        sx={{ border: '1px solid var(--card-border)', borderRadius: 2, p: 2 }}
+                      >
                         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
                           <Typography variant="subtitle2">Item {index + 1}</Typography>
                           <IconButton size="small" color="error" onClick={() => removeItem(index)} disabled={submitting || isView}>
                             <DeleteOutline fontSize="small" />
                           </IconButton>
                         </Stack>
-                        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                          <FormControl fullWidth sx={formControlDisabledSelectBlackTextSx}>
-                            <InputLabel id={`tier-item-type-${index}`}>Item Type</InputLabel>
-                            <Select
-                              labelId={`tier-item-type-${index}`}
-                              label="Item Type"
-                              value={item.itemType}
+                        <Stack spacing={2}>
+                          <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems="flex-start">
+                            <FormControl sx={{ ...formControlDisabledSelectBlackTextSx, minWidth: 200, maxWidth: { xs: '100%', md: 220 } }} fullWidth={false}>
+                              <InputLabel id={`tier-item-type-${index}`}>Item Type</InputLabel>
+                              <Select
+                                labelId={`tier-item-type-${index}`}
+                                label="Item Type"
+                                value={item.itemType}
+                                disabled={isView || submitting}
+                                onChange={(event) => handleItemTypeChange(index, Number(event.target.value))}
+                              >
+                                {DESIGN_TEMPLATE_TIER_ITEM_TYPE_OPTIONS.map((option) => (
+                                  <MenuItem key={option.value} value={option.value}>
+                                    {option.label}
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                            </FormControl>
+
+                            <TierCreateItemPlantMaterialFields
+                              item={item}
                               disabled={isView || submitting}
-                              onChange={(event) => updateItem(index, { itemType: Number(event.target.value) })}
-                            >
-                              {DESIGN_TEMPLATE_TIER_ITEM_TYPE_OPTIONS.map((option) => (
-                                <MenuItem key={option.value} value={option.value}>
-                                  {option.label}
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          </FormControl>
-                          <TextField
-                            label="Plant ID"
-                            type="number"
-                            value={item.plantId ?? ''}
-                            onChange={(event) => updateItem(index, { plantId: event.target.value === '' ? null : Number(event.target.value) })}
-                            disabled={isView || submitting}
-                            fullWidth
-                            sx={textFieldDisabledBlackInputSx}
-                          />
-                          <TextField
-                            label="Material ID"
-                            type="number"
-                            value={item.materialId ?? ''}
-                            onChange={(event) => updateItem(index, { materialId: event.target.value === '' ? null : Number(event.target.value) })}
-                            disabled={isView || submitting}
-                            fullWidth
-                            sx={textFieldDisabledBlackInputSx}
-                          />
-                          <TextField
-                            label="Quantity"
-                            type="number"
-                            value={item.quantity}
-                            onChange={(event) => updateItem(index, { quantity: Number(event.target.value) })}
-                            disabled={isView || submitting}
-                            fullWidth
-                            inputProps={{ min: 1 }}
-                            sx={textFieldDisabledBlackInputSx}
-                          />
+                              catalogPlants={catalogPlants}
+                              catalogPlantsLoading={catalogPlantsLoading}
+                              catalogMaterials={catalogMaterials}
+                              catalogMaterialsLoading={catalogMaterialsLoading}
+                              onPatch={(patch) => updateItem(index, patch)}
+                            />
+
+                            <TextField
+                              label="Quantity"
+                              type="number"
+                              value={item.quantity}
+                              onChange={(event) => updateItem(index, { quantity: Number(event.target.value) })}
+                              disabled={isView || submitting}
+                              inputProps={{ min: 1 }}
+                              sx={{ ...textFieldDisabledBlackInputSx, width: { xs: '100%', md: 140 }, flexShrink: 0 }}
+                            />
+                          </Stack>
                         </Stack>
                       </Box>
                     ))
@@ -410,7 +1120,7 @@ export default function DesignTemplateTierDialog({
               </Box>
             ) : null}
 
-            {!isCreate && tier && (
+            {isView && tier && (
               <Box>
                 <Typography variant="subtitle2" sx={{ mb: 1 }}>
                   Existing Items
@@ -421,13 +1131,32 @@ export default function DesignTemplateTierDialog({
                       No items found for this tier.
                     </Typography>
                   ) : (
-                    tier.items.map((item) => (
-                      <Box key={item.id ?? `${item.itemType}-${item.quantity}`} sx={{ px: 2, py: 1.5, border: '1px solid var(--card-border)', borderRadius: 2 }}>
-                        <Typography variant="body2">
-                          Type {item.itemType} - Qty {item.quantity} - {item.plantId ? `Plant ${item.plantId}` : `Material ${item.materialId}`}
-                        </Typography>
-                      </Box>
-                    ))
+                    <TableContainer>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow sx={{ backgroundColor: 'var(--primary)' }}>
+                            <TableCell sx={{ fontWeight: 700 }}>ID</TableCell>
+                            <TableCell sx={{ fontWeight: 700 }}>Item Type</TableCell>
+                            <TableCell sx={{ fontWeight: 700 }}>Name</TableCell>
+                            <TableCell sx={{ fontWeight: 700 }} align="center">
+                              Quantity
+                            </TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {tier.items.map((item) => (
+                            <TableRow
+                              key={item.id ?? `${item.designTemplateTierId}-${item.itemType}-${item.plantId ?? ''}-${item.materialId ?? ''}`}
+                            >
+                              <TableCell>{item.id ?? '—'}</TableCell>
+                              <TableCell>{formatTierItemTypeLabel(item)}</TableCell>
+                              <TableCell>{item.name ?? '—'}</TableCell>
+                              <TableCell align="center">{formatTierItemQuantity(item.quantity)}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
                   )}
                 </Stack>
               </Box>
@@ -449,7 +1178,7 @@ export default function DesignTemplateTierDialog({
         <Button onClick={onClose} disabled={submitting}>
           Close
         </Button>
-        {!isView && (!isCreate || (isCreate && showCreateTierForm)) ? (
+        {!isView && ((isCreate && showCreateTierForm) || (isEdit && tier)) ? (
           <Button onClick={() => void onSubmit()} variant="contained" disabled={submitting || detailLoading}>
             {submitting ? 'Processing...' : isCreate ? 'Create' : 'Save'}
           </Button>

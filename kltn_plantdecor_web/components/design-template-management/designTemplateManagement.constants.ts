@@ -66,7 +66,6 @@ interface RoomDesignEnumOption {
 export const DESIGN_TEMPLATE_TIER_ITEM_TYPE_OPTIONS = [
   { value: 1, label: "Plant" },
   { value: 2, label: "Material" },
-  { value: 3, label: "Decor" },
 ];
 
 export const DESIGN_TEMPLATE_TABLE_PAGE_SIZE_OPTIONS = [10, 20, 50];

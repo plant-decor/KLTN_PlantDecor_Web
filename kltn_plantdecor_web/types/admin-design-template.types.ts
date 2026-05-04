@@ -10,6 +10,10 @@ export interface DesignTemplateTierItem {
   materialId: number | null;
   plantId: number | null;
   itemType: number;
+  /** Present on public design-template payloads (e.g. GET public/design-templates/{id}). */
+  itemTypeName?: string;
+  /** Display name for plant/material when returned by API. */
+  name?: string;
   quantity: number;
   createdAt?: string;
 }
@@ -87,6 +91,18 @@ export interface AdminDesignTemplateTierUpdateRequest {
   scopedOfWork: string;
   estimatedDays: number;
   isActive: boolean;
+}
+
+/** Body for PUT `/api/admin/design-template-tiers/{id}/items` — plantId/materialId không dùng gửi 0. */
+export interface AdminDesignTemplateTierItemApiBody {
+  materialId: number;
+  plantId: number;
+  itemType: number;
+  quantity: number;
+}
+
+export interface AdminDesignTemplateTierItemsUpdateRequest {
+  items: AdminDesignTemplateTierItemApiBody[];
 }
 
 export interface DesignTemplateTierItemCreateRequest {

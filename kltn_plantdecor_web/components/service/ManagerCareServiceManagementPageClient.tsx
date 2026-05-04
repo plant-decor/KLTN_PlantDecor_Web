@@ -24,15 +24,19 @@ import {
   TableRow,
   Tooltip,
   Typography,
+  Stack,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import ToggleOnIcon from "@mui/icons-material/ToggleOn";
 import ToggleOffIcon from "@mui/icons-material/ToggleOff";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import { toast } from "react-toastify";
 import ManagementHeader from "@/components/layout/ManagementHeader";
 import { CustomLoading } from "@/components/CustomLoading";
-import { getCareServiceTypeOptions } from "@/lib/api/adminCareServicePackagesService";
+import ServicePackageModal from "@/components/service/service-management/ServicePackageModal";
+import { buildFormFromDetail, emptyFormValue, type ServicePackageFormValue } from "@/components/service/service-management/types";
+import { getAdminCareServicePackageDetail, getCareServiceTypeOptions } from "@/lib/api/adminCareServicePackagesService";
 import {
   addManagerPackageToNursery,
   deleteManagerNurseryCareService,
@@ -40,7 +44,7 @@ import {
   getManagerNurseryCareServices,
   toggleManagerNurseryCareService,
 } from "@/lib/api/careServiceService";
-import type { CareServiceTypeOption } from "@/types/admin-service-package.types";
+import type { AdminCareServicePackageDetail, CareServiceTypeOption } from "@/types/admin-service-package.types";
 import type { CareServicePackage, NurseryCareService } from "@/types/care-service.types";
 
 const formatCurrency = (value: number) => {
@@ -71,6 +75,43 @@ export default function ManagerCareServiceManagementPageClient() {
   const [targetToggleItem, setTargetToggleItem] = useState<NurseryCareService | null>(null);
   const [targetDeleteItem, setTargetDeleteItem] = useState<NurseryCareService | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [detailPackageId, setDetailPackageId] = useState<number | null>(null);
+  const [packageDetail, setPackageDetail] = useState<AdminCareServicePackageDetail | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState<string | null>(null);
+  const [detailFormValue, setDetailFormValue] = useState<ServicePackageFormValue>(emptyFormValue);
+
+  const closePackageDetailDialog = useCallback(() => {
+    setDetailModalOpen(false);
+    setDetailPackageId(null);
+    setPackageDetail(null);
+    setDetailError(null);
+    setDetailLoading(false);
+    setDetailFormValue(emptyFormValue);
+  }, []);
+
+  const handleViewPackageDetail = useCallback(async (item: NurseryCareService) => {
+    const id = item.careServicePackage.id;
+    setDetailModalOpen(true);
+    setDetailPackageId(id);
+    setPackageDetail(null);
+    setDetailError(null);
+    setDetailLoading(true);
+    setDetailFormValue(emptyFormValue);
+    try {
+      const detail = await getAdminCareServicePackageDetail(id, false);
+      setPackageDetail(detail);
+      setDetailFormValue(buildFormFromDetail(detail));
+    } catch (error) {
+      const message = getErrorMessage(error, "Cannot load service package details");
+      setDetailError(message);
+      toast.error(message);
+    } finally {
+      setDetailLoading(false);
+    }
+  }, []);
 
   const serviceTypeLabelMap = useMemo(() => {
     const map = new Map<number, string>();
@@ -206,7 +247,7 @@ export default function ManagerCareServiceManagementPageClient() {
             <Table size="small">
               <TableHead sx={{ backgroundColor: "var(--primary)" }}>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 700 }} align="center">ID</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>ID</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Package Name</TableCell>
                   <TableCell sx={{ fontWeight: 700 }} align="center">Type</TableCell>
                   <TableCell sx={{ fontWeight: 700 }} align="center">
@@ -236,8 +277,8 @@ export default function ManagerCareServiceManagementPageClient() {
                 ) : (
                   items.map((item) => (
                     <TableRow key={item.id} hover sx={{ opacity: item.isActive ? 1 : 0.65 }}>
-                      <TableCell align="center">{item.id}</TableCell>
-                      <TableCell>
+                      <TableCell>{item.id}</TableCell>
+                      <TableCell sx={{ maxWidth: 300 }}>
                         <Typography variant="body2" fontWeight={600}>
                           {item.careServicePackage.name}
                         </Typography>
@@ -260,24 +301,36 @@ export default function ManagerCareServiceManagementPageClient() {
                         />
                       </TableCell>
                       <TableCell align="center">
-                        <Tooltip title={item.isActive ? "Deactivate Package" : "Activate Package"}>
-                          <IconButton
-                            size="small"
-                            color={item.isActive ? "success" : "default"}
-                            onClick={() => setTargetToggleItem(item)}
-                          >
-                            {item.isActive ? <ToggleOnIcon fontSize="small" /> : <ToggleOffIcon fontSize="small" />}
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Delete from Inventory">
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() => setTargetDeleteItem(item)}
-                          >
-                            <DeleteOutlineIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
+                        <Stack direction="row" spacing={0.5} justifyContent="center" alignItems="center">
+                          <Tooltip title="View package detail">
+                            <IconButton
+                              size="small"
+                              color="primary"
+                              onClick={() => void handleViewPackageDetail(item)}
+                              aria-label="View care service package detail"
+                            >
+                              <VisibilityIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title={item.isActive ? "Deactivate Package" : "Activate Package"}>
+                            <IconButton
+                              size="small"
+                              color={item.isActive ? "success" : "default"}
+                              onClick={() => setTargetToggleItem(item)}
+                            >
+                              {item.isActive ? <ToggleOnIcon fontSize="small" /> : <ToggleOffIcon fontSize="small" />}
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Delete from Inventory">
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => setTargetDeleteItem(item)}
+                            >
+                              <DeleteOutlineIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Stack>
                       </TableCell>
                     </TableRow>
                   ))
@@ -363,6 +416,24 @@ export default function ManagerCareServiceManagementPageClient() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ServicePackageModal
+        open={detailModalOpen}
+        mode="view"
+        packageId={detailPackageId}
+        detail={packageDetail}
+        detailLoading={detailLoading}
+        detailError={detailError}
+        formValue={detailFormValue}
+        serviceTypeOptions={serviceTypeOptions}
+        specializationOptions={[]}
+        categoryOptions={[]}
+        careLevelOptions={[]}
+        submitting={false}
+        onClose={closePackageDetailDialog}
+        onFormChange={(updater) => setDetailFormValue(updater)}
+        onSubmit={async () => {}}
+      />
     </Box>
   );
 }

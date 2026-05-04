@@ -10,11 +10,13 @@ import type {
   AdminDesignTemplateDetail,
   AdminDesignTemplateListItem,
   AdminDesignTemplateTierCreateRequest,
+  AdminDesignTemplateTierItemApiBody,
   AdminDesignTemplateTierUpdateRequest,
   DesignTemplateSpecialization,
   DesignTemplateRoomTypeOption,
   DesignTemplateStyleOption,
   DesignTemplateTier,
+  DesignTemplateTierItemCreateRequest,
 } from '@/types/admin-design-template.types';
 import {
   createAdminDesignTemplate,
@@ -27,10 +29,14 @@ import {
   getAdminDesignTemplates,
   updateAdminDesignTemplate,
   updateAdminDesignTemplateTier,
+  updateAdminDesignTemplateTierItems,
 } from '@/lib/api/adminDesignTemplatesService';
 import DesignTemplateTable from './DesignTemplateTable';
 import DesignTemplateFormDialog, { type DesignTemplateFormValue } from './DesignTemplateFormDialog';
-import DesignTemplateTierDialog, { type DesignTemplateTierFormValue } from './DesignTemplateTierDialog';
+import DesignTemplateTierDialog, {
+  type DesignTemplateTierFormValue,
+  type DesignTemplateTierItemFormRow,
+} from './DesignTemplateTierDialog';
 import {
   DESIGN_TEMPLATE_SAMPLE_IMAGE_MAX_BYTES,
   mapRoomTypeOptions,
@@ -59,6 +65,58 @@ const emptyTierForm = (): DesignTemplateTierFormValue => ({
   isActive: true,
   items: [{ materialId: null, plantId: null, itemType: 1, quantity: 1 }],
 });
+
+const TIER_ITEM_TYPE_PLANT = 1;
+const TIER_ITEM_TYPE_MATERIAL = 2;
+
+const toCreateTierItems = (items: DesignTemplateTierItemFormRow[]): DesignTemplateTierItemCreateRequest[] =>
+  items.map((row) => ({
+    materialId: row.materialId,
+    plantId: row.plantId,
+    itemType: row.itemType,
+    quantity: row.quantity,
+  }));
+
+const mapTierItemsToFormRows = (items: DesignTemplateTier['items']): DesignTemplateTierItemFormRow[] =>
+  items.map((item) => {
+    const name = item.name?.trim();
+    return {
+      materialId: item.materialId,
+      plantId: item.plantId,
+      itemType: item.itemType,
+      quantity: item.quantity,
+      ...(item.itemType === TIER_ITEM_TYPE_PLANT && name ? { plantDisplayName: name } : {}),
+      ...(item.itemType === TIER_ITEM_TYPE_MATERIAL && name ? { materialDisplayName: name } : {}),
+    };
+  });
+
+const toTierItemsApiBody = (items: DesignTemplateTierItemCreateRequest[]): AdminDesignTemplateTierItemApiBody[] =>
+  items.map((row) => ({
+    materialId: row.materialId ?? 0,
+    plantId: row.plantId ?? 0,
+    itemType: row.itemType,
+    quantity: row.quantity,
+  }));
+
+const validateTierFormItems = (items: DesignTemplateTierItemFormRow[]): string | null => {
+  if (items.length === 0) {
+    return 'Add at least one tier item';
+  }
+  for (let i = 0; i < items.length; i++) {
+    const row = items[i];
+    const qty = Number(row.quantity);
+    if (!Number.isFinite(qty) || qty < 1) {
+      return `Item ${i + 1}: quantity must be at least 1`;
+    }
+    if (row.itemType === TIER_ITEM_TYPE_PLANT && (row.plantId == null || Number(row.plantId) <= 0)) {
+      return `Item ${i + 1}: please select a plant`;
+    }
+    if (row.itemType === TIER_ITEM_TYPE_MATERIAL && (row.materialId == null || Number(row.materialId) <= 0)) {
+      return `Item ${i + 1}: please select a material`;
+    }
+  }
+  return null;
+};
 
 const getErrorMessage = (error: unknown, fallback: string) => {
   if (!error || typeof error !== 'object') {
@@ -300,12 +358,7 @@ export default function DesignTemplateManagementPageClient() {
           scopedOfWork: tierDetail.scopedOfWork,
           estimatedDays: tierDetail.estimatedDays,
           isActive: tierDetail.isActive,
-          items: tierDetail.items.map((item) => ({
-            materialId: item.materialId,
-            plantId: item.plantId,
-            itemType: item.itemType,
-            quantity: item.quantity,
-          })),
+          items: mapTierItemsToFormRows(tierDetail.items),
         });
       }
     } catch (error) {
@@ -330,12 +383,7 @@ export default function DesignTemplateManagementPageClient() {
         scopedOfWork: tier.scopedOfWork,
         estimatedDays: tier.estimatedDays,
         isActive: tier.isActive,
-        items: tier.items.map((item) => ({
-          materialId: item.materialId,
-          plantId: item.plantId,
-          itemType: item.itemType,
-          quantity: item.quantity,
-        })),
+        items: mapTierItemsToFormRows(tier.items),
       });
     },
     []
@@ -353,12 +401,7 @@ export default function DesignTemplateManagementPageClient() {
       scopedOfWork: t.scopedOfWork,
       estimatedDays: t.estimatedDays,
       isActive: t.isActive,
-      items: t.items.map((item) => ({
-        materialId: item.materialId,
-        plantId: item.plantId,
-        itemType: item.itemType,
-        quantity: item.quantity,
-      })),
+      items: mapTierItemsToFormRows(t.items),
     });
   }, []);
 
@@ -422,6 +465,12 @@ export default function DesignTemplateManagementPageClient() {
       }
 
       if (tierDialogMode === 'create') {
+        const itemsError = validateTierFormItems(tierFormValue.items);
+        if (itemsError) {
+          toast.error(itemsError);
+          return;
+        }
+
         const payload: AdminDesignTemplateTierCreateRequest = {
           designTemplateId: selectedTemplate.id,
           tierName: tierFormValue.tierName.trim(),
@@ -431,7 +480,7 @@ export default function DesignTemplateManagementPageClient() {
           scopedOfWork: tierFormValue.scopedOfWork.trim(),
           estimatedDays: tierFormValue.estimatedDays,
           isActive: tierFormValue.isActive,
-          items: tierFormValue.items,
+          items: toCreateTierItems(tierFormValue.items),
         };
         await createAdminDesignTemplateTier(payload, false);
         toast.success('Tier created successfully');
@@ -449,6 +498,12 @@ export default function DesignTemplateManagementPageClient() {
       }
 
       if (tierDialogMode === 'edit' && selectedTier) {
+        const itemsError = validateTierFormItems(tierFormValue.items);
+        if (itemsError) {
+          toast.error(itemsError);
+          return;
+        }
+
         const payload: AdminDesignTemplateTierUpdateRequest = {
           tierName: tierFormValue.tierName.trim(),
           minArea: tierFormValue.minArea,
@@ -459,6 +514,11 @@ export default function DesignTemplateManagementPageClient() {
           isActive: tierFormValue.isActive,
         };
         await updateAdminDesignTemplateTier(selectedTier.id, payload, false);
+        await updateAdminDesignTemplateTierItems(
+          selectedTier.id,
+          { items: toTierItemsApiBody(toCreateTierItems(tierFormValue.items)) },
+          false
+        );
         toast.success('Tier updated successfully');
       }
 

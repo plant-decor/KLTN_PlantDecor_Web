@@ -180,7 +180,7 @@ export default function ManagerCareServiceManagementPageClient() {
   };
 
   return (
-    <Box sx={{ bgcolor: "var(--background)", minHeight: "100vh", p: { xs: 2, md: 4 } }}>
+    <Box>
       <ManagementHeader
         title="Care Service Packages Management"
         description="Manage the care service packages currently being offered: add new ones from the system, enable/disable, and delete when there are no existing subscriptions."

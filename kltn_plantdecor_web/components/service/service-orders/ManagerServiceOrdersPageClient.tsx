@@ -28,6 +28,7 @@ import {
   getNurseryDesignRegistrations,
   managerCancelDesignRegistration,
   rejectDesignRegistration,
+  rescheduleDesignTask,
 } from '@/lib/api/designRegistrationService';
 import type { CustomerDesignRegistrationDetail, CustomerDesignRegistrationListItem, DesignEligibleCaretaker, DesignEligibleCaretakerAvailability, DesignFlowEnumGroup, DesignRegistrationTask } from '@/types/design-registration.types';
 import type { EligibleCaretaker, EnumOption, ManagerServiceRegistration, PublicShift } from '@/types/care-service.types';
@@ -51,6 +52,7 @@ import DesignServiceTab from './DesignServiceTab';
 import ManagementHeader from '@/components/layout/ManagementHeader';
 import { formatEnumLabel } from '@/lib/utils/enumLabelUtil';
 import { DESIGN_STATUS } from './utils/designStatusConstants';
+import DesignTaskRescheduleDialog from './dialogs/DesignTaskRescheduleDialog';
 
 interface ManagerServiceOrdersPageClientProps {
   pageTitle?: string;
@@ -118,6 +120,10 @@ export default function ManagerServiceOrdersPageClient({
   const [designAssignLoading, setDesignAssignLoading] = useState(false);
   const [selectedDesignCaretakerId, setSelectedDesignCaretakerId] = useState<number>(0);
   const [designTaskScheduledDate, setDesignTaskScheduledDate] = useState(getLocalDateInputValue());
+
+  const [designTaskRescheduleTarget, setDesignTaskRescheduleTarget] = useState<DesignRegistrationTask | null>(null);
+  const [designTaskRescheduleRegistration, setDesignTaskRescheduleRegistration] = useState<CustomerDesignRegistrationListItem | CustomerDesignRegistrationDetail | null>(null);
+  const [designTaskRescheduleDate, setDesignTaskRescheduleDate] = useState(getLocalDateInputValue());
 
   useEffect(() => {
     const loadStatusEnums = async () => {
@@ -413,6 +419,16 @@ export default function ManagerServiceOrdersPageClient({
     }
   };
 
+  const openDesignTaskRescheduleDialog = (
+    task: DesignRegistrationTask,
+    registration: CustomerDesignRegistrationListItem | CustomerDesignRegistrationDetail
+  ) => {
+    const initialDate = task.scheduledDate?.slice(0, 10) || getLocalDateInputValue();
+    setDesignTaskRescheduleTarget(task);
+    setDesignTaskRescheduleRegistration(registration);
+    setDesignTaskRescheduleDate(initialDate);
+  };
+
   const handleDesignTaskScheduledDateChange = async (value: string) => {
     setDesignTaskScheduledDate(value);
     if (!designTaskAssignRegistration) {
@@ -460,6 +476,31 @@ export default function ManagerServiceOrdersPageClient({
       await Promise.all([loadDesignOrders(), refreshDesignDetailIfNeeded(registrationId)]);
     } catch (assignError) {
       toast.error(getErrorMessage(assignError, 'Cannot assign design task'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDesignTaskReschedule = async () => {
+    if (!designTaskRescheduleTarget || !designTaskRescheduleRegistration) {
+      return;
+    }
+
+    if (!designTaskRescheduleDate) {
+      toast.error('Please select a scheduled date');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await rescheduleDesignTask(designTaskRescheduleTarget.id, { scheduledDate: designTaskRescheduleDate }, false);
+      toast.success('Design task rescheduled successfully');
+      const registrationId = designTaskRescheduleRegistration.id;
+      setDesignTaskRescheduleTarget(null);
+      setDesignTaskRescheduleRegistration(null);
+      await Promise.all([loadDesignOrders(), refreshDesignDetailIfNeeded(registrationId)]);
+    } catch (rescheduleError) {
+      toast.error(getErrorMessage(rescheduleError, 'Cannot reschedule design task'));
     } finally {
       setSubmitting(false);
     }
@@ -660,7 +701,14 @@ export default function ManagerServiceOrdersPageClient({
       />
 
       <Box sx={{ mb: 3 }}>
-        <Tabs value={currentTab} onChange={(_event, newValue) => setCurrentTab(newValue)}>
+        <Tabs value={currentTab} onChange={(_event, newValue) => setCurrentTab(newValue)}
+          sx={{
+            borderBottom: 1,
+            borderColor: 'divider',
+            '& .MuiTab-root': { fontWeight: 600, textTransform: 'none', fontSize: '1rem' },
+            '& .Mui-selected': { backgroundColor: 'var(--primary) !important', color: '#fff !important' },
+          }}
+          >
           <Tab label="Care Service" />
           <Tab label="Design Service" />
         </Tabs>
@@ -835,6 +883,7 @@ export default function ManagerServiceOrdersPageClient({
             setDesignCancelReason('');
           }}
           onOpenTaskAssignDialog={(task, registration) => void openDesignTaskAssignDialog(task, registration)}
+          onOpenTaskRescheduleDialog={(task, registration) => openDesignTaskRescheduleDialog(task, registration)}
           onCloseDetail={() => setDesignDetailOpen(false)}
           onCloseCancel={() => setDesignCancelTarget(null)}
           onCloseReject={() => setDesignRejectTarget(null)}
@@ -853,6 +902,20 @@ export default function ManagerServiceOrdersPageClient({
           onRejectReasonChange={setDesignRejectReason}
         />
       )}
+
+      <DesignTaskRescheduleDialog
+        open={Boolean(designTaskRescheduleTarget)}
+        target={designTaskRescheduleTarget}
+        scheduledDate={designTaskRescheduleDate}
+        submitting={submitting}
+        onScheduledDateChange={setDesignTaskRescheduleDate}
+        onClose={() => {
+          setDesignTaskRescheduleTarget(null);
+          setDesignTaskRescheduleRegistration(null);
+        }}
+        onConfirm={() => void handleDesignTaskReschedule()}
+        getDesignTaskTypeLabel={getDesignTaskTypeLabel}
+      />
     </Box>
   );
 }

@@ -20,6 +20,7 @@ import {
 import { DeleteOutline, EditOutlined, VisibilityOutlined, TuneOutlined } from '@mui/icons-material';
 import type { AdminDesignTemplateListItem, DesignTemplateRoomTypeOption, DesignTemplateStyleOption } from '@/types/admin-design-template.types';
 import { DESIGN_TEMPLATE_TABLE_PAGE_SIZE_OPTIONS, formatCurrency, formatRoomTypes, formatStyle } from './designTemplateManagement.constants';
+import { formatDateTime } from '@/lib/utils/dateUtils';
 
 interface DesignTemplateTableProps {
   templates: AdminDesignTemplateListItem[];
@@ -78,7 +79,7 @@ export default function DesignTemplateTable({
               <TableCell sx={{ fontWeight: 700 }}>Template</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>Style</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>Room Types</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Tiers</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="center">Tiers</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>Updated</TableCell>
               <TableCell sx={{ fontWeight: 700 }} align="center">Actions</TableCell>
             </TableRow>
@@ -106,9 +107,6 @@ export default function DesignTemplateTable({
                       <Typography variant="body2" color="text.secondary">
                         {truncateText(template.description)}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {template.imageUrl}
-                      </Typography>
                     </Stack>
                   </TableCell>
                   <TableCell>
@@ -117,7 +115,7 @@ export default function DesignTemplateTable({
                   <TableCell sx={{ maxWidth: 240 }}>
                     <Typography variant="body2">{formatRoomTypes(template.roomTypes, roomTypeOptions)}</Typography>
                   </TableCell>
-                  <TableCell>
+                  <TableCell align='center'>
                     <Stack spacing={0.75}>
                       <Chip size="small" color="primary" variant="outlined" label={`${template.tiers.length} tiers`} />
                       {template.tiers[0] && (
@@ -129,7 +127,7 @@ export default function DesignTemplateTable({
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2">
-                      {template.updatedAt ? new Date(template.updatedAt).toLocaleString('vi-VN') : '-'}
+                      {template.updatedAt ? formatDateTime(template.updatedAt) : '-'}
                     </Typography>
                   </TableCell>
                   <TableCell align="center">

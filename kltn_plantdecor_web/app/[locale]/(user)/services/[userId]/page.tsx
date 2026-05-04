@@ -636,7 +636,12 @@ export default function UserServicePage({ params }: PageProps) {
       <Tabs
         value={currentTab}
         onChange={handleTabChange}
-        sx={{ mb: 4, '& .MuiTab-root': { textTransform: 'none', fontWeight: 700 } }}
+        sx={{
+          borderBottom: 1,
+          borderColor: 'divider',
+          '& .MuiTab-root': { fontWeight: 600, textTransform: 'none', fontSize: '1rem' },
+          '& .Mui-selected': { backgroundColor: 'var(--primary) !important', color: '#fff !important' },
+        }}
       >
         <Tab label="Care Service" />
         <Tab label="Design Service" />

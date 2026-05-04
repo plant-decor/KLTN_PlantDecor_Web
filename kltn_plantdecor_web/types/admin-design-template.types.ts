@@ -50,21 +50,21 @@ export interface AdminDesignTemplateDetail extends AdminDesignTemplateListItem {
   nurseryOfferings: DesignTemplateNurseryOffering[];
 }
 
-export interface AdminDesignTemplateCreateRequest {
+export interface AdminDesignTemplateCreateInput {
   name: string;
   description: string;
   style: number;
   roomTypes: number[];
-  imageUrl: string;
+  imageFile: File;
   specializationIds: number[];
 }
 
-export interface AdminDesignTemplateUpdateRequest {
+export interface AdminDesignTemplateUpdateInput {
   name: string;
   description: string;
   style: number;
   roomTypes: number[];
-  imageUrl: string;
+  imageFile?: File | null;
 }
 
 export interface AdminDesignTemplateTierCreateRequest {

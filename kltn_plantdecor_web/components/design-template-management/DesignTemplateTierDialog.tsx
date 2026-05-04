@@ -18,11 +18,18 @@ import {
   Stack,
   Switch,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material';
-import { DeleteOutline, Add, EditNoteOutlined } from '@mui/icons-material';
+import { DeleteOutline, Add, EditNoteOutlined, VisibilityOutlined } from '@mui/icons-material';
 import type { AdminDesignTemplateDetail, DesignTemplateTier, DesignTemplateTierItemCreateRequest } from '@/types/admin-design-template.types';
-import { DESIGN_TEMPLATE_TIER_ITEM_TYPE_OPTIONS, formatCurrency } from './designTemplateManagement.constants';
+import {
+  DESIGN_TEMPLATE_TIER_ITEM_TYPE_OPTIONS,
+  formatCurrency,
+  formControlDisabledSelectBlackTextSx,
+  formControlLabelDisabledBlackTextSx,
+  textFieldDisabledBlackInputSx,
+} from './designTemplateManagement.constants';
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils/formatUtil';
 import { CustomLoading } from '@/components/CustomLoading';
 
@@ -45,13 +52,22 @@ interface DesignTemplateTierDialogProps {
   existingTiers: DesignTemplateTier[];
   detailLoading: boolean;
   detailError: string | null;
+  /** When mode is create: false = list only; true = show add-tier form. Edit mode ignores this for fields. */
+  showCreateTierForm: boolean;
   formValue: DesignTemplateTierFormValue;
   submitting: boolean;
   onClose: () => void;
   onSubmit: () => Promise<void>;
   onFormChange: (updater: (prev: DesignTemplateTierFormValue) => DesignTemplateTierFormValue) => void;
   onEditExistingTier: (tier: DesignTemplateTier) => void;
+  onViewExistingTier: (tier: DesignTemplateTier) => void;
   onDeactivateExistingTier: (tier: DesignTemplateTier) => void;
+  /** Leave tier detail and return to list-only (create manage state). */
+  onBackToTierList?: () => void;
+  /** Switch back to creating a new tier (e.g. after editing one tier in this dialog). */
+  onStartCreateNewTier?: () => void;
+  /** Hide add-tier form and reset draft (create mode only). */
+  onCancelCreateTierForm?: () => void;
 }
 
 const createEmptyTierItem = (): DesignTemplateTierItemCreateRequest => ({
@@ -67,6 +83,7 @@ export default function DesignTemplateTierDialog({
   template,
   tier,
   existingTiers,
+  showCreateTierForm,
   detailLoading,
   detailError,
   formValue,
@@ -75,10 +92,16 @@ export default function DesignTemplateTierDialog({
   onSubmit,
   onFormChange,
   onEditExistingTier,
+  onViewExistingTier,
   onDeactivateExistingTier,
+  onStartCreateNewTier,
+  onCancelCreateTierForm,
+  onBackToTierList,
 }: DesignTemplateTierDialogProps) {
   const isView = mode === 'view';
   const isCreate = mode === 'create';
+  /** Main tier fields: add form (create+visible) or edit/view with selected tier. */
+  const showTierMainFields = (isCreate && showCreateTierForm) || (!isCreate && Boolean(tier));
 
   const handleChangeField = <K extends keyof DesignTemplateTierFormValue>(field: K, value: DesignTemplateTierFormValue[K]) => {
     onFormChange((prev) => ({ ...prev, [field]: value }));
@@ -105,7 +128,13 @@ export default function DesignTemplateTierDialog({
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
       <DialogTitle>
-        {isCreate ? 'Create Tier' : isView ? `Tier #${tier?.id ?? ''}` : `Edit Tier #${tier?.id ?? ''}`}
+        {isView
+          ? `View tier · ${tier?.tierName ?? `#${tier?.id ?? ''}`}`
+          : isCreate && !showCreateTierForm
+            ? 'Manage tiers'
+            : isCreate
+              ? 'Add tier'
+              : `Edit Tier #${tier?.id ?? ''}`}
       </DialogTitle>
       <DialogContent dividers>
         {detailLoading ? (
@@ -120,13 +149,31 @@ export default function DesignTemplateTierDialog({
               Template: {template?.name ?? 'Unknown template'}
             </Typography>
             <Box>
-              <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
+              <Stack direction="row" alignItems="center" justifyContent="space-between" flexWrap="wrap" useFlexGap gap={1} sx={{ mb: 1 }}>
                 <Typography variant="subtitle2">Existing Tiers</Typography>
-                {!isView && (
-                  <Typography variant="caption" color="text.secondary">
-                    Use Edit / Delete to manage current tiers.
-                  </Typography>
-                )}
+                <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap" useFlexGap>
+                  {isView && onBackToTierList ? (
+                    <Button size="small" variant="outlined" onClick={() => onBackToTierList()} disabled={submitting}>
+                      Back to list
+                    </Button>
+                  ) : null}
+                  {onStartCreateNewTier && !(isCreate && showCreateTierForm) ? (
+                    <Button size="small" variant="contained" startIcon={<Add />} onClick={() => onStartCreateNewTier()} disabled={submitting}>
+                      Add tier
+                    </Button>
+                  ) : null}
+                  {!isView ? (
+                    <Typography variant="caption" color="text.secondary">
+                      {isCreate && !showCreateTierForm
+                        ? 'Press Add tier to enter details, then save.'
+                        : 'Use View / Edit / Deactivate to manage tiers.'}
+                    </Typography>
+                  ) : (
+                    <Typography variant="caption" color="text.secondary">
+                      Viewing tier detail. Use View on another row to switch, or Back to list.
+                    </Typography>
+                  )}
+                </Stack>
               </Stack>
               <Stack spacing={1.5}>
                 {existingTiers.length === 0 ? (
@@ -145,6 +192,9 @@ export default function DesignTemplateTierDialog({
                         gap: 2,
                         justifyContent: 'space-between',
                         alignItems: 'center',
+                        ...(isView && tier?.id === item.id
+                          ? { borderColor: 'primary.main', borderWidth: 2, boxShadow: 1 }
+                          : {}),
                       }}
                     >
                       <Box>
@@ -153,112 +203,139 @@ export default function DesignTemplateTierDialog({
                           {item.minArea} - {item.maxArea} m2 | {formatCurrency(item.packagePrice)} | {item.estimatedDays} days
                         </Typography>
                       </Box>
-                      {!isView && (
-                        <Stack direction="row" spacing={1}>
-                          <Button size="medium" onClick={() => onEditExistingTier(item)} disabled={submitting}>
-                            <EditNoteOutlined fontSize="large" />
-                          </Button>
+                      <Stack direction="row" spacing={0.5} alignItems="center">
+                        <Tooltip title="View detail">
                           <IconButton
                             size="medium"
-                            color="error"
-                            onClick={() => onDeactivateExistingTier(item)}
-                            disabled={submitting || !item.isActive}
+                            color={isView && tier?.id === item.id ? 'primary' : 'default'}
+                            onClick={() => onViewExistingTier(item)}
+                            disabled={submitting}
+                            aria-label="View tier"
                           >
-                            <DeleteOutline />
+                            <VisibilityOutlined />
                           </IconButton>
-                        </Stack>
-                      )}
+                        </Tooltip>
+                        {!isView ? (
+                          <>
+                            <Tooltip title="Edit">
+                              <IconButton size="medium" onClick={() => onEditExistingTier(item)} disabled={submitting} aria-label="Edit tier">
+                                <EditNoteOutlined />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Deactivate">
+                              <IconButton
+                                size="medium"
+                                color="error"
+                                onClick={() => onDeactivateExistingTier(item)}
+                                disabled={submitting || !item.isActive}
+                                aria-label="Deactivate tier"
+                              >
+                                <DeleteOutline />
+                              </IconButton>
+                            </Tooltip>
+                          </>
+                        ) : null}
+                      </Stack>
                     </Box>
                   ))
                 )}
               </Stack>
             </Box>
 
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-              <TextField
-                label="Tier Name"
-                value={formValue.tierName}
-                onChange={(event) => handleChangeField('tierName', event.target.value)}
-                disabled={isView || submitting}
-                fullWidth
-                required
-              />
-              <TextField
-              required
-                label="Estimated Days"
-                type="number"
-                value={formValue.estimatedDays}
-                onChange={(event) => handleChangeField('estimatedDays', Number(event.target.value))}
-                disabled={isView || submitting}
-                fullWidth
-                inputProps={{ min: 1 }}
-              />
-            </Stack>
-
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-              <TextField
-              required
-                label="Min Area"
-                type="number"
-                value={formValue.minArea}
-                onChange={(event) => handleChangeField('minArea', Number(event.target.value))}
-                disabled={isView || submitting}
-                fullWidth
-                inputProps={{ min: 0 }}
-              />
-              <TextField
-              required
-                label="Max Area"
-                type="number"
-                value={formValue.maxArea}
-                onChange={(event) => handleChangeField('maxArea', Number(event.target.value))}
-                disabled={isView || submitting}
-                fullWidth
-                inputProps={{ min: 0 }}
-              />
-              <TextField
-              required
-                label="Package Price"
-                type="text"
-                value={formatCurrencyInput(formValue.packagePrice, 'vi')}
-                onChange={(event) => handleChangeField('packagePrice', parseCurrencyInput(event.target.value))}
-                disabled={isView || submitting}
-                fullWidth
-                inputProps={{ inputMode: 'numeric' }}
-              />
-            </Stack>
-
-            <TextField
-              label="Scope of Work"
-              value={formValue.scopedOfWork}
-              onChange={(event) => handleChangeField('scopedOfWork', event.target.value)}
-              disabled={isView || submitting}
-              fullWidth
-              multiline
-              minRows={3}
-              required
-            />
-
-            <Stack direction="column" alignItems="left" justifyContent="left">
-              <Typography variant="body2" fontWeight={600}>
-                Status
-              </Typography>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={formValue.isActive}
-                    onChange={(event) => handleChangeField('isActive', event.target.checked)}
+            {showTierMainFields ? (
+              <>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                  <TextField
+                    label="Tier Name"
+                    value={formValue.tierName}
+                    onChange={(event) => handleChangeField('tierName', event.target.value)}
                     disabled={isView || submitting}
-                    color="success"
+                    fullWidth
+                    required
+                    sx={textFieldDisabledBlackInputSx}
                   />
-                }
-                label={formValue.isActive ? 'Active' : 'Inactive'}
-              />
-            </Stack>
+                  <TextField
+                    required
+                    label="Estimated Days"
+                    type="number"
+                    value={formValue.estimatedDays}
+                    onChange={(event) => handleChangeField('estimatedDays', Number(event.target.value))}
+                    disabled={isView || submitting}
+                    fullWidth
+                    inputProps={{ min: 1 }}
+                    sx={textFieldDisabledBlackInputSx}
+                  />
+                </Stack>
 
-            
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                  <TextField
+                    required
+                    label="Min Area"
+                    type="number"
+                    value={formValue.minArea}
+                    onChange={(event) => handleChangeField('minArea', Number(event.target.value))}
+                    disabled={isView || submitting}
+                    fullWidth
+                    inputProps={{ min: 0 }}
+                    sx={textFieldDisabledBlackInputSx}
+                  />
+                  <TextField
+                    required
+                    label="Max Area"
+                    type="number"
+                    value={formValue.maxArea}
+                    onChange={(event) => handleChangeField('maxArea', Number(event.target.value))}
+                    disabled={isView || submitting}
+                    fullWidth
+                    inputProps={{ min: 0 }}
+                    sx={textFieldDisabledBlackInputSx}
+                  />
+                  <TextField
+                    required
+                    label="Package Price"
+                    type="text"
+                    value={formatCurrencyInput(formValue.packagePrice, 'vi')}
+                    onChange={(event) => handleChangeField('packagePrice', parseCurrencyInput(event.target.value))}
+                    disabled={isView || submitting}
+                    fullWidth
+                    inputProps={{ inputMode: 'numeric' }}
+                    sx={textFieldDisabledBlackInputSx}
+                  />
+                </Stack>
 
-            {isCreate && (
+                <TextField
+                  label="Scope of Work"
+                  value={formValue.scopedOfWork}
+                  onChange={(event) => handleChangeField('scopedOfWork', event.target.value)}
+                  disabled={isView || submitting}
+                  fullWidth
+                  multiline
+                  minRows={3}
+                  required
+                  sx={textFieldDisabledBlackInputSx}
+                />
+
+                <Stack direction="column" alignItems="left" justifyContent="left">
+                  <Typography variant="body2" fontWeight={600}>
+                    Status
+                  </Typography>
+                  <FormControlLabel
+                    sx={formControlLabelDisabledBlackTextSx}
+                    control={
+                      <Switch
+                        checked={formValue.isActive}
+                        onChange={(event) => handleChangeField('isActive', event.target.checked)}
+                        disabled={isView || submitting}
+                        color="success"
+                      />
+                    }
+                    label={formValue.isActive ? 'Active' : 'Inactive'}
+                  />
+                </Stack>
+              </>
+            ) : null}
+
+            {isCreate && showCreateTierForm ? (
               <Box>
                 <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
                   <Typography variant="subtitle2">Tier Items</Typography>
@@ -281,7 +358,7 @@ export default function DesignTemplateTierDialog({
                           </IconButton>
                         </Stack>
                         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                          <FormControl fullWidth>
+                          <FormControl fullWidth sx={formControlDisabledSelectBlackTextSx}>
                             <InputLabel id={`tier-item-type-${index}`}>Item Type</InputLabel>
                             <Select
                               labelId={`tier-item-type-${index}`}
@@ -304,6 +381,7 @@ export default function DesignTemplateTierDialog({
                             onChange={(event) => updateItem(index, { plantId: event.target.value === '' ? null : Number(event.target.value) })}
                             disabled={isView || submitting}
                             fullWidth
+                            sx={textFieldDisabledBlackInputSx}
                           />
                           <TextField
                             label="Material ID"
@@ -312,6 +390,7 @@ export default function DesignTemplateTierDialog({
                             onChange={(event) => updateItem(index, { materialId: event.target.value === '' ? null : Number(event.target.value) })}
                             disabled={isView || submitting}
                             fullWidth
+                            sx={textFieldDisabledBlackInputSx}
                           />
                           <TextField
                             label="Quantity"
@@ -321,6 +400,7 @@ export default function DesignTemplateTierDialog({
                             disabled={isView || submitting}
                             fullWidth
                             inputProps={{ min: 1 }}
+                            sx={textFieldDisabledBlackInputSx}
                           />
                         </Stack>
                       </Box>
@@ -328,7 +408,7 @@ export default function DesignTemplateTierDialog({
                   )}
                 </Stack>
               </Box>
-            )}
+            ) : null}
 
             {!isCreate && tier && (
               <Box>
@@ -356,14 +436,24 @@ export default function DesignTemplateTierDialog({
         )}
       </DialogContent>
       <DialogActions>
+        {isCreate && showCreateTierForm && onCancelCreateTierForm ? (
+          <Button onClick={() => onCancelCreateTierForm()} disabled={submitting} color="inherit">
+            Cancel
+          </Button>
+        ) : null}
+        {isView && onBackToTierList ? (
+          <Button onClick={() => onBackToTierList()} disabled={submitting} color="inherit">
+            Back to list
+          </Button>
+        ) : null}
         <Button onClick={onClose} disabled={submitting}>
           Close
         </Button>
-        {!isView && (
+        {!isView && (!isCreate || (isCreate && showCreateTierForm)) ? (
           <Button onClick={() => void onSubmit()} variant="contained" disabled={submitting || detailLoading}>
             {submitting ? 'Processing...' : isCreate ? 'Create' : 'Save'}
           </Button>
-        )}
+        ) : null}
       </DialogActions>
     </Dialog>
   );

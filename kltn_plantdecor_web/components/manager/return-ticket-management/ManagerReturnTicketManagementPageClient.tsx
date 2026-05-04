@@ -274,7 +274,7 @@ export default function ManagerReturnTicketManagementPageClient({
   };
 
   return (
-    <Box sx={{ py: 4, px: { xs: 2, md: 4 }, mx: 'auto' }}>
+    <Box>
       <ManagerReturnTicketHeader
         statusFilter={statusFilter}
         totalCount={items.length}

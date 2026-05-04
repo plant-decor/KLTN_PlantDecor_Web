@@ -14,6 +14,7 @@ interface DesignOrderDetailDialogProps {
   onReject: (item: CustomerDesignRegistrationDetail) => void;
   onCancel: (item: CustomerDesignRegistrationDetail) => void;
   onAssignTask: (task: DesignRegistrationTask, registration: CustomerDesignRegistrationDetail) => void;
+  onRescheduleTask: (task: DesignRegistrationTask, registration: CustomerDesignRegistrationDetail) => void;
   getDesignRegistrationStatusLabel: (item: Pick<CustomerDesignRegistrationDetail, 'status' | 'statusName'>) => string;
   getDesignTaskStatusLabel: (task: DesignRegistrationTask) => string;
   getDesignTaskTypeLabel: (task: DesignRegistrationTask) => string;
@@ -29,6 +30,7 @@ export default function DesignOrderDetailDialog({
   onReject,
   onCancel,
   onAssignTask,
+  onRescheduleTask,
   getDesignRegistrationStatusLabel,
   getDesignTaskStatusLabel,
   getDesignTaskTypeLabel,
@@ -106,14 +108,24 @@ export default function DesignOrderDetailDialog({
                           {task.status !== undefined && task.status !== null &&
                             task.status !== 3 &&
                             task.status !== 4 ? (
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              onClick={() => onAssignTask(task, detailItem)}
-                              disabled={submitting}
-                            >
-                              Assign
-                            </Button>
+                            <Stack direction="row" spacing={1} justifyContent="center">
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                onClick={() => onAssignTask(task, detailItem)}
+                                disabled={submitting}
+                              >
+                                Assign
+                              </Button>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                onClick={() => onRescheduleTask(task, detailItem)}
+                                disabled={submitting}
+                              >
+                                Reschedule
+                              </Button>
+                            </Stack>
                           ) : (
                             '-'
                           )}

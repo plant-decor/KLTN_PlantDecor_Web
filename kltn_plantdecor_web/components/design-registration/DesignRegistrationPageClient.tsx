@@ -573,7 +573,7 @@ export default function DesignRegistrationPageClient() {
             <CustomLoading />
           </Box>
         ) : registrations.length === 0 ? (
-          <Box sx={{ p: 4 }}>
+          <Box>
             <EmptyState
               icon={<AddIcon />}
               title="No design registrations"
@@ -730,7 +730,7 @@ export default function DesignRegistrationPageClient() {
                   onChange={(event) => setSelectedNurseryId(Number(event.target.value))}
                 >
                   <MenuItem value={0}>
-                    <em>Let PlantDecor choose a nursery (optional)</em>
+                    <em>Select service provider nursery (optional)</em>
                   </MenuItem>
                   {nurseries.map((nursery) => (
                     <MenuItem key={`${nursery.nurseryId}-${nursery.id ?? nursery.nurseryId}`} value={nursery.nurseryId}>

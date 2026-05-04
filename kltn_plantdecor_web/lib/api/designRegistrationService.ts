@@ -4,6 +4,7 @@ import * as apiClient from "@/lib/api/apiService.client";
 import type { ResponseModel } from "@/types/api.types";
 import type {
   AssignDesignTaskRequest,
+  RescheduleDesignTaskRequest,
   CustomerDesignRegistrationRequest,
   CustomerDesignRegistrationResponse,
   CustomerDesignRegistrationListItem,
@@ -795,6 +796,26 @@ export const assignDesignTask = async (
   const task = normalizeDesignRegistrationTask(unwrapPayloadData(response));
   if (!task) {
     throw new Error("Cannot assign design task");
+  }
+
+  return task;
+};
+
+export const rescheduleDesignTask = async (
+  id: number,
+  data: RescheduleDesignTaskRequest,
+  loading = true
+): Promise<DesignRegistrationTask> => {
+  const response = await apiClient.put<WrappedResponse<unknown>>(
+    `design-tasks/${id}/reschedule`,
+    data,
+    loading,
+    MUTATION_CONFIG
+  );
+
+  const task = normalizeDesignRegistrationTask(unwrapPayloadData(response));
+  if (!task) {
+    throw new Error("Cannot reschedule design task");
   }
 
   return task;

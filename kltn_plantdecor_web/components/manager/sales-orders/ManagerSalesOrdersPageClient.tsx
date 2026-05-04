@@ -4,6 +4,7 @@ import { useMemo, useState, type ReactNode, type SyntheticEvent } from 'react';
 import { Badge, Box, Tab, Tabs } from '@mui/material';
 import ManagerReturnTicketManagementPageClient from '@/components/manager/return-ticket-management/ManagerReturnTicketManagementPageClient';
 import ManagerSalesOrdersTabContent from './ManagerSalesOrdersTabContent';
+import ManagementHeader from '@/components/layout/ManagementHeader';
 
 const SALES_TAB = 0;
 const RETURN_TAB = 1;
@@ -42,7 +43,12 @@ export default function ManagerSalesOrdersPageClient() {
   const shouldMountReturnTab = useMemo(() => visitedTabs.has(RETURN_TAB), [visitedTabs]);
 
   return (
-    <Box sx={{ py: 4, px: { xs: 2, md: 4 }, mx: 'auto' }}>
+    <Box >
+      <ManagementHeader
+        title="Sales Orders"
+        description="Review and process assigned return tickets"
+        entityLabel="sales orders"
+      />
       <Tabs
         value={activeTab}
         onChange={handleChangeTab}

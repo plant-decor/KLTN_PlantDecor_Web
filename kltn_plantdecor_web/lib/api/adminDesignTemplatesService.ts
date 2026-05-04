@@ -3,12 +3,13 @@
 import * as apiClient from "@/lib/api/apiService.client";
 import type { ResponseModel } from "@/types/api.types";
 import type {
-  AdminDesignTemplateCreateRequest,
+  AdminDesignTemplateCreateInput,
   AdminDesignTemplateDetail,
   AdminDesignTemplateListItem,
   AdminDesignTemplateTierCreateRequest,
+  AdminDesignTemplateTierItemsUpdateRequest,
   AdminDesignTemplateTierUpdateRequest,
-  AdminDesignTemplateUpdateRequest,
+  AdminDesignTemplateUpdateInput,
   DesignTemplateNurseryOffering,
   DesignTemplateSpecialization,
   DesignTemplateTier,
@@ -53,6 +54,73 @@ const unwrapPayloadData = <T>(response: WrappedResponse<T>): T => {
   return response as T;
 };
 
+/** Room / style enums for design-template forms (GET `/system/enums/room-design` via apiClient). */
+export interface RoomDesignEnumOptionRow {
+  value: number;
+  name: string;
+}
+
+export interface RoomDesignEnumOptionsPayload {
+  roomTypes: RoomDesignEnumOptionRow[];
+  roomStyles: RoomDesignEnumOptionRow[];
+  lightRequirements: RoomDesignEnumOptionRow[];
+}
+
+const normalizeSystemEnumOptions = (raw: unknown): RoomDesignEnumOptionRow[] => {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+
+  return raw
+    .map((item) => {
+      if (!isRecord(item)) {
+        return null;
+      }
+
+      const value = Number(item.value);
+      if (!Number.isFinite(value) || typeof item.name !== "string") {
+        return null;
+      }
+
+      return { value, name: item.name };
+    })
+    .filter((item): item is RoomDesignEnumOptionRow => Boolean(item));
+};
+
+export const fetchRoomDesignEnumOptionsForTemplates = async (
+  loading = true
+): Promise<RoomDesignEnumOptionsPayload> => {
+  const response = await apiClient.get<WrappedResponse<unknown>>(
+    "/system/enums/room-design",
+    undefined,
+    loading,
+    QUERY_CONFIG
+  );
+
+  const payload = unwrapPayloadData(response);
+  const groups = Array.isArray(payload) ? payload : [];
+  const groupMap = new Map<string, RoomDesignEnumOptionRow[]>();
+
+  groups.forEach((group) => {
+    if (!isRecord(group)) {
+      return;
+    }
+
+    const enumName = group.enumName;
+    if (typeof enumName !== "string") {
+      return;
+    }
+
+    groupMap.set(enumName, normalizeSystemEnumOptions(group.values));
+  });
+
+  return {
+    roomTypes: groupMap.get("RoomType") ?? [],
+    roomStyles: groupMap.get("RoomStyle") ?? [],
+    lightRequirements: groupMap.get("LightRequirement") ?? [],
+  };
+};
+
 const normalizeSpecialization = (value: unknown): DesignTemplateSpecialization | null => {
   if (!isRecord(value)) {
     return null;
@@ -78,12 +146,17 @@ const normalizeTierItem = (value: unknown): DesignTemplateTierItem | null => {
   const id = value.id == null ? undefined : toNumber(value.id, Number.NaN);
   const designTemplateTierId = value.designTemplateTierId == null ? undefined : toNumber(value.designTemplateTierId, Number.NaN);
 
+  const itemTypeName = toText(value.itemTypeName);
+  const displayName = toText(value.name);
+
   return {
     id: id != null && Number.isFinite(id) ? id : undefined,
     designTemplateTierId: designTemplateTierId != null && Number.isFinite(designTemplateTierId) ? designTemplateTierId : undefined,
     materialId: value.materialId == null ? null : toNumber(value.materialId),
     plantId: value.plantId == null ? null : toNumber(value.plantId),
     itemType: toNumber(value.itemType),
+    ...(itemTypeName ? { itemTypeName } : {}),
+    ...(displayName ? { name: displayName } : {}),
     quantity: toNumber(value.quantity, 1),
     createdAt: toText(value.createdAt) || undefined,
   };
@@ -199,8 +272,43 @@ const normalizeTemplateDetail = (raw: unknown): AdminDesignTemplateDetail => {
   };
 };
 
+type DesignTemplateFormDataInput = {
+  name: string;
+  description: string;
+  style: number;
+  roomTypes: number[];
+  imageFile?: File | null;
+  specializationIds?: number[];
+};
+
+const buildDesignTemplateFormData = (
+  input: DesignTemplateFormDataInput,
+  options: { includeSpecializationIds: boolean }
+): FormData => {
+  const data = new FormData();
+  data.append("Name", input.name);
+  data.append("Description", input.description);
+  data.append("Style", String(input.style));
+
+  input.roomTypes.forEach((roomType) => {
+    data.append("RoomTypes", String(roomType));
+  });
+
+  if (input.imageFile) {
+    data.append("ImageUrl", input.imageFile);
+  }
+
+  if (options.includeSpecializationIds && Array.isArray(input.specializationIds)) {
+    input.specializationIds.forEach((id) => {
+      data.append("SpecializationIds", String(id));
+    });
+  }
+
+  return data;
+};
+
 export const getAdminDesignTemplates = async (loading = true): Promise<AdminDesignTemplateListItem[]> => {
-  const response = await apiClient.get<WrappedResponse<unknown>>("public/design-templates", undefined, loading, QUERY_CONFIG);
+  const response = await apiClient.get<WrappedResponse<unknown>>("admin/design-templates", undefined, loading, QUERY_CONFIG);
   return normalizeTemplates(response);
 };
 
@@ -213,7 +321,7 @@ export const getAdminDesignTemplateDetail = async (
 };
 
 export const getActiveDesignTemplateSpecializations = async (loading = true): Promise<DesignTemplateSpecialization[]> => {
-  const response = await apiClient.get<WrappedResponse<unknown>>('specializations', undefined, loading, QUERY_CONFIG);
+  const response = await apiClient.get<WrappedResponse<unknown>>('admin/specializations', undefined, loading, QUERY_CONFIG);
   const unwrapped = unwrapPayloadData(response);
   const list = Array.isArray(unwrapped) ? unwrapped : [];
   return list
@@ -222,19 +330,54 @@ export const getActiveDesignTemplateSpecializations = async (loading = true): Pr
 };
 
 export const createAdminDesignTemplate = async (
-  payload: AdminDesignTemplateCreateRequest,
+  payload: AdminDesignTemplateCreateInput,
   loading = true
 ): Promise<AdminDesignTemplateDetail> => {
-  const response = await apiClient.post<WrappedResponse<unknown>>("admin/design-templates", payload, loading, MUTATION_CONFIG);
+  const formData = buildDesignTemplateFormData(
+    {
+      name: payload.name,
+      description: payload.description,
+      style: payload.style,
+      roomTypes: payload.roomTypes,
+      imageFile: payload.imageFile,
+      specializationIds: payload.specializationIds,
+    },
+    { includeSpecializationIds: true }
+  );
+  const response = await apiClient.post<WrappedResponse<unknown>>("admin/design-templates", formData, loading, MUTATION_CONFIG);
   return normalizeTemplateDetail(response);
 };
 
 export const updateAdminDesignTemplate = async (
   id: number,
-  payload: AdminDesignTemplateUpdateRequest,
+  payload: AdminDesignTemplateUpdateInput,
   loading = true
 ): Promise<AdminDesignTemplateDetail> => {
-  const response = await apiClient.put<WrappedResponse<unknown>>(`admin/design-templates/${id}`, payload, loading, MUTATION_CONFIG);
+  const formData = buildDesignTemplateFormData(
+    {
+      name: payload.name,
+      description: payload.description,
+      style: payload.style,
+      roomTypes: payload.roomTypes,
+      imageFile: payload.imageFile ?? null,
+    },
+    { includeSpecializationIds: false }
+  );
+  const response = await apiClient.put<WrappedResponse<unknown>>(`admin/design-templates/${id}`, formData, loading, MUTATION_CONFIG);
+  return normalizeTemplateDetail(response);
+};
+
+export const updateAdminDesignTemplateSpecializations = async (
+  id: number,
+  specializationIds: number[],
+  loading = true
+): Promise<AdminDesignTemplateDetail> => {
+  const response = await apiClient.put<WrappedResponse<unknown>>(
+    `admin/design-templates/${id}/specializations`,
+    { specializationIds },
+    loading,
+    MUTATION_CONFIG
+  );
   return normalizeTemplateDetail(response);
 };
 
@@ -312,6 +455,32 @@ export const updateAdminDesignTemplateTier = async (
     scopedOfWork: payload.scopedOfWork,
     estimatedDays: payload.estimatedDays,
     isActive: payload.isActive,
+    items: [],
+  };
+};
+
+export const updateAdminDesignTemplateTierItems = async (
+  id: number,
+  payload: AdminDesignTemplateTierItemsUpdateRequest,
+  loading = true
+): Promise<DesignTemplateTier> => {
+  const response = await apiClient.put<WrappedResponse<unknown>>(
+    `admin/design-template-tiers/${id}/items`,
+    payload,
+    loading,
+    MUTATION_CONFIG
+  );
+  const tier = normalizeTier(unwrapPayloadData(response));
+  return tier ?? {
+    id,
+    designTemplateId: 0,
+    tierName: '',
+    minArea: 0,
+    maxArea: 0,
+    packagePrice: 0,
+    scopedOfWork: '',
+    estimatedDays: 0,
+    isActive: true,
     items: [],
   };
 };

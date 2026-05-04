@@ -51,6 +51,7 @@ interface DesignServiceTabProps {
   onOpenRejectDialog: (item: CustomerDesignRegistrationListItem) => void;
   onOpenCancelDialog: (item: CustomerDesignRegistrationListItem) => void;
   onOpenTaskAssignDialog: (task: DesignRegistrationTask, registration: CustomerDesignRegistrationListItem | CustomerDesignRegistrationDetail) => void;
+  onOpenTaskRescheduleDialog: (task: DesignRegistrationTask, registration: CustomerDesignRegistrationListItem | CustomerDesignRegistrationDetail) => void;
   onCloseDetail: () => void;
   onCloseCancel: () => void;
   onCloseReject: () => void;
@@ -97,6 +98,7 @@ export default function DesignServiceTab({
   onOpenRejectDialog,
   onOpenCancelDialog,
   onOpenTaskAssignDialog,
+  onOpenTaskRescheduleDialog,
   onCloseDetail,
   onCloseCancel,
   onCloseReject,
@@ -254,6 +256,7 @@ export default function DesignServiceTab({
         onReject={(item) => onOpenRejectDialog(item as CustomerDesignRegistrationListItem)}
         onCancel={(item) => onOpenCancelDialog(item as CustomerDesignRegistrationListItem)}
         onAssignTask={onOpenTaskAssignDialog}
+        onRescheduleTask={onOpenTaskRescheduleDialog}
         getDesignRegistrationStatusLabel={getDesignRegistrationStatusLabel}
         getDesignTaskStatusLabel={getDesignTaskStatusLabel}
         getDesignTaskTypeLabel={getDesignTaskTypeLabel}

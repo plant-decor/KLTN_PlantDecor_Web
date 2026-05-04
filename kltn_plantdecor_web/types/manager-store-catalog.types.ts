@@ -111,7 +111,7 @@ export interface UpdateNurseryMaterialRequest {
   isActive: boolean;
 }
 
-export type LowStockProductType = 'Plant' | 'PlantInstance' | 'PlantCombo' | 'Material';
+export type LowStockProductType = 'Plant' | 'PlantInstance' | 'PlantCombo' | 'Material' | 'CommonPlant';
 
 export interface LowStockProductItem {
   productType: LowStockProductType;

@@ -13,6 +13,8 @@ export interface AdminMaterialSearchRequest {
     pageNumber: number;
     pageSize: number;
   };
+  keyword?: string;
+  isActive?: boolean;
 }
 
 export interface AdminMaterialSearchPayload {

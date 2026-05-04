@@ -218,6 +218,10 @@ export interface AssignDesignTaskRequest {
   scheduledDate: string;
 }
 
+export interface RescheduleDesignTaskRequest {
+  scheduledDate: string;
+}
+
 export interface DesignRegistrationsQuery {
   pageNumber?: number;
   pageSize?: number;

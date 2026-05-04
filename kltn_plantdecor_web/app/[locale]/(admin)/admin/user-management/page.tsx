@@ -57,13 +57,18 @@ export default function UserManagementPage() {
   }, [searchTerm]);
 
   useEffect(() => {
-    void fetchUsers({
-      pagination: { pageNumber: 1, pageSize: pagination.pageSize },
-      keyword: debouncedSearchTerm.trim() || undefined,
-      role: roleFilter ? formatUserRoleForApi(roleFilter) : undefined,
-      status: statusFilter ? formatStatusForApi(statusFilter) : undefined,
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ refetch khi đổi filter/tìm kiếm (đã debounce); dùng pagination.pageSize mà không liệt kê pagination để tránh refetch khi đổi trang
+    const controller = new AbortController();
+    void fetchUsers(
+      {
+        pagination: { pageNumber: 1, pageSize: pagination.pageSize },
+        keyword: debouncedSearchTerm.trim() || undefined,
+        role: roleFilter ? formatUserRoleForApi(roleFilter) : undefined,
+        status: statusFilter ? formatStatusForApi(statusFilter) : undefined,
+      },
+      { signal: controller.signal }
+    );
+    return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ refetch khi đổi filter/tìm kiếm (đã debounce); dùng pagination.pageSize mà không liệt kê pagination để tránh refetch khi đổi trang
   }, [debouncedSearchTerm, roleFilter, statusFilter, fetchUsers]);
 
   const handlePageChange = useCallback(

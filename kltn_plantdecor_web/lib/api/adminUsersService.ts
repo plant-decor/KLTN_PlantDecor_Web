@@ -1,6 +1,7 @@
 "use client";
 
 import * as apiClient from "@/lib/api/apiService.client";
+import type { ApiClientRequestConfig } from "@/lib/api/apiService.client";
 import type { ResponseModel } from "@/types/api.types";
 import type {
   AdminUser,
@@ -11,9 +12,12 @@ import type {
 export const searchAdminUsers = async (
   data: AdminUserSearchRequest,
   loading = true,
-  showToast = false
+  config: ApiClientRequestConfig = {}
 ): Promise<ResponseModel<AdminUserSearchPayload>> => {
-  return apiClient.post("/admin/users/search", data, loading, {showToast});
+  return apiClient.post("/admin/users/search", data, loading, {
+    ...config,
+    showToast: config.showToast ?? true,
+  });
 };
 
 export const getAdminUserById = async (

@@ -4,11 +4,13 @@ import { useCallback, useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 export type ServicePageAction = "book";
+export type ServicePageTab = "care" | "design";
 
 export interface ServicePageQueryAction {
   initialPackageId: number | null;
   shouldAutoBook: boolean;
   action: ServicePageAction | null;
+  tab: ServicePageTab;
   clearAction: () => void;
 }
 
@@ -21,6 +23,7 @@ export function useServicePageQueryAction(): ServicePageQueryAction {
 
   const packageIdRaw = searchParams.get("packageId");
   const actionRaw = searchParams.get("action");
+  const tabRaw = searchParams.get("tab");
 
   const initialPackageId = useMemo(() => {
     if (!packageIdRaw) return null;
@@ -36,17 +39,26 @@ export function useServicePageQueryAction(): ServicePageQueryAction {
       : null;
   }, [actionRaw]);
 
-  const shouldAutoBook = action === "book" && initialPackageId !== null;
+  const tab = tabRaw === "design" ? "design" : "care";
+  const shouldAutoBook = tab === "care" && action === "book" && initialPackageId !== null;
 
   const clearAction = useCallback(() => {
     if (!pathname) return;
-    router.replace(pathname, { scroll: false });
-  }, [pathname, router]);
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("packageId");
+    params.delete("action");
+    if (!params.has("tab")) {
+      params.set("tab", tab);
+    }
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  }, [pathname, router, searchParams, tab]);
 
   return {
     initialPackageId,
     shouldAutoBook,
     action,
+    tab,
     clearAction,
   };
 }

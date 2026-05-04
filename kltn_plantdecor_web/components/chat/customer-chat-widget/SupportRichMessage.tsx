@@ -37,7 +37,7 @@ export function SupportRichMessage({ text, isMine }: Props) {
   if (parsed.kind === "serviceBooking" && parsed.serviceBooking) {
     const target = parsed.serviceBooking;
     const localePrefix = target.locale ? `/${target.locale}` : "";
-    const href = `${localePrefix}/services/${target.userId}?packageId=${target.packageId}&action=book`;
+    const href = `${localePrefix}/services/${target.userId}?tab=care&packageId=${target.packageId}&action=book`;
 
     return (
       <Box

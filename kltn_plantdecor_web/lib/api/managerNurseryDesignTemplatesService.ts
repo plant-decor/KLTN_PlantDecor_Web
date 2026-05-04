@@ -80,13 +80,13 @@ const normalizeTemplate = (value: unknown): ManagerNotOfferedDesignTemplate | nu
 };
 
 export const getMyNurseryDesignTemplates = async (activeOnly = false, loading = true): Promise<ManagerNurseryDesignTemplateListItem[]> => {
-  const response = await apiClient.get<WrappedResponse<unknown>>("/api/manager/nursery-design-templates/my", { activeOnly }, loading, QUERY_CONFIG);
+  const response = await apiClient.get<WrappedResponse<unknown>>("/manager/nursery-design-templates/my", { activeOnly }, loading, QUERY_CONFIG);
   const unwrapped = unwrapPayloadData(response);
   return Array.isArray(unwrapped) ? unwrapped.map(normalizeMapping).filter((item): item is ManagerNurseryDesignTemplateListItem => Boolean(item)) : [];
 };
 
 export const getNotOfferedDesignTemplates = async (loading = true): Promise<ManagerNotOfferedDesignTemplate[]> => {
-  const response = await apiClient.get<WrappedResponse<unknown>>("/api/manager/nursery-design-templates/not-offered-templates", undefined, loading, QUERY_CONFIG);
+  const response = await apiClient.get<WrappedResponse<unknown>>("/manager/nursery-design-templates/not-offered-templates", undefined, loading, QUERY_CONFIG);
   const unwrapped = unwrapPayloadData(response);
   return Array.isArray(unwrapped) ? unwrapped.map(normalizeTemplate).filter((item): item is ManagerNotOfferedDesignTemplate => Boolean(item)) : [];
 };
@@ -95,7 +95,7 @@ export const createNurseryDesignTemplate = async (
   payload: ManagerCreateNurseryDesignTemplateRequest,
   loading = true
 ): Promise<ManagerNurseryDesignTemplateListItem> => {
-  const response = await apiClient.post<WrappedResponse<unknown>>("/api/manager/nursery-design-templates", payload, loading, MUTATION_CONFIG);
+  const response = await apiClient.post<WrappedResponse<unknown>>("/manager/nursery-design-templates", payload, loading, MUTATION_CONFIG);
   const mapping = normalizeMapping(unwrapPayloadData(response));
   return mapping ?? {
     id: 0,
@@ -108,7 +108,7 @@ export const createNurseryDesignTemplate = async (
 };
 
 export const toggleNurseryDesignTemplate = async (id: number, loading = true): Promise<ManagerNurseryDesignTemplateListItem> => {
-  const response = await apiClient.patch<WrappedResponse<unknown>>(`/api/manager/nursery-design-templates/${id}/toggle`, undefined, loading, MUTATION_CONFIG);
+  const response = await apiClient.patch<WrappedResponse<unknown>>(`/manager/nursery-design-templates/${id}/toggle`, undefined, loading, MUTATION_CONFIG);
   const mapping = normalizeMapping(unwrapPayloadData(response));
   return mapping ?? {
     id,
@@ -121,5 +121,5 @@ export const toggleNurseryDesignTemplate = async (id: number, loading = true): P
 };
 
 export const deleteNurseryDesignTemplate = async (id: number, loading = true): Promise<void> => {
-  await apiClient.del<WrappedResponse<unknown>>(`/api/manager/nursery-design-templates/${id}`, loading, MUTATION_CONFIG);
+  await apiClient.del<WrappedResponse<unknown>>(`/manager/nursery-design-templates/${id}`, loading, MUTATION_CONFIG);
 };

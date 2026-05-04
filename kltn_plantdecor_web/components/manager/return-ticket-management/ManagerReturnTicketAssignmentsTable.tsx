@@ -56,7 +56,7 @@ export default function ManagerReturnTicketAssignmentsTable({
         <Table size="small">
           <TableHead sx={{ backgroundColor: 'var(--primary)' }}>
             <TableRow>
-              <TableCell sx={{ fontWeight: 700 }}>Assignment ID</TableCell>
+              <TableCell sx={{ fontWeight: 700 }}>ID</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>Ticket ID</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>Order ID</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>Nursery</TableCell>

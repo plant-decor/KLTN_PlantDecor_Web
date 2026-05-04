@@ -6,32 +6,39 @@ import { Alert, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogC
 import { toast } from 'react-toastify';
 import ManagementHeader from '@/components/layout/ManagementHeader';
 import type {
-  AdminDesignTemplateCreateRequest,
+  AdminDesignTemplateCreateInput,
   AdminDesignTemplateDetail,
   AdminDesignTemplateListItem,
   AdminDesignTemplateTierCreateRequest,
+  AdminDesignTemplateTierItemApiBody,
   AdminDesignTemplateTierUpdateRequest,
   DesignTemplateSpecialization,
   DesignTemplateRoomTypeOption,
   DesignTemplateStyleOption,
   DesignTemplateTier,
+  DesignTemplateTierItemCreateRequest,
 } from '@/types/admin-design-template.types';
 import {
   createAdminDesignTemplate,
   createAdminDesignTemplateTier,
   deactivateAdminDesignTemplateTier,
   deleteAdminDesignTemplate,
+  fetchRoomDesignEnumOptionsForTemplates,
   getActiveDesignTemplateSpecializations,
   getAdminDesignTemplateDetail,
   getAdminDesignTemplates,
   updateAdminDesignTemplate,
   updateAdminDesignTemplateTier,
+  updateAdminDesignTemplateTierItems,
 } from '@/lib/api/adminDesignTemplatesService';
-import { fetchRoomDesignEnumOptions } from '@/lib/api/adminPlantGuidesService';
 import DesignTemplateTable from './DesignTemplateTable';
 import DesignTemplateFormDialog, { type DesignTemplateFormValue } from './DesignTemplateFormDialog';
-import DesignTemplateTierDialog, { type DesignTemplateTierFormValue } from './DesignTemplateTierDialog';
+import DesignTemplateTierDialog, {
+  type DesignTemplateTierFormValue,
+  type DesignTemplateTierItemFormRow,
+} from './DesignTemplateTierDialog';
 import {
+  DESIGN_TEMPLATE_SAMPLE_IMAGE_MAX_BYTES,
   mapRoomTypeOptions,
   mapStyleOptions,
 } from './designTemplateManagement.constants';
@@ -44,7 +51,7 @@ const emptyTemplateForm = (defaultStyle = 1): DesignTemplateFormValue => ({
   description: '',
   style: defaultStyle,
   roomTypes: [],
-  imageUrl: '',
+  imageFile: null,
   specializationIds: [],
 });
 
@@ -58,6 +65,58 @@ const emptyTierForm = (): DesignTemplateTierFormValue => ({
   isActive: true,
   items: [{ materialId: null, plantId: null, itemType: 1, quantity: 1 }],
 });
+
+const TIER_ITEM_TYPE_PLANT = 1;
+const TIER_ITEM_TYPE_MATERIAL = 2;
+
+const toCreateTierItems = (items: DesignTemplateTierItemFormRow[]): DesignTemplateTierItemCreateRequest[] =>
+  items.map((row) => ({
+    materialId: row.materialId,
+    plantId: row.plantId,
+    itemType: row.itemType,
+    quantity: row.quantity,
+  }));
+
+const mapTierItemsToFormRows = (items: DesignTemplateTier['items']): DesignTemplateTierItemFormRow[] =>
+  items.map((item) => {
+    const name = item.name?.trim();
+    return {
+      materialId: item.materialId,
+      plantId: item.plantId,
+      itemType: item.itemType,
+      quantity: item.quantity,
+      ...(item.itemType === TIER_ITEM_TYPE_PLANT && name ? { plantDisplayName: name } : {}),
+      ...(item.itemType === TIER_ITEM_TYPE_MATERIAL && name ? { materialDisplayName: name } : {}),
+    };
+  });
+
+const toTierItemsApiBody = (items: DesignTemplateTierItemCreateRequest[]): AdminDesignTemplateTierItemApiBody[] =>
+  items.map((row) => ({
+    materialId: row.materialId ?? 0,
+    plantId: row.plantId ?? 0,
+    itemType: row.itemType,
+    quantity: row.quantity,
+  }));
+
+const validateTierFormItems = (items: DesignTemplateTierItemFormRow[]): string | null => {
+  if (items.length === 0) {
+    return 'Add at least one tier item';
+  }
+  for (let i = 0; i < items.length; i++) {
+    const row = items[i];
+    const qty = Number(row.quantity);
+    if (!Number.isFinite(qty) || qty < 1) {
+      return `Item ${i + 1}: quantity must be at least 1`;
+    }
+    if (row.itemType === TIER_ITEM_TYPE_PLANT && (row.plantId == null || Number(row.plantId) <= 0)) {
+      return `Item ${i + 1}: please select a plant`;
+    }
+    if (row.itemType === TIER_ITEM_TYPE_MATERIAL && (row.materialId == null || Number(row.materialId) <= 0)) {
+      return `Item ${i + 1}: please select a material`;
+    }
+  }
+  return null;
+};
 
 const getErrorMessage = (error: unknown, fallback: string) => {
   if (!error || typeof error !== 'object') {
@@ -93,6 +152,8 @@ export default function DesignTemplateManagementPageClient() {
   const [tierDetailLoading, setTierDetailLoading] = useState(false);
   const [tierDetailError, setTierDetailError] = useState<string | null>(null);
   const [tierSubmitting, setTierSubmitting] = useState(false);
+  /** Manage tiers: list first; show add-tier form only after "Add tier". */
+  const [tierCreateFormVisible, setTierCreateFormVisible] = useState(false);
 
   const [deleteTemplateTarget, setDeleteTemplateTarget] = useState<AdminDesignTemplateListItem | null>(null);
   const [deleteTierTarget, setDeleteTierTarget] = useState<DesignTemplateTier | null>(null);
@@ -116,7 +177,7 @@ export default function DesignTemplateManagementPageClient() {
 
   const loadRoomDesignEnums = useCallback(async () => {
     try {
-      const response = await fetchRoomDesignEnumOptions(false);
+      const response = await fetchRoomDesignEnumOptionsForTemplates(false);
       const nextStyleOptions = mapStyleOptions(response.roomStyles);
       const nextRoomTypeOptions = mapRoomTypeOptions(response.roomTypes);
 
@@ -178,7 +239,7 @@ export default function DesignTemplateManagementPageClient() {
           description: detail.description,
           style: detail.style,
           roomTypes: detail.roomTypes,
-          imageUrl: detail.imageUrl,
+          imageFile: null,
           specializationIds: detail.specializations.map((item) => item.id),
         });
       } catch (error) {
@@ -213,34 +274,47 @@ export default function DesignTemplateManagementPageClient() {
         return;
       }
 
-      if (!templateFormValue.imageUrl.trim()) {
-        toast.error('Image URL is required');
-        return;
-      }
-
       if (templateDialogMode === 'create') {
         if (templateFormValue.specializationIds.length === 0) {
           toast.error('Please select at least one specialization');
           return;
         }
 
-        const payload: AdminDesignTemplateCreateRequest = {
+        if (!templateFormValue.imageFile) {
+          toast.error('Image is required');
+          return;
+        }
+
+        if (templateFormValue.imageFile.size > DESIGN_TEMPLATE_SAMPLE_IMAGE_MAX_BYTES) {
+          toast.error(`Image must be at most ${DESIGN_TEMPLATE_SAMPLE_IMAGE_MAX_BYTES / (1024 * 1024)} MB.`);
+          return;
+        }
+
+        const payload: AdminDesignTemplateCreateInput = {
           name: templateFormValue.name.trim(),
           description: templateFormValue.description.trim(),
           style: templateFormValue.style,
           roomTypes: templateFormValue.roomTypes,
-          imageUrl: templateFormValue.imageUrl.trim(),
+          imageFile: templateFormValue.imageFile,
           specializationIds: templateFormValue.specializationIds,
         };
         await createAdminDesignTemplate(payload, false);
         toast.success('Design template created successfully');
       } else if (templateDialogMode === 'edit' && selectedTemplate) {
+        if (
+          templateFormValue.imageFile &&
+          templateFormValue.imageFile.size > DESIGN_TEMPLATE_SAMPLE_IMAGE_MAX_BYTES
+        ) {
+          toast.error(`Image must be at most ${DESIGN_TEMPLATE_SAMPLE_IMAGE_MAX_BYTES / (1024 * 1024)} MB.`);
+          return;
+        }
+
         const payload = {
           name: templateFormValue.name.trim(),
           description: templateFormValue.description.trim(),
           style: templateFormValue.style,
           roomTypes: templateFormValue.roomTypes,
-          imageUrl: templateFormValue.imageUrl.trim(),
+          imageFile: templateFormValue.imageFile,
         };
         await updateAdminDesignTemplate(selectedTemplate.id, payload, false);
         toast.success('Design template updated successfully');
@@ -261,6 +335,7 @@ export default function DesignTemplateManagementPageClient() {
     setTierDialogOpen(true);
     setTierDetailError(null);
     setSelectedTier(null);
+    setTierCreateFormVisible(false);
 
     try {
       setTierDetailLoading(true);
@@ -283,12 +358,7 @@ export default function DesignTemplateManagementPageClient() {
           scopedOfWork: tierDetail.scopedOfWork,
           estimatedDays: tierDetail.estimatedDays,
           isActive: tierDetail.isActive,
-          items: tierDetail.items.map((item) => ({
-            materialId: item.materialId,
-            plantId: item.plantId,
-            itemType: item.itemType,
-            quantity: item.quantity,
-          })),
+          items: mapTierItemsToFormRows(tierDetail.items),
         });
       }
     } catch (error) {
@@ -303,6 +373,7 @@ export default function DesignTemplateManagementPageClient() {
   const handleEditExistingTier = useCallback(
     (tier: DesignTemplateTier) => {
       setTierDialogMode('edit');
+      setTierCreateFormVisible(false);
       setSelectedTier(tier);
       setTierFormValue({
         tierName: tier.tierName,
@@ -312,15 +383,63 @@ export default function DesignTemplateManagementPageClient() {
         scopedOfWork: tier.scopedOfWork,
         estimatedDays: tier.estimatedDays,
         isActive: tier.isActive,
-        items: tier.items.map((item) => ({
-          materialId: item.materialId,
-          plantId: item.plantId,
-          itemType: item.itemType,
-          quantity: item.quantity,
-        })),
+        items: mapTierItemsToFormRows(tier.items),
       });
     },
     []
+  );
+
+  const handleViewExistingTier = useCallback((t: DesignTemplateTier) => {
+    setTierDialogMode('view');
+    setTierCreateFormVisible(false);
+    setSelectedTier(t);
+    setTierFormValue({
+      tierName: t.tierName,
+      minArea: t.minArea,
+      maxArea: t.maxArea,
+      packagePrice: t.packagePrice,
+      scopedOfWork: t.scopedOfWork,
+      estimatedDays: t.estimatedDays,
+      isActive: t.isActive,
+      items: mapTierItemsToFormRows(t.items),
+    });
+  }, []);
+
+  const handleBackToTierList = useCallback(() => {
+    setTierDialogMode('create');
+    setTierCreateFormVisible(false);
+    setSelectedTier(null);
+    setTierFormValue(emptyTierForm());
+  }, []);
+
+  const handleStartCreateNewTierInTierDialog = useCallback(() => {
+    setTierDialogMode('create');
+    setSelectedTier(null);
+    setTierFormValue(emptyTierForm());
+    setTierDetailError(null);
+    setTierCreateFormVisible(true);
+  }, []);
+
+  const handleCancelCreateTierForm = useCallback(() => {
+    setTierCreateFormVisible(false);
+    setTierFormValue(emptyTierForm());
+  }, []);
+
+  const handleFormAddTier = useCallback(() => {
+    if (!selectedTemplate) {
+      return;
+    }
+    void openTierDialog('create', selectedTemplate);
+  }, [selectedTemplate, openTierDialog]);
+
+  const handleFormEditTier = useCallback(
+    (tier: DesignTemplateTier) => {
+      if (!selectedTemplate) {
+        return;
+      }
+      void openTierDialog('edit', selectedTemplate, tier);
+    },
+    [selectedTemplate, openTierDialog]
   );
 
   const handleSaveTier = useCallback(async () => {
@@ -328,6 +447,9 @@ export default function DesignTemplateManagementPageClient() {
       toast.error('Please select a template first');
       return;
     }
+
+    const templateIdForRefresh = selectedTemplate.id;
+    const refreshTemplateForm = templateDialogOpen;
 
     try {
       setTierSubmitting(true);
@@ -343,6 +465,12 @@ export default function DesignTemplateManagementPageClient() {
       }
 
       if (tierDialogMode === 'create') {
+        const itemsError = validateTierFormItems(tierFormValue.items);
+        if (itemsError) {
+          toast.error(itemsError);
+          return;
+        }
+
         const payload: AdminDesignTemplateTierCreateRequest = {
           designTemplateId: selectedTemplate.id,
           tierName: tierFormValue.tierName.trim(),
@@ -352,11 +480,30 @@ export default function DesignTemplateManagementPageClient() {
           scopedOfWork: tierFormValue.scopedOfWork.trim(),
           estimatedDays: tierFormValue.estimatedDays,
           isActive: tierFormValue.isActive,
-          items: tierFormValue.items,
+          items: toCreateTierItems(tierFormValue.items),
         };
         await createAdminDesignTemplateTier(payload, false);
         toast.success('Tier created successfully');
-      } else if (tierDialogMode === 'edit' && selectedTier) {
+        setTierCreateFormVisible(false);
+        setTierFormValue(emptyTierForm());
+        setSelectedTier(null);
+        await loadTemplates();
+        try {
+          const detail = await getAdminDesignTemplateDetail(templateIdForRefresh, false);
+          setSelectedTemplate(detail);
+        } catch (error) {
+          toast.error(getErrorMessage(error, 'Cannot refresh template'));
+        }
+        return;
+      }
+
+      if (tierDialogMode === 'edit' && selectedTier) {
+        const itemsError = validateTierFormItems(tierFormValue.items);
+        if (itemsError) {
+          toast.error(itemsError);
+          return;
+        }
+
         const payload: AdminDesignTemplateTierUpdateRequest = {
           tierName: tierFormValue.tierName.trim(),
           minArea: tierFormValue.minArea,
@@ -367,18 +514,33 @@ export default function DesignTemplateManagementPageClient() {
           isActive: tierFormValue.isActive,
         };
         await updateAdminDesignTemplateTier(selectedTier.id, payload, false);
+        await updateAdminDesignTemplateTierItems(
+          selectedTier.id,
+          { items: toTierItemsApiBody(toCreateTierItems(tierFormValue.items)) },
+          false
+        );
         toast.success('Tier updated successfully');
       }
 
       setTierDialogOpen(false);
+      setTierCreateFormVisible(false);
       setSelectedTier(null);
       await loadTemplates();
+
+      if (refreshTemplateForm && templateIdForRefresh) {
+        try {
+          const detail = await getAdminDesignTemplateDetail(templateIdForRefresh, false);
+          setSelectedTemplate(detail);
+        } catch (error) {
+          toast.error(getErrorMessage(error, 'Cannot refresh template'));
+        }
+      }
     } catch (error) {
       toast.error(getErrorMessage(error, 'Cannot save tier'));
     } finally {
       setTierSubmitting(false);
     }
-  }, [loadTemplates, selectedTemplate, selectedTier, tierDialogMode, tierFormValue]);
+  }, [loadTemplates, selectedTemplate, selectedTier, templateDialogOpen, tierDialogMode, tierFormValue]);
 
   const handleDeleteTemplate = useCallback((template: AdminDesignTemplateListItem) => {
     setDeleteTemplateTarget(template);
@@ -408,15 +570,28 @@ export default function DesignTemplateManagementPageClient() {
       return;
     }
 
+    const templateIdForRefresh = selectedTemplate?.id;
+    const refreshDetail =
+      templateIdForRefresh && (templateDialogOpen || tierDialogOpen);
+
     try {
       await deactivateAdminDesignTemplateTier(deleteTierTarget.id, false);
       toast.success('Tier deactivated successfully');
       setDeleteTierTarget(null);
       await loadTemplates();
+
+      if (refreshDetail) {
+        try {
+          const detail = await getAdminDesignTemplateDetail(templateIdForRefresh, false);
+          setSelectedTemplate(detail);
+        } catch (error) {
+          toast.error(getErrorMessage(error, 'Cannot refresh template'));
+        }
+      }
     } catch (error) {
       toast.error(getErrorMessage(error, 'Cannot deactivate tier'));
     }
-  }, [deleteTierTarget, loadTemplates]);
+  }, [deleteTierTarget, loadTemplates, selectedTemplate?.id, templateDialogOpen, tierDialogOpen]);
 
   const closeTemplateDialog = useCallback(() => {
     if (templateSubmitting) {
@@ -428,16 +603,32 @@ export default function DesignTemplateManagementPageClient() {
     setTemplateDetailError(null);
   }, [templateSubmitting]);
 
-  const closeTierDialog = useCallback(() => {
+  const closeTierDialog = useCallback(async () => {
     if (tierSubmitting) {
       return;
     }
 
+    const keepTemplateForm = templateDialogOpen;
+    const templateId = selectedTemplate?.id;
+
     setTierDialogOpen(false);
-    setSelectedTemplate(null);
+    setTierCreateFormVisible(false);
     setSelectedTier(null);
     setTierDetailError(null);
-  }, [tierSubmitting]);
+
+    if (keepTemplateForm && templateId) {
+      try {
+        const detail = await getAdminDesignTemplateDetail(templateId, false);
+        setSelectedTemplate(detail);
+      } catch (error) {
+        toast.error(getErrorMessage(error, 'Cannot refresh template'));
+        setSelectedTemplate(null);
+      }
+      return;
+    }
+
+    setSelectedTemplate(null);
+  }, [tierSubmitting, templateDialogOpen, selectedTemplate?.id]);
 
   return (
     <Box sx={{ bgcolor: 'var(--background)', minHeight: '100vh', p: { xs: 2, md: 4 } }}>
@@ -448,16 +639,6 @@ export default function DesignTemplateManagementPageClient() {
         count={totalCount}
         actionLabel="Create Template"
         onAction={openCreateTemplate}
-        actions={[
-          {
-            label: 'Reload',
-            onClick: () => {
-              void loadTemplates();
-              void loadRoomDesignEnums();
-              void loadSpecializations();
-            },
-          },
-        ]}
       />
 
       <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
@@ -501,6 +682,9 @@ export default function DesignTemplateManagementPageClient() {
         onClose={closeTemplateDialog}
         onSubmit={handleSaveTemplate}
         onFormChange={setTemplateFormValue}
+        onAddTier={handleFormAddTier}
+        onEditTier={handleFormEditTier}
+        onDeactivateTier={handleDeleteTier}
       />
 
       <DesignTemplateTierDialog
@@ -509,6 +693,7 @@ export default function DesignTemplateManagementPageClient() {
         template={selectedTemplate}
         tier={selectedTier}
         existingTiers={selectedTemplate?.tiers ?? []}
+        showCreateTierForm={tierCreateFormVisible}
         detailLoading={tierDetailLoading}
         detailError={tierDetailError}
         formValue={tierFormValue}
@@ -517,7 +702,11 @@ export default function DesignTemplateManagementPageClient() {
         onSubmit={handleSaveTier}
         onFormChange={setTierFormValue}
         onEditExistingTier={handleEditExistingTier}
+        onViewExistingTier={handleViewExistingTier}
         onDeactivateExistingTier={handleDeleteTier}
+        onStartCreateNewTier={handleStartCreateNewTierInTierDialog}
+        onCancelCreateTierForm={handleCancelCreateTierForm}
+        onBackToTierList={handleBackToTierList}
       />
 
       <Dialog open={Boolean(deleteTemplateTarget)} onClose={() => setDeleteTemplateTarget(null)}>

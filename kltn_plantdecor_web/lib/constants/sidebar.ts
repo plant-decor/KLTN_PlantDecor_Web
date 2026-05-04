@@ -54,7 +54,7 @@ export const SIDEBAR_ITEMS_BY_ROLE: Record<UserRole, SidebarItem[]> = {
     { label: 'Product Catalog', href: '/manager/store-catalog', icon: 'catalog' },
     { label: 'Care Service Management', href: '/manager/care-service-management', icon: 'services' },
     { label: 'Nursery Design Templates', href: '/manager/nursery-design-template-management', icon: 'catalog' },
-    { label: 'Store Payment', href: '/manager/store-payment', icon: 'payment' },
+    // { label: 'Store Payment', href: '/manager/store-payment', icon: 'payment' },
     { label: 'Sales Orders', href: '/manager/sales-orders', icon: 'orders' },
     { label: 'Service Orders', href: '/manager/service-orders', icon: 'requests' },
     { label: 'Service Schedule', href: '/manager/schedule-services', icon: 'scheduled' },

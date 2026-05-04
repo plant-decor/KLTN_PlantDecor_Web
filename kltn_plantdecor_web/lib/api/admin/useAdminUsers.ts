@@ -1,5 +1,6 @@
 "use client";
 
+import axios from "axios";
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
   getAdminUserById,
@@ -12,6 +13,10 @@ import type { AdminUser, AdminUserSearchRequest } from "@/types/admin-user.types
 export type AdminUsersFetchParams = Omit<Partial<AdminUserSearchRequest>, "pagination"> & {
   pagination?: Partial<AdminUserSearchRequest["pagination"]>;
 };
+
+export interface FetchAdminUsersOptions {
+  signal?: AbortSignal;
+}
 
 interface PaginationState {
   totalCount: number;
@@ -30,7 +35,7 @@ export interface UseAdminUsersReturn {
   pagination: PaginationState;
   userDetail: AdminUser | null;
   detailLoading: boolean;
-  fetchUsers: (params?: AdminUsersFetchParams) => Promise<void>;
+  fetchUsers: (params?: AdminUsersFetchParams, options?: FetchAdminUsersOptions) => Promise<void>;
   setPage: (pageNumber: number) => Promise<void>;
   setPageSize: (pageSize: number) => Promise<void>;
   loadUserDetail: (id: number) => Promise<AdminUser | null>;
@@ -63,6 +68,10 @@ const normalizeError = (err: unknown): string => {
   };
 
   return candidate.response?.data?.message || candidate.message || "An error occurred";
+};
+
+const isRequestCanceled = (err: unknown): boolean => {
+  return axios.isAxiosError(err) && err.code === "ERR_CANCELED";
 };
 
 const cleanSearchRequest = (body: AdminUserSearchRequest): AdminUserSearchRequest => {
@@ -112,7 +121,10 @@ export const useAdminUsers = (): UseAdminUsersReturn => {
     },
   });
 
-  const fetchUsers = useCallback(async (params?: AdminUsersFetchParams) => {
+  const fetchSeqRef = useRef(0);
+
+  const fetchUsers = useCallback(async (params?: AdminUsersFetchParams, options?: FetchAdminUsersOptions) => {
+    const seq = ++fetchSeqRef.current;
     setLoading(true);
     setError(null);
 
@@ -129,11 +141,17 @@ export const useAdminUsers = (): UseAdminUsersReturn => {
     const requestBody = cleanSearchRequest(merged);
     lastRequestRef.current = requestBody;
 
+    const axiosConfig = options?.signal ? { signal: options.signal } : {};
+
     try {
-      const response = await searchAdminUsers(requestBody, true);
+      const response = await searchAdminUsers(requestBody, true, axiosConfig);
       const payload = getResponsePayload(response);
 
       if (!payload) {
+        return;
+      }
+
+      if (seq !== fetchSeqRef.current) {
         return;
       }
 
@@ -147,9 +165,17 @@ export const useAdminUsers = (): UseAdminUsersReturn => {
         hasNext: payload.hasNext ?? false,
       });
     } catch (err) {
+      if (isRequestCanceled(err)) {
+        return;
+      }
+      if (seq !== fetchSeqRef.current) {
+        return;
+      }
       setError(normalizeError(err));
     } finally {
-      setLoading(false);
+      if (seq === fetchSeqRef.current) {
+        setLoading(false);
+      }
     }
   }, []);
 

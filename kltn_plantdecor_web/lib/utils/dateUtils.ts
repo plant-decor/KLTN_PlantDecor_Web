@@ -4,12 +4,30 @@
  */
 
 /**
+ * Chuỗi ISO kiểu .NET/JSON thường là UTC nhưng không có hậu tố Z/offset.
+ * `new Date("...T14:16:18")` không có Z → ES coi là giờ **local**, nên trùng với +7 khi máy đã ở VN.
+ * Nếu khớp dạng thuần này thì gắn Z để parse đúng instant UTC.
+ */
+function dateFromApiString(s: string): Date {
+  const t = s.trim();
+  if (!t) return new Date(NaN);
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(t)) {
+    return new Date(`${t}Z`);
+  }
+  return new Date(t);
+}
+
+function coerceDateInput(date: Date | string): Date {
+  return typeof date === 'string' ? dateFromApiString(date) : date;
+}
+
+/**
  * Format timestamp thành relative time string
  * VD: "just now", "2m ago", "3h ago", "2d ago"
  */
 export function formatDistanceToNow(date: Date | string): string {
   const now = new Date();
-  const targetDate = typeof date === 'string' ? new Date(date) : date;
+  const targetDate = coerceDateInput(date);
   const diffInSeconds = Math.floor((now.getTime() - targetDate.getTime()) / 1000);
 
   if (diffInSeconds < 10) return 'just now';
@@ -26,7 +44,7 @@ export function formatDistanceToNow(date: Date | string): string {
  * Format date thành dd/MM/yyyy
  */
 export function formatDate(date: Date | string): string {
-  const targetDate = typeof date === 'string' ? new Date(date) : date;
+  const targetDate = coerceDateInput(date);
   return new Intl.DateTimeFormat('vi-VN', {
     year: 'numeric',
     month: '2-digit',
@@ -39,7 +57,7 @@ export function formatDate(date: Date | string): string {
  * Format date + time thành dd/MM/yyyy HH:mm
  */
 export function formatDateTime(date: Date | string): string {
-  const targetDate = typeof date === 'string' ? new Date(date) : date;
+  const targetDate = coerceDateInput(date);
   return new Intl.DateTimeFormat('vi-VN', {
     year: 'numeric',
     month: '2-digit',
@@ -56,7 +74,7 @@ export function formatDateTime(date: Date | string): string {
  * Check if date is today
  */
 export function isToday(date: Date | string): boolean {
-  const targetDate = typeof date === 'string' ? new Date(date) : date;
+  const targetDate = coerceDateInput(date);
   const today = new Date();
   
   return (
@@ -70,7 +88,7 @@ export function isToday(date: Date | string): boolean {
  * Check if date is yesterday
  */
 export function isYesterday(date: Date | string): boolean {
-  const targetDate = typeof date === 'string' ? new Date(date) : date;
+  const targetDate = coerceDateInput(date);
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
   

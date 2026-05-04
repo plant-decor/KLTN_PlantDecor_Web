@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Box, Paper, TableContainer } from '@mui/material';
+import { Alert, Box, Paper, Tab, TableContainer, Tabs } from '@mui/material';
 import { toast } from 'react-toastify';
 import { CustomLoading } from '@/components/CustomLoading';
 import {
@@ -16,12 +16,27 @@ import {
   rejectManagerServiceRegistration,
   rescheduleManagerServiceRegistration,
 } from '@/lib/api/careServiceService';
+import {
+  assignDesignTask,
+  approveDesignRegistration,
+  buildDesignFlowLabelMap,
+  getDesignFlowEnums,
+  getDesignTasksByRegistration,
+  getEligibleCaretakersForDesignRegistration,
+  getEligibleCaretakersWithAvailabilityForDesignRegistration,
+  getNurseryDesignRegistrationDetail,
+  getNurseryDesignRegistrations,
+  managerCancelDesignRegistration,
+  rejectDesignRegistration,
+} from '@/lib/api/designRegistrationService';
+import type { CustomerDesignRegistrationDetail, CustomerDesignRegistrationListItem, DesignEligibleCaretaker, DesignEligibleCaretakerAvailability, DesignFlowEnumGroup, DesignRegistrationTask } from '@/types/design-registration.types';
 import type { EligibleCaretaker, EnumOption, ManagerServiceRegistration, PublicShift } from '@/types/care-service.types';
 import {
   ALL_STATUS_FILTER,
   buildServiceStatusLabelMap,
   buildServiceStatusOptions,
   getErrorMessage,
+  type ServiceStatusOption,
   type ServiceStatusFilterValue,
 } from './managerServiceOrders.constants';
 import ServiceOrdersHeader from './ServiceOrdersHeader';
@@ -32,9 +47,29 @@ import ServiceOrderRejectDialog from './ServiceOrderRejectDialog';
 import ServiceOrderCancelDialog from './ServiceOrderCancelDialog';
 import ServiceOrderAssignDialog from './ServiceOrderAssignDialog';
 import ServiceOrderRescheduleDialog, { type ServiceOrderRescheduleValues } from './ServiceOrderRescheduleDialog';
+import DesignServiceTab from './DesignServiceTab';
 import ManagementHeader from '@/components/layout/ManagementHeader';
+import { formatEnumLabel } from '@/lib/utils/enumLabelUtil';
+import { DESIGN_STATUS } from './utils/designStatusConstants';
 
-export default function ManagerServiceOrdersPageClient() {
+interface ManagerServiceOrdersPageClientProps {
+  pageTitle?: string;
+  pageDescription?: string;
+  entityLabel?: string;
+}
+
+const getLocalDateInputValue = () => {
+  const now = new Date();
+  const offset = now.getTimezoneOffset();
+  const local = new Date(now.getTime() - offset * 60 * 1000);
+  return local.toISOString().slice(0, 10);
+};
+
+export default function ManagerServiceOrdersPageClient({
+  pageTitle = 'Service Orders Management',
+  pageDescription = 'Manage service registration orders for your nursery, including approval, cancellation, and caretaker assignment.',
+  entityLabel = 'service orders',
+}: ManagerServiceOrdersPageClientProps) {
   const [items, setItems] = useState<ManagerServiceRegistration[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,6 +77,7 @@ export default function ManagerServiceOrdersPageClient() {
   const [statusFilter, setStatusFilter] = useState<ServiceStatusFilterValue>(ALL_STATUS_FILTER);
   const [pageNumber, setPageNumber] = useState(1);
   const pageSize = 10;
+  const [currentTab, setCurrentTab] = useState(0);
 
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -63,6 +99,26 @@ export default function ManagerServiceOrdersPageClient() {
   const [shiftsLoading, setShiftsLoading] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
+  const [designOrders, setDesignOrders] = useState<CustomerDesignRegistrationListItem[]>([]);
+  const [designLoading, setDesignLoading] = useState(false);
+  const [designError, setDesignError] = useState<string | null>(null);
+  const [designFlowEnums, setDesignFlowEnums] = useState<DesignFlowEnumGroup[]>([]);
+  const [designStatusFilter, setDesignStatusFilter] = useState<ServiceStatusFilterValue>(ALL_STATUS_FILTER);
+  const [designDetailOpen, setDesignDetailOpen] = useState(false);
+  const [designDetailLoading, setDesignDetailLoading] = useState(false);
+  const [designDetailItem, setDesignDetailItem] = useState<CustomerDesignRegistrationDetail | null>(null);
+  const [designCancelTarget, setDesignCancelTarget] = useState<CustomerDesignRegistrationListItem | null>(null);
+  const [designCancelReason, setDesignCancelReason] = useState('');
+  const [designRejectTarget, setDesignRejectTarget] = useState<CustomerDesignRegistrationListItem | null>(null);
+  const [designRejectReason, setDesignRejectReason] = useState('');
+  const [designTaskAssignTarget, setDesignTaskAssignTarget] = useState<DesignRegistrationTask | null>(null);
+  const [designTaskAssignRegistration, setDesignTaskAssignRegistration] = useState<CustomerDesignRegistrationListItem | CustomerDesignRegistrationDetail | null>(null);
+  const [eligibleDesignCaretakers, setEligibleDesignCaretakers] = useState<DesignEligibleCaretaker[]>([]);
+  const [eligibleDesignAvailability, setEligibleDesignAvailability] = useState<DesignEligibleCaretakerAvailability[]>([]);
+  const [designAssignLoading, setDesignAssignLoading] = useState(false);
+  const [selectedDesignCaretakerId, setSelectedDesignCaretakerId] = useState<number>(0);
+  const [designTaskScheduledDate, setDesignTaskScheduledDate] = useState(getLocalDateInputValue());
+
   useEffect(() => {
     const loadStatusEnums = async () => {
       try {
@@ -76,13 +132,54 @@ export default function ManagerServiceOrdersPageClient() {
     void loadStatusEnums();
   }, []);
 
+  useEffect(() => {
+    const loadDesignFlowEnums = async () => {
+      try {
+        const enums = await getDesignFlowEnums(false);
+        setDesignFlowEnums(enums);
+      } catch {
+        setDesignFlowEnums([]);
+      }
+    };
+
+    void loadDesignFlowEnums();
+  }, []);
+
   const statusOptions = useMemo(() => buildServiceStatusOptions(statusEnums), [statusEnums]);
-  console.log(statusOptions);
   const statusLabelMap = useMemo(() => buildServiceStatusLabelMap(statusEnums), [statusEnums]);
+
+  const designRegistrationStatusValues = useMemo(
+    () => designFlowEnums.find((group) => group.enumName === 'DesignRegistrationStatus')?.values ?? [],
+    [designFlowEnums]
+  );
+  const designStatusOptions = useMemo<ServiceStatusOption[]>(
+    () => [
+      { value: ALL_STATUS_FILTER, label: 'All Statuses' },
+      ...designRegistrationStatusValues.map((item) => ({ value: item.value, label: formatEnumLabel(item.name) })),
+    ],
+    [designRegistrationStatusValues]
+  );
+  const designStatusLabelMap = useMemo(
+    () => buildDesignFlowLabelMap(designFlowEnums, 'DesignRegistrationStatus', formatEnumLabel),
+    [designFlowEnums]
+  );
+  const designTaskStatusLabelMap = useMemo(
+    () => buildDesignFlowLabelMap(designFlowEnums, 'DesignTaskStatus', formatEnumLabel),
+    [designFlowEnums]
+  );
+  const designTaskTypeLabelMap = useMemo(
+    () => buildDesignFlowLabelMap(designFlowEnums, 'TaskType', formatEnumLabel),
+    [designFlowEnums]
+  );
 
   const activeFilterLabel = useMemo(
     () => statusOptions.find((option) => option.value === statusFilter)?.label || 'All Statuses',
     [statusFilter, statusOptions]
+  );
+
+  const activeDesignFilterLabel = useMemo(
+    () => designStatusOptions.find((option) => option.value === designStatusFilter)?.label || 'All Statuses',
+    [designStatusFilter, designStatusOptions]
   );
 
   const stats = useMemo(() => {
@@ -92,6 +189,54 @@ export default function ManagerServiceOrdersPageClient() {
       active: items.filter((item) => item.status === 3).length,
     };
   }, [items]);
+
+  const designStats = useMemo(() => {
+    return {
+      pending: designOrders.filter((item) => item.status === DESIGN_STATUS.PendingApproval).length,
+      awaitingPayment: designOrders.filter((item) => item.status === DESIGN_STATUS.AwaitDeposit || item.status === DESIGN_STATUS.AwaitFinalPayment).length,
+      active: designOrders.filter((item) => item.status === DESIGN_STATUS.DepositPaid || item.status === DESIGN_STATUS.InProgress).length,
+    };
+  }, [designOrders]);
+
+  const getDesignRegistrationStatusLabel = useCallback(
+    (item: Pick<CustomerDesignRegistrationListItem, 'status' | 'statusName'>) => {
+      return designStatusLabelMap[item.status] || formatEnumLabel(item.statusName) || `#${item.status}`;
+    },
+    [designStatusLabelMap]
+  );
+
+  const getDesignTaskStatusLabel = useCallback(
+    (task: DesignRegistrationTask) => {
+      return designTaskStatusLabelMap[task.status] || formatEnumLabel(task.statusName) || `#${task.status}`;
+    },
+    [designTaskStatusLabelMap]
+  );
+
+  const getDesignTaskTypeLabel = useCallback(
+    (task: DesignRegistrationTask) => {
+      return designTaskTypeLabelMap[task.taskType] || formatEnumLabel(task.taskTypeName) || `#${task.taskType}`;
+    },
+    [designTaskTypeLabelMap]
+  );
+
+  const loadDesignOrders = useCallback(async () => {
+    try {
+      setDesignLoading(true);
+      setDesignError(null);
+      const response = await getNurseryDesignRegistrations({
+        pageNumber: 1,
+        pageSize: 10,
+        status: designStatusFilter === ALL_STATUS_FILTER ? undefined : designStatusFilter,
+      }, false);
+      setDesignOrders(response.items);
+    } catch (loadError) {
+      const message = loadError instanceof Error ? loadError.message : 'Cannot load design service orders';
+      setDesignError(message);
+      toast.error(message);
+    } finally {
+      setDesignLoading(false);
+    }
+  }, [designStatusFilter]);
 
   const loadList = useCallback(async () => {
     try {
@@ -120,6 +265,13 @@ export default function ManagerServiceOrdersPageClient() {
     void loadList();
   }, [loadList]);
 
+  useEffect(() => {
+    if (currentTab !== 1) {
+      return;
+    }
+    void loadDesignOrders();
+  }, [currentTab, loadDesignOrders]);
+
   const refreshDetailIfNeeded = useCallback(
     async (registrationId: number) => {
       if (!detailOpen || detailItem?.id !== registrationId) {
@@ -136,6 +288,28 @@ export default function ManagerServiceOrdersPageClient() {
     [detailItem?.id, detailOpen]
   );
 
+  const refreshDesignDetailIfNeeded = useCallback(
+    async (registrationId: number) => {
+      if (!designDetailOpen || designDetailItem?.id !== registrationId) {
+        return;
+      }
+
+      try {
+        const [detail, tasks] = await Promise.all([
+          getNurseryDesignRegistrationDetail(registrationId, false),
+          getDesignTasksByRegistration(registrationId, false),
+        ]);
+        setDesignDetailItem({
+          ...detail,
+          designTasks: tasks.length > 0 ? tasks : detail.designTasks,
+        });
+      } catch {
+        // Keep current design detail content if refresh fails.
+      }
+    },
+    [designDetailItem?.id, designDetailOpen]
+  );
+
   const handleViewDetail = async (id: number) => {
     try {
       setDetailOpen(true);
@@ -148,6 +322,185 @@ export default function ManagerServiceOrdersPageClient() {
       setDetailItem(null);
     } finally {
       setDetailLoading(false);
+    }
+  };
+
+  const handleViewDesignDetail = async (id: number) => {
+    try {
+      setDesignDetailOpen(true);
+      setDesignDetailLoading(true);
+      const [response, tasks] = await Promise.all([
+        getNurseryDesignRegistrationDetail(id, false),
+        getDesignTasksByRegistration(id, false),
+      ]);
+      setDesignDetailItem({
+        ...response,
+        designTasks: tasks.length > 0 ? tasks : response.designTasks,
+      });
+    } catch (viewError) {
+      toast.error(getErrorMessage(viewError, 'Cannot load design registration details'));
+      setDesignDetailOpen(false);
+      setDesignDetailItem(null);
+    } finally {
+      setDesignDetailLoading(false);
+    }
+  };
+
+  const handleDesignCancel = async () => {
+    if (!designCancelTarget) {
+      return;
+    }
+
+    const trimmedReason = designCancelReason.trim();
+    if (!trimmedReason) {
+      toast.error('Please enter a reason for cancellation');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await managerCancelDesignRegistration(designCancelTarget.id, trimmedReason, false);
+      toast.success('Design order cancelled successfully');
+      setDesignCancelTarget(null);
+      setDesignCancelReason('');
+      await Promise.all([loadDesignOrders(), refreshDesignDetailIfNeeded(designCancelTarget.id)]);
+    } catch (cancelError) {
+      toast.error(getErrorMessage(cancelError, 'Cannot cancel design order'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const loadDesignCaretakersForAssignment = useCallback(
+    async (registrationId: number, scheduledDate: string) => {
+      if (scheduledDate) {
+        const availability = await getEligibleCaretakersWithAvailabilityForDesignRegistration(registrationId, scheduledDate, false);
+        setEligibleDesignAvailability(availability);
+        setEligibleDesignCaretakers(availability.map((item) => item.staff));
+        const firstAvailable = availability.find((item) => item.isAvailable)?.staff ?? availability[0]?.staff;
+        setSelectedDesignCaretakerId(firstAvailable?.id ?? 0);
+        return;
+      }
+
+      const caretakers = await getEligibleCaretakersForDesignRegistration(registrationId, false);
+      setEligibleDesignAvailability([]);
+      setEligibleDesignCaretakers(caretakers);
+      setSelectedDesignCaretakerId(caretakers[0]?.id ?? 0);
+    },
+    []
+  );
+
+  const openDesignTaskAssignDialog = async (
+    task: DesignRegistrationTask,
+    registration: CustomerDesignRegistrationListItem | CustomerDesignRegistrationDetail
+  ) => {
+    try {
+      const initialDate = task.scheduledDate?.slice(0, 10) || getLocalDateInputValue();
+      setDesignTaskAssignTarget(task);
+      setDesignTaskAssignRegistration(registration);
+      setDesignTaskScheduledDate(initialDate);
+      setDesignAssignLoading(true);
+      setSelectedDesignCaretakerId(0);
+      await loadDesignCaretakersForAssignment(registration.id, initialDate);
+    } catch (assignError) {
+      toast.error(getErrorMessage(assignError, 'Cannot load eligible caretakers'));
+      setDesignTaskAssignTarget(null);
+      setDesignTaskAssignRegistration(null);
+      setEligibleDesignCaretakers([]);
+      setEligibleDesignAvailability([]);
+    } finally {
+      setDesignAssignLoading(false);
+    }
+  };
+
+  const handleDesignTaskScheduledDateChange = async (value: string) => {
+    setDesignTaskScheduledDate(value);
+    if (!designTaskAssignRegistration) {
+      return;
+    }
+
+    try {
+      setDesignAssignLoading(true);
+      await loadDesignCaretakersForAssignment(designTaskAssignRegistration.id, value);
+    } catch (availabilityError) {
+      toast.error(getErrorMessage(availabilityError, 'Cannot check caretaker availability'));
+      setEligibleDesignCaretakers([]);
+      setEligibleDesignAvailability([]);
+      setSelectedDesignCaretakerId(0);
+    } finally {
+      setDesignAssignLoading(false);
+    }
+  };
+
+  const handleDesignAssign = async () => {
+    if (!designTaskAssignTarget || !designTaskAssignRegistration || !selectedDesignCaretakerId) {
+      toast.error('Please select a caretaker');
+      return;
+    }
+
+    if (!designTaskScheduledDate) {
+      toast.error('Please select a scheduled date');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await assignDesignTask(
+        designTaskAssignTarget.id,
+        { assignedStaffId: selectedDesignCaretakerId, scheduledDate: designTaskScheduledDate },
+        false
+      );
+      toast.success('Design task assigned successfully');
+      const registrationId = designTaskAssignRegistration.id;
+      setDesignTaskAssignTarget(null);
+      setDesignTaskAssignRegistration(null);
+      setEligibleDesignCaretakers([]);
+      setEligibleDesignAvailability([]);
+      setSelectedDesignCaretakerId(0);
+      await Promise.all([loadDesignOrders(), refreshDesignDetailIfNeeded(registrationId)]);
+    } catch (assignError) {
+      toast.error(getErrorMessage(assignError, 'Cannot assign design task'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDesignReject = async () => {
+    if (!designRejectTarget) {
+      return;
+    }
+
+    const trimmedReason = designRejectReason.trim();
+    if (!trimmedReason) {
+      toast.error('Please enter a reason for rejection');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await rejectDesignRegistration(designRejectTarget.id, trimmedReason, false);
+      toast.success('Design order rejected successfully');
+      const targetId = designRejectTarget.id;
+      setDesignRejectTarget(null);
+      setDesignRejectReason('');
+      await Promise.all([loadDesignOrders(), refreshDesignDetailIfNeeded(targetId)]);
+    } catch (rejectError) {
+      toast.error(getErrorMessage(rejectError, 'Cannot reject design order'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDesignApprove = async (id: number) => {
+    try {
+      setSubmitting(true);
+      await approveDesignRegistration(id, false);
+      toast.success('Design order approved successfully');
+      await Promise.all([loadDesignOrders(), refreshDesignDetailIfNeeded(id)]);
+    } catch (approveError) {
+      toast.error(getErrorMessage(approveError, 'Cannot approve design order'));
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -299,139 +652,207 @@ export default function ManagerServiceOrdersPageClient() {
 
   return (
     <Box sx={{ py: 4, px: { xs: 2, md: 4 }, mx: 'auto' }}>
-      <ManagementHeader 
-        title='Service Orders Management'
-        description='Manage service registration orders for your nursery, including approval, cancellation, and caretaker assignment.'
-        entityLabel='service orders'
-        count={items.length}
+      <ManagementHeader
+        title={pageTitle}
+        description={pageDescription}
+        entityLabel={entityLabel}
+        count={currentTab === 0 ? items.length : designOrders.length}
       />
 
-      <ServiceOrdersHeader
-        statusFilter={statusFilter}
-        statusOptions={statusOptions}
-        activeFilterLabel={activeFilterLabel}
-        pendingCount={stats.pending}
-        awaitingPaymentCount={stats.awaitingPayment}
-        activeCount={stats.active}
-        loading={loading}
-        onStatusFilterChange={(value) => {
-          setStatusFilter(value);
-          setPageNumber(1);
-        }}
-        onRefresh={() => void loadList()}
-      />
+      <Box sx={{ mb: 3 }}>
+        <Tabs value={currentTab} onChange={(_event, newValue) => setCurrentTab(newValue)}>
+          <Tab label="Care Service" />
+          <Tab label="Design Service" />
+        </Tabs>
+      </Box>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
-          {error}
-        </Alert>
+      {currentTab === 0 ? (
+        <>
+          <ServiceOrdersHeader
+            statusFilter={statusFilter}
+            statusOptions={statusOptions}
+            activeFilterLabel={activeFilterLabel}
+            pendingCount={stats.pending}
+            awaitingPaymentCount={stats.awaitingPayment}
+            activeCount={stats.active}
+            loading={loading}
+            onStatusFilterChange={(value) => {
+              setStatusFilter(value);
+              setPageNumber(1);
+            }}
+            onRefresh={() => void loadList()}
+          />
+
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+              {error}
+            </Alert>
+          )}
+
+          <Paper sx={{ border: '1px solid var(--card-border)', overflow: 'hidden' }}>
+            {loading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+                <CustomLoading />
+              </Box>
+            ) : (
+              <TableContainer>
+                <ServiceOrdersTable
+                  items={items}
+                  statusLabels={statusLabelMap}
+                  submitting={submitting}
+                  onViewDetail={handleViewDetail}
+                  onApprove={(item) => setApproveTarget(item)}
+                  onReject={(item) => {
+                    setRejectTarget(item);
+                    setRejectReason('');
+                  }}
+                  onCancel={(item) => {
+                    setCancelTarget(item);
+                    setCancelReason('');
+                  }}
+                  onAssignCaretaker={(item) => void openAssignDialog(item)}
+                  onReschedule={(item) => void openRescheduleDialog(item)}
+                />
+              </TableContainer>
+            )}
+          </Paper>
+
+          <ServiceOrderDetailDialog
+            open={detailOpen}
+            loading={detailLoading}
+            submitting={submitting}
+            detailItem={detailItem}
+            statusLabels={statusLabelMap}
+            onClose={() => {
+              setDetailOpen(false);
+              setDetailItem(null);
+            }}
+            onApprove={(item) => setApproveTarget(item)}
+            onReject={(item) => {
+              setRejectTarget(item);
+              setRejectReason('');
+            }}
+            onCancel={(item) => {
+              setCancelTarget(item);
+              setCancelReason('');
+            }}
+            onAssignCaretaker={(item) => void openAssignDialog(item)}
+            onReschedule={(item) => void openRescheduleDialog(item)}
+          />
+
+          <ServiceOrderApproveDialog
+            open={Boolean(approveTarget)}
+            target={approveTarget}
+            submitting={submitting}
+            onClose={() => setApproveTarget(null)}
+            onConfirm={() => void handleApprove()}
+          />
+
+          <ServiceOrderRejectDialog
+            open={Boolean(rejectTarget)}
+            target={rejectTarget}
+            reason={rejectReason}
+            submitting={submitting}
+            onReasonChange={setRejectReason}
+            onClose={() => setRejectTarget(null)}
+            onConfirm={() => void handleReject()}
+          />
+
+          <ServiceOrderCancelDialog
+            open={Boolean(cancelTarget)}
+            target={cancelTarget}
+            reason={cancelReason}
+            submitting={submitting}
+            onReasonChange={setCancelReason}
+            onClose={() => setCancelTarget(null)}
+            onConfirm={() => void handleManagerCancel()}
+          />
+
+          <ServiceOrderAssignDialog
+            open={Boolean(assignTarget)}
+            target={assignTarget}
+            selectedCaretakerId={selectedCaretakerId}
+            eligibleCaretakers={eligibleCaretakers}
+            loading={assignLoading}
+            submitting={submitting}
+            onSelectedCaretakerIdChange={setSelectedCaretakerId}
+            onClose={() => {
+              setAssignTarget(null);
+              setEligibleCaretakers([]);
+            }}
+            onConfirm={() => void handleAssignCaretaker()}
+          />
+
+          <ServiceOrderRescheduleDialog
+            open={Boolean(rescheduleTarget)}
+            target={rescheduleTarget}
+            shifts={publicShifts}
+            shiftsLoading={shiftsLoading}
+            submitting={submitting}
+            onClose={() => setRescheduleTarget(null)}
+            onConfirm={(values) => void handleReschedule(values)}
+          />
+        </>
+      ) : (
+        <DesignServiceTab
+          designOrders={designOrders}
+          designLoading={designLoading}
+          designError={designError}
+          designStatusFilter={designStatusFilter}
+          designStatusOptions={designStatusOptions}
+          activeDesignFilterLabel={activeDesignFilterLabel}
+          designStats={designStats}
+          submitting={submitting}
+          designDetailOpen={designDetailOpen}
+          designDetailLoading={designDetailLoading}
+          designDetailItem={designDetailItem}
+          designCancelTarget={designCancelTarget}
+          designCancelReason={designCancelReason}
+          designRejectTarget={designRejectTarget}
+          designRejectReason={designRejectReason}
+          designTaskAssignTarget={designTaskAssignTarget}
+          designTaskAssignRegistration={designTaskAssignRegistration}
+          eligibleDesignCaretakers={eligibleDesignCaretakers}
+          eligibleDesignAvailability={eligibleDesignAvailability}
+          designAssignLoading={designAssignLoading}
+          selectedDesignCaretakerId={selectedDesignCaretakerId}
+          designTaskScheduledDate={designTaskScheduledDate}
+          getDesignRegistrationStatusLabel={getDesignRegistrationStatusLabel}
+          getDesignTaskStatusLabel={getDesignTaskStatusLabel}
+          getDesignTaskTypeLabel={getDesignTaskTypeLabel}
+          onStatusFilterChange={(value) => {
+            setDesignStatusFilter(value);
+          }}
+          onRefresh={() => void loadDesignOrders()}
+          onViewDetail={(id) => void handleViewDesignDetail(id)}
+          onApprove={(id) => void handleDesignApprove(id)}
+          onOpenRejectDialog={(item) => {
+            setDesignRejectTarget(item);
+            setDesignRejectReason('');
+          }}
+          onOpenCancelDialog={(item) => {
+            setDesignCancelTarget(item);
+            setDesignCancelReason('');
+          }}
+          onOpenTaskAssignDialog={(task, registration) => void openDesignTaskAssignDialog(task, registration)}
+          onCloseDetail={() => setDesignDetailOpen(false)}
+          onCloseCancel={() => setDesignCancelTarget(null)}
+          onCloseReject={() => setDesignRejectTarget(null)}
+          onCloseTaskAssign={() => {
+            setDesignTaskAssignTarget(null);
+            setDesignTaskAssignRegistration(null);
+            setEligibleDesignCaretakers([]);
+            setEligibleDesignAvailability([]);
+          }}
+          onConfirmCancel={() => void handleDesignCancel()}
+          onConfirmReject={() => void handleDesignReject()}
+          onConfirmAssign={() => void handleDesignAssign()}
+          onScheduledDateChange={(date) => void handleDesignTaskScheduledDateChange(date)}
+          onSelectedCaretakerIdChange={setSelectedDesignCaretakerId}
+          onCancelReasonChange={setDesignCancelReason}
+          onRejectReasonChange={setDesignRejectReason}
+        />
       )}
-
-      <Paper sx={{ border: '1px solid var(--card-border)', overflow: 'hidden' }}>
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-            <CustomLoading />
-          </Box>
-        ) : (
-          <>
-            <TableContainer>
-              <ServiceOrdersTable
-                items={items}
-                statusLabels={statusLabelMap}
-                submitting={submitting}
-                onViewDetail={handleViewDetail}
-                onApprove={(item) => setApproveTarget(item)}
-                onReject={(item) => {
-                  setRejectTarget(item);
-                  setRejectReason('');
-                }}
-                onCancel={(item) => {
-                  setCancelTarget(item);
-                  setCancelReason('');
-                }}
-                onAssignCaretaker={(item) => void openAssignDialog(item)}
-                onReschedule={(item) => void openRescheduleDialog(item)}
-              />
-            </TableContainer>
-          </>
-        )}
-      </Paper>
-
-      <ServiceOrderDetailDialog
-        open={detailOpen}
-        loading={detailLoading}
-        submitting={submitting}
-        detailItem={detailItem}
-        statusLabels={statusLabelMap}
-        onClose={() => {
-          setDetailOpen(false);
-          setDetailItem(null);
-        }}
-        onApprove={(item) => setApproveTarget(item)}
-        onReject={(item) => {
-          setRejectTarget(item);
-          setRejectReason('');
-        }}
-        onCancel={(item) => {
-          setCancelTarget(item);
-          setCancelReason('');
-        }}
-        onAssignCaretaker={(item) => void openAssignDialog(item)}
-        onReschedule={(item) => void openRescheduleDialog(item)}
-      />
-
-      <ServiceOrderApproveDialog
-        open={Boolean(approveTarget)}
-        target={approveTarget}
-        submitting={submitting}
-        onClose={() => setApproveTarget(null)}
-        onConfirm={() => void handleApprove()}
-      />
-
-      <ServiceOrderRejectDialog
-        open={Boolean(rejectTarget)}
-        target={rejectTarget}
-        reason={rejectReason}
-        submitting={submitting}
-        onReasonChange={setRejectReason}
-        onClose={() => setRejectTarget(null)}
-        onConfirm={() => void handleReject()}
-      />
-
-      <ServiceOrderCancelDialog
-        open={Boolean(cancelTarget)}
-        target={cancelTarget}
-        reason={cancelReason}
-        submitting={submitting}
-        onReasonChange={setCancelReason}
-        onClose={() => setCancelTarget(null)}
-        onConfirm={() => void handleManagerCancel()}
-      />
-
-      <ServiceOrderAssignDialog
-        open={Boolean(assignTarget)}
-        target={assignTarget}
-        selectedCaretakerId={selectedCaretakerId}
-        eligibleCaretakers={eligibleCaretakers}
-        loading={assignLoading}
-        submitting={submitting}
-        onSelectedCaretakerIdChange={setSelectedCaretakerId}
-        onClose={() => {
-          setAssignTarget(null);
-          setEligibleCaretakers([]);
-        }}
-        onConfirm={() => void handleAssignCaretaker()}
-      />
-
-      <ServiceOrderRescheduleDialog
-        open={Boolean(rescheduleTarget)}
-        target={rescheduleTarget}
-        shifts={publicShifts}
-        shiftsLoading={shiftsLoading}
-        submitting={submitting}
-        onClose={() => setRescheduleTarget(null)}
-        onConfirm={(values) => void handleReschedule(values)}
-      />
     </Box>
   );
 }

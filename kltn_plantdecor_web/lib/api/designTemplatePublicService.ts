@@ -119,23 +119,23 @@ const normalizeTemplate = (value: unknown): MarketedDesignTemplate | null => {
 
   const specializations = Array.isArray(value.specializations)
     ? value.specializations
-        .map((item) => {
-          if (!isRecord(item)) {
-            return null;
-          }
+      .map((item) => {
+        if (!isRecord(item)) {
+          return null;
+        }
 
-          const specializationId = toNumber(item.id, Number.NaN);
-          if (!Number.isFinite(specializationId)) {
-            return null;
-          }
+        const specializationId = toNumber(item.id, Number.NaN);
+        if (!Number.isFinite(specializationId)) {
+          return null;
+        }
 
-          return {
-            id: specializationId,
-            name: toText(item.name),
-            description: toText(item.description) || undefined,
-          };
-        })
-        .filter((item): item is { id: number; name: string; description: string | undefined } => Boolean(item))
+        return {
+          id: specializationId,
+          name: toText(item.name),
+          description: toText(item.description) || undefined,
+        };
+      })
+      .filter((item): item is { id: number; name: string; description: string | undefined } => Boolean(item))
     : [];
 
   return {
@@ -162,7 +162,7 @@ export const getMarketedDesignTemplates = async (loading = true): Promise<Market
 };
 
 export const getMarketedDesignTemplateTiers = async (loading = true): Promise<MarketedDesignTemplateTier[]> => {
-  const response = await apiClient.get<WrappedResponse<unknown>>("/api/public/design-template-tiers/marketed", undefined, loading, QUERY_CONFIG);
+  const response = await apiClient.get<WrappedResponse<unknown>>("/public/design-template-tiers/marketed", undefined, loading, QUERY_CONFIG);
   const unwrapped = unwrapPayloadData(response);
   return Array.isArray(unwrapped) ? unwrapped.map(normalizeTier).filter((item): item is MarketedDesignTemplateTier => Boolean(item)) : [];
 };
@@ -173,7 +173,7 @@ export const getDesignTemplateTiers = async (
   loading = true
 ): Promise<MarketedDesignTemplateTier[]> => {
   const response = await apiClient.get<WrappedResponse<unknown>>(
-    "/api/public/design-template-tiers",
+    "/public/design-template-tiers",
     { designTemplateId, includeInactive },
     loading,
     QUERY_CONFIG
@@ -183,7 +183,7 @@ export const getDesignTemplateTiers = async (
 };
 
 export const getDesignTemplateTierNurseries = async (id: number, loading = true): Promise<MarketedDesignTemplateTierNursery[]> => {
-  const response = await apiClient.get<WrappedResponse<unknown>>(`/api/public/design-template-tiers/${id}/nurseries`, undefined, loading, QUERY_CONFIG);
+  const response = await apiClient.get<WrappedResponse<unknown>>(`/public/design-template-tiers/${id}/nurseries`, undefined, loading, QUERY_CONFIG);
   const unwrapped = unwrapPayloadData(response);
   return Array.isArray(unwrapped) ? unwrapped.map(normalizeNursery).filter((item): item is MarketedDesignTemplateTierNursery => Boolean(item)) : [];
 };

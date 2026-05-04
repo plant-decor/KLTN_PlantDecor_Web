@@ -71,6 +71,35 @@ const getLocalDateInputValue = (date: Date = new Date()) => {
   return `${year}-${month}-${day}`;
 };
 
+const parseTimeToHms = (time: string) => {
+  const normalized = time.trim();
+  const [hRaw, mRaw, sRaw] = normalized.split(':');
+  const h = Number(hRaw);
+  const m = Number(mRaw ?? 0);
+  const s = Number(sRaw ?? 0);
+  if (!Number.isFinite(h) || !Number.isFinite(m) || !Number.isFinite(s)) {
+    return null;
+  }
+  if (h < 0 || h > 23 || m < 0 || m > 59 || s < 0 || s > 59) {
+    return null;
+  }
+  return { h, m, s };
+};
+
+const buildLocalDateTimeFromDateAndTime = (dateStr: string, timeStr: string) => {
+  const [yRaw, moRaw, dRaw] = dateStr.split('-');
+  const y = Number(yRaw);
+  const mo = Number(moRaw);
+  const d = Number(dRaw);
+  const hms = parseTimeToHms(timeStr);
+  if (!Number.isFinite(y) || !Number.isFinite(mo) || !Number.isFinite(d) || !hms) {
+    return null;
+  }
+  // JS Date months are 0-based.
+  const dt = new Date(y, mo - 1, d, hms.h, hms.m, hms.s, 0);
+  return Number.isNaN(dt.getTime()) ? null : dt;
+};
+
 export default function ServiceBookingDialog({ open, onClose, onSubmit, initialPackageId }: ServiceBookingDialogProps) {
   const t = useTranslations('services');
   const tError = useTranslations('profile');
@@ -469,6 +498,33 @@ export default function ServiceBookingDialog({ open, onClose, onSubmit, initialP
     if (!formData.preferredShiftId) {
       newErrors.preferredShiftId = t('shift');
     }
+
+    const minLeadHours =
+      selectedPackage?.serviceType === serviceTypeOneTimeValue
+        ? 6
+        : selectedPackage?.serviceType === serviceTypePeriodicValue
+          ? 24
+          : null;
+
+    if (!newErrors.serviceDate && !newErrors.preferredShiftId && minLeadHours != null) {
+      const shift = shifts.find((s) => s.id === formData.preferredShiftId) ?? null;
+      const startAt =
+        shift?.startTime && formData.serviceDate
+          ? buildLocalDateTimeFromDateAndTime(formData.serviceDate, shift.startTime)
+          : null;
+
+      if (!startAt) {
+        newErrors.serviceDate = t('serviceDateRequired');
+      } else {
+        const diffMs = startAt.getTime() - Date.now();
+        const minLeadMs = minLeadHours * 60 * 60 * 1000;
+        if (diffMs < minLeadMs) {
+          newErrors.serviceDate =
+            minLeadHours === 6 ? t('bookingLeadTimeOneTime') : t('bookingLeadTimePeriodic');
+        }
+      }
+    }
+
     if (selectedPackage?.serviceType === serviceTypePeriodicValue) {
       if (formData.scheduleDaysOfWeek.length === 0) {
         newErrors.scheduleDaysOfWeek = t('scheduleRequired');

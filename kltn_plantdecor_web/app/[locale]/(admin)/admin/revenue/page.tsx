@@ -1,10 +1,5 @@
-"use client";
-import React from 'react'
+import AdminRevenuePageClient from '@/components/revenue/AdminRevenuePageClient';
 
-const page = () => {
-  return (
-    <div>Revenue Page</div>
-  )
+export default function AdminRevenuePage() {
+  return <AdminRevenuePageClient />;
 }
-
-export default page

@@ -27,7 +27,6 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  CircularProgress,
   Alert,
   TablePagination,
 } from '@mui/material';
@@ -555,7 +554,7 @@ export default function CrossNurseryInventoryPage() {
             {loading ? (
               <TableRow>
                 <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
-                  <CircularProgress size={28} />
+                  <CustomLoading size={28} />
                 </TableCell>
               </TableRow>
             ) : (

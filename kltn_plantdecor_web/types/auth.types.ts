@@ -76,10 +76,19 @@ export interface ForgotPasswordRequest {
   email: string;
 }
 
-export interface CreateManagerRequest {
+/** Body POST /Authentication/create-consultant */
+export interface CreateConsultantRequest {
   email: string;
   password: string;
+  confirmPassword: string;
+  username: string;
   fullName: string;
+  phoneNumber: string;
+}
+
+/** Body POST /Authentication/create-manager (nurseryId tùy chọn) */
+export interface CreateManagerRequest extends CreateConsultantRequest {
+  nurseryId?: number;
 }
 
 export interface RevokeTokenRequest {

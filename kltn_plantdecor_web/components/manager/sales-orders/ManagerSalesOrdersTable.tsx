@@ -19,8 +19,10 @@ import {
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
 import ImageIcon from '@mui/icons-material/Image';
+import ReplayIcon from '@mui/icons-material/Replay';
 import type { ManagerNurseryOrder } from '@/types/manager-sales-orders.types';
 import FullscreenImageModal from '@/components/image-view/FullscreenImageModal';
+import RedeliveryConfirmationModal from './RedeliveryConfirmationModal';
 import {
   formatCurrency,
   SALES_ORDER_STATUS_CHIP_COLOR,
@@ -43,6 +45,7 @@ interface ManagerSalesOrdersTableProps {
   onRowsPerPageChange: (pageSize: number) => void;
   onViewDetail: (item: ManagerNurseryOrder) => void;
   onAssignShipper?: (item: ManagerNurseryOrder) => void;
+  onRedelivery?: (item: ManagerNurseryOrder) => void;
 }
 
 export default function ManagerSalesOrdersTable({
@@ -54,10 +57,13 @@ export default function ManagerSalesOrdersTable({
   onRowsPerPageChange,
   onViewDetail,
   onAssignShipper,
+  onRedelivery,
 }: ManagerSalesOrdersTableProps) {
   const [shipImageOpen, setShipImageOpen] = useState(false);
   const [shipImageUrl, setShipImageUrl] = useState<string | null>(null);
   const shipImages = useMemo(() => (shipImageUrl ? [shipImageUrl] : []), [shipImageUrl]);
+
+  const [redeliveryTarget, setRedeliveryTarget] = useState<ManagerNurseryOrder | null>(null);
 
   const handleChangePage = (_event: unknown, newPage: number) => {
     onPageChange(newPage + 1);
@@ -73,16 +79,16 @@ export default function ManagerSalesOrdersTable({
         <Table size="small">
           <TableHead sx={{ backgroundColor: 'var(--primary)' }}>
             <TableRow>
-              <TableCell sx={{ fontWeight: 700 }}>Nursery Order ID</TableCell>
+              <TableCell sx={{ fontWeight: 700 }}>ID</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>Customer</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>Shipper</TableCell>
-              <TableCell sx={{ fontWeight: 700 }} align="right">
+              <TableCell sx={{ fontWeight: 700 }} align="center">
                 Deposit
               </TableCell>
-              <TableCell sx={{ fontWeight: 700 }} align="right">
+              <TableCell sx={{ fontWeight: 700 }} align="center">
                 Remaining
               </TableCell>
-              <TableCell sx={{ fontWeight: 700 }} align="right">
+              <TableCell sx={{ fontWeight: 700 }} align="center">
                 Subtotal
               </TableCell>
               <TableCell sx={{ fontWeight: 700 }} align="center">
@@ -109,6 +115,7 @@ export default function ManagerSalesOrdersTable({
                 const customerDescription = `${item.customerName} - ${item.customerPhone}`;
                 const shipperDescription = item.shipperName || 'Unassigned';
                 const canAssignShipper = ASSIGNABLE_STATUSES.has(item.status);
+                const canRedeliver = item.status === 9 || item.statusName === 'Failed';
                 // const paidAmount = getPaidAmount(item);
 
                 return (
@@ -130,22 +137,22 @@ export default function ManagerSalesOrdersTable({
                         {item.shipperPhone || '-'}
                       </Typography>
                     </TableCell>
-                    {/* <TableCell align="right">
+                    {/* <TableCell align="center">
                       <Typography variant="body2" fontWeight={700}>
                         {paidAmount != null ? formatCurrency(paidAmount) : '-'}
                       </Typography>
                     </TableCell> */}
-                    <TableCell align="right">
+                    <TableCell align="center">
                       <Typography variant="body2" fontWeight={700}>
                         {formatCurrency(item.depositAmount ?? undefined)}
                       </Typography>
                     </TableCell>
-                    <TableCell align="right">
+                    <TableCell align="center">
                       <Typography variant="body2" fontWeight={700}>
                         {formatCurrency(item.remainingAmount ?? 0)}
                       </Typography>
                     </TableCell>
-                    <TableCell align="right">
+                    <TableCell align="center">
                       <Typography variant="body2" fontWeight={700}>
                         {formatCurrency(item.subTotalAmount)}
                       </Typography>
@@ -166,6 +173,13 @@ export default function ManagerSalesOrdersTable({
                               <AssignmentIndIcon fontSize="medium" className="hover:scale-110" />
                             </Button>
                           </span>
+                        </Tooltip>
+                      ) : null}
+                      {onRedelivery && canRedeliver ? (
+                        <Tooltip title="Redelivery">
+                          <Button size="small" onClick={() => setRedeliveryTarget(item)}>
+                            <ReplayIcon fontSize="medium" className="hover:scale-110" />
+                          </Button>
                         </Tooltip>
                       ) : null}
                       {item.deliveryImageUrl ? (
@@ -213,6 +227,17 @@ export default function ManagerSalesOrdersTable({
           setShipImageUrl(null);
         }}
         alt="Delivery image"
+      />
+
+      <RedeliveryConfirmationModal
+        open={!!redeliveryTarget}
+        onClose={() => setRedeliveryTarget(null)}
+        onConfirm={() => {
+          if (redeliveryTarget && onRedelivery) {
+            onRedelivery(redeliveryTarget);
+          }
+          setRedeliveryTarget(null);
+        }}
       />
     </Box>
   );

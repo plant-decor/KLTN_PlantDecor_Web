@@ -10,13 +10,13 @@ import {
   IconButton,
   Stack,
   Typography,
-  CircularProgress,
   Divider,
 } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
 import type { AdminUser } from '@/types/admin-user.types';
 import { formatRoleLabel, mapApiUserStatusToUi } from '@/lib/user-management/helpers';
 import { formatDateTime } from '@/lib/utils/dateUtils';
+import { CustomLoading } from '../CustomLoading';
 
 interface UserDetailDialogProps {
   open: boolean;
@@ -50,7 +50,7 @@ export default function UserDetailDialog({
       <DialogContent sx={{ pt: 1 }}>
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-            <CircularProgress size={32} />
+            <CustomLoading size={32} />
           </Box>
         ) : user ? (
           <Stack spacing={1.5}>

@@ -259,7 +259,7 @@ export const getAdminDesignTemplateTiers = async (
 };
 
 export const getAdminDesignTemplateTierDetail = async (id: number, loading = true): Promise<DesignTemplateTier> => {
-  const response = await apiClient.get<WrappedResponse<unknown>>(`/api/public/design-template-tiers/${id}`, undefined, loading, QUERY_CONFIG);
+  const response = await apiClient.get<WrappedResponse<unknown>>(`/public/design-template-tiers/${id}`, undefined, loading, QUERY_CONFIG);
   const tier = normalizeTier(unwrapPayloadData(response));
   return tier ?? {
     id: 0,

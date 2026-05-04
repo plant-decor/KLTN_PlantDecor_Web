@@ -110,3 +110,20 @@ export const updateManagerNurseryOrderShipper = async (
 
   return unwrapPayloadData(response);
 };
+
+export const markManagerNurseryOrderAsAssigned = async (
+  nurseryOrderId: number,
+  loading = true
+): Promise<ManagerNurseryOrderDetail> => {
+  const response = await apiClient.put<ResponseModel<ManagerNurseryOrderDetail>>(
+    `/manager/nursery-orders/${nurseryOrderId}/mark-assigned`,
+    {},
+    loading,
+    {
+      showToast: false,
+      showErrorToast: false,
+    }
+  );
+
+  return unwrapPayloadData(response);
+};

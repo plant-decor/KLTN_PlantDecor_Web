@@ -28,6 +28,7 @@ export function buildServiceBookingPath({
   const safeLocale = encodeURIComponent(locale);
   const safeUserId = encodeURIComponent(String(userId));
   const params = new URLSearchParams();
+  params.set("tab", "care");
   params.set("packageId", String(packageId));
   params.set("action", action);
   return `/${safeLocale}/services/${safeUserId}?${params.toString()}`;

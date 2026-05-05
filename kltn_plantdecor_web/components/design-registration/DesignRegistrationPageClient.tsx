@@ -527,15 +527,7 @@ export default function DesignRegistrationPageClient() {
 
   return (
     <Box>
-      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
-        <Box>
-          <Typography variant="h4" fontWeight="bold" gutterBottom>
-            My Design Services
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Track design registrations, payments, and assigned design tasks.
-          </Typography>
-        </Box>
+      <Box sx={{ my: 2, display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
         <Button
           variant="contained"
           startIcon={<AddIcon />}

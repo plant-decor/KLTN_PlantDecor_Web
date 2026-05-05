@@ -1,9 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import { Alert, Box, Button, Chip, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, Typography } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
 import PersonAddAltOutlinedIcon from '@mui/icons-material/PersonAddAltOutlined';
 import ServiceOrdersHeader from './ServiceOrdersHeader';
 import DesignOrderDetailDialog from './dialogs/DesignOrderDetailDialog';
@@ -11,6 +13,7 @@ import DesignOrderCancelDialog from './dialogs/DesignOrderCancelDialog';
 import DesignOrderRejectDialog from './dialogs/DesignOrderRejectDialog';
 import DesignTaskAssignDialog from './dialogs/DesignTaskAssignDialog';
 import DesignCaretakerAssignDialog from './dialogs/DesignCaretakerAssignDialog';
+import FullscreenImageModal from '@/components/image-view/FullscreenImageModal';
 import { canApproveDesign, canManagerCancelDesign, canRejectDesign, canAssignCaretakerToDesign, getDesignStatusChipColor } from './utils/designStatusUtil';
 import { formatCurrency } from '@/lib/utils/formatUtil';
 import type { CustomerDesignRegistrationDetail, CustomerDesignRegistrationListItem, DesignEligibleCaretaker, DesignEligibleCaretakerAvailability, DesignRegistrationTask } from '@/types/design-registration.types';
@@ -56,6 +59,7 @@ interface DesignServiceTabProps {
   onStatusFilterChange: (value: ServiceStatusFilterValue) => void;
   onRefresh: () => void;
   onViewDetail: (id: number) => void;
+  onViewTaskDetail: (taskId: number) => void;
   onApprove: (id: number) => void;
   onOpenRejectDialog: (item: CustomerDesignRegistrationListItem) => void;
   onOpenCancelDialog: (item: CustomerDesignRegistrationListItem) => void;
@@ -114,6 +118,7 @@ export default function DesignServiceTab({
   onStatusFilterChange,
   onRefresh,
   onViewDetail,
+  onViewTaskDetail,
   onApprove,
   onOpenRejectDialog,
   onOpenCancelDialog,
@@ -136,6 +141,8 @@ export default function DesignServiceTab({
   onCancelReasonChange,
   onRejectReasonChange,
 }: DesignServiceTabProps) {
+  const [fullscreenCurrentStateImage, setFullscreenCurrentStateImage] = useState<string | null>(null);
+
   const availabilityByStaffId = eligibleDesignAvailability.reduce<Record<number, DesignEligibleCaretakerAvailability>>((acc, item) => {
     acc[item.staff.id] = item;
     return acc;
@@ -193,93 +200,109 @@ export default function DesignServiceTab({
                     </TableCell>
                   </TableRow>
                 ) : (
-                  designOrders.map((order) => (
-                    <TableRow key={order.id} hover>
-                      <TableCell>{order.id}</TableCell>
-                      <TableCell>
-                        <Typography variant="body2" fontWeight={600}>
-                          {order.customer?.fullName || '-'}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {order.customer?.email || '-'}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" fontWeight={600}>
-                          {order.designTemplateTier.designTemplate.name || '-'}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {order.designTemplateTier.tierName || '-'}
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="center">
-                        <Chip
-                          size="small"
-                          color={getDesignStatusChipColor(order.status)}
-                          label={getDesignRegistrationStatusLabel(order)}
-                        />
-                      </TableCell>
-                      <TableCell align="center">{formatCurrency(order.totalPrice, 'vi-VN')}</TableCell>
-                      <TableCell>{order.createdAt ? formatDate(order.createdAt) : '-'}</TableCell>
-                      <TableCell align="center">
-                        <Stack direction="row" spacing={1} justifyContent="center" useFlexGap flexWrap="nowrap" maxHeight={40}>
-                            <Button size="small" variant='contained' title='View Detail' className='bg-transparent! aspect-square! rounded-full!' onClick={() => onViewDetail(order.id)}>
-                              <VisibilityIcon fontSize="medium" />
-                            </Button>
-                          {canApproveDesign(order.status) && (
-                            <Button
-                              size="small"
-                              variant="contained"
-                              className="bg-primary! aspect-square! rounded-full!"
-                              disabled={submitting}
-                              title="Approve"
-                              onClick={() => onApprove(order.id)}
-                            >
-                              <CheckCircleOutlineIcon />
-                            </Button>
-                          )}
-                          {canRejectDesign(order.status) && (
-                            <Button
-                              size="small"
-                              variant="contained"
-                              className="bg-error! aspect-square! rounded-full!"
-                              disabled={submitting}
-                              title="Reject"
-                              onClick={() => onOpenRejectDialog(order)}
-                            >
-                              <CancelOutlinedIcon />
-                            </Button>
-                          )}
-                          {canManagerCancelDesign(order.status) && (
-                            <Button
-                              size="small"
-                              variant="contained"
-                              color="error"
-                              className="bg-error! aspect-square! rounded-full!"
-                              disabled={submitting}
-                              title="Cancel"
-                              onClick={() => onOpenCancelDialog(order)}
-                            >
-                              <CancelOutlinedIcon />
-                            </Button>
-                          )}
-                          {canAssignCaretakerToDesign(order.status) && (
-                            <Tooltip title="Assign caretaker">
+                  designOrders.map((order) => {
+                    const currentStateImageUrl = order.currentStateImageUrl?.trim();
+
+                    return (
+                      <TableRow key={order.id} hover>
+                        <TableCell>{order.id}</TableCell>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight={600}>
+                            {order.customer?.fullName || '-'}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {order.customer?.email || '-'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight={600}>
+                            {order.designTemplateTier.designTemplate.name || '-'}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {order.designTemplateTier.tierName || '-'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="center">
+                          <Chip
+                            size="small"
+                            color={getDesignStatusChipColor(order.status)}
+                            label={getDesignRegistrationStatusLabel(order)}
+                          />
+                        </TableCell>
+                        <TableCell align="center">{formatCurrency(order.totalPrice, 'vi-VN')}</TableCell>
+                        <TableCell>{order.createdAt ? formatDate(order.createdAt) : '-'}</TableCell>
+                        <TableCell align="center">
+                          <Stack direction="row" spacing={1} justifyContent="center" useFlexGap flexWrap="nowrap" maxHeight={40}>
+                              <Button size="small" variant='contained' title='View Detail' className='bg-transparent! aspect-square! rounded-full!' onClick={() => onViewDetail(order.id)}>
+                                <VisibilityIcon fontSize="medium" />
+                              </Button>
+                            {currentStateImageUrl && (
+                              <Tooltip title="View current state image">
+                                <Button
+                                  size="small"
+                                  variant="contained"
+                                  className="bg-green-500! aspect-square! rounded-full!"
+                                  onClick={() => setFullscreenCurrentStateImage(currentStateImageUrl)}
+                                >
+                                  <ImageOutlinedIcon fontSize="small" />
+                                </Button>
+                              </Tooltip>
+                            )}
+                            {canApproveDesign(order.status) && (
                               <Button
                                 size="small"
                                 variant="contained"
-                                className="bg-blue-400! aspect-square! rounded-full!"
+                                className="bg-primary! aspect-square! rounded-full!"
                                 disabled={submitting}
-                                onClick={() => onOpenCaretakerAssignDialog(order)}
+                                title="Approve"
+                                onClick={() => onApprove(order.id)}
                               >
-                                <PersonAddAltOutlinedIcon fontSize="small" />
+                                <CheckCircleOutlineIcon />
                               </Button>
-                            </Tooltip>
-                          )}
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                            )}
+                            {canRejectDesign(order.status) && (
+                              <Button
+                                size="small"
+                                variant="contained"
+                                className="bg-error! aspect-square! rounded-full!"
+                                disabled={submitting}
+                                title="Reject"
+                                onClick={() => onOpenRejectDialog(order)}
+                              >
+                                <CancelOutlinedIcon />
+                              </Button>
+                            )}
+                            {canManagerCancelDesign(order.status) && (
+                              <Button
+                                size="small"
+                                variant="contained"
+                                color="error"
+                                className="bg-error! aspect-square! rounded-full!"
+                                disabled={submitting}
+                                title="Cancel"
+                                onClick={() => onOpenCancelDialog(order)}
+                              >
+                                <CancelOutlinedIcon />
+                              </Button>
+                            )}
+                            {canAssignCaretakerToDesign(order.status) && (
+                              <Tooltip title="Assign caretaker">
+                                <Button
+                                  size="small"
+                                  variant="contained"
+                                  className="bg-blue-400! aspect-square! rounded-full!"
+                                  disabled={submitting}
+                                  onClick={() => onOpenCaretakerAssignDialog(order)}
+                                >
+                                  <PersonAddAltOutlinedIcon fontSize="small" />
+                                </Button>
+                              </Tooltip>
+                            )}
+                          </Stack>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 )}
               </TableBody>
             </Table>
@@ -298,6 +321,7 @@ export default function DesignServiceTab({
         onCancel={(item) => onOpenCancelDialog(item as CustomerDesignRegistrationListItem)}
         onAssignTask={onOpenTaskAssignDialog}
         onRescheduleTask={onOpenTaskRescheduleDialog}
+        onViewTaskDetail={onViewTaskDetail}
         getDesignRegistrationStatusLabel={getDesignRegistrationStatusLabel}
         getDesignTaskStatusLabel={getDesignTaskStatusLabel}
         getDesignTaskTypeLabel={getDesignTaskTypeLabel}
@@ -353,6 +377,13 @@ export default function DesignServiceTab({
         onStartDateChange={onCaretakerAssignStartDateChange}
         onSelectedCaretakerIdChange={onSelectedCaretakerIdForAssignChange}
         onConfirm={onConfirmCaretakerAssign}
+      />
+
+      <FullscreenImageModal
+        images={fullscreenCurrentStateImage ? [fullscreenCurrentStateImage] : []}
+        isOpen={Boolean(fullscreenCurrentStateImage)}
+        onClose={() => setFullscreenCurrentStateImage(null)}
+        alt="Current state image"
       />
     </>
   );

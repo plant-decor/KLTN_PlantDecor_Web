@@ -77,6 +77,7 @@ export interface MaterialNursery {
   nurseryMaterialId: number;
   nurseryPlantComboId: number | null;
   commonPlantId: number | null;
+  quantity?: number | null;
   managerId: number | null;
   managerName: string | null;
   name: string;

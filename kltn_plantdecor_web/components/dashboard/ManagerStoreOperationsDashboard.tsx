@@ -1,28 +1,49 @@
 'use client';
 
 import {
+  Alert,
   Box,
   Card,
   CardContent,
-  Typography,
-  Paper,
   Chip,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
 } from '@mui/material';
 import {
   Inventory2,
-  Warning,
-  CheckCircle,
-  AccessTime,
+  LocalFlorist,
+  Grass,
+  ErrorOutline,
+  Schedule,
 } from '@mui/icons-material';
 import { PieChart } from '@mui/x-charts/PieChart';
-import { ScatterChart } from '@mui/x-charts/ScatterChart';
-import {
-  orderStatusDistribution,
-  inventoryStockData,
-  storeOperationsStats,
-} from '@/data/dashboardMockData';
+import { CustomLoading } from '@/components/CustomLoading';
+import type { ExpiringSoonMaterialItem, LowStockProductItem } from '@/types/manager-store-catalog.types';
+import type {
+  MyNurseryMaterialSummaryPayload,
+  NurseryFailedOrdersPayload,
+  NurseryOrderStatusSummaryPayload,
+} from '@/types/manager-dashboard.types';
+import { formatDateTime } from '@/lib/utils/dateUtils';
 
-// Stat Card Component
+const PIE_COLORS = ['#ff9800', '#2196f3', '#9c27b0', '#4caf50', '#f44336', '#00bcd4', '#795548', '#607d8b'];
+
+export interface ManagerStoreOperationsDashboardProps {
+  statusSummary: NurseryOrderStatusSummaryPayload | null;
+  failed: NurseryFailedOrdersPayload | null;
+  materialSummary: MyNurseryMaterialSummaryPayload | null;
+  lowStockItems: LowStockProductItem[];
+  expiringMaterials: ExpiringSoonMaterialItem[];
+  loading: boolean;
+  loadError: string | null;
+}
+
 interface StatCardProps {
   title: string;
   value: string | number;
@@ -67,255 +88,253 @@ function StatCard({ title, value, icon, color, subtitle }: StatCardProps) {
   );
 }
 
-// Format currency in VND
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
-  }).format(value);
-};
-
-export default function ManagerStoreOperationsDashboard() {
-  // Prepare data for order status pie chart
-  const orderStatusData = [
-    { id: 0, value: orderStatusDistribution.pending, label: 'Chờ xử lý', color: '#ff9800' },
-    { id: 1, value: orderStatusDistribution.processing, label: 'Đang xử lý', color: '#2196f3' },
-    { id: 2, value: orderStatusDistribution.shipping, label: 'Đang giao', color: '#9c27b0' },
-    { id: 3, value: orderStatusDistribution.completed, label: 'Hoàn thành', color: '#4caf50' },
-    { id: 4, value: orderStatusDistribution.cancelled, label: 'Đã hủy', color: '#f44336' },
-  ];
-
-  const totalOrders = Object.values(orderStatusDistribution).reduce((a, b) => a + b, 0);
-
-  // Prepare data for inventory scatter chart
-  const scatterData = inventoryStockData.map((item) => ({
-    x: item.salesVelocity,
-    y: item.stockQuantity,
-    id: item.productName,
+export default function ManagerStoreOperationsDashboard({
+  statusSummary,
+  failed,
+  materialSummary,
+  lowStockItems,
+  expiringMaterials,
+  loading,
+  loadError,
+}: ManagerStoreOperationsDashboardProps) {
+  const items = statusSummary?.items ?? [];
+  const totalByStatus = items.reduce((acc, it) => acc + it.totalOrders, 0);
+  const pieData = items.map((it, index) => ({
+    id: it.status,
+    value: it.totalOrders,
+    label: it.statusName,
+    color: PIE_COLORS[index % PIE_COLORS.length],
   }));
+
+  const cp = materialSummary?.commonPlants;
+  const pi = materialSummary?.plantInstances;
+  const mat = materialSummary?.materials;
+  const totalFailed = failed?.totalFailedOrders ?? 0;
 
   return (
     <Box sx={{ p: 3 }}>
-      {/* Header */}
       <Typography variant="h4" fontWeight="bold" gutterBottom>
-        Dashboard Vận Hành
+        Operations & Inventory
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-        Quản lý đơn hàng và tồn kho chi nhánh
+        Order status for the period, inventory overview, and low-stock / expiry alerts.
       </Typography>
 
-      {/* Statistics Cards */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' }, gap: 3, mb: 4 }}>
-        <StatCard
-          title="Giá Trị Tồn Kho"
-          value={formatCurrency(storeOperationsStats.totalInventoryValue)}
-          icon={<Inventory2 sx={{ color: 'white', fontSize: 32 }} />}
-          color="#2196f3"
-        />
-        <StatCard
-          title="Sản Phẩm Sắp Hết"
-          value={storeOperationsStats.lowStockItems}
-          icon={<Warning sx={{ color: 'white', fontSize: 32 }} />}
-          color="#ff9800"
-          subtitle="Cần nhập thêm hàng"
-        />
-        <StatCard
-          title="Hết Hàng"
-          value={storeOperationsStats.outOfStock}
-          icon={<CheckCircle sx={{ color: 'white', fontSize: 32 }} />}
-          color="#4caf50"
-        />
-        <StatCard
-          title="Thời Gian Xử Lý TB"
-          value={`${storeOperationsStats.averageFulfillmentTime} ngày`}
-          icon={<AccessTime sx={{ color: 'white', fontSize: 32 }} />}
-          color="#9c27b0"
-        />
-      </Box>
+      {loadError && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {loadError}
+        </Alert>
+      )}
 
-      {/* Charts */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '0.7fr 1.3fr' }, gap: 3 }}>
-        {/* Order Status Pie Chart */}
-          <Paper sx={{ p: 3, height: '100%' }}>
-            <Typography variant="h6" fontWeight="bold" gutterBottom>
-              Trạng Thái Đơn Hàng
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Phân bổ trạng thái đơn hàng hiện tại
-            </Typography>
-            <Box
-              sx={{
-                width: '100%',
-                height: 350,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <PieChart
-                series={[
-                  {
-                    data: orderStatusData,
-                    highlightScope: { fade: 'global', highlight: 'item' },
-                    faded: { innerRadius: 30, additionalRadius: -30, color: 'gray' },
-                    innerRadius: 40,
-                    outerRadius: 120,
-                    paddingAngle: 2,
-                    cornerRadius: 5,
-                  },
-                ]}
-                height={350}
-                slotProps={{
-                  legend: {
-                    position: { vertical: 'middle', horizontal: 'end' },
-                  },
-                }}
-              />
-            </Box>
-          </Paper>
+      {loading && (
+        <Box sx={{ py: 4, display: 'flex', justifyContent: 'center' }}>
+          <CustomLoading />
+        </Box>
+      )}
 
-        {/* Inventory Scatter Chart */}
-          <Paper sx={{ p: 3, height: '100%' }}>
-            <Typography variant="h6" fontWeight="bold" gutterBottom>
-              Phân Tích Tồn Kho vs Tốc Độ Bán
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Cảnh báo mức độ tồn kho (số lượng) so với tốc độ bán (sản phẩm/ngày)
-            </Typography>
-            <Box sx={{ width: '100%', height: 350 }}>
-              <ScatterChart
-                series={[
-                  {
-                    data: scatterData,
-                    label: 'Sản phẩm',
-                    color: '#2196f3',
-                  },
-                ]}
-                xAxis={[
-                  {
-                    label: 'Tốc độ bán (sp/ngày)',
-                  },
-                ]}
-                yAxis={[
-                  {
-                    label: 'Số lượng tồn kho',
-                  },
-                ]}
-                height={350}
-              />
-            </Box>
-          </Paper>
-      </Box>
+      {!loading && (
+        <>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(4, 1fr)' },
+              gap: 3,
+              mb: 4,
+            }}
+          >
+            <StatCard
+              title="Common products (items)"
+              value={cp?.totalProducts?.toLocaleString('vi-VN') ?? '—'}
+              icon={<Grass sx={{ color: 'white', fontSize: 32 }} />}
+              color="#2e7d32"
+              subtitle={`Available stock: ${cp?.totalAvailableQuantity?.toLocaleString('vi-VN') ?? '—'}`}
+            />
+            <StatCard
+              title="Identified plants (instances)"
+              value={pi?.totalInstances?.toLocaleString('vi-VN') ?? '—'}
+              icon={<LocalFlorist sx={{ color: 'white', fontSize: 32 }} />}
+              color="#7b1fa2"
+              subtitle={`Low stock (summary): ${pi?.lowStockPlants?.toLocaleString('vi-VN') ?? '—'}`}
+            />
+            <StatCard
+              title="Materials (items)"
+              value={mat?.totalProducts?.toLocaleString('vi-VN') ?? '—'}
+              icon={<Inventory2 sx={{ color: 'white', fontSize: 32 }} />}
+              color="#1565c0"
+              subtitle={`Expiring soon: ${mat?.expiringSoonProducts?.toLocaleString('vi-VN') ?? '—'}`}
+            />
+            <StatCard
+              title="Failed orders (period)"
+              value={totalFailed.toLocaleString('vi-VN')}
+              icon={<ErrorOutline sx={{ color: 'white', fontSize: 32 }} />}
+              color="#c62828"
+            />
+          </Box>
 
-      {/* Order Status and Inventory Details */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3, mt: 3 }}>
-        {/* Order Status Details */}
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" fontWeight="bold" gutterBottom>
-              Chi Tiết Trạng Thái Đơn Hàng
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Thống kê chi tiết từng trạng thái
-            </Typography>
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, 1fr)' }, gap: 2 }}>
-              <Box sx={{ textAlign: 'center', p: 2, backgroundColor: '#fff3e0', borderRadius: 2 }}>
-                <Typography variant="h4" fontWeight="bold" color="#ff9800">
-                  {orderStatusDistribution.pending}
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                  Chờ xử lý
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {((orderStatusDistribution.pending / totalOrders) * 100).toFixed(1)}%
-                </Typography>
-              </Box>
-              <Box sx={{ textAlign: 'center', p: 2, backgroundColor: '#e3f2fd', borderRadius: 2 }}>
-                <Typography variant="h4" fontWeight="bold" color="#2196f3">
-                  {orderStatusDistribution.processing}
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                  Đang xử lý
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {((orderStatusDistribution.processing / totalOrders) * 100).toFixed(1)}%
-                </Typography>
-              </Box>
-              <Box sx={{ textAlign: 'center', p: 2, backgroundColor: '#f3e5f5', borderRadius: 2 }}>
-                <Typography variant="h4" fontWeight="bold" color="#9c27b0">
-                  {orderStatusDistribution.shipping}
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                  Đang giao
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {((orderStatusDistribution.shipping / totalOrders) * 100).toFixed(1)}%
-                </Typography>
-              </Box>
-              <Box sx={{ textAlign: 'center', p: 2, backgroundColor: '#e8f5e9', borderRadius: 2 }}>
-                <Typography variant="h4" fontWeight="bold" color="#4caf50">
-                  {orderStatusDistribution.completed}
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                  Hoàn thành
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {((orderStatusDistribution.completed / totalOrders) * 100).toFixed(1)}%
-                </Typography>
-              </Box>
-            </Box>
-          </Paper>
-
-        {/* Inventory Details Table */}
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" fontWeight="bold" gutterBottom>
-              Cảnh Báo Tồn Kho
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Các sản phẩm cần chú ý
-            </Typography>
-            <Box sx={{ maxHeight: 300, overflowY: 'auto' }}>
-              {inventoryStockData
-                .filter((item) => item.stockQuantity < item.reorderPoint * 1.5)
-                .map((item) => (
-                  <Box
-                    key={item.productName}
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      p: 2,
-                      mb: 1,
-                      backgroundColor: item.stockQuantity < item.reorderPoint ? '#ffebee' : '#fff3e0',
-                      borderRadius: 1,
-                      borderLeft:
-                        item.stockQuantity < item.reorderPoint
-                          ? '4px solid #f44336'
-                          : '4px solid #ff9800',
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '0.85fr 1.15fr' }, gap: 3, mb: 3 }}>
+            <Paper sx={{ p: 3 }}>
+              <Typography variant="h6" fontWeight="bold" gutterBottom>
+                Orders by status (period)
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                {totalByStatus === 0 ? 'No orders in this period.' : `Total ${totalByStatus.toLocaleString('vi-VN')} orders`}
+              </Typography>
+              {totalByStatus > 0 && pieData.length > 0 && (
+                <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                  <PieChart
+                    series={[
+                      {
+                        data: pieData,
+                        highlightScope: { fade: 'global', highlight: 'item' },
+                        faded: { innerRadius: 30, additionalRadius: -30, color: 'gray' },
+                        innerRadius: 48,
+                        outerRadius: 120,
+                        paddingAngle: 2,
+                        cornerRadius: 4,
+                      },
+                    ]}
+                    height={360}
+                    slotProps={{
+                      legend: {
+                        position: { vertical: 'middle', horizontal: 'end' },
+                      },
                     }}
-                  >
-                    <Box>
-                      <Typography variant="subtitle2" fontWeight="bold">
-                        {item.productName}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Tốc độ bán: {item.salesVelocity} sp/ngày
-                      </Typography>
-                    </Box>
-                    <Box sx={{ textAlign: 'right' }}>
+                  />
+                </Box>
+              )}
+            </Paper>
+
+            <Paper sx={{ p: 3 }}>
+              <Typography variant="h6" fontWeight="bold" gutterBottom>
+                Status details
+              </Typography>
+              {items.length === 0 ? (
+                <Typography color="text.secondary">No data available.</Typography>
+              ) : (
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)' }, gap: 2 }}>
+                  {items.map((it, index) => {
+                    const pct = totalByStatus > 0 ? ((it.totalOrders / totalByStatus) * 100).toFixed(1) : '0';
+                    const bg = `${PIE_COLORS[index % PIE_COLORS.length]}18`;
+                    return (
+                      <Box key={it.status} sx={{ textAlign: 'center', p: 2, backgroundColor: bg, borderRadius: 2 }}>
+                        <Typography variant="h4" fontWeight="bold">
+                          {it.totalOrders.toLocaleString('vi-VN')}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                          {it.statusName}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {pct}%
+                        </Typography>
+                      </Box>
+                    );
+                  })}
+                </Box>
+              )}
+
+              {materialSummary && (
+                <Box sx={{ mt: 3, p: 2, bgcolor: 'action.hover', borderRadius: 1 }}>
+                  <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+                    {materialSummary.nurseryName}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    Summary updated: {formatDateTime(materialSummary.generatedAt)}
+                  </Typography>
+                </Box>
+              )}
+            </Paper>
+          </Box>
+
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
+            <Paper sx={{ p: 3 }}>
+              <Typography variant="h6" fontWeight="bold" gutterBottom>
+                Low-stock products
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Based on the selected low-stock threshold (API low-stock).
+              </Typography>
+              <Box sx={{ maxHeight: 360, overflowY: 'auto' }}>
+                {lowStockItems.length === 0 ? (
+                  <Typography color="text.secondary">No products below threshold.</Typography>
+                ) : (
+                  lowStockItems.map((item) => (
+                    <Box
+                      key={`${item.productType}-${item.productId}`}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        p: 2,
+                        mb: 1,
+                        backgroundColor: '#fff3e0',
+                        borderRadius: 1,
+                        borderLeft: '4px solid #ff9800',
+                      }}
+                    >
+                      <Box>
+                        <Typography variant="subtitle2" fontWeight="bold">
+                          {item.productName}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {item.productType} 
+                        </Typography>
+                      </Box>
                       <Chip
-                        label={`${item.stockQuantity} / ${item.reorderPoint}`}
+                        label={`KD: ${item.availableQuantity} / ${item.totalQuantity}`}
                         size="small"
-                        color={item.stockQuantity < item.reorderPoint ? 'error' : 'warning'}
+                        color="warning"
                       />
-                      <Typography variant="caption" display="block" color="text.secondary">
-                        Tồn / Điểm đặt lại
-                      </Typography>
                     </Box>
-                  </Box>
-                ))}
-            </Box>
-          </Paper>
-      </Box>
+                  ))
+                )}
+              </Box>
+            </Paper>
+
+            <Paper sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <Schedule color="action" />
+                <Typography variant="h6" fontWeight="bold">
+                  Materials expiring soon
+                </Typography>
+              </Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Within the selected date range
+              </Typography>
+              {expiringMaterials.length === 0 ? (
+                <Typography color="text.secondary">No materials in the expiry window.</Typography>
+              ) : (
+                <TableContainer sx={{ maxHeight: 360 }}>
+                  <Table size="small" stickyHeader>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Material</TableCell>
+                        <TableCell align="right">Days left</TableCell>
+                        <TableCell align="right">Qty</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {expiringMaterials.map((row) => (
+                        <TableRow key={row.nurseryMaterialId}>
+                          <TableCell>
+                            <Typography variant="body2" fontWeight={600}>
+                              {row.materialName}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {row.materialCode}
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="right">{row.daysToExpire}</TableCell>
+                          <TableCell align="right">{row.availableQuantity}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+            </Paper>
+          </Box>
+        </>
+      )}
     </Box>
   );
 }

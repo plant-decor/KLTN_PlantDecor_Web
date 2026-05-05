@@ -10,6 +10,10 @@ export interface DesignTemplateTierItem {
   materialId: number | null;
   plantId: number | null;
   itemType: number;
+  /** Present on public design-template payloads (e.g. GET public/design-templates/{id}). */
+  itemTypeName?: string;
+  /** Display name for plant/material when returned by API. */
+  name?: string;
   quantity: number;
   createdAt?: string;
 }
@@ -50,21 +54,21 @@ export interface AdminDesignTemplateDetail extends AdminDesignTemplateListItem {
   nurseryOfferings: DesignTemplateNurseryOffering[];
 }
 
-export interface AdminDesignTemplateCreateRequest {
+export interface AdminDesignTemplateCreateInput {
   name: string;
   description: string;
   style: number;
   roomTypes: number[];
-  imageUrl: string;
+  imageFile: File;
   specializationIds: number[];
 }
 
-export interface AdminDesignTemplateUpdateRequest {
+export interface AdminDesignTemplateUpdateInput {
   name: string;
   description: string;
   style: number;
   roomTypes: number[];
-  imageUrl: string;
+  imageFile?: File | null;
 }
 
 export interface AdminDesignTemplateTierCreateRequest {
@@ -87,6 +91,18 @@ export interface AdminDesignTemplateTierUpdateRequest {
   scopedOfWork: string;
   estimatedDays: number;
   isActive: boolean;
+}
+
+/** Body for PUT `/api/admin/design-template-tiers/{id}/items` — plantId/materialId không dùng gửi 0. */
+export interface AdminDesignTemplateTierItemApiBody {
+  materialId: number;
+  plantId: number;
+  itemType: number;
+  quantity: number;
+}
+
+export interface AdminDesignTemplateTierItemsUpdateRequest {
+  items: AdminDesignTemplateTierItemApiBody[];
 }
 
 export interface DesignTemplateTierItemCreateRequest {

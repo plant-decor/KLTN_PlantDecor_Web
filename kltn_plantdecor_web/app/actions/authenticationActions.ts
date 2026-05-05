@@ -3,6 +3,7 @@
 import { cookies } from 'next/headers';
 import type {
   ConfirmEmailRequest,
+  CreateConsultantRequest,
   CreateManagerRequest,
   ForgotPasswordRequest,
   GoogleLoginRequest,
@@ -56,6 +57,26 @@ interface RawAuthApiResponse {
 interface ApiMessageResponse {
   message?: string;
 }
+
+type ApiMessageResult = {
+  success?: boolean;
+  statusCode?: number;
+  message?: string;
+  payload?: unknown;
+};
+
+const deriveApiSuccess = (data: ApiMessageResult): boolean => {
+  if (typeof data.success === 'boolean') {
+    return data.success;
+  }
+
+  if (typeof data.statusCode === 'number') {
+    return data.statusCode >= 200 && data.statusCode < 300;
+  }
+
+  // Nếu backend không trả success/statusCode mà request không throw thì coi là success.
+  return true;
+};
 
 interface LogoutAllRequest {
   accessToken: string;
@@ -343,7 +364,7 @@ export async function refreshTokenAction(
 
 export async function registerAction(payload: RegisterRequest): Promise<ActionResult> {
   try {
-    const data = await callAuthenticationApi<ApiMessageResponse>(
+    const data = await callAuthenticationApi<ApiMessageResult>(
       '/Authentication/register',
       'Đăng ký tài khoản thất bại.',
       {
@@ -351,9 +372,10 @@ export async function registerAction(payload: RegisterRequest): Promise<ActionRe
       }
     );
 
+    const success = deriveApiSuccess(data);
     return {
-      success: true,
-      message: data.message || 'Đăng ký tài khoản thành công.',
+      success,
+      message: data.message || (success ? 'Đăng ký tài khoản thành công.' : 'Đăng ký tài khoản thất bại.'),
     };
   } catch (error) {
     return {
@@ -461,7 +483,7 @@ export async function resendVerificationEmailAction(
   try {
     const payload: VerifyEmailRequest = typeof email === 'string' ? { email } : email;
 
-    const data = await callAuthenticationApi<ApiMessageResponse>(
+    const data = await callAuthenticationApi<ApiMessageResult>(
       '/Authentication/verify-email',
       'Không thể gửi lại email xác thực.',
       {
@@ -469,9 +491,14 @@ export async function resendVerificationEmailAction(
       }
     );
 
+    const success = deriveApiSuccess(data);
     return {
-      success: true,
-      message: data.message || 'Đã gửi lại email xác thực. Vui lòng kiểm tra hộp thư của bạn.',
+      success,
+      message:
+        data.message ||
+        (success
+          ? 'Đã gửi lại email xác thực. Vui lòng kiểm tra hộp thư của bạn.'
+          : 'Không thể gửi lại email xác thực.'),
     };
   } catch (error) {
     return {
@@ -487,22 +514,23 @@ export async function confirmEmailAction(
 ): Promise<ActionResult> {
   try {
     const payload: ConfirmEmailRequest = { email, token };
-    const data = await callAuthenticationApi<ApiMessageResponse>(
+    const data = await callAuthenticationApi<ApiMessageResult>(
       '/Authentication/confirm-email',
-      'Xác thực email thất bại.',
+      'Email verification failed.',
       {
         body: payload,
       }
     );
-
+    console.log('response', data);
+    const success = deriveApiSuccess(data);
     return {
-      success: true,
-      message: data.message || 'Xác thực email thành công.',
+      success,
+      message: data.message || (success ? 'Email verification successful.' : 'Email verification failed.'),
     };
   } catch (error) {
     return {
       success: false,
-      message: error instanceof Error ? error.message : 'Xác thực email thất bại.',
+      message: error instanceof Error ? error.message : 'Email verification failed.',
     };
   }
 }
@@ -511,7 +539,7 @@ export async function forgotPasswordAction(
   payload: ForgotPasswordRequest
 ): Promise<ActionResult> {
   try {
-    const data = await callAuthenticationApi<ApiMessageResponse>(
+    const data = await callAuthenticationApi<ApiMessageResult>(
       '/Authentication/forgot-password',
       'Không thể gửi email đặt lại mật khẩu.',
       {
@@ -519,9 +547,10 @@ export async function forgotPasswordAction(
       }
     );
 
+    const success = deriveApiSuccess(data);
     return {
-      success: true,
-      message: data.message || 'Đã gửi email đặt lại mật khẩu.',
+      success,
+      message: data.message || (success ? 'Đã gửi email đặt lại mật khẩu.' : 'Không thể gửi email đặt lại mật khẩu.'),
     };
   } catch (error) {
     return {
@@ -535,7 +564,7 @@ export async function resetPasswordAction(
   payload: ResetPasswordRequest
 ): Promise<ActionResult> {
   try {
-    const data = await callAuthenticationApi<ApiMessageResponse>(
+    const data = await callAuthenticationApi<ApiMessageResult>(
       '/Authentication/reset-password',
       'Đặt lại mật khẩu thất bại.',
       {
@@ -544,9 +573,10 @@ export async function resetPasswordAction(
       }
     );
 
+    const success = deriveApiSuccess(data);
     return {
-      success: true,
-      message: data.message || 'Đặt lại mật khẩu thành công.',
+      success,
+      message: data.message || (success ? 'Đặt lại mật khẩu thành công.' : 'Đặt lại mật khẩu thất bại.'),
     };
   } catch (error) {
     return {
@@ -556,22 +586,59 @@ export async function resetPasswordAction(
   }
 }
 
-export async function createManagerAction(
-  payload: CreateManagerRequest
+const toCreateManagerApiBody = (payload: CreateManagerRequest): Record<string, unknown> => {
+  const { nurseryId, ...rest } = payload;
+  const body: Record<string, unknown> = { ...rest };
+  if (nurseryId != null && Number.isFinite(nurseryId)) {
+    body.nurseryId = nurseryId;
+  }
+  return body;
+};
+
+export async function createConsultantAction(
+  payload: CreateConsultantRequest
 ): Promise<ActionResult> {
   try {
-    const data = await callAuthenticationApi<ApiMessageResponse>(
-      '/Authentication/create-manager',
-      'Create manager account failed.',
+    const data = await callAuthenticationApi<ApiMessageResult>(
+      '/Authentication/create-consultant',
+      'Create consultant account failed.',
       {
         auth: 'required',
         body: payload,
       }
     );
 
+    const success = deriveApiSuccess(data);
     return {
-      success: true,
-      message: data.message || 'Create manager account successful.',
+      success,
+      message:
+        data.message || (success ? 'Create consultant account successful.' : 'Create consultant account failed.'),
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Create consultant account failed.',
+    };
+  }
+}
+
+export async function createManagerAction(
+  payload: CreateManagerRequest
+): Promise<ActionResult> {
+  try {
+    const data = await callAuthenticationApi<ApiMessageResult>(
+      '/Authentication/create-manager',
+      'Create manager account failed.',
+      {
+        auth: 'required',
+        body: toCreateManagerApiBody(payload),
+      }
+    );
+
+    const success = deriveApiSuccess(data);
+    return {
+      success,
+      message: data.message || (success ? 'Create manager account successful.' : 'Create manager account failed.'),
     };
   } catch (error) {
     return {

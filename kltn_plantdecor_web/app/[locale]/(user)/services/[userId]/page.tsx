@@ -13,8 +13,14 @@ import {
   Snackbar,
   Stack,
   TextField,
+  IconButton,
+  Tooltip,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import { useTranslations } from 'next-intl';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useAuthStore } from '@/lib/store/authStore';
 import {
   DifficultyLevel,
   ServiceRegistration,
@@ -24,9 +30,11 @@ import {
 import StorageIcon from '@mui/icons-material/Storage';
 import AddIcon from '@mui/icons-material/Add';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
+import StarIcon from '@mui/icons-material/Star';
 import ServiceRequestTable from '@/components/service/ServiceRequestTable';
 import ServiceDetailsDialog from '@/components/service/ServiceDetailsDialog';
 import ServiceBookingDialog, { ServiceBookingData } from '@/components/service/ServiceBookingDialog';
+import DesignRegistrationPageClient from '@/components/design-registration/DesignRegistrationPageClient';
 import EmptyState from '@/components/service/EmptyState';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 import { toast } from 'react-toastify';
@@ -38,9 +46,15 @@ import {
   getServiceRegistrationDetail,
 } from '@/lib/api/careServiceService';
 import { createPaymentUrlByOrderId } from '@/lib/api/orderService';
-import type { EnumOption, MyServiceRegistration } from '@/types/care-service.types';
+import type { EnumOption, MyServiceRegistration, ServiceRegistrationRating } from '@/types/care-service.types';
 import { ServiceRegistrationStatusEnum } from '@/types/care-service.types';
+import {
+  getServiceRatingByRegistration,
+  ratingPayloadToRegistrationRating,
+} from '@/lib/api/serviceRatingService';
+import { ServiceRatingSubmitDialog } from '@/components/service/ServiceRatingDialogs';
 import { CustomLoading } from '@/components/CustomLoading';
+import { useServicePageQueryAction } from '@/hooks/services/useServicePageQueryAction';
 
 interface PageProps {
   params: Promise<{ userid: string }>;
@@ -66,6 +80,7 @@ type ServiceRequestViewModel = ServiceRegistration & {
   latitude?: number;
   longitude?: number;
   progressesCount?: number;
+  rating?: ServiceRegistrationRating | null;
 };
 
 export default function UserServicePage({ params }: PageProps) {
@@ -85,8 +100,49 @@ export default function UserServicePage({ params }: PageProps) {
   const [cancelReason, setCancelReason] = useState('');
   const [cancelTarget, setCancelTarget] = useState<ServiceRequestViewModel | null>(null);
   const [cancelSubmitting, setCancelSubmitting] = useState(false);
+  const [currentTab, setCurrentTab] = useState(0);
   const [paymentSubmittingId, setPaymentSubmittingId] = useState<number | null>(null);
   const [statusEnums, setStatusEnums] = useState<EnumOption[]>([]);
+  const [bookingInitialPackageId, setBookingInitialPackageId] = useState<number | null>(null);
+  const [autoBookConsumed, setAutoBookConsumed] = useState(false);
+  const [ratingSubmitOpen, setRatingSubmitOpen] = useState(false);
+  const [ratingSubmitRegistrationId, setRatingSubmitRegistrationId] = useState<number | null>(null);
+  const [customerRatingRefreshKey, setCustomerRatingRefreshKey] = useState(0);
+
+  const {
+    initialPackageId: queryPackageId,
+    shouldAutoBook,
+    tab: queryTab,
+    clearAction,
+  } = useServicePageQueryAction();
+
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const isAuthBootstrapCompleted = useAuthStore(
+    (state) => state.isAuthBootstrapCompleted,
+  );
+
+  useEffect(() => {
+    const nextTab = queryTab === 'design' ? 1 : 0;
+    setCurrentTab((prev) => (prev === nextTab ? prev : nextTab));
+  }, [queryTab]);
+
+  useEffect(() => {
+    if (!isAuthBootstrapCompleted) return;
+    if (isAuthenticated) return;
+
+    const search = searchParams.toString();
+    const fullPath = search ? `${pathname}?${search}` : pathname;
+    router.replace(`/login?redirectTo=${encodeURIComponent(fullPath)}`);
+  }, [
+    isAuthBootstrapCompleted,
+    isAuthenticated,
+    pathname,
+    router,
+    searchParams,
+  ]);
 
   const normalizeStatusName = useCallback((value?: string | null) => {
     return String(value ?? '')
@@ -164,6 +220,39 @@ export default function UserServicePage({ params }: PageProps) {
       return !!orderId && getStatusCode(status, statusNameRaw) === ServiceRegistrationStatusEnum.AwaitPayment;
     },
     [getStatusCode]
+  );
+
+  const hasValidServiceRating = useCallback((row: ServiceRequestViewModel) => {
+    const r = row.rating;
+    return (
+      !!r &&
+      Number.isFinite(r.id) &&
+      r.id > 0 &&
+      Number.isFinite(r.score) &&
+      r.score >= 1 &&
+      r.score <= 5
+    );
+  }, []);
+
+  const isRowCompleted = useCallback(
+    (row: ServiceRequestViewModel) => {
+      if (getStatusCode(row.status, row.statusNameRaw) === ServiceRegistrationStatusEnum.Completed) {
+        return true;
+      }
+      if (normalizeStatusName(row.statusNameRaw) === 'completed') {
+        return true;
+      }
+      const n = Number(row.status);
+      return Number.isFinite(n) && n === ServiceRegistrationStatusEnum.Completed;
+    },
+    [getStatusCode, normalizeStatusName]
+  );
+
+  const canRateService = useCallback(
+    (row: ServiceRequestViewModel) => {
+      return isRowCompleted(row) && !hasValidServiceRating(row);
+    },
+    [isRowCompleted, hasValidServiceRating]
   );
 
   const mapStatusToViewValue = useCallback((status: number | string): number | ServiceRegistrationStatus => {
@@ -253,11 +342,11 @@ export default function UserServicePage({ params }: PageProps) {
       packageVisitPerWeek: registration.nurseryCareService.careServicePackage.visitPerWeek,
       preferredShift: registration.prefferedShift
         ? {
-            id: registration.prefferedShift.id,
-            shiftName: registration.prefferedShift.shiftName,
-            startTime: registration.prefferedShift.startTime,
-            endTime: registration.prefferedShift.endTime,
-          }
+          id: registration.prefferedShift.id,
+          shiftName: registration.prefferedShift.shiftName,
+          startTime: registration.prefferedShift.startTime,
+          endTime: registration.prefferedShift.endTime,
+        }
         : null,
       customerName: registration.customer?.fullName,
       customerEmail: registration.customer?.email,
@@ -265,6 +354,7 @@ export default function UserServicePage({ params }: PageProps) {
       longitude: registration.longitude,
       scheduleDaysOfWeek: registration.scheduleDaysOfWeek,
       progressesCount: registration.progresses.length,
+      rating: registration.rating ?? null,
     }),
     [mapStatusToViewValue]
   );
@@ -274,25 +364,112 @@ export default function UserServicePage({ params }: PageProps) {
       setLoading(true);
       setError(null);
       const response = await getMyServiceRegistrations({ pageNumber: 1, pageSize: 10 }, false);
-      setRequests(response.items.map(mapApiToViewModel));
+      const items = await Promise.all(
+        response.items.map(async (reg) => {
+          const regCompleted =
+            Number(reg.status) === ServiceRegistrationStatusEnum.Completed ||
+            normalizeStatusName(reg.statusName) === 'completed';
+          const er = reg.rating;
+          const hasEmbeddedRating =
+            !!er &&
+            Number.isFinite(er.id) &&
+            er.id > 0 &&
+            Number.isFinite(er.score) &&
+            er.score >= 1 &&
+            er.score <= 5;
+          if (regCompleted && !hasEmbeddedRating) {
+            const fetched = await getServiceRatingByRegistration(reg.id, false);
+            if (fetched) {
+              return mapApiToViewModel({
+                ...reg,
+                rating: ratingPayloadToRegistrationRating(fetched),
+              });
+            }
+          }
+          return mapApiToViewModel(reg);
+        })
+      );
+      setRequests(items);
     } catch (loadError) {
       const message = loadError instanceof Error ? loadError.message : t('errorFetching');
       setError(message);
     } finally {
       setLoading(false);
     }
-  }, [mapApiToViewModel, t]);
+  }, [mapApiToViewModel, normalizeStatusName, t]);
 
   useEffect(() => {
+    if (isAuthBootstrapCompleted && !isAuthenticated) {
+      return;
+    }
     void loadMyRegistrations();
-  }, [loadMyRegistrations]);
+  }, [loadMyRegistrations, isAuthBootstrapCompleted, isAuthenticated]);
+
+  useEffect(() => {
+    if (!detailOpen) return;
+    setSelectedRequest((prev) => {
+      if (!prev) return prev;
+      const updated = requests.find((r) => r.id === prev.id);
+      return updated ?? prev;
+    });
+  }, [requests, detailOpen]);
+
+  useEffect(() => {
+    if (loading) return;
+    if (autoBookConsumed) return;
+    if (!shouldAutoBook || !queryPackageId) return;
+    if (isAuthBootstrapCompleted && !isAuthenticated) return;
+
+    setCurrentTab(0);
+    setBookingInitialPackageId(queryPackageId);
+    setBookingOpen(true);
+    setAutoBookConsumed(true);
+    clearAction();
+  }, [
+    loading,
+    shouldAutoBook,
+    queryPackageId,
+    autoBookConsumed,
+    clearAction,
+    isAuthBootstrapCompleted,
+    isAuthenticated,
+  ]);
 
   const handleViewDetails = async (request: ServiceRegistration) => {
     try {
       setDetailOpen(true);
       setDetailLoading(true);
       const detail = await getServiceRegistrationDetail(request.id, false);
-      setSelectedRequest(mapApiToViewModel(detail));
+      const listRow = requests.find((r) => Number(r.id) === Number(detail.id));
+      const detailCompleted =
+        Number(detail.status) === ServiceRegistrationStatusEnum.Completed ||
+        normalizeStatusName(detail.statusName) === 'completed';
+
+      let registrationForVm: MyServiceRegistration = detail;
+
+      if (detailCompleted && !detail.rating && listRow?.rating) {
+        const lr = listRow.rating;
+        if (
+          Number.isFinite(lr.id) &&
+          lr.id > 0 &&
+          Number.isFinite(lr.score) &&
+          lr.score >= 1 &&
+          lr.score <= 5
+        ) {
+          registrationForVm = { ...detail, rating: lr };
+        }
+      }
+
+      if (detailCompleted && !registrationForVm.rating) {
+        const fetched = await getServiceRatingByRegistration(detail.id, false);
+        if (fetched) {
+          registrationForVm = {
+            ...registrationForVm,
+            rating: ratingPayloadToRegistrationRating(fetched),
+          };
+        }
+      }
+      setSelectedRequest(mapApiToViewModel(registrationForVm));
     } catch (detailError) {
       const message = detailError instanceof Error ? detailError.message : t('errorFetching');
       toast.error(message);
@@ -336,6 +513,7 @@ export default function UserServicePage({ params }: PageProps) {
 
   const handleCloseBooking = () => {
     setBookingOpen(false);
+    setBookingInitialPackageId(null);
   };
 
   const handleSubmitBooking = async (data: ServiceBookingData) => {
@@ -416,6 +594,25 @@ export default function UserServicePage({ params }: PageProps) {
     setSuccessMessage(null);
   };
 
+  const handleTabChange = useCallback(
+    (_event: unknown, newValue: number) => {
+      setCurrentTab(newValue);
+      if (!pathname) {
+        return;
+      }
+
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('tab', newValue === 1 ? 'design' : 'care');
+      if (newValue === 1) {
+        params.delete('packageId');
+        params.delete('action');
+      }
+
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [pathname, router, searchParams]
+  );
+
   const selectedRequestCanCancel = useMemo(
     () => (selectedRequest ? canCancelByStatus(selectedRequest.status, selectedRequest.statusNameRaw) : false),
     [canCancelByStatus, selectedRequest]
@@ -426,7 +623,7 @@ export default function UserServicePage({ params }: PageProps) {
     [canPayByStatus, selectedRequest]
   );
 
-  if (loading) {
+  if (loading && currentTab === 0) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
         <CustomLoading size={18} />
@@ -436,108 +633,162 @@ export default function UserServicePage({ params }: PageProps) {
 
   return (
     <Box sx={{ py: 4, px: { xs: 2, md: 4 }, maxWidth: 1400, mx: 'auto' }}>
-      {/* Page Header */}
-      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
-        <Box>
-          <Typography variant="h4" fontWeight="bold" gutterBottom>
-            {t('myRequests')}
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            {t('myRequestsDesc')}
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={handleOpenBooking}
-          sx={{ minWidth: 180, backgroundColor: 'var(--primary)', fontWeight: 'bold', ...hoverLiftStyle }}
-        >
-          {t('bookService')}
-        </Button>
-      </Box>
+      <Tabs
+        value={currentTab}
+        onChange={handleTabChange}
+        sx={{
+          borderBottom: 1,
+          borderColor: 'divider',
+          '& .MuiTab-root': { fontWeight: 600, textTransform: 'none', fontSize: '1rem' },
+          '& .Mui-selected': { backgroundColor: 'var(--primary) !important', color: '#fff !important' },
+        }}
+      >
+        <Tab label="Care Service" />
+        <Tab label="Design Service" />
+      </Tabs>
 
-      {/* Error Alert */}
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      )}
+      {currentTab === 0 ? (
+        <>
+          {/* Page Header */}
+          <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
+            <Box>
+              <Typography variant="h4" fontWeight="bold" gutterBottom>
+                {t('myRequests')}
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                {t('myRequestsDesc')}
+              </Typography>
+            </Box>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleOpenBooking}
+              sx={{ minWidth: 180, backgroundColor: 'var(--primary)', fontWeight: 'bold', ...hoverLiftStyle }}
+            >
+              {t('bookService')}
+            </Button>
+          </Box>
 
-      {/* Service Requests Table */}
-      {requests.length > 0 ? (
-        <ServiceRequestTable
-          requests={requests}
-          onViewDetails={handleViewDetails}
-          showStatus={true}
-          showCaretaker={false}
-          statusLabels={statusLabelMap}
-          actionButtons={(request) => {
-            const found = requests.find((item) => item.id === request.id);
-            const canCancel = found ? canCancelByStatus(found.status, found.statusNameRaw) : false;
-            const canPay = found ? canPayByStatus(found.status, found.statusNameRaw, found.orderId) : false;
+          {/* Error Alert */}
+          {error && (
+            <Alert severity="error" sx={{ mb: 3 }}>
+              {error}
+            </Alert>
+          )}
 
-            return (
-              <Stack direction="row" spacing={1} justifyContent="center">
-                <Button sx={hoverLiftStyle} variant="outlined" size="small" onClick={() => void handleViewDetails(request)}>
-                  {tCommon('view')}
-                </Button>
-                {canPay ? (
-                  <Button
-                    variant="contained"
-                    size="small"
-                    onClick={() => void handlePayRegistration(request)}
-                    disabled={paymentSubmittingId === request.id}
-                    sx={{ backgroundColor: 'var(--primary)', ...hoverLiftStyle }}
-                  >
-                    {paymentSubmittingId === request.id ? t('creatingPayment') : t('payNow')}
-                  </Button>
-                ) : null}
-                {canCancel ? (
-                <Button
-                  variant="outlined"
-                  size="small"
-                  color="error"
-                  className='bg-error! text-white!'
-                  startIcon={<CancelOutlinedIcon />}
-                  disabled={!canCancel}
-                  onClick={() => handleOpenCancel(request)}
-                  sx={hoverLiftStyle}
-                >
-                  {t('cancel')}
-                </Button>
-                ) : null}
-              </Stack>
-            );
-          }}
-        />
+          {/* Service Requests Table */}
+          {requests.length > 0 ? (
+            <ServiceRequestTable
+              requests={requests}
+              onViewDetails={handleViewDetails}
+              showStatus={true}
+              showCaretaker={false}
+              statusLabels={statusLabelMap}
+              actionButtons={(request) => {
+                const row = request as ServiceRequestViewModel;
+                const found =
+                  requests.find((item) => Number(item.id) === Number(request.id)) ?? row;
+                const canCancel = canCancelByStatus(found.status, found.statusNameRaw);
+                const canPay = canPayByStatus(found.status, found.statusNameRaw, found.orderId);
+                const showRate = canRateService(row);
+
+                return (
+                  <Stack direction="row" spacing={1} justifyContent="center" alignItems="center" flexWrap="wrap">
+                    <Button sx={hoverLiftStyle} variant="outlined" size="small" onClick={() => void handleViewDetails(request)}>
+                      {tCommon('view')}
+                    </Button>
+                    {showRate ? (
+                      <Tooltip title="Submit rating">
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          aria-label="Submit rating"
+                          onClick={() => {
+                            setRatingSubmitRegistrationId(Number(request.id));
+                            setRatingSubmitOpen(true);
+                          }}
+                          sx={{ ...hoverLiftStyle, border: '1px solid', borderColor: 'primary.main', borderRadius: 1 }}
+                        >
+                          <StarIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    ) : null}
+                    {canPay ? (
+                      <Button
+                        variant="contained"
+                        size="small"
+                        onClick={() => void handlePayRegistration(request)}
+                        disabled={paymentSubmittingId === request.id}
+                        sx={{ backgroundColor: 'var(--primary)', ...hoverLiftStyle }}
+                      >
+                        {paymentSubmittingId === request.id ? t('creatingPayment') : t('payNow')}
+                      </Button>
+                    ) : null}
+                    {canCancel ? (
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        color="error"
+                        className='bg-error! text-white!'
+                        startIcon={<CancelOutlinedIcon />}
+                        disabled={!canCancel}
+                        onClick={() => handleOpenCancel(request)}
+                        sx={hoverLiftStyle}
+                      >
+                        {t('cancel')}
+                      </Button>
+                    ) : null}
+                  </Stack>
+                );
+              }}
+            />
+          ) : (
+            <EmptyState
+              icon={<StorageIcon />}
+              title={t('noRequests')}
+              description={t('noRequestsDesc')}
+            />
+          )}
+
+          {/* Service Details Dialog */}
+          <ServiceDetailsDialog
+            open={detailOpen}
+            onClose={handleCloseDetail}
+            service={selectedRequest}
+            loading={detailLoading}
+            canCancel={selectedRequestCanCancel}
+            canPay={selectedRequestCanPay}
+            paying={paymentSubmittingId === selectedRequest?.id}
+            statusLabels={statusLabelMap}
+            onPay={selectedRequest ? () => void handlePayRegistration(selectedRequest) : undefined}
+            onCancel={selectedRequestCanCancel && selectedRequest ? () => handleOpenCancel(selectedRequest) : undefined}
+            customerRatingRefreshKey={customerRatingRefreshKey}
+          />
+
+          <ServiceRatingSubmitDialog
+            open={ratingSubmitOpen}
+            registrationId={ratingSubmitRegistrationId}
+            onClose={() => {
+              setRatingSubmitOpen(false);
+              setRatingSubmitRegistrationId(null);
+            }}
+            onSubmitted={() => {
+              void loadMyRegistrations().then(() => setCustomerRatingRefreshKey((k) => k + 1));
+            }}
+          />
+
+          <ServiceBookingDialog
+            open={bookingOpen}
+            onClose={handleCloseBooking}
+            onSubmit={handleSubmitBooking}
+            initialPackageId={bookingInitialPackageId}
+          />
+        </>
       ) : (
-        <EmptyState
-          icon={<StorageIcon />}
-          title={t('noRequests')}
-          description={t('noRequestsDesc')}
-        />
+        <Box sx={{ mt: 3 }}>
+          <DesignRegistrationPageClient />
+        </Box>
       )}
-
-      {/* Service Details Dialog */}
-      <ServiceDetailsDialog
-        open={detailOpen}
-        onClose={handleCloseDetail}
-        service={selectedRequest}
-        loading={detailLoading}
-        canCancel={selectedRequestCanCancel}
-        canPay={selectedRequestCanPay}
-        paying={paymentSubmittingId === selectedRequest?.id}
-        statusLabels={statusLabelMap}
-        onPay={selectedRequest ? () => void handlePayRegistration(selectedRequest) : undefined}
-        onCancel={selectedRequestCanCancel && selectedRequest ? () => handleOpenCancel(selectedRequest) : undefined}
-      />
-
-      {/* Service Booking Dialog */}
-      <ServiceBookingDialog
-        open={bookingOpen}
-        onClose={handleCloseBooking}
-        onSubmit={handleSubmitBooking}
-      />
 
       {/* Success Snackbar */}
       <Snackbar
@@ -587,3 +838,5 @@ export default function UserServicePage({ params }: PageProps) {
     </Box>
   );
 }
+
+

@@ -1,5 +1,6 @@
 import WishlistPageClient from '@/components/wishlist/WishlistPageClient';
 import { fetchWishlistItems } from '@/lib/api/cartWishlistService';
+import { DEFAULT_PAGE_SIZE } from '@/lib/utils/plant-store/constants';
 
 interface PageProps {
   params: Promise<{ userid: string }>;
@@ -13,7 +14,7 @@ export default async function WishlistPage({ params }: PageProps) {
     initialPayload = await fetchWishlistItems(
       {
         pageNumber: 1,
-        pageSize: 10,
+        pageSize: DEFAULT_PAGE_SIZE,
       },
       true,
       false

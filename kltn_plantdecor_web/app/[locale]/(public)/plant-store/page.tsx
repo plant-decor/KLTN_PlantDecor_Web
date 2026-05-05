@@ -6,6 +6,7 @@ import {
   type ShopNurserySearchPayload,
 } from '@/lib/api/shopPlantsService';
 import { getShopUnifiedSearchConfig, searchShopUnified, type UnifiedEnumValue } from '@/lib/api/shopUnifiedService';
+import type { PlantStoreSortByOption } from '@/components/plant-store/PlantStoreUnifiedResults';
 import type { CategoryResponse } from '@/lib/api/categoriesService';
 import PlantStoreFilters from '@/components/plant-store/PlantStoreFilters';
 import PlantStoreUnifiedResults from '@/components/plant-store/PlantStoreUnifiedResults';
@@ -21,7 +22,6 @@ import {
   getDefaultUnifiedSearchPayload,
   getPayload,
   getUnifiedEnumValues,
-  getUnifiedSelectedSort,
   getSharedPageSize,
 } from '@/lib/utils/plant-store/helpers';
 
@@ -135,38 +135,26 @@ export default async function PlantStorePage({ params, searchParams }: PageProps
   const sizeOptions = getUnifiedEnumValues(filterEnums, 'PlantSize');
   const fengShuiElementOptions = getUnifiedEnumValues(filterEnums, 'FengShuiElement');
 
-  const selectedSort = getUnifiedSelectedSort(unifiedRequestBody);
+  const sortByEnumValues = getUnifiedEnumValues(sortEnums, 'UnifiedSearchSortBy');
 
-  const sortByOptions = getUnifiedEnumValues(sortEnums, 'UnifiedSearchSortBy');
-  const sortDirectionOptions = getUnifiedEnumValues(sortEnums, 'SortDirection');
-
-  const toSortLabel = (sortByName: string, directionName: string) => {
-    const direction = directionName.toLowerCase();
+  const toSortByFieldLabel = (sortByName: string) => {
     const key = sortByName.toLowerCase();
-
-    if (key === 'name' && direction === 'asc') return t('sort.nameAsc');
-    if (key === 'name' && direction === 'desc') return t('sort.nameDesc');
-    if (key === 'price' && direction === 'asc') return t('sort.priceAsc');
-    if (key === 'price' && direction === 'desc') return t('sort.priceDesc');
-    if (key === 'createdat' && direction === 'desc') return t('sort.newest');
-    if (key === 'createdat' && direction === 'asc') return t('sort.oldest');
-    if (key === 'size' && direction === 'asc') return t('sort.sizeAsc');
-    if (key === 'size' && direction === 'desc') return t('sort.sizeDesc');
-    if (key === 'availableinstances' && direction === 'desc') return t('sort.availableDesc');
-    if (key === 'availableinstances' && direction === 'asc') return t('sort.availableAsc');
-
-    return `${sortByName} ${directionName.toUpperCase()}`;
+    if (key === 'name') return t('sort.fieldName');
+    if (key === 'price') return t('sort.fieldPrice');
+    if (key === 'createdat') return t('sort.fieldCreatedAt');
+    if (key === 'size') return t('sort.fieldSize');
+    if (key === 'availableinstances') return t('sort.fieldAvailableInstances');
+    if (key === 'updatedat') return t('sort.fieldUpdatedAt');
+    if (key === 'carelevel' || key === 'careleveltype') return t('sort.fieldCareLevel');
+    return sortByName;
   };
 
-  const sortOptions = [
-    { value: ':', label: t('sort.default') },
-    ...sortByOptions.flatMap((sortBy: UnifiedEnumValue) =>
-      sortDirectionOptions.map((direction: UnifiedEnumValue) => ({
-        value: `${sortBy.name}:${direction.name}`,
-        label: toSortLabel(sortBy.name, direction.name),
-      }))
-    ),
-  ];
+  const unifiedSortBySelectOptions: PlantStoreSortByOption[] = sortByEnumValues.map(
+    (item: UnifiedEnumValue) => ({
+      value: item.name,
+      label: toSortByFieldLabel(item.name),
+    })
+  );
 
   const filterTexts = {
     title: tFilter('title'),
@@ -248,8 +236,9 @@ export default async function PlantStorePage({ params, searchParams }: PageProps
             query={query}
             payload={unifiedPayload.items}
             pageSize={sharedPageSize}
-            selectedSort={selectedSort}
-            sortOptions={sortOptions}
+            sortBy={unifiedRequestBody.sortBy ?? 'CreatedAt'}
+            sortDirection={unifiedRequestBody.sortDirection ?? 'Desc'}
+            sortByOptions={unifiedSortBySelectOptions}
             foundText={t('result.foundProducts', { count: unifiedPayload.items.totalCount })}
             pageOfText={t('result.pageOf', {
               current: unifiedPayload.items.pageNumber,
@@ -260,6 +249,8 @@ export default async function PlantStorePage({ params, searchParams }: PageProps
             noProductsLabel={t('result.noProducts')}
             itemsPerPageLabel={t('result.itemsPerPage')}
             sortLabel={t('filters.sort')}
+            sortDirectionAriaAscending={t('sort.ariaSortAscending')}
+            sortDirectionAriaDescending={t('sort.ariaSortDescending')}
             initialWishlistState={initialWishlistState}
           />
         </div>

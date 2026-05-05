@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Add } from '@mui/icons-material';
 import {
   Alert,
@@ -15,18 +15,14 @@ import {
 } from '@mui/material';
 import { toast } from 'react-toastify';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
-import { useAdminCategories } from '@/lib/api/admin/useAdminCategories';
 import { useAdminMaterials } from '@/lib/api/admin/useAdminMaterials';
 import { useAdminTags } from '@/lib/api/admin/useAdminTags';
 import type { ImageUploadData, Material, MaterialDetail, MaterialFormData } from '@/types/store-management.types';
 import MaterialFormDialog from './MaterialFormDialog';
 import MaterialTable from './MaterialTable';
-import {
-  flattenCategoryTree,
-  type CategoryTreeNodeLike,
-  type OptionItem,
-} from './MaterialTab.shared';
+import { type OptionItem } from './MaterialTab.shared';
 import MaterialViewDialog from './MaterialViewDialog';
+import { getCategoriesByType } from '@/lib/api/categoriesService';
 
 export default function AdminMaterialMode() {
   const [formOpen, setFormOpen] = useState(false);
@@ -35,6 +31,8 @@ export default function AdminMaterialMode() {
   const [editingData, setEditingData] = useState<MaterialDetail | undefined>();
   const [viewingData, setViewingData] = useState<MaterialDetail | undefined>();
   const [toggleTarget, setToggleTarget] = useState<Material | null>(null);
+  const [categoryOptions, setCategoryOptions] = useState<OptionItem[]>([]);
+  const [categoryError, setCategoryError] = useState<string | null>(null);
 
   const {
     materials,
@@ -52,27 +50,59 @@ export default function AdminMaterialMode() {
   } = useAdminMaterials();
 
   const {
-    categoryTree,
-    error: categoryError,
-    fetchCategoryTree,
-  } = useAdminCategories();
-
-  const {
     tags,
     error: tagError,
     fetchTags,
   } = useAdminTags();
 
-  useEffect(() => {
-    void fetchMaterials({ pagination: { pageNumber: 1, pageSize: 10 } });
-    void fetchCategoryTree();
-    void fetchTags({ pageNumber: 1, pageSize: 1000 });
-  }, [fetchCategoryTree, fetchMaterials, fetchTags]);
+  const didInitFetchRef = useRef(false);
+  const didInitCategoriesRef = useRef(false);
 
-  const categoryOptions = useMemo(
-    () => flattenCategoryTree(categoryTree as CategoryTreeNodeLike[]),
-    [categoryTree]
-  );
+  useEffect(() => {
+    if (didInitFetchRef.current) {
+      return;
+    }
+    didInitFetchRef.current = true;
+
+    void fetchMaterials({ pagination: { pageNumber: 1, pageSize: 10 } });
+    void fetchTags({ pageNumber: 1, pageSize: 1000 });
+  }, [fetchMaterials, fetchTags]);
+
+  useEffect(() => {
+    if (didInitCategoriesRef.current) {
+      return;
+    }
+    didInitCategoriesRef.current = true;
+
+    let mounted = true;
+
+    const loadCategories = async () => {
+      if (mounted) {
+        setCategoryError(null);
+      }
+      try {
+        const response = await getCategoriesByType({ categoryType: 2, activeOnly: true }, true);
+        const payload = response.payload ?? response.data ?? [];
+        const options = payload
+          .map((item) => ({ id: item.id, name: item.name }))
+          .filter((item) => Number.isFinite(item.id) && Boolean(item.name));
+        if (mounted) {
+          setCategoryOptions(options);
+        }
+      } catch {
+        if (mounted) {
+          setCategoryError('Failed to load categories.');
+          setCategoryOptions([]);
+        }
+      }
+    };
+
+    void loadCategories();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const tagOptions = useMemo<OptionItem[]>(() => {
     return tags.map((tag) => ({ id: tag.id, name: tag.tagName }));

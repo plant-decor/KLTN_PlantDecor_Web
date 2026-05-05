@@ -3,7 +3,31 @@ export interface AllergyPlantOption {
   plantName: string;
 }
 
+export type RoomDesignEnumName =
+  | 'RoomType'
+  | 'RoomStyle'
+  | 'LightRequirement'
+  | 'LightDirection'
+  | 'DominantDirection'
+  | 'RoomViewAngle'
+  | 'LayoutDesignStatus'
+  | 'RoomUploadModerationStatus'
+  | 'AiLayoutResponseModerationStatus'
+  | 'FengShuiElement'
+  | string;
+
+export interface RoomDesignEnumValue {
+  value: number;
+  name: string;
+}
+
+export interface RoomDesignEnumGroup {
+  enumName: RoomDesignEnumName;
+  values: RoomDesignEnumValue[];
+}
+
 export interface RoomAnalysisResult {
+  numberOfPlantsSuggest?: number;
   availableSpace: string;
   colorPalette: string[];
   summary: string;
@@ -36,20 +60,43 @@ export interface AnalyzeRoomUploadPayload {
   layoutDesignId: number;
 }
 
-export interface AnalyzeRoomUploadRequest {
-  image: File;
+export type RoomViewAngle = 'Front' | 'Left' | 'Right' | 'Back' | string;
+
+export interface UploadRoomImagesRequest {
+  imagesByViewAngle: Partial<Record<RoomViewAngle, File>>;
+}
+
+export interface UploadedRoomImageItem {
+  roomImageId: number;
+  imageUrl: string | null;
+  viewAngle: RoomViewAngle;
+  moderationStatus?: string | null;
+  moderationReason?: string | null;
+  uploadedAt?: string | null;
+}
+
+export interface UploadRoomImagesPayload {
+  roomImages: UploadedRoomImageItem[];
+}
+
+export interface AnalyzeRoomRequest {
+  roomImageIds: number[];
   fengShuiElement?: string | null;
-  roomType: string;
-  roomStyle: string;
-  minBudget?: number;
-  maxBudget?: number;
-  careLevelType?: string;
-  hasAllergy?: boolean;
-  allergyNote?: string;
-  allergicPlantIds?: number[];
-  petSafe?: boolean;
-  childSafe?: boolean;
-  preferredNurseryIds?: number[];
+  roomType?: string | null;
+  roomStyle?: string | null;
+  roomArea?: number | null;
+  lightDirection?: string | null;
+  dominantDirection?: string | null;
+  naturalLightLevel?: string | null;
+  minBudget?: number | null;
+  maxBudget?: number | null;
+  careLevelType?: string | null;
+  hasAllergy?: boolean | null;
+  allergyNote?: string | null;
+  allergicPlantIds?: number[] | null;
+  petSafe?: boolean | null;
+  childSafe?: boolean | null;
+  preferredNurseryIds?: number[] | null;
 }
 
 export interface GeneratedLayoutImageItem {
@@ -79,6 +126,8 @@ export interface GeneratedImageItem {
   layoutDesignPlantId?: number | null;
   commonPlantId?: number | null;
   plantInstanceId?: number | null;
+  name?: string | null;
+  price?: number | null;
   imageUrl: string | null;
   fluxPromptUsed: string | null;
   createdAt: string;

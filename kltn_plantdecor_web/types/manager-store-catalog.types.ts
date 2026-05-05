@@ -111,6 +111,31 @@ export interface UpdateNurseryMaterialRequest {
   isActive: boolean;
 }
 
+export type LowStockProductType = 'Plant' | 'PlantInstance' | 'PlantCombo' | 'Material' | 'CommonPlant';
+
+export interface LowStockProductItem {
+  productType: LowStockProductType;
+  productId: number;
+  productName: string;
+  totalQuantity: number;
+  reservedQuantity: number;
+  availableQuantity: number;
+  threshold: number;
+}
+
+export interface ExpiringSoonMaterialItem {
+  nurseryMaterialId: number;
+  materialId: number;
+  materialName: string;
+  materialCode: string;
+  unit: string;
+  quantity: number;
+  reservedQuantity: number;
+  availableQuantity: number;
+  expiredDate: string;
+  daysToExpire: number;
+}
+
 export interface PlantSummaryItem {
   plantId: number;
   plantName: string;
@@ -187,6 +212,44 @@ export interface UpdatePlantInstanceStatusRequest {
   status: number;
 }
 
+export interface PlantInstanceImage {
+  id: number;
+  imageUrl: string;
+  isPrimary: boolean;
+}
+
+export interface PlantInstanceDetail {
+  id: number;
+  plantId: number;
+  plantName: string;
+  currentNurseryId: number;
+  nurseryName: string;
+  nurseryAddress: string;
+  nurseryPhone: string;
+  sku: string | null;
+  specificPrice: number;
+  height: number;
+  trunkDiameter: number | null;
+  healthStatus: string;
+  age: number;
+  description: string;
+  status: number;
+  statusName: string;
+  createdAt: string;
+  updatedAt: string;
+  images: PlantInstanceImage[];
+}
+
+export interface UpdatePlantInstanceRequest {
+  sku: string;
+  specificPrice: number;
+  height: number;
+  trunkDiameter: number | null;
+  healthStatus: string;
+  age: number;
+  description: string;
+}
+
 export interface BatchUpdatePlantInstanceStatusRequest {
   instanceIds: number[];
   status: number;
@@ -225,6 +288,7 @@ export type SystemPlantSearchPayload = PaginatedPayload<SystemPlantSearchItem>;
 
 export interface ManagerPlantComboInventoryItem {
   id: number;
+  plantComboId: number;
   comboCode: string;
   comboName: string;
   comboType: number;

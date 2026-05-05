@@ -38,18 +38,41 @@ const getResponsePayload = <T,>(response: WrappedResponse<T>): T | undefined => 
   return response as T;
 };
 
+const toPlantGuidesListQueryParams = (params: AdminPlantGuideSearchRequest): Record<string, string | number> => {
+  const query: Record<string, string | number> = {
+    PageNumber: params.pagination.pageNumber,
+    PageSize: params.pagination.pageSize,
+  };
+
+  if (typeof params.plantId === 'number' && Number.isFinite(params.plantId)) {
+    query.PlantId = params.plantId;
+  }
+
+  const keyword = params.keyword?.trim();
+  if (keyword) {
+    query.Keyword = keyword;
+  }
+
+  return query;
+};
+
 export const getAdminPlantGuides = async (
   params: AdminPlantGuideSearchRequest,
   loading = true
 ): Promise<ResponseModel<AdminPlantGuideListPayload>> => {
-  return apiClient.get('/admin/PlantGuides', params, loading, { showToast: false, showErrorToast: false });
+  return apiClient.get(
+    '/admin/PlantGuides',
+    toPlantGuidesListQueryParams(params),
+    loading,
+    { showToast: false, showErrorToast: false }
+  );
 };
 
 export const getAdminPlantGuideById = async (
   id: number,
   loading = true
 ): Promise<ResponseModel<AdminPlantGuideDetail>> => {
-  return apiClient.get(`/admin/PlantGuides/${id}`, undefined, loading, { showToast: false, showErrorToast: false });
+  return apiClient.get(`/PlantGuides/${id}`, undefined, loading, { showToast: false, showErrorToast: false });
 };
 
 export const getAdminPlantGuideByPlantId = async (

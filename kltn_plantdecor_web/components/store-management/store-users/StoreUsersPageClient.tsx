@@ -331,7 +331,7 @@ export default function StoreUsersPageClient() {
   };
 
   return (
-    <Box sx={{ bgcolor: "#f5f5f5", minHeight: "100vh", p: { xs: 2, md: 4 } }}>
+    <Box>
       <Paper elevation={0} sx={{ p: { xs: 2, md: 3 }, borderRadius: 2 }}>
         <ManagementHeader
           title="Store Users"

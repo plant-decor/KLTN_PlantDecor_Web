@@ -70,6 +70,53 @@ const getResponsePayload = <T,>(response: { data?: T; payload?: T }): T | undefi
   return response.payload ?? response.data;
 };
 
+type UnknownRecord = Record<string, unknown>;
+
+const stripEmptyStringFields = <T extends UnknownRecord>(value: T): T => {
+  const next: UnknownRecord = {};
+
+  Object.entries(value).forEach(([key, raw]) => {
+    if (typeof raw === 'string' && raw.trim() === '') {
+      return;
+    }
+    next[key] = raw;
+  });
+
+  return next as T;
+};
+
+const readNumber = (payload: unknown, camelKey: string, pascalKey: string): number | undefined => {
+  if (!payload || typeof payload !== 'object') {
+    return undefined;
+  }
+  const candidate = payload as UnknownRecord;
+  const camel = candidate[camelKey];
+  if (typeof camel === 'number' && Number.isFinite(camel)) {
+    return camel;
+  }
+  const pascal = candidate[pascalKey];
+  if (typeof pascal === 'number' && Number.isFinite(pascal)) {
+    return pascal;
+  }
+  return undefined;
+};
+
+const readBoolean = (payload: unknown, camelKey: string, pascalKey: string): boolean | undefined => {
+  if (!payload || typeof payload !== 'object') {
+    return undefined;
+  }
+  const candidate = payload as UnknownRecord;
+  const camel = candidate[camelKey];
+  if (typeof camel === 'boolean') {
+    return camel;
+  }
+  const pascal = candidate[pascalKey];
+  if (typeof pascal === 'boolean') {
+    return pascal;
+  }
+  return undefined;
+};
+
 const normalizeError = (err: unknown): string => {
   if (!err || typeof err !== 'object') {
     return 'An error occurred';
@@ -186,14 +233,14 @@ export const useAdminMaterials = (): UseAdminMaterialsReturn => {
     setLoading(true);
     setError(null);
 
-    const requestBody: AdminMaterialSearchRequest = {
+    const requestBody: AdminMaterialSearchRequest = stripEmptyStringFields({
       ...lastRequestRef.current,
       ...params,
       pagination: {
         pageNumber: params?.pagination?.pageNumber ?? lastRequestRef.current.pagination.pageNumber,
         pageSize: params?.pagination?.pageSize ?? lastRequestRef.current.pagination.pageSize,
       },
-    };
+    });
 
     lastRequestRef.current = requestBody;
 
@@ -207,12 +254,12 @@ export const useAdminMaterials = (): UseAdminMaterialsReturn => {
 
       setMaterials(payload.items ?? []);
       setPagination({
-        totalCount: payload.totalCount ?? 0,
-        pageNumber: payload.pageNumber ?? requestBody.pagination.pageNumber,
-        pageSize: payload.pageSize ?? requestBody.pagination.pageSize,
-        totalPages: payload.totalPages ?? 1,
-        hasPrevious: payload.hasPrevious ?? false,
-        hasNext: payload.hasNext ?? false,
+        totalCount: readNumber(payload, 'totalCount', 'TotalCount') ?? 0,
+        pageNumber: readNumber(payload, 'pageNumber', 'PageNumber') ?? requestBody.pagination.pageNumber,
+        pageSize: readNumber(payload, 'pageSize', 'PageSize') ?? requestBody.pagination.pageSize,
+        totalPages: readNumber(payload, 'totalPages', 'TotalPages') ?? 1,
+        hasPrevious: readBoolean(payload, 'hasPrevious', 'HasPrevious') ?? false,
+        hasNext: readBoolean(payload, 'hasNext', 'HasNext') ?? false,
       });
     } catch (err) {
       setError(normalizeError(err));

@@ -1,27 +1,45 @@
 'use client';
 
 import {
+  Alert,
   Box,
   Card,
   CardContent,
-  Typography,
+  Chip,
   Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
 } from '@mui/material';
 import {
   AttachMoney,
   ShoppingBag,
   TrendingUp,
-  Assessment,
+  ErrorOutline,
 } from '@mui/icons-material';
 import { BarChart } from '@mui/x-charts/BarChart';
-import { LineChart } from '@mui/x-charts/LineChart';
-import {
-  revenueByWeek,
-  managerOrderTrends,
-  managerStoreStats,
-} from '@/data/dashboardMockData';
+import { Link } from '@/i18n/navigation';
+import { CustomLoading } from '@/components/CustomLoading';
+import type {
+  NurseryFailedOrdersPayload,
+  NurseryRevenueSummaryPayload,
+  NurseryTopProductItem,
+} from '@/types/manager-dashboard.types';
+import type { ManagerNurseryOrder } from '@/types/manager-sales-orders.types';
 
-// Stat Card Component
+export interface ManagerStoreMetricsDashboardProps {
+  revenue: NurseryRevenueSummaryPayload | null;
+  failed: NurseryFailedOrdersPayload | null;
+  topProducts: NurseryTopProductItem[];
+  recentOrders: ManagerNurseryOrder[];
+  loading: boolean;
+  loadError: string | null;
+}
+
 interface StatCardProps {
   title: string;
   value: string | number;
@@ -66,7 +84,6 @@ function StatCard({ title, value, icon, color, subtitle }: StatCardProps) {
   );
 }
 
-// Format currency in VND
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('vi-VN', {
     style: 'currency',
@@ -74,209 +91,193 @@ const formatCurrency = (value: number) => {
   }).format(value);
 };
 
-export default function ManagerStoreMetricsDashboard() {
-  // Prepare data for weekly revenue chart
-  const weekLabels = revenueByWeek.map((item) => item.week);
-  const weekRevenues = revenueByWeek.map((item) => item.revenue / 1000000); // Convert to millions
+export default function ManagerStoreMetricsDashboard({
+  revenue,
+  failed,
+  topProducts,
+  recentOrders,
+  loading,
+  loadError,
+}: ManagerStoreMetricsDashboardProps) {
+  const totalRevenue = revenue?.totalRevenue ?? 0;
+  const totalOrdersInPeriod = revenue?.totalOrders ?? 0;
+  const avgOrder =
+    totalOrdersInPeriod > 0 ? Math.round(totalRevenue / totalOrdersInPeriod) : 0;
+  const totalFailed = failed?.totalFailedOrders ?? 0;
 
-  // Prepare data for order trends line chart
-  const orderDates = managerOrderTrends.map((item) => {
-    const date = new Date(item.date);
-    return `${date.getDate()}/${date.getMonth() + 1}`;
-  });
-  const orderCounts = managerOrderTrends.map((item) => item.orders);
+  const plantNames = topProducts.map((p) =>
+    p.productName.length > 28 ? `${p.productName.slice(0, 28)}…` : p.productName
+  );
+  const plantRevenueMillions = topProducts.map((p) =>
+    Math.round((p.totalRevenue / 1_000_000) * 100) / 100
+  );
 
   return (
     <Box sx={{ p: 3 }}>
-      {/* Header */}
       <Typography variant="h4" fontWeight="bold" gutterBottom>
-        Thống Kê Chi Nhánh
+        Business Metrics
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-        Theo dõi hiệu suất kinh doanh của chi nhánh
+        Revenue and orders for the selected period (API aggregates by period, no daily chart).
       </Typography>
 
-      {/* Statistics Cards */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' }, gap: 3, mb: 4 }}>
-        <StatCard
-          title="Doanh Thu Chi Nhánh"
-          value={formatCurrency(managerStoreStats.totalRevenue)}
-          icon={<AttachMoney sx={{ color: 'white', fontSize: 32 }} />}
-          color="#4caf50"
-          subtitle={`+${managerStoreStats.growthRate}% so với tháng trước`}
-        />
-        <StatCard
-          title="Tổng Đơn Hàng"
-          value={managerStoreStats.totalOrders.toLocaleString()}
-          icon={<ShoppingBag sx={{ color: 'white', fontSize: 32 }} />}
-          color="#2196f3"
-        />
-        <StatCard
-          title="Giá Trị TB/Đơn"
-          value={formatCurrency(managerStoreStats.averageOrderValue)}
-          icon={<TrendingUp sx={{ color: 'white', fontSize: 32 }} />}
-          color="#ff9800"
-        />
-        <StatCard
-          title="Tăng Trưởng"
-          value={`${managerStoreStats.growthRate}%`}
-          icon={<Assessment sx={{ color: 'white', fontSize: 32 }} />}
-          color="#9c27b0"
-          subtitle="Tháng này"
-        />
-      </Box>
+      {loadError && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {loadError}
+        </Alert>
+      )}
 
-      {/* Charts */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
-        {/* Weekly Revenue Comparison */}
-          <Paper sx={{ p: 3, height: '100%' }}>
-            <Typography variant="h6" fontWeight="bold" gutterBottom>
-              So Sánh Doanh Thu Theo Tuần (Triệu VNĐ)
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              So sánh doanh thu giữa các tuần trong tháng
-            </Typography>
-            <Box sx={{ width: '100%', height: 350 }}>
-              <BarChart
-                xAxis={[
-                  {
-                    data: weekLabels,
-                    scaleType: 'band',
-                  },
-                ]}
-                series={[
-                  {
-                    data: weekRevenues,
-                    label: 'Doanh thu (Triệu VNĐ)',
-                    color: '#4caf50',
-                  },
-                ]}
-                height={350}
-              />
-            </Box>
-          </Paper>
+      {loading && (
+        <Box sx={{ py: 4, display: 'flex', justifyContent: 'center' }}>
+          <CustomLoading />
+        </Box>
+      )}
 
-        {/* Order Trends Line Chart */}
-          <Paper sx={{ p: 3, height: '100%' }}>
-            <Typography variant="h6" fontWeight="bold" gutterBottom>
-              Xu Hướng Đơn Hàng Theo Ngày
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Số lượng đơn hàng đặt tại chi nhánh hàng ngày
-            </Typography>
-            <Box sx={{ width: '100%', height: 350 }}>
-              <LineChart
-                xAxis={[
-                  {
-                    data: orderDates,
-                    scaleType: 'band',
-                  },
-                ]}
-                series={[
-                  {
-                    data: orderCounts,
-                    label: 'Số đơn hàng',
-                    color: '#2196f3',
-                    area: true,
-                  },
-                ]}
-                height={350}
-              />
-            </Box>
-          </Paper>
-      </Box>
+      {!loading && (
+        <>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(4, 1fr)' },
+              gap: 3,
+              mb: 4,
+            }}
+          >
+            <StatCard
+              title="Total revenue (period)"
+              value={formatCurrency(totalRevenue)}
+              icon={<AttachMoney sx={{ color: 'white', fontSize: 32 }} />}
+              color="#4caf50"
+              subtitle={revenue ? `${revenue.from?.slice(0, 10)} → ${revenue.to?.slice(0, 10)}` : undefined}
+            />
+            <StatCard
+              title="Orders (period revenue)"
+              value={totalOrdersInPeriod.toLocaleString('vi-VN')}
+              icon={<ShoppingBag sx={{ color: 'white', fontSize: 32 }} />}
+              color="#2196f3"
+              subtitle="Based on revenue summary"
+            />
+            <StatCard
+              title="Avg. order value"
+              value={totalOrdersInPeriod > 0 ? formatCurrency(avgOrder) : '—'}
+              icon={<TrendingUp sx={{ color: 'white', fontSize: 32 }} />}
+              color="#ff9800"
+              subtitle={totalOrdersInPeriod === 0 ? 'No orders in the period' : undefined}
+            />
+            <StatCard
+              title="Failed deliveries"
+              value={totalFailed.toLocaleString('vi-VN')}
+              icon={<ErrorOutline sx={{ color: 'white', fontSize: 32 }} />}
+              color="#f44336"
+              subtitle="For selected period"
+            />
+          </Box>
 
-      {/* Weekly Performance Details */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 3, mb: 3 }}>
+            <Paper sx={{ p: 3 }}>
+              <Typography variant="h6" fontWeight="bold" gutterBottom>
+                Top selling products (revenue, million VND)
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Top products for the selected period
+              </Typography>
+              {topProducts.length === 0 ? (
+                <Typography color="text.secondary">No data for this period.</Typography>
+              ) : (
+                <Box sx={{ width: '100%', height: Math.max(280, topProducts.length * 36) }}>
+                  <BarChart
+                    yAxis={[{ data: plantNames, scaleType: 'band' }]}
+                    series={[
+                      {
+                        data: plantRevenueMillions,
+                        label: 'Revenue (million VND)',
+                        color: '#2e7d32',
+                      },
+                    ]}
+                    layout="horizontal"
+                    height={Math.max(280, topProducts.length * 36)}
+                    margin={{ left: 160, right: 24, top: 16, bottom: 24 }}
+                    grid={{ vertical: true }}
+                  />
+                </Box>
+              )}
+            </Paper>
+
+            <Paper sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h6" fontWeight="bold">
+                  Recent orders
+                </Typography>
+                <Link href="/manager/sales-orders" style={{ fontSize: '0.875rem', fontWeight: 600 }}>
+                  View all
+                </Link>
+              </Box>
+              {recentOrders.length === 0 ? (
+                <Typography color="text.secondary">No orders yet.</Typography>
+              ) : (
+                <TableContainer>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Customer</TableCell>
+                        <TableCell align="right">Total</TableCell>
+                        <TableCell>Status</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {recentOrders.map((o) => (
+                        <TableRow key={o.id}>
+                          <TableCell>{o.customerName}</TableCell>
+                          <TableCell align="right">{formatCurrency(o.totalAmount ?? o.subTotalAmount)}</TableCell>
+                          <TableCell>
+                            <Chip label={o.statusName} size="small" variant="outlined" />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+            </Paper>
+          </Box>
+
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" fontWeight="bold" gutterBottom>
-              Chi Tiết Hiệu Suất Theo Tuần
+              Top product details
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Thống kê chi tiết doanh thu và đơn hàng theo tuần
-            </Typography>
-            <Box sx={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ borderBottom: '2px solid #e0e0e0' }}>
-                    <th style={{ padding: '12px', textAlign: 'left' }}>
-                      <Typography variant="subtitle2" fontWeight="bold">
-                        Tuần
-                      </Typography>
-                    </th>
-                    <th style={{ padding: '12px', textAlign: 'right' }}>
-                      <Typography variant="subtitle2" fontWeight="bold">
-                        Doanh Thu
-                      </Typography>
-                    </th>
-                    <th style={{ padding: '12px', textAlign: 'right' }}>
-                      <Typography variant="subtitle2" fontWeight="bold">
-                        Số Đơn Hàng
-                      </Typography>
-                    </th>
-                    <th style={{ padding: '12px', textAlign: 'right' }}>
-                      <Typography variant="subtitle2" fontWeight="bold">
-                        Giá Trị TB/Đơn
-                      </Typography>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {revenueByWeek.map((week, index) => (
-                    <tr
-                      key={week.week}
-                      style={{
-                        borderBottom: '1px solid #f0f0f0',
-                        backgroundColor: index % 2 === 0 ? '#fafafa' : 'white',
-                      }}
-                    >
-                      <td style={{ padding: '12px' }}>
-                        <Typography variant="body2" fontWeight="medium">
-                          {week.week}
-                        </Typography>
-                      </td>
-                      <td style={{ padding: '12px', textAlign: 'right' }}>
-                        <Typography variant="body2" color="primary" fontWeight="bold">
-                          {formatCurrency(week.revenue)}
-                        </Typography>
-                      </td>
-                      <td style={{ padding: '12px', textAlign: 'right' }}>
-                        <Typography variant="body2">
-                          {week.orders.toLocaleString()}
-                        </Typography>
-                      </td>
-                      <td style={{ padding: '12px', textAlign: 'right' }}>
-                        <Typography variant="body2">
-                          {formatCurrency(week.revenue / week.orders)}
-                        </Typography>
-                      </td>
-                    </tr>
-                  ))}
-                  <tr style={{ borderTop: '2px solid #e0e0e0', backgroundColor: '#f5f5f5' }}>
-                    <td style={{ padding: '12px' }}>
-                      <Typography variant="subtitle2" fontWeight="bold">
-                        Tổng Cộng
-                      </Typography>
-                    </td>
-                    <td style={{ padding: '12px', textAlign: 'right' }}>
-                      <Typography variant="subtitle2" fontWeight="bold" color="primary">
-                        {formatCurrency(managerStoreStats.totalRevenue)}
-                      </Typography>
-                    </td>
-                    <td style={{ padding: '12px', textAlign: 'right' }}>
-                      <Typography variant="subtitle2" fontWeight="bold">
-                        {managerStoreStats.totalOrders.toLocaleString()}
-                      </Typography>
-                    </td>
-                    <td style={{ padding: '12px', textAlign: 'right' }}>
-                      <Typography variant="subtitle2" fontWeight="bold">
-                        {formatCurrency(managerStoreStats.averageOrderValue)}
-                      </Typography>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </Box>
+            {topProducts.length === 0 ? (
+              <Typography color="text.secondary">No data available.</Typography>
+            ) : (
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Name</TableCell>
+                      <TableCell align="right">Quantity</TableCell>
+                      <TableCell align="right">Revenue</TableCell>
+                      <TableCell align="right">Avg. price</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {topProducts.map((p) => (
+                      <TableRow key={`${p.productType}-${p.productId}`}>
+                        <TableCell>{p.productName}</TableCell>
+                        <TableCell align="right">{p.totalQuantity.toLocaleString('vi-VN')}</TableCell>
+                        <TableCell align="right">{formatCurrency(p.totalRevenue)}</TableCell>
+                        <TableCell align="right">
+                          {p.totalQuantity > 0
+                            ? formatCurrency(Math.round(p.totalRevenue / p.totalQuantity))
+                            : '—'}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
           </Paper>
+        </>
+      )}
     </Box>
   );
 }

@@ -14,8 +14,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import CheckoutShipping from '@/components/checkout/CheckoutShipping';
 import CheckoutPayment from '@/components/checkout/CheckoutPayment';
-import CheckoutReview from '@/components/checkout/CheckoutReview';
-import CheckoutComplete from '@/components/checkout/CheckoutComplete';
 import { get } from '@/lib/api/apiService';
 import { isValidPhoneNumber10Digits } from '@/lib/utils/phoneNumber';
 import { CustomLoading } from '@/components/CustomLoading';
@@ -23,8 +21,10 @@ import {
   fetchCartItems,
   type CartApiItem,
 } from '@/lib/api/cartWishlistService';
+import { createOrder, getInvoicesByOrderId } from '@/lib/api/orderService';
 import type { CheckoutData, CartItem } from '@/types/cart.types';
 import type { CustomerProfile } from '@/types/auth.types';
+import type { OrderCreateRequest, OrderCreatePayload, OrderInvoice } from '@/types/order.types';
 
 interface CheckoutPageClientProps {
   userId: string;
@@ -68,6 +68,51 @@ const parsePositiveNumber = (value: string | null): number => {
   return parsed;
 };
 
+function buildOrderCreateRequest(checkoutData: CheckoutData): OrderCreateRequest {
+  if (!checkoutData.shippingInfo) {
+    throw new Error('Missing shipping information');
+  }
+
+  const { fullName, phone, address, notes } = checkoutData.shippingInfo;
+  const basePayload = {
+    address,
+    phone,
+    customerName: fullName,
+    note: notes ?? '',
+    paymentStrategy: checkoutData.orderType === 2 ? (checkoutData.paymentStrategy ?? 1) : 1,
+  };
+
+  if (checkoutData.orderType === 2) {
+    return {
+      ...basePayload,
+      orderType: 2,
+      plantInstanceId: checkoutData.plantInstanceId ?? 0,
+    };
+  }
+  if (checkoutData.orderType === 3) {
+    return {
+      ...basePayload,
+      orderType: 3,
+      buyNowItemId: checkoutData.buyNowItemId ?? checkoutData.items[0]?.id ?? 0,
+      buyNowItemType: (checkoutData.buyNowItemType ?? 1) as 1 | 2 | 3,
+      buyNowQuantity: checkoutData.buyNowQuantity ?? checkoutData.items[0]?.quantity ?? 1,
+    };
+  }
+  return {
+    ...basePayload,
+    orderType: 1,
+    cartItemIds: checkoutData.items.map((item) => item.id),
+  };
+}
+
+async function resolveInvoicesForOrder(created: OrderCreatePayload): Promise<OrderInvoice[]> {
+  const fromPayload = created.invoices;
+  if (fromPayload && fromPayload.length > 0) {
+    return fromPayload;
+  }
+  return getInvoicesByOrderId(created.id);
+}
+
 export default function CheckoutPageClient({
   userId,
   cartId,
@@ -77,18 +122,15 @@ export default function CheckoutPageClient({
   const locale = useLocale();
   const tCheckout = useTranslations('checkout');
   const tError = useTranslations('profile');
-  const tCommon = useTranslations('common');
-  const STEPS = [
-    tCheckout('shipping'),
-    tCheckout('review'),
-    tCheckout('payment'),
-    tCheckout('complete'),
-  ];
+  const STEPS = [tCheckout('shipping'), tCheckout('payment')];
   const [activeStep, setActiveStep] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
   const [error, setError] = useState('');
   const [checkoutData, setCheckoutData] = useState<CheckoutData | null>(null);
   const [userProfile, setUserProfile] = useState<CustomerProfile | null>(null);
+  const [createdOrder, setCreatedOrder] = useState<OrderCreatePayload | null>(null);
+  const [orderInvoices, setOrderInvoices] = useState<OrderInvoice[]>([]);
 
   const orderTypeFromQuery = parsePositiveInt(searchParams.get('orderType')) || 1;
   const isPlantInstanceOrder = orderTypeFromQuery === 2;
@@ -254,10 +296,6 @@ export default function CheckoutPageClient({
     setCheckoutData((prev) => (prev ? { ...prev, ...data } : prev));
   };
 
-  const handleBack = () => {
-    setActiveStep((prev) => Math.max(0, prev - 1));
-  };
-
   const handleShippingSubmit = async () => {
     if (!checkoutData.shippingInfo) {
       setError(tCheckout('errors.missingShippingInfo'));
@@ -283,82 +321,39 @@ export default function CheckoutPageClient({
         return;
       }
 
+      setIsSubmittingOrder(true);
+      const payload = buildOrderCreateRequest(checkoutData);
+      const created = await createOrder(payload);
+      const invoices = await resolveInvoicesForOrder(created);
+
+      if (invoices.length === 0) {
+        setError(tCheckout('errors.noInvoice'));
+        return;
+      }
+
+      const payable =
+        invoices.find((inv) => inv.statusName.toLowerCase() === 'pending') ?? invoices[0];
+      setCreatedOrder(created);
+      setOrderInvoices(invoices);
+      setCheckoutData((prev) =>
+        prev
+          ? {
+              ...prev,
+              orderId: created.id,
+              invoices,
+              subtotal: created.totalAmount,
+              total: payable.totalAmount,
+            }
+          : null
+      );
       setActiveStep(1);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : tCheckout('errors.submitFailed');
       setError(errorMessage);
+    } finally {
+      setIsSubmittingOrder(false);
     }
-  };
-
-  const handleReviewToPayment = () => {
-    setError('');
-    setActiveStep(2);
-  };
-
-  const handlePaymentCompleted = () => {
-    setActiveStep(3);
-  };
-
-  const renderNavigation = () => {
-    if (activeStep >= STEPS.length - 1) {
-      return null;
-    }
-
-    if (activeStep === 2) {
-      return (
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            gap: 2,
-            mt: 4,
-          }}
-        >
-          <Button
-            variant="outlined"
-            onClick={handleBack}
-          >
-            {tCommon('back')}
-          </Button>
-        </Box>
-      );
-    }
-
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          gap: 2,
-          mt: 4,
-        }}
-      >
-        <Button
-          variant="outlined"
-          onClick={handleBack}
-          disabled={activeStep === 0}
-          className='font-semibold!'
-        >
-          {tCommon('back')}
-        </Button>
-        <Button
-          variant="contained"
-          className='font-semibold! bg-primary!'
-          onClick={() => {
-            if (activeStep === 0) {
-              void handleShippingSubmit();
-              return;
-            }
-            if (activeStep === 1) {
-              handleReviewToPayment();
-            }
-          }}
-        >
-          {activeStep === 0 ? tCheckout('actions.reviewOrder') : tCheckout('actions.goToPayment')}
-        </Button>
-      </Box>
-    );
   };
 
   return (
@@ -386,30 +381,28 @@ export default function CheckoutPageClient({
           />
         )}
 
-        {activeStep === 1 && (
-          <CheckoutReview
-            checkoutData={checkoutData}
-            // cartId={cartId}
-          />
-        )}
-
-        {activeStep === 2 && (
+        {activeStep === 1 && createdOrder && orderInvoices.length > 0 && (
           <CheckoutPayment
             checkoutData={checkoutData}
             onDataChange={updateCheckoutData}
-            onPaymentCompleted={handlePaymentCompleted}
-          />
-        )}
-
-        {activeStep === 3 && (
-          <CheckoutComplete
-            checkoutData={checkoutData}
-            userId={userId}
+            createdOrder={createdOrder}
+            invoices={orderInvoices}
           />
         )}
       </Box>
 
-      {renderNavigation()}
+      {activeStep === 0 && (
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4 }}>
+          <Button
+            variant="contained"
+            className='font-semibold! bg-primary!'
+            onClick={() => void handleShippingSubmit()}
+            disabled={isSubmittingOrder}
+          >
+            {isSubmittingOrder ? tCheckout('actions.creatingOrder') : tCheckout('actions.continueToPayment')}
+          </Button>
+        </Box>
+      )}
     </Container>
   );
 }

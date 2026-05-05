@@ -6,9 +6,11 @@ import type {
   AdminCareServicePackageCreateRequest,
   AdminCareServicePackageDetail,
   AdminCareServicePackageListItem,
+  AdminCareServicePackageSuitabilityRuleCreateRequest,
   AdminCareServicePackageUpdateRequest,
   AdminSpecializationOption,
   CareServiceTypeOption,
+  AdminCareServicePackageSuitabilityRule,
 } from "@/types/admin-service-package.types";
 
 const QUERY_CONFIG = {
@@ -105,6 +107,33 @@ const normalizeSpecializationItem = (item: unknown): AdminSpecializationOption |
   };
 };
 
+const normalizeSuitabilityRuleItem = (item: unknown): AdminCareServicePackageSuitabilityRule | null => {
+  if (!isRecord(item)) {
+    return null;
+  }
+
+  const id = item.id == null ? undefined : toNumber(item.id, NaN);
+  const careServicePackageId =
+    item.careServicePackageId == null ? undefined : toNumber(item.careServicePackageId, NaN);
+
+  const categoryIdRaw = item.categoryId == null ? null : toNumber(item.categoryId, NaN);
+  const categoryId = categoryIdRaw != null && Number.isFinite(categoryIdRaw) ? categoryIdRaw : null;
+
+  const careDifficultyRaw = item.careDifficultyLevel == null ? null : toNumber(item.careDifficultyLevel, NaN);
+  const careDifficultyLevel =
+    careDifficultyRaw != null && Number.isFinite(careDifficultyRaw) ? careDifficultyRaw : null;
+
+  return {
+    id: id != null && Number.isFinite(id) ? id : undefined,
+    careServicePackageId:
+      careServicePackageId != null && Number.isFinite(careServicePackageId) ? careServicePackageId : undefined,
+    categoryId,
+    categoryName: item.categoryName == null ? null : toText(item.categoryName) || null,
+    careDifficultyLevel,
+    careDifficultyLevelName: item.careDifficultyLevelName == null ? null : toText(item.careDifficultyLevelName) || null,
+  };
+};
+
 const normalizeDetail = (raw: unknown): AdminCareServicePackageDetail => {
   const base = normalizePackageItem(raw);
 
@@ -123,6 +152,7 @@ const normalizeDetail = (raw: unknown): AdminCareServicePackageDetail => {
       isActive: false,
       specializationIds: [],
       specializations: [],
+      suitabilityRules: [],
     };
   }
 
@@ -141,10 +171,16 @@ const normalizeDetail = (raw: unknown): AdminCareServicePackageDetail => {
     .map(normalizeSpecializationItem)
     .filter((item): item is AdminSpecializationOption => Boolean(item));
 
+  const suitabilityRulesRaw = Array.isArray(source.suitabilityRules) ? source.suitabilityRules : [];
+  const suitabilityRules = suitabilityRulesRaw
+    .map(normalizeSuitabilityRuleItem)
+    .filter((item): item is AdminCareServicePackageSuitabilityRule => Boolean(item));
+
   return {
     ...base,
     specializationIds,
     specializations,
+    suitabilityRules,
   };
 };
 
@@ -283,6 +319,38 @@ export const updateAdminCareServicePackage = async (
   const response = await apiClient.put<
     WrappedResponse<AdminCareServicePackageDetail> | unknown
   >(`care-service-packages/${id}`, data, loading, MUTATION_CONFIG);
+
+  const raw = unwrapPayloadData(response as WrappedResponse<unknown>);
+  return normalizeDetail(raw);
+};
+
+export const updateAdminCareServicePackageSpecializations = async (
+  id: number,
+  specializationIds: number[],
+  loading = true
+): Promise<AdminCareServicePackageDetail> => {
+  const response = await apiClient.put<WrappedResponse<AdminCareServicePackageDetail> | unknown>(
+    `care-service-packages/${id}/specializations`,
+    { specializationIds },
+    loading,
+    MUTATION_CONFIG
+  );
+
+  const raw = unwrapPayloadData(response as WrappedResponse<unknown>);
+  return normalizeDetail(raw);
+};
+
+export const updateAdminCareServicePackageSuitabilityRules = async (
+  id: number,
+  suitabilityRules: AdminCareServicePackageSuitabilityRuleCreateRequest[],
+  loading = true
+): Promise<AdminCareServicePackageDetail> => {
+  const response = await apiClient.put<WrappedResponse<AdminCareServicePackageDetail> | unknown>(
+    `care-service-packages/${id}/suitability-rules`,
+    { suitabilityRules },
+    loading,
+    MUTATION_CONFIG
+  );
 
   const raw = unwrapPayloadData(response as WrappedResponse<unknown>);
   return normalizeDetail(raw);

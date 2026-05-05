@@ -10,11 +10,15 @@ import {
   Typography,
   TextField,
   Grid,
+  Divider,
 } from '@mui/material';
 import { useTranslations } from 'next-intl';
 import { ServiceRegistration } from '@/types/service.types';
+import type { ServiceRegistrationRating } from '@/types/care-service.types';
+import { ServiceRegistrationStatusEnum } from '@/types/care-service.types';
 import ServiceStatusChip from './ServiceStatusChip';
 import { CustomLoading } from '@/components/CustomLoading';
+import ServiceRatingReadOnlySection from '@/components/service/ServiceRatingReadOnlySection';
 
 interface ExtendedServiceRegistration extends ServiceRegistration {
   totalSessions?: number;
@@ -35,6 +39,10 @@ interface ExtendedServiceRegistration extends ServiceRegistration {
   latitude?: number;
   longitude?: number;
   progressesCount?: number;
+  /** Raw API status name (e.g. Completed) — used to detect Completed when numeric status is inconsistent */
+  statusNameRaw?: string;
+  /** Normalized from list/detail API when GET /service-ratings/by-registration is empty */
+  rating?: ServiceRegistrationRating | null;
 }
 
 interface ServiceDetailsDialogProps {
@@ -48,6 +56,8 @@ interface ServiceDetailsDialogProps {
   onPay?: () => void;
   onCancel?: () => void;
   statusLabels?: Record<number, string>;
+  /** Bump after customer submits a rating so the embedded section refetches */
+  customerRatingRefreshKey?: number;
 }
 
 export default function ServiceDetailsDialog({
@@ -61,10 +71,10 @@ export default function ServiceDetailsDialog({
   onPay,
   onCancel,
   statusLabels,
+  customerRatingRefreshKey = 0,
 }: ServiceDetailsDialogProps) {
   const t = useTranslations('services');
   const tCommon = useTranslations('common');
-  console.log('ServiceDetailsDialog render', { service });
   const formatDate = (date?: string) => {
     if (!date) {
       return '-';
@@ -110,16 +120,22 @@ export default function ServiceDetailsDialog({
     return `${shift.shiftName} (${shift.startTime} - ${shift.endTime})`;
   };
 
-  const formatScheduleDays = (days?: number[]) => {
-    if (!Array.isArray(days) || days.length === 0) {
-      return '-';
-    }
+  // const formatScheduleDays = (days?: number[]) => {
+  //   if (!Array.isArray(days) || days.length === 0) {
+  //     return '-';
+  //   }
 
-    const weekdayByIndex = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    return days
-      .map((day) => weekdayByIndex[day] ?? String(day))
-      .join(', ');
-  };
+  //   const weekdayByIndex = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  //   return days
+  //     .map((day) => weekdayByIndex[day] ?? String(day))
+  //     .join(', ');
+  // };
+
+  const normalizeDetailStatusName = (value?: string | null) =>
+    String(value ?? '')
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '');
 
   const renderReadOnlyField = (label: string, value: string, multiline = false) => (
     <Box>
@@ -179,14 +195,11 @@ export default function ServiceDetailsDialog({
             <Grid size={{ xs: 12, md: 6 }}>
               {renderReadOnlyField(t('scheduleDays'), t('scheduleDaysError'))}
             </Grid>
-          ) : (
-            <Grid size={{ xs: 12, md: 6 }}>
-              {renderReadOnlyField(t('scheduleDays'), formatScheduleDays(service.scheduleDaysOfWeek))}
-            </Grid>
-          ) 
+          ) : 
+            null
           }
           <Grid size={{ xs: 12, md: 6 }}>{renderReadOnlyField(t('phone'), service.phone || '-')}</Grid>
-          {service.orderId ? (
+          {/* {service.orderId ? (
             <Grid size={{ xs: 12, md: 6 }}>
               {renderReadOnlyField(t('orderId'), service.orderId ? `#${service.orderId}` : '-')}
             </Grid>
@@ -194,7 +207,7 @@ export default function ServiceDetailsDialog({
             <Grid size={{ xs: 24, md: 12 }}>
               {renderReadOnlyField(t('orderId'), t('orderIdError'))}
             </Grid>
-          }
+          } */}
           <Grid size={{ xs: 12 }}>{renderReadOnlyField(t('address'), service.address || '-', true)}</Grid>
           <Grid size={{ xs: 12 }}>{renderReadOnlyField(t('notes'), service.note || '-', true)}</Grid>
 
@@ -205,6 +218,26 @@ export default function ServiceDetailsDialog({
           {service.cancelReason ? (
             <Grid size={{ xs: 12 }}>{renderReadOnlyField(t('cancelReason'), service.cancelReason, true)}</Grid>
           ) : null}
+
+          {(() => {
+            const statusNum = Number(service.status);
+            const isDetailCompleted =
+              (Number.isFinite(statusNum) &&
+                statusNum === ServiceRegistrationStatusEnum.Completed) ||
+              normalizeDetailStatusName(service.statusNameRaw) === 'completed';
+            return isDetailCompleted ? (
+              <Grid size={{ xs: 12 }}>
+                <Divider sx={{ my: 2 }} />
+                <ServiceRatingReadOnlySection
+                  key={`detail-rating-${service.id}-${customerRatingRefreshKey}`}
+                  registrationId={service.id}
+                  enabled={open && !loading}
+                  embeddedRating={service.rating ?? null}
+                  ratedCustomerName={service.customerName ?? null}
+                />
+              </Grid>
+            ) : null;
+          })()}
         </Grid>
         )}
       </DialogContent>

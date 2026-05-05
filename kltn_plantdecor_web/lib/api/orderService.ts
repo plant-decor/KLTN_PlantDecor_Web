@@ -6,12 +6,16 @@ import type {
   MyOrderDetailResponse,
   MyOrdersResponse,
   Order,
+  OrderByEmail,
   OrderCreatePayload,
   OrderCreateRequest,
   OrderInvoice,
+  OrdersByEmailResponse,
   PendingInvoicesResponse,
   PaymentCreateResponse,
   OrderStatusName,
+  RecommendedPackagesPayload,
+  RecommendedPackagesResponse,
 } from '@/types/order.types';
 
 const ORDER_ENDPOINT = '/Order';
@@ -125,6 +129,41 @@ export async function continuePaymentByInvoice(invoiceId: number): Promise<strin
     false
   );
   return response.payload.paymentUrl;
+}
+
+export async function getOrdersByEmail(
+  email: string,
+  loading = false
+): Promise<OrderByEmail[]> {
+  const trimmed = email.trim();
+  if (!trimmed) {
+    return [];
+  }
+
+  const response = await get<OrdersByEmailResponse & ApiResponseFallback<OrderByEmail[]>>(
+    `${ORDER_ENDPOINT}/by-email`,
+    { email: trimmed },
+    loading,
+    false
+  );
+
+  return getPayloadFromResponse(response) ?? [];
+}
+
+export async function getRecommendedPackagesByPlant(
+  orderId: number,
+  loading = false
+): Promise<RecommendedPackagesPayload> {
+  const response = await get<
+    RecommendedPackagesResponse & ApiResponseFallback<RecommendedPackagesPayload>
+  >(
+    `${ORDER_ENDPOINT}/${orderId}/recommended-packages-by-plant`,
+    undefined,
+    loading,
+    false
+  );
+
+  return getPayloadFromResponse(response) ?? { recommendations: [] };
 }
 
 export async function cancelOrder(orderId: number): Promise<Order> {

@@ -8,6 +8,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
   Stack,
   Typography,
 } from '@mui/material';
@@ -22,6 +23,7 @@ import {
   formatDate,
   getStatusChipColor,
 } from './managerServiceOrders.constants';
+import ServiceRatingReadOnlySection from '@/components/service/ServiceRatingReadOnlySection';
 
 interface ServiceOrderDetailDialogProps {
   open: boolean;
@@ -133,6 +135,15 @@ export default function ServiceOrderDetailDialog({
             <Typography>
               <strong>Approved at:</strong> {formatDate(detailItem.approvedAt)}
             </Typography>
+
+            <Divider sx={{ my: 1 }} />
+
+            <ServiceRatingReadOnlySection
+              registrationId={detailItem.id}
+              enabled={open && Boolean(detailItem) && !loading}
+              embeddedRating={detailItem.rating ?? null}
+              ratedCustomerName={detailItem.customer?.fullName ?? null}
+            />
           </Stack>
         )}
       </DialogContent>

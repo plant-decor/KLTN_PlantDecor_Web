@@ -27,7 +27,7 @@ export interface PlantDetailResponse {
   basePrice: number;
   placementType: number;
   placementTypeName: string;
-  size: string;
+  sizeName: string;
   growthRate: number | null;
   toxicity: boolean | null;
   airPurifying: boolean | null;

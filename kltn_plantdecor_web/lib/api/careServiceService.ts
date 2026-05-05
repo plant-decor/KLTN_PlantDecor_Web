@@ -332,13 +332,21 @@ const normalizeServiceRegistration = (item: unknown): MyServiceRegistration | nu
         };
       })
       .filter((progress): progress is MyServiceRegistration["progresses"][number] => Boolean(progress)),
-    rating: rating
-      ? {
-          id: toNumber(rating.id),
-          score: toNumber(rating.score),
-          comment: toText(rating.comment) || undefined,
-        }
-      : null,
+    rating: (() => {
+      if (!rating) {
+        return null;
+      }
+      const ratingId = toNumber(rating.id, Number.NaN);
+      const score = toNumber(
+        rating.score !== undefined ? rating.score : rating.rating,
+        Number.NaN
+      );
+      if (!Number.isFinite(ratingId) || !Number.isFinite(score)) {
+        return null;
+      }
+      const comment = toText(rating.comment) || toText(rating.description) || undefined;
+      return { id: ratingId, score, comment };
+    })(),
   };
 };
 

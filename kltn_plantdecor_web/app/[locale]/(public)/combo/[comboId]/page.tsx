@@ -133,6 +133,7 @@ export async function generateMetadata({ params }: ComboDetailPageProps): Promis
     getShopComboById(numericComboId, true, false).catch(() => null),
     getFallbackCombo(numericComboId),
   ]);
+  console.log('comboResponse',comboResponse);
   const roomDesignEnumsResponse = await getRoomDesignEnums(true, false).catch(() => null);
 
   const combo = getPayload<PlantCombo>(comboResponse);
@@ -173,6 +174,7 @@ export async function generateMetadata({ params }: ComboDetailPageProps): Promis
 export default async function ComboDetailPage({ params }: ComboDetailPageProps) {
   const { locale, comboId } = await params;
   const tCommon = await getTranslations({ locale, namespace: 'common' });
+  const t = await getTranslations({ locale, namespace: 'productDetail' });
   const tProducts = await getTranslations({ locale, namespace: 'products' });
   const tCombo = await getTranslations({ locale, namespace: 'combo' });
   const tRoomDesignEnum = await getTranslations({ locale, namespace: 'roomDesignEnums' });
@@ -191,7 +193,7 @@ export default async function ComboDetailPage({ params }: ComboDetailPageProps) 
 
   const combo = getPayload<PlantCombo>(comboResponse);
   const roomDesignEnums = getPayload(roomDesignEnumsResponse) ?? [];
-  const { lightRequirementById, roomTypeById } = getRoomDesignLabelMaps(roomDesignEnums, tRoomDesignEnum);
+  const { roomTypeById } = getRoomDesignLabelMaps(roomDesignEnums, tRoomDesignEnum);
   const nurseries = getPayload(nurseriesResponse) ?? [];
 
   const comboName = combo?.comboName || fallbackCombo?.name || `Combo #${comboId}`;
@@ -200,7 +202,7 @@ export default async function ComboDetailPage({ params }: ComboDetailPageProps) 
   const seasonName = combo?.seasonName || '';
   const themeName = combo?.themeName || '';
   const themeDescription = combo?.themeDescription || '';
-  const suitableSpaceLabel = lightRequirementById.get(Number(combo?.suitableSpace)) || '';
+  const suitableSpaceLabel = (combo?.suitableSpace) || '';
   const suitableRooms = Array.isArray(combo?.suitableRooms) ? combo.suitableRooms : [];
   const suitableRoomLabels = suitableRooms.map((roomId) => roomTypeById.get(Number(roomId)) || String(roomId));
   const comboPrice = combo?.comboPrice ?? fallbackCombo?.price ?? 0;
@@ -257,9 +259,9 @@ export default async function ComboDetailPage({ params }: ComboDetailPageProps) 
       />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <nav className="mb-8 flex items-center text-sm text-gray-500">
-          <Link href={`/${locale}`} className="hover:text-green-600">{tCommon('menu')}</Link>
-          <span className="mx-2">/</span>
-          <Link href={`/${locale}/plant-store`} className="hover:text-green-600">{tCommon('search')}</Link>
+        <Link href={`/${locale}`} className="hover:text-green-600">{t('home')}</Link>
+        <span className="mx-2">/</span>
+          <Link href={`/${locale}/plant-store`} className="hover:text-green-600">{t('store')}</Link>
           <span className="mx-2">/</span>
           <span className="text-gray-900">{comboName}</span>
         </nav>
@@ -317,10 +319,44 @@ export default async function ComboDetailPage({ params }: ComboDetailPageProps) 
                 quantityByNurseryId={quantityByNurseryId}
               />
             </div>
+
+            <div className="mt-8 w-full col-span-2">
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                {locale === 'en' ? 'Plants in this combo' : 'Các cây trong combo'}
+              </h3>
+              {combo?.comboItems && combo.comboItems.length > 0 ? (
+                <ul className="divide-y divide-gray-200 rounded-lg border border-gray-200 bg-white">
+                  {combo.comboItems.map((item, index) => (
+                    <li key={`${item.plantId}-${index}`} className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <div className="min-w-0">
+                        <Link
+                          href={`/${locale}/products/${item.plantId}`}
+                          className="font-semibold text-gray-900 hover:text-green-700 hover:underline"
+                        >
+                          {item.plantName || `Plant #${item.plantId}`}
+                        </Link>
+                        {item.notes ? (
+                          <p className="text-sm text-gray-600 mt-1">{item.notes}</p>
+                        ) : null}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-500">
+                          {locale === 'en' ? 'Quantity' : 'Số lượng'}
+                        </span>
+                        <span className="inline-flex items-center rounded-full bg-green-50 px-3 py-1 text-sm font-semibold text-green-700">
+                          {Math.max(0, Math.floor(Number(item.quantity ?? 0)))}
+                        </span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-gray-600">{tCommon('noData')}</p>
+              )}
+            </div>
             {comboDescription && (
-              <div className="mb-6 w-full col-span-2"> {/* Thêm w-full */}
+              <div className="mb-6 w-full col-span-2">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Description</h3>
-                {/* Loại bỏ prose ở div này, chỉ để bên trong RichTextDisplay xử lý */}
                 <div className="w-full overflow-hidden text-gray-600">
                   <RichTextDisplay content={comboDescription} />
                 </div>

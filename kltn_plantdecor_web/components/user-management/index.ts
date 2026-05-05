@@ -1,4 +1,4 @@
-export { default as UserPageHeader } from './UserPageHeader';
+export { default as CreateConsultantManagerDialog } from './CreateConsultantManagerDialog';
 export { default as MessageAlert } from './MessageAlert';
 export { default as UserStatsCard } from './UserStatsCard';
 export { default as UserFilterPanel } from './UserFilterPanel';

@@ -1,4 +1,5 @@
 import type { Plant } from '@/data/sampledata';
+import type { OrderInvoice } from '@/types/order.types';
 
 export interface CartItem {
   id: number;
@@ -38,6 +39,9 @@ export interface CheckoutData {
   buyNowQuantity?: number | null;
   paymentMethod?: string;
   useProfileInfo?: boolean;
+  /** Set after createOrder when checkout creates the order before payment */
+  orderId?: number;
+  invoices?: OrderInvoice[];
   subtotal: number;
   // shippingFee: number;
   total: number;

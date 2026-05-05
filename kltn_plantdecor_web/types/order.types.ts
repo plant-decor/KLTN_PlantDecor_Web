@@ -66,12 +66,13 @@ export type OrderCreateRequest =
 
 export interface OrderInvoiceDetail {
   id: number;
-  imageUrl: string | null;
+  /** Consultant / một số API chỉ trả các field cơ bản */
+  imageUrl?: string | null;
   itemName: string;
   unitPrice: number;
   quantity: number;
   amount: number;
-  statusName: string;
+  statusName?: string;
 }
 
 export interface OrderInvoice {
@@ -165,3 +166,107 @@ export interface PaymentCreatePayload {
 
 export type PaymentCreateResponse = ApiResponseWithPayload<PaymentCreatePayload>;
 export type ContinuePaymentResponse = ApiResponseWithPayload<PaymentCreatePayload>;
+
+export interface OrderByEmailItem {
+  id: number;
+  itemName: string;
+  imageUrl: string | null;
+  quantity: number;
+  price: number;
+  status: number;
+  statusName: string;
+}
+
+export interface OrderByEmailNursery {
+  id: number;
+  orderId: number;
+  nurseryId: number;
+  nurseryName: string;
+  shipperId: number | null;
+  shipperName: string | null;
+  shipperEmail: string | null;
+  shipperPhone: string | null;
+  customerId: number;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  customerAddress: string;
+  subTotalAmount: number;
+  totalAmount: number;
+  depositAmount: number | null;
+  remainingAmount: number | null;
+  status: number;
+  statusName: string;
+  shipperNote: string | null;
+  deliveryNote: string | null;
+  deliveryImageUrl: string | null;
+  note: string | null;
+  items: OrderByEmailItem[];
+}
+
+export interface OrderByEmailInvoiceDetail {
+  id: number;
+  itemName: string;
+  unitPrice: number;
+  quantity: number;
+  amount: number;
+}
+
+export interface OrderByEmailInvoice {
+  id: number;
+  orderId: number;
+  issuedDate: string;
+  totalAmount: number;
+  type: number;
+  typeName: string;
+  status: number;
+  statusName: string;
+  details: OrderByEmailInvoiceDetail[];
+}
+
+export interface OrderByEmail {
+  id: number;
+  userId: number;
+  address: string;
+  phone: string;
+  customerName: string | null;
+  totalAmount: number;
+  depositAmount: number | null;
+  remainingAmount: number | null;
+  status: number;
+  statusName: string;
+  paymentStrategy: number;
+  orderType: number;
+  note: string | null;
+  createdAt: string;
+  updatedAt: string;
+  items: OrderByEmailItem[];
+  nurseryOrders: OrderByEmailNursery[];
+  invoices: OrderByEmailInvoice[];
+}
+
+export type OrdersByEmailResponse = ApiResponseWithPayload<OrderByEmail[]>;
+
+export interface RecommendedPackagePlant {
+  plantId: number;
+  plantName: string;
+  quantity: number;
+}
+
+export interface RecommendedPackage {
+  packageId: number;
+  packageName: string;
+  unitPrice: number;
+  matchScore: number;
+  matchedCategoryCount: number;
+  matchedCareLevelCount: number;
+  totalPurchasedPlantItems: number;
+  matchReasons: string[];
+  plants: RecommendedPackagePlant[];
+}
+
+export interface RecommendedPackagesPayload {
+  recommendations: RecommendedPackage[];
+}
+
+export type RecommendedPackagesResponse = ApiResponseWithPayload<RecommendedPackagesPayload>;

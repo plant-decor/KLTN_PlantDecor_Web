@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import axios from "axios";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   createAdminNursery,
   searchAdminNurseries,
@@ -28,13 +29,20 @@ interface SaveNurseryParams {
   editingNurseryId?: number;
 }
 
+interface FetchNurseriesOptions {
+  signal?: AbortSignal;
+}
+
 interface UseAdminNurseriesReturn {
   nurseries: AdminNursery[];
   loading: boolean;
   saving: boolean;
   error: string | null;
   pagination: PaginationState;
-  fetchNurseries: (params?: Partial<AdminNurserySearchRequest>) => Promise<void>;
+  fetchNurseries: (
+    params?: Partial<AdminNurserySearchRequest>,
+    options?: FetchNurseriesOptions
+  ) => Promise<void>;
   saveNursery: (params: SaveNurseryParams) => Promise<boolean>;
   toggleNurseryActive: (id: number) => Promise<boolean>;
   setPage: (pageNumber: number) => Promise<void>;
@@ -53,6 +61,10 @@ const defaultPagination: PaginationState = {
 
 const getResponsePayload = <T,>(response: { data?: T; payload?: T }): T | undefined => {
   return response.payload ?? response.data;
+};
+
+const isRequestCanceled = (err: unknown): boolean => {
+  return axios.isAxiosError(err) && err.code === "ERR_CANCELED";
 };
 
 const normalizeError = (err: unknown): string => {
@@ -104,44 +116,75 @@ export const useAdminNurseries = (): UseAdminNurseriesReturn => {
     },
   });
 
-  const fetchNurseries = useCallback(async (params?: Partial<AdminNurserySearchRequest>) => {
-    setLoading(true);
-    setError(null);
+  const fetchSeqRef = useRef(0);
 
-    const requestBody: AdminNurserySearchRequest = {
-      ...lastRequestRef.current,
-      ...params,
-      pagination: {
-        pageNumber: params?.pagination?.pageNumber ?? lastRequestRef.current.pagination.pageNumber,
-        pageSize: params?.pagination?.pageSize ?? lastRequestRef.current.pagination.pageSize,
-      },
-    };
+  const fetchNurseries = useCallback(
+    async (params?: Partial<AdminNurserySearchRequest>, options?: FetchNurseriesOptions) => {
+      const seq = ++fetchSeqRef.current;
+      setLoading(true);
+      setError(null);
 
-    lastRequestRef.current = requestBody;
+      const requestBody: AdminNurserySearchRequest = {
+        ...lastRequestRef.current,
+        ...params,
+        pagination: {
+          pageNumber: params?.pagination?.pageNumber ?? lastRequestRef.current.pagination.pageNumber,
+          pageSize: params?.pagination?.pageSize ?? lastRequestRef.current.pagination.pageSize,
+        },
+      };
 
-    try {
-      const response = await searchAdminNurseries(requestBody, true);
-      const payload = getResponsePayload(response);
+      lastRequestRef.current = requestBody;
 
-      if (!payload) {
-        return;
+      const axiosConfig = options?.signal ? { signal: options.signal } : {};
+
+      try {
+        const response = await searchAdminNurseries(requestBody, true, axiosConfig);
+        const payload = getResponsePayload(response);
+
+        if (!payload) {
+          return;
+        }
+
+        if (seq !== fetchSeqRef.current) {
+          return;
+        }
+
+        setNurseries(payload.items ?? []);
+        setPagination({
+          totalCount: payload.totalCount ?? 0,
+          pageNumber: payload.pageNumber ?? requestBody.pagination.pageNumber,
+          pageSize: payload.pageSize ?? requestBody.pagination.pageSize,
+          totalPages: payload.totalPages ?? 1,
+          hasPrevious: payload.hasPrevious ?? false,
+          hasNext: payload.hasNext ?? false,
+        });
+      } catch (err) {
+        if (isRequestCanceled(err)) {
+          return;
+        }
+        if (seq !== fetchSeqRef.current) {
+          return;
+        }
+        setError(normalizeError(err));
+      } finally {
+        if (seq === fetchSeqRef.current) {
+          setLoading(false);
+        }
       }
+    },
+    []
+  );
 
-      setNurseries(payload.items ?? []);
-      setPagination({
-        totalCount: payload.totalCount ?? 0,
-        pageNumber: payload.pageNumber ?? requestBody.pagination.pageNumber,
-        pageSize: payload.pageSize ?? requestBody.pagination.pageSize,
-        totalPages: payload.totalPages ?? 1,
-        hasPrevious: payload.hasPrevious ?? false,
-        hasNext: payload.hasNext ?? false,
-      });
-    } catch (err) {
-      setError(normalizeError(err));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetchNurseries(
+      {
+        pagination: { pageNumber: 1, pageSize: defaultPagination.pageSize },
+      },
+      { signal: controller.signal }
+    );
+    return () => controller.abort();
+  }, [fetchNurseries]);
 
   const saveNursery = useCallback(
     async ({ formData, editingNurseryId }: SaveNurseryParams): Promise<boolean> => {

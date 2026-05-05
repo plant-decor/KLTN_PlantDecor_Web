@@ -113,6 +113,9 @@ function plantGuideReducer(_state: boolean, action: PlantGuideStateAction): bool
   }
 }
 
+/** ~5 MenuItem rows (default row ~48px); list scrolls when there are more options */
+const MULTI_SELECT_LIST_MAX_HEIGHT = 240;
+
 interface PlantFormDialogProps {
   open: boolean;
   editingData?: PlantDetail;
@@ -397,7 +400,7 @@ export default function PlantFormDialog({
               Plant attributes
             </Typography>
             <Grid container spacing={2}>
-              <Grid size={{ xs: 12, sm: 4 }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Controller
                   name="placementType"
                   control={control}
@@ -419,7 +422,7 @@ export default function PlantFormDialog({
                   )}
                 />
               </Grid>
-              <Grid size={{ xs: 12, sm: 4 }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Controller
                   name="size"
                   control={control}
@@ -441,7 +444,7 @@ export default function PlantFormDialog({
                   )}
                 />
               </Grid>
-              <Grid size={{ xs: 12, sm: 4 }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Controller
                   name="careLevelType"
                   control={control}
@@ -500,6 +503,11 @@ export default function PlantFormDialog({
                         onChange={(event) => {
                           field.onChange(handleMultipleSelectChange(event.target.value as number[] | string[]));
                         }}
+                        MenuProps={{
+                          PaperProps: {
+                            sx: { maxHeight: MULTI_SELECT_LIST_MAX_HEIGHT },
+                          },
+                        }}
                         renderValue={(selected) => (
                           <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap">
                             {(selected as number[]).map((id) => {
@@ -539,6 +547,11 @@ export default function PlantFormDialog({
                         value={field.value || []}
                         onChange={(event) => {
                           field.onChange(handleMultipleSelectChange(event.target.value as number[] | string[]));
+                        }}
+                        MenuProps={{
+                          PaperProps: {
+                            sx: { maxHeight: MULTI_SELECT_LIST_MAX_HEIGHT },
+                          },
                         }}
                         renderValue={(selected) => (
                           <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap">
@@ -842,6 +855,11 @@ export default function PlantFormDialog({
                         onChange={(event) => {
                           field.onChange(handleMultipleSelectChange(event.target.value as number[] | string[]));
                         }}
+                        MenuProps={{
+                          PaperProps: {
+                            sx: { maxHeight: MULTI_SELECT_LIST_MAX_HEIGHT },
+                          },
+                        }}
                         renderValue={(selected) => (
                           <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap">
                             {(selected as number[]).map((id) => {
@@ -873,6 +891,11 @@ export default function PlantFormDialog({
                         value={field.value || []}
                         onChange={(event) => {
                           field.onChange(handleMultipleSelectChange(event.target.value as number[] | string[]));
+                        }}
+                        MenuProps={{
+                          PaperProps: {
+                            sx: { maxHeight: MULTI_SELECT_LIST_MAX_HEIGHT },
+                          },
                         }}
                         renderValue={(selected) => (
                           <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap">

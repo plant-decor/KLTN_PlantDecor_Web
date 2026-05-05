@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Box,
@@ -49,11 +49,14 @@ export default function PlantComboTab({}: PlantComboTabProps) {
     enumError,
     saving,
     plantsLoading,
+    plantsSearchLoading,
+    comboPlantSearchResults,
     error,
     pagination,
     fetchCombos,
     fetchComboById,
-    fetchComboPlants,
+    fetchComboPlantCatalog,
+    searchPlantsForComboForm,
     loadEnums,
     savePlantCombo,
     toggleComboActive,
@@ -62,6 +65,8 @@ export default function PlantComboTab({}: PlantComboTabProps) {
     clearError,
   } = useAdminPlantCombos();
 
+  const didInitFetchRef = useRef(false);
+
   const {
     tags,
     error: tagError,
@@ -69,11 +74,18 @@ export default function PlantComboTab({}: PlantComboTabProps) {
   } = useAdminTags();
 
   useEffect(() => {
-    void loadEnums();
-    void fetchCombos({ pageNumber: 1, pageSize: 10 });
-    void fetchComboPlants();
-    void fetchTags({ pageNumber: 1, pageSize: 1000 });
-  }, [fetchComboPlants, fetchCombos, fetchTags, loadEnums]);
+    if (didInitFetchRef.current) {
+      return;
+    }
+    didInitFetchRef.current = true;
+
+    void (async () => {
+      void loadEnums();
+      void fetchCombos({ pageNumber: 1, pageSize: 10 });
+      void fetchComboPlantCatalog();
+      void fetchTags({ pageNumber: 1, pageSize: 1000 });
+    })();
+  }, [fetchComboPlantCatalog, fetchCombos, fetchTags, loadEnums]);
 
   const tagOptions = useMemo<OptionItem[]>(() => {
     return tags.map((tag) => ({ id: tag.id, name: tag.tagName }));
@@ -164,8 +176,8 @@ export default function PlantComboTab({}: PlantComboTabProps) {
   }, [setPageSize]);
 
   const handlePlantSearch = useCallback((keyword: string) => {
-    void fetchComboPlants(keyword);
-  }, [fetchComboPlants]);
+    void searchPlantsForComboForm(keyword);
+  }, [searchPlantsForComboForm]);
 
   return (
     <Box>
@@ -200,7 +212,9 @@ export default function PlantComboTab({}: PlantComboTabProps) {
         open={formOpen}
         editingData={editingData}
         plants={comboPlants}
+        searchPlants={comboPlantSearchResults}
         plantsLoading={plantsLoading}
+        searchPlantsLoading={plantsSearchLoading}
         tags={tagOptions}
         lightRequirementOptions={enums.lightRequirements}
         roomTypeOptions={enums.roomTypes}

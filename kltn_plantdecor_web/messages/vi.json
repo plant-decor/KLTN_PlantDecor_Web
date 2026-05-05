@@ -80,7 +80,8 @@
     "contact": "Liên hệ",
     "about": "Về chúng tôi",
     "myPlant": "Cây của tôi",
-    "aiRecommendation": "Tư vấn AI"
+    "aiRecommendation": "Tư vấn AI",
+    "aiChatSupport": "AI Chat hỗ trợ"
   },
   "header": {
     "logoAlt": "Plant Decor Logo",
@@ -175,6 +176,15 @@
       "apply": "Áp dụng"
     },
     "sort": {
+      "fieldName": "Tên",
+      "fieldPrice": "Giá",
+      "fieldCreatedAt": "Ngày tạo",
+      "fieldSize": "Kích thước",
+      "fieldAvailableInstances": "Sẵn có",
+      "fieldUpdatedAt": "Cập nhật",
+      "fieldCareLevel": "Độ chăm sóc",
+      "ariaSortAscending": "Đang sắp xếp tăng dần. Nhấn để chuyển sang giảm dần.",
+      "ariaSortDescending": "Đang sắp xếp giảm dần. Nhấn để chuyển sang tăng dần.",
       "default": "Mặc định",
       "nameAsc": "Tên A-Z",
       "nameDesc": "Tên Z-A",
@@ -282,9 +292,11 @@
     "fullName": "Họ và tên",
     "phone": "Số điện thoại",
     "address": "Địa chỉ",
+    "notesLabel": "Ghi chú đơn hàng",
     "city": "Thành phố",
     "zipCode": "Mã bưu điện",
     "paymentMethod": "Phương thức thanh toán",
+    "paymentMethodHint": "Bạn sẽ được chuyển tới VNPay. Số tiền thực tế thu trùng với dòng “Thanh toán lần này (hóa đơn)” ở bảng bên trên.",
     "creditCard": "Thẻ tín dụng",
     "cashOnDelivery": "Thanh toán khi nhận hàng",
     "orderSummary": "Tóm tắt đơn hàng",
@@ -295,7 +307,28 @@
     "backToCart": "Quay lại giỏ hàng",
     "actions": {
       "reviewOrder": "Xem lại đơn hàng",
-      "goToPayment": "Đến thanh toán"
+      "goToPayment": "Đến thanh toán",
+      "continueToPayment": "Tiếp tục thanh toán",
+      "creatingOrder": "Đang tạo đơn hàng…",
+      "creatingPayment": "Đang chuyển tới trang thanh toán…",
+      "payWithVnPay": "Thanh toán qua VNPay"
+    },
+    "orderIdLabel": "Mã đơn",
+    "paymentBreakdownTitle": "Số tiền cần thanh toán",
+    "orderTotalValue": "Tổng giá trị đơn hàng",
+    "breakdownTable": {
+      "description": "Mục",
+      "amount": "Số tiền (VND)"
+    },
+    "amountDueThisPayment": "Thanh toán lần này (hóa đơn)",
+    "invoiceToPay": "Cần thanh toán ngay",
+    "depositInfo": "Cọc (trên đơn)",
+    "remainingInfo": "Còn lại (sau này)",
+    "itemsTable": {
+      "product": "Sản phẩm",
+      "qty": "SL",
+      "price": "Đơn giá",
+      "lineTotal": "Tạm tính dòng"
     },
     "errors": {
       "emptyCartGoBack": "Giỏ hàng đang trống. Vui lòng quay lại giỏ hàng.",
@@ -304,7 +337,9 @@
       "emptyCart": "Giỏ hàng đang trống.",
       "missingRequiredShippingFields": "Vui lòng nhập đầy đủ họ tên, số điện thoại và địa chỉ giao hàng.",
       "submitFailed": "Không thể gửi đơn hàng",
-      "orderNotCreated": "Đơn hàng chưa được tạo."
+      "orderNotCreated": "Đơn hàng chưa được tạo.",
+      "noInvoice": "Chưa có hóa đơn cho đơn hàng. Vui lòng thử lại hoặc liên hệ hỗ trợ.",
+      "paymentUrlFailed": "Không thể bắt đầu thanh toán. Vui lòng thử lại."
     },
     "completeDetails": {
       "notAvailable": "Không có",
@@ -455,6 +490,8 @@
     "selectScheduleDays": "Chọn ngày thực hiện trong tuần",
     "oneTimeScheduleHint": "Gói một lần chỉ chọn được 1 ngày trong tuần.",
     "periodicScheduleHint": "Gói định kỳ cần chọn đúng {count} ngày và không bao gồm Chủ nhật.",
+    "bookingLeadTimeOneTime": "Đơn một lần phải đăng ký trước ít nhất 6 tiếng (tính theo giờ bắt đầu ca).",
+    "bookingLeadTimePeriodic": "Đơn định kỳ phải đăng ký trước ít nhất 24 tiếng (tính theo giờ bắt đầu ca buổi đầu tiên).",
     "shift": "Ca làm việc",
     "scheduleDays": "Ngày thực hiện trong tuần",
     "orderId": "Mã đơn hàng",
@@ -622,6 +659,9 @@
     "latitude": "Vĩ độ",
     "longitude": "Kinh độ",
     "phoneReadOnly": "Số điện thoại là chỉ đọc",
+    "fullNameRequired": "Vui lòng nhập họ và tên",
+    "usernameRequired": "Vui lòng nhập tên người dùng",
+    "phoneNumberRequired": "Vui lòng nhập số điện thoại",
     "phoneNumberInvalid": "Số điện thoại phải gồm đúng 10 chữ số",
     "notificationSettings": "Cài đặt thông báo",
     "receiveNotifications": "Nhận thông báo",
@@ -755,6 +795,7 @@
     "roomStyle": "Phong cách phòng",
     "growthRate": "Tốc độ phát triển",
     "uniqueInstance": "Cây đặc biệt",
+    "potSize": "Kích thước chậu",
     "categories": "Danh mục",
     "tags": "Thẻ",
     "categoryFallback": "Danh mục {index}",
@@ -830,6 +871,7 @@
     "customerSupport": "Hỗ trợ khách hàng",
     "faq": "Câu hỏi thường gặp",
     "returnPolicy": "Chính sách đổi trả",
+    "userPolicy": "Chính sách người dùng",
     "contactInfo": "Thông tin liên hệ",
     "address": "123 Đường Xanh, Thành phố Hồ Chí Minh, Việt Nam",
     "phone": "+84 123 456 789",
@@ -993,7 +1035,14 @@
     },
     "map": {
       "title": "Bản Đồ Văn Phòng/Vườn Ươm",
-      "placeholder": "Bản đồ Google Maps sẽ được cập nhật trong phiên bản tiếp theo."
+      "description": "Bản đồ OpenStreetMap nhúng (iframe). Vị trí trên bản đồ được ước tính từ địa chỉ.",
+      "unavailableOnFetchError": "Bản đồ hiển thị kèm danh sách vườn ươm. Tải danh sách thất bại nên không thể tải bản đồ ở đây — vui lòng thử lại sau.",
+      "emptyNurseries": "Chưa có vườn ươm hoạt động để hiển thị bản đồ.",
+      "iframeTitle": "Bản đồ vị trí: {name}",
+      "fallbackNoCoords": "Không xác định được tọa độ từ địa chỉ. Bạn vẫn có thể tìm trên OpenStreetMap bằng liên kết bên dưới.",
+      "openInOsm": "Mở trên OpenStreetMap",
+      "openLargerInOsm": "Mở vị trí tìm theo địa chỉ trên OpenStreetMap",
+      "selectNurseryAria": "Chọn {name} để xem bản đồ vị trí"
     }
   },
   "roomDesignEnums": {

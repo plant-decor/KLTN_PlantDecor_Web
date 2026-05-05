@@ -66,9 +66,9 @@ export default function StoreManagementPageClient({
     <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', p: 4 }}>
         {/* Header */}
         <ManagementHeader
-          title="Store Management"
+          title="Product Management"
           description="Manage the main data of plants, combos, plant instances, and consumable materials."
-          entityLabel="packages"
+          entityLabel="plants, combos, plant instances, and consumable materials"
                 // count={packages.length}
                 actionLabel="Create New"
                 // onAction={openCreateModal}
@@ -79,7 +79,7 @@ export default function StoreManagementPageClient({
           <Tabs
             value={tabValue}
             onChange={handleTabChange}
-            aria-label="store management tabs"
+            aria-label="product management tabs"
             sx={{
               borderBottom: 1,
               borderColor: 'divider',

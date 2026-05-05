@@ -1,5 +1,5 @@
 import * as signalR from "@microsoft/signalr";
-import { getClientAccessToken } from "@/lib/axios/tokenStorage";
+import { getValidAccessToken } from "@/lib/auth/getValidAccessToken";
 
 export type MessageReceivedPayload = {
   messageId: number;
@@ -37,6 +37,23 @@ class ChatHubService {
 
   private readonly hubUrl = `${process.env.NEXT_PUBLIC_SIGNALR_BASE_URL}/hubs/chat`;
 
+  private isDebugEnabled() {
+    return process.env.NEXT_PUBLIC_DEBUG_AUTH === "1";
+  }
+
+  private isUnauthorizedError(error: unknown): boolean {
+    const message =
+      typeof (error as { message?: unknown } | null)?.message === "string"
+        ? String((error as { message: string }).message)
+        : "";
+
+    return (
+      /unauthorized/i.test(message) ||
+      /\b401\b/.test(message) ||
+      /Unable to identify user from token/i.test(message)
+    );
+  }
+
   private emit<K extends EventKey>(event: K, payload: ChatEventMap[K]) {
     const listeners = this.listeners[event] as
       | Set<EventCallback<K>>
@@ -70,14 +87,9 @@ class ChatHubService {
   }
 
   private createConnection() {
-    const token = getClientAccessToken();
-    if (!token) {
-      throw new Error("Không tìm thấy access token để kết nối chat hub");
-    }
-
     const connection = new signalR.HubConnectionBuilder()
       .withUrl(this.hubUrl, {
-        accessTokenFactory: () => getClientAccessToken() || "",
+        accessTokenFactory: async () => (await getValidAccessToken()) || "",
         withCredentials: true,
         transport:
           signalR.HttpTransportType.WebSockets |
@@ -152,9 +164,18 @@ class ChatHubService {
       this.connection = this.createConnection();
     }
 
+    if (this.isDebugEnabled()) {
+      console.log("[signalr] connect(): starting hub connection");
+    }
+
     this.startPromise = this.connection
       .start()
       .then(() => {
+        if (this.isDebugEnabled()) {
+          console.log("[signalr] connect(): connected", {
+            connectionId: this.connection?.connectionId,
+          });
+        }
         return this.connection!;
       })
       .finally(() => {
@@ -162,6 +183,40 @@ class ChatHubService {
       });
 
     return this.startPromise;
+  }
+
+  private async stopConnectionPreserveRooms() {
+    if (
+      this.connection &&
+      this.connection.state !== signalR.HubConnectionState.Disconnected
+    ) {
+      try {
+        await this.connection.stop();
+      } catch (error) {
+        console.warn("Failed to stop chat hub connection:", error);
+      }
+    }
+    this.connection = null;
+    this.startPromise = null;
+  }
+
+  async restart() {
+    const roomIds = [...this.joinedConversationIds];
+    if (this.isDebugEnabled()) {
+      console.log("[signalr] restart(): restarting hub, rooms:", roomIds);
+    }
+    await this.stopConnectionPreserveRooms();
+
+    await this.connect();
+
+    // Re-join rooms after a fresh connection is established.
+    for (const conversationId of roomIds) {
+      try {
+        await this.connection?.invoke("JoinConversation", conversationId);
+      } catch (error) {
+        console.error(`Rejoin conversation ${conversationId} failed after restart`, error);
+      }
+    }
   }
 
   async disconnect() {
@@ -198,10 +253,58 @@ class ChatHubService {
     return this.connection;
   }
 
-  async joinConversation(conversationId: number) {
+  private async invokeWithAuthRetry<T = unknown>(
+    method: string,
+    args: unknown[],
+    options: { retryOnce?: boolean } = {},
+  ): Promise<T> {
+    const { retryOnce = true } = options;
     const connection = await this.ensureConnected();
 
-    await connection.invoke("JoinConversation", conversationId);
+    try {
+      return (await connection.invoke(method, ...args)) as T;
+    } catch (error) {
+      if (!retryOnce || !this.isUnauthorizedError(error)) {
+        throw error;
+      }
+
+      if (this.isDebugEnabled()) {
+        console.log("[signalr] invoke unauthorized -> refresh + restart + retry", {
+          method,
+        });
+      }
+
+      // Force refresh and restart hub, then retry once.
+      const refreshed = await getValidAccessToken({ forceRefresh: true });
+      if (!refreshed) {
+        // getValidAccessToken() already redirected; fail fast.
+        throw error;
+      }
+
+      await this.restart();
+
+      try {
+        const restarted = await this.ensureConnected();
+        return (await restarted.invoke(method, ...args)) as T;
+      } catch (retryError) {
+        if (this.isUnauthorizedError(retryError)) {
+          if (this.isDebugEnabled()) {
+            console.log("[signalr] retry still unauthorized -> disconnect + redirect login", {
+              method,
+            });
+          }
+          await this.disconnect();
+          // getValidAccessToken() redirected on refresh failure;
+          // if we still got unauthorized after refresh, force login redirect.
+          void getValidAccessToken({ forceRefresh: true, redirectOnFailure: true });
+        }
+        throw retryError;
+      }
+    }
+  }
+
+  async joinConversation(conversationId: number) {
+    await this.invokeWithAuthRetry("JoinConversation", [conversationId]);
     this.joinedConversationIds.add(conversationId);
   }
 
@@ -214,7 +317,7 @@ class ChatHubService {
       return;
     }
 
-    await this.connection.invoke("LeaveConversation", conversationId);
+    await this.invokeWithAuthRetry("LeaveConversation", [conversationId]);
     this.joinedConversationIds.delete(conversationId);
   }
 
@@ -224,8 +327,7 @@ class ChatHubService {
       throw new Error("Message content cannot be empty");
     }
 
-    const connection = await this.ensureConnected();
-    await connection.invoke("SendMessage", conversationId, trimmed);
+    await this.invokeWithAuthRetry("SendMessage", [conversationId, trimmed]);
   }
 
   async sendTyping(conversationId: number) {
@@ -236,7 +338,15 @@ class ChatHubService {
       return;
     }
 
-    await this.connection.invoke("UserTyping", conversationId);
+    try {
+      await this.invokeWithAuthRetry("UserTyping", [conversationId]);
+    } catch (error) {
+      if (this.isUnauthorizedError(error)) {
+        // getValidAccessToken() already redirects on failure; keep typing non-blocking.
+        return;
+      }
+      console.warn("UserTyping failed:", error);
+    }
   }
 
   async sendStopTyping(conversationId: number) {
@@ -247,7 +357,14 @@ class ChatHubService {
       return;
     }
 
-    await this.connection.invoke("UserStoppedTyping", conversationId);
+    try {
+      await this.invokeWithAuthRetry("UserStoppedTyping", [conversationId]);
+    } catch (error) {
+      if (this.isUnauthorizedError(error)) {
+        return;
+      }
+      console.warn("UserStoppedTyping failed:", error);
+    }
   }
 
   clearAllListeners() {

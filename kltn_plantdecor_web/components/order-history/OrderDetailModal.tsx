@@ -23,14 +23,15 @@ import {
 import { useTranslations } from 'next-intl';
 import type { Order } from '@/types/order.types';
 import {
+  canUserCancelOrder,
   formatCurrency,
-  formatDate,
   getStatusInfo,
 } from './orderHistoryUtils';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 import Image from 'next/image';
-import { canCreateReturnTicket, isPendingNurseryOrderDetail } from './returnTicket.constants';
+import { canCreateReturnTicket } from './returnTicket.constants';
 import { CustomLoading } from '@/components/CustomLoading';
+import { formatDateTime } from '@/lib/utils/dateUtils';
 
 const SERVICE_ORDER_TYPE = 4;
 
@@ -66,15 +67,9 @@ export default function OrderDetailModal({
   const tOrderHistory = useTranslations('orderHistory');
   const statusInfo = order ? getStatusInfo(order.statusName) : null;
   const isServiceOrder = order?.orderType === SERVICE_ORDER_TYPE;
-  const canCancelOrder = order?.statusName === 'Pending' || order?.statusName === 'DepositPaid' || order?.statusName === 'Paid';
-  const canCreateReturn = !!order
-    && !isServiceOrder
-    && canCreateReturnTicket(order.statusName)
-    && order.nurseryOrders.some((nurseryOrder) =>
-      nurseryOrder.items.some((item) => isPendingNurseryOrderDetail(item.statusName))
-    );
+  const canCancelOrder = !!order && canUserCancelOrder(order.statusName);
+  const canCreateReturn = !!order && !isServiceOrder && canCreateReturnTicket(order.statusName);
   const isCancelling = !!order && cancelLoadingOrderId === order.id;
-
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
       <DialogTitle>
@@ -120,13 +115,13 @@ export default function OrderDetailModal({
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                   Created at
                 </Typography>
-                <Typography variant="body1">{formatDate(order.createdAt)}</Typography>
+                <Typography variant="body1">{formatDateTime(order.createdAt)}</Typography>
               </Box>
               <Box>
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                   Updated at
                 </Typography>
-                <Typography variant="body1">{formatDate(order.updatedAt)}</Typography>
+                <Typography variant="body1">{formatDateTime(order.updatedAt)}</Typography>
               </Box>
             </Box>
 
@@ -136,12 +131,16 @@ export default function OrderDetailModal({
               Customer information
             </Typography>
             <Box sx={{ mb: 3 }}>
-              <Typography variant="body2" color="text.secondary">
-                Customer
-              </Typography>
-              <Typography variant="body1" gutterBottom>
-                {order.customerName || '-'}
-              </Typography>
+              {order.customerName && (
+                <>
+                  <Typography variant="body2" color="text.secondary">
+                    Customer
+                  </Typography>
+                  <Typography variant="body1" gutterBottom>
+                    {order.customerName || '-'}
+                  </Typography>
+                </>
+              )}
               <Typography variant="body2" color="text.secondary">
                 Phone
               </Typography>
@@ -257,7 +256,7 @@ export default function OrderDetailModal({
                       <Chip label={invoice.statusName} size="small" />
                     </Box>
                     <Typography variant="body2" color="text.secondary">
-                      Type: {invoice.typeName} - Date: {formatDate(invoice.issuedDate)}
+                      Type: {invoice.typeName} - Date: {formatDateTime(invoice.issuedDate)}
                     </Typography>
                     <Typography variant="body1" fontWeight="bold" sx={{ mt: 1 }}>
                       {formatCurrency(invoice.totalAmount)}
@@ -306,22 +305,22 @@ export default function OrderDetailModal({
                       </TableContainer>
                     ) : null}
                     <Box
-                      className='w-full flex justify-end'> 
-                    {invoice.statusName === 'Pending' ? (
-                      <Button
-                        variant="contained"
-                        className='font-semibold!'
-                        size="small"
-                        sx={{ px: 2, py: 1, backgroundColor: 'var(--primary)', ...hoverLiftStyle }}
-                        onClick={() => void onPayInvoice(invoice.id)}
-                        disabled={paymentLoadingInvoiceId === invoice.id || isCancelling}
-                      >
-                        {paymentLoadingInvoiceId === invoice.id
-                          ? tOrderHistory('retryingPayment')
-                          : tOrderHistory('payNow')}
-                      </Button>
-                    ) : null}
-                </Box>
+                      className='w-full flex justify-end'>
+                      {invoice.statusName === 'Pending' ? (
+                        <Button
+                          variant="contained"
+                          className='font-semibold!'
+                          size="small"
+                          sx={{ px: 2, py: 1, backgroundColor: 'var(--primary)', ...hoverLiftStyle }}
+                          onClick={() => void onPayInvoice(invoice.id)}
+                          disabled={paymentLoadingInvoiceId === invoice.id || isCancelling}
+                        >
+                          {paymentLoadingInvoiceId === invoice.id
+                            ? tOrderHistory('retryingPayment')
+                            : tOrderHistory('payNow')}
+                        </Button>
+                      ) : null}
+                    </Box>
                   </Card>
                 ))}
               </>

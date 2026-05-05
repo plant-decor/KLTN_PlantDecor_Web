@@ -186,19 +186,25 @@ h6 {
   --leaf-loader-size: 24px;
   width: var(--leaf-loader-size);
   height: var(--leaf-loader-size);
-  display: inline-grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: visible;
 }
 
 .leaf-loader__inner {
   width: 140px;
   height: 140px;
-  position: relative;
-  transform: scale(calc(var(--leaf-loader-size) / 140px));
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) scale(calc(var(--leaf-loader-size) / 140px));
   transform-origin: center;
 }
 
 .leaf-loader__leaf {
+  display: block;
   position: absolute;
   left: 50%;
   top: 50%;

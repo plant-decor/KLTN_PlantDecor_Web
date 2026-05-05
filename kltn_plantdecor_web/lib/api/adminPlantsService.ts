@@ -58,7 +58,7 @@ export interface AssignTagsRequest {
 
 export const searchAdminPlants = async (
   data: AdminPlantSearchRequest,
-  loading = false
+  loading = true
 ): Promise<ResponseModel<AdminPlantSearchPayload>> => {
   return apiClient.post('/system/plants/search', data, loading);
 };

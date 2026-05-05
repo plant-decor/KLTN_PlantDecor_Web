@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import CartBadge from '@/components/cart/CartBadge';
-import LanguageSwitcher from './LanguageSwitcher';
 import HeaderUnifiedSearch from './HeaderUnifiedSearch';
 import { getCategoryTree, type CategoryResponse } from '@/lib/api/categoriesService';
 import {
@@ -15,6 +14,7 @@ import {
   Phone as PhoneIcon,
   Info as InfoIcon,
   LocalFlorist as LocalFloristIcon,
+  ChatBubbleOutline as ChatBubbleOutlineIcon,
   SmartToy as SmartToyIcon,
   Menu as MenuIcon,
   Close as CloseIcon,
@@ -39,6 +39,7 @@ const NAV_LABEL_KEYS: Record<HeaderIconKey, string> = {
   about: 'about',
   myPlant: 'myPlant',
   ai: 'aiRecommendation',
+  aiChat: 'aiChatSupport',
 };
 
 const getNavLabelKey = (icon: HeaderIconKey): string => NAV_LABEL_KEYS[icon];
@@ -58,6 +59,7 @@ const ICONS: Record<HeaderIconKey, ReactNode> = {
   about: <InfoIcon sx={{ fontSize: 20 }} />,
   myPlant: <LocalFloristIcon sx={{ fontSize: 20 }} />,
   ai: <SmartToyIcon sx={{ fontSize: 20 }} />,
+  aiChat: <ChatBubbleOutlineIcon sx={{ fontSize: 20 }} />,
 };
 
 interface NavigationProps {
@@ -220,7 +222,7 @@ export default function Navigation({ initialStoreCategories = [] }: NavigationPr
   return (
     <nav className="bg-white shadow-sm border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="hidden sm:flex lg:flex md:flex items-center justify-around h-12">
+        <div className="hidden md:flex items-center justify-around h-12">
           <div className="flex items-center gap-1 lg:gap-6">
             {navItems.map((item: HeaderNavItem) => {
               const isStoreItem = item.icon === 'store';
@@ -260,7 +262,7 @@ export default function Navigation({ initialStoreCategories = [] }: NavigationPr
 
             {isStoreHoverOpen && (
               <div className="absolute left-0 top-full z-50 w-96 pt-2">
-                <div className="rounded-xl border border-gray-100 bg-white p-3 shadow-xl">
+                <div className="rounded-xl border border-gray-100 bg-white p-3 shadow-xl max-h-[60vh] overflow-y-auto">
             {filteredStoreCategories.length > 0 ? (
               renderStoreCategoryTree(filteredStoreCategories)
             ) : (
@@ -288,7 +290,6 @@ export default function Navigation({ initialStoreCategories = [] }: NavigationPr
 
           <div className="flex items-center gap-3">
             <CartBadge />
-            <LanguageSwitcher />
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="text-gray-700 hover:text-green-600 focus:outline-none p-1"

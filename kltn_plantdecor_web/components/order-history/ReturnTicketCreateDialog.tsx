@@ -78,7 +78,7 @@ export default function ReturnTicketCreateDialog({
   const eligibleItems = useMemo<EligibleItem[]>(() => {
     return order.nurseryOrders.flatMap((nurseryOrder) =>
       nurseryOrder.items
-        .filter((item) => item.statusName === 'Pending' && item.quantity > 0)
+        .filter((item) => item.quantity > 0)
         .map((item) => ({
           nurseryOrderDetailId: item.id,
           nurseryOrderId: nurseryOrder.id,
@@ -225,9 +225,9 @@ export default function ReturnTicketCreateDialog({
       <DialogTitle>Create Return Ticket for Order #{order.id}</DialogTitle>
       <DialogContent dividers>
         <Stack spacing={2}>
-          <Alert severity="info">
+          {/* <Alert severity="info">
             Only items with Pending status are eligible. At least one image is required for each selected item.
-          </Alert>
+          </Alert> */}
 
           {validationError ? <Alert severity="error">{validationError}</Alert> : null}
           {submitError ? <Alert severity="error">{submitError}</Alert> : null}
@@ -280,7 +280,7 @@ export default function ReturnTicketCreateDialog({
               {eligibleItems.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} align="center">
-                    <Typography color="text.secondary">No pending items available for return in this order.</Typography>
+                    <Typography color="text.secondary">No items available for return in this order.</Typography>
                   </TableCell>
                 </TableRow>
               ) : (

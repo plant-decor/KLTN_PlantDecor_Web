@@ -31,6 +31,7 @@ import {
   uploadAdminPlantComboImages,
   uploadAdminPlantComboThumbnail,
 } from '@/lib/api/adminPlantCombosService';
+import { toast } from 'react-toastify';
 
 interface PaginationState {
   totalCount: number;
@@ -60,18 +61,21 @@ interface ComboEnums {
 interface UseAdminPlantCombosReturn {
   combos: PlantCombo[];
   comboPlants: Plant[];
+  comboPlantSearchResults: Plant[];
   enums: ComboEnums;
   enumLoading: boolean;
   enumError: string | null;
   saving: boolean;
   detailLoading: boolean;
   plantsLoading: boolean;
+  plantsSearchLoading: boolean;
   error: string | null;
   pagination: PaginationState;
   filters: ListFilters;
-  fetchCombos: (params?: { pageNumber?: number; pageSize?: number }) => Promise<void>;
+  fetchCombos: (params?: { pageNumber?: number; pageSize?: number }) => Promise<boolean>;
   fetchComboById: (id: number) => Promise<PlantCombo | null>;
-  fetchComboPlants: (keyword?: string) => Promise<void>;
+  fetchComboPlantCatalog: () => Promise<void>;
+  searchPlantsForComboForm: (keyword: string) => Promise<void>;
   loadEnums: () => Promise<void>;
   savePlantCombo: (params: SavePlantComboParams) => Promise<boolean>;
   toggleComboActive: (id: number) => Promise<boolean>;
@@ -98,6 +102,21 @@ const EMPTY_ENUMS: ComboEnums = {
 
 const getResponsePayload = <T,>(response: { data?: T; payload?: T }): T | undefined => {
   return response.payload ?? response.data;
+};
+
+type UnknownRecord = Record<string, unknown>;
+
+const stripEmptyStringFields = <T extends UnknownRecord>(value: T): T => {
+  const next: UnknownRecord = {};
+
+  Object.entries(value).forEach(([key, raw]) => {
+    if (typeof raw === 'string' && raw.trim() === '') {
+      return;
+    }
+    next[key] = raw;
+  });
+
+  return next as T;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -201,6 +220,7 @@ const toComboId = (payload: unknown): number | null => {
 export const useAdminPlantCombos = (): UseAdminPlantCombosReturn => {
   const [combos, setCombos] = useState<PlantCombo[]>([]);
   const [comboPlants, setComboPlants] = useState<Plant[]>([]);
+  const [comboPlantSearchResults, setComboPlantSearchResults] = useState<Plant[]>([]);
   const [enums, setEnums] = useState<ComboEnums>(EMPTY_ENUMS);
   const [enumLoading, setEnumLoading] = useState(false);
   const [enumError, setEnumError] = useState<string | null>(null);
@@ -208,6 +228,7 @@ export const useAdminPlantCombos = (): UseAdminPlantCombosReturn => {
   const [saving, setSaving] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
   const [plantsLoading, setPlantsLoading] = useState(false);
+  const [plantsSearchLoading, setPlantsSearchLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState<PaginationState>(defaultPagination);
   const [filters, setFilters] = useState<ListFilters>({ keyword: '' });
@@ -216,9 +237,10 @@ export const useAdminPlantCombos = (): UseAdminPlantCombosReturn => {
     pageNumber: defaultPagination.pageNumber,
     pageSize: defaultPagination.pageSize,
   });
-  const plantSearchRequestRef = useRef(0);
+  const plantCatalogRequestRef = useRef(0);
+  const plantFormSearchRequestRef = useRef(0);
 
-  const fetchCombos = useCallback(async (params?: { pageNumber?: number; pageSize?: number }) => {
+  const fetchCombos = useCallback(async (params?: { pageNumber?: number; pageSize?: number }): Promise<boolean> => {
     setLoading(true);
     setError(null);
 
@@ -234,10 +256,10 @@ export const useAdminPlantCombos = (): UseAdminPlantCombosReturn => {
         },
         true
       );
-
+      toast.success(response.message);
       const payload = getResponsePayload(response);
       if (!payload) {
-        return;
+        return false;
       }
 
       setCombos(payload.items ?? []);
@@ -249,8 +271,10 @@ export const useAdminPlantCombos = (): UseAdminPlantCombosReturn => {
         hasPrevious: payload.hasPrevious ?? false,
         hasNext: payload.hasNext ?? false,
       });
+      return true;
     } catch (err) {
       setError(normalizeError(err));
+      return false;
     } finally {
       setLoading(false);
     }
@@ -271,15 +295,51 @@ export const useAdminPlantCombos = (): UseAdminPlantCombosReturn => {
     }
   }, []);
 
-  const fetchComboPlants = useCallback(async (keyword = '') => {
-    const requestId = ++plantSearchRequestRef.current;
+  const fetchComboPlantCatalog = useCallback(async () => {
+    const requestId = ++plantCatalogRequestRef.current;
     setError(null);
     setPlantsLoading(true);
 
     try {
+      const response = await searchAdminPlantsForCombo(
+        stripEmptyStringFields({
+          pagination: {
+            pageNumber: 1,
+            pageSize: 1000,
+          },
+          keyword: '',
+          isActive: true,
+          isUniqueInstance: false,
+          sortBy: '',
+          sortDirection: '',
+        }),
+        false
+      );
+      const payload = getResponsePayload(response);
+      if (requestId === plantCatalogRequestRef.current) {
+        setComboPlants(payload?.items ?? []);
+      }
+    } catch (err) {
+      if (requestId === plantCatalogRequestRef.current) {
+        setError(normalizeError(err));
+      }
+    } finally {
+      if (requestId === plantCatalogRequestRef.current) {
+        setPlantsLoading(false);
+      }
+    }
+  }, []);
+
+  const searchPlantsForComboForm = useCallback(async (keyword: string) => {
+    const requestId = ++plantFormSearchRequestRef.current;
+    setComboPlantSearchResults([]);
+    setError(null);
+    setPlantsSearchLoading(true);
+
+    try {
       const normalizedKeyword = keyword.trim();
       const response = await searchAdminPlantsForCombo(
-        {
+        stripEmptyStringFields({
           pagination: {
             pageNumber: 1,
             pageSize: 1000,
@@ -289,20 +349,20 @@ export const useAdminPlantCombos = (): UseAdminPlantCombosReturn => {
           isUniqueInstance: false,
           sortBy: '',
           sortDirection: '',
-        },
+        }),
         false
       );
       const payload = getResponsePayload(response);
-      if (requestId === plantSearchRequestRef.current) {
-        setComboPlants(payload?.items ?? []);
+      if (requestId === plantFormSearchRequestRef.current) {
+        setComboPlantSearchResults(payload?.items ?? []);
       }
     } catch (err) {
-      if (requestId === plantSearchRequestRef.current) {
+      if (requestId === plantFormSearchRequestRef.current) {
         setError(normalizeError(err));
       }
     } finally {
-      if (requestId === plantSearchRequestRef.current) {
-        setPlantsLoading(false);
+      if (requestId === plantFormSearchRequestRef.current) {
+        setPlantsSearchLoading(false);
       }
     }
   }, []);
@@ -478,18 +538,21 @@ export const useAdminPlantCombos = (): UseAdminPlantCombosReturn => {
   return {
     combos,
     comboPlants,
+    comboPlantSearchResults,
     enums,
     enumLoading,
     enumError,
     saving,
     detailLoading,
     plantsLoading,
+    plantsSearchLoading,
     error,
     pagination,
     filters,
     fetchCombos,
     fetchComboById,
-    fetchComboPlants,
+    fetchComboPlantCatalog,
+    searchPlantsForComboForm,
     loadEnums,
     savePlantCombo,
     toggleComboActive,

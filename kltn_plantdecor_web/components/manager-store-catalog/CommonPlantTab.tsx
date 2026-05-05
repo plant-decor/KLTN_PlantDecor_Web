@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
   Box,
@@ -47,6 +47,7 @@ import CommonPlantImportDialog, { type ImportFormValue } from './CommonPlantImpo
 
 interface CommonPlantTabProps {
   nurseryId: number | null;
+  readOnly?: boolean;
 }
 
 interface PaginationState {
@@ -90,7 +91,7 @@ const getErrorMessage = (error: unknown, fallback: string): string => {
   return candidate.response?.data?.message || candidate.message || fallback;
 };
 
-export default function CommonPlantTab({ nurseryId }: CommonPlantTabProps) {
+export default function CommonPlantTab({ nurseryId, readOnly = false }: CommonPlantTabProps) {
   const [items, setItems] = useState<CommonPlantInventoryItem[]>([]);
   const [pagination, setPagination] = useState<PaginationState>(DEFAULT_PAGINATION);
   const [loading, setLoading] = useState(false);
@@ -110,7 +111,7 @@ export default function CommonPlantTab({ nurseryId }: CommonPlantTabProps) {
   const [toggleItem, setToggleItem] = useState<CommonPlantInventoryItem | null>(null);
 
   const fetchCommonPlants = useCallback(
-    async (nextPage = pagination.pageNumber, nextSize = pagination.pageSize) => {
+    async (nextPage: number, nextSize: number) => {
       if (!nurseryId) {
         return;
       }
@@ -143,7 +144,7 @@ export default function CommonPlantTab({ nurseryId }: CommonPlantTabProps) {
         setLoading(false);
       }
     },
-    [nurseryId, pagination.pageNumber, pagination.pageSize]
+    [nurseryId]
   );
 
   useEffect(() => {
@@ -228,7 +229,7 @@ export default function CommonPlantTab({ nurseryId }: CommonPlantTabProps) {
       setEditOpen(false);
       setEditingItem(null);
       setEditForm(DEFAULT_EDIT_FORM);
-      await fetchCommonPlants();
+      await fetchCommonPlants(pagination.pageNumber, pagination.pageSize);
     } catch {
       // Error toast is handled globally by axios interceptor.
     } finally {
@@ -251,7 +252,7 @@ export default function CommonPlantTab({ nurseryId }: CommonPlantTabProps) {
       await toggleManagerCommonPlantActive(nurseryId, toggleItem.id, true);
       setToggleOpen(false);
       setToggleItem(null);
-      await fetchCommonPlants();
+      await fetchCommonPlants(pagination.pageNumber, pagination.pageSize);
     } catch {
       // Error toast is handled globally by axios interceptor.
     } finally {
@@ -259,10 +260,10 @@ export default function CommonPlantTab({ nurseryId }: CommonPlantTabProps) {
     }
   };
 
-  const totalQuantity = useMemo(
-    () => items.reduce((sum, item) => sum + item.quantity, 0),
-    [items]
-  );
+  // const totalQuantity = useMemo(
+  //   () => items.reduce((sum, item) => sum + item.quantity, 0),
+  //   [items]
+  // );
 
   const handleChangePage = (_event: unknown, newPage: number) => {
     void fetchCommonPlants(newPage + 1, pagination.pageSize);
@@ -286,7 +287,7 @@ export default function CommonPlantTab({ nurseryId }: CommonPlantTabProps) {
       <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={2} sx={{ mb: 2 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
           <Chip label={`Total rows: ${pagination.totalCount}`} sx={{ bgcolor: '#ecfff3' }} />
-          <Chip label={`Page quantity sum: ${totalQuantity}`} sx={{ bgcolor: '#ecf7ff' }} />
+          {/* <Chip label={`Page quantity sum: ${totalQuantity}`} sx={{ bgcolor: '#ecf7ff' }} /> */}
         </Stack>
 
         <Stack direction="row" spacing={1}>
@@ -298,14 +299,16 @@ export default function CommonPlantTab({ nurseryId }: CommonPlantTabProps) {
           >
             Refresh
           </Button> */}
-          <Button
-            startIcon={<AddIcon />}
-            variant="contained"
-            onClick={() => void handleOpenImport()}
-            sx={{ backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)' }}
-          >
-            Import Plant
-          </Button>
+          {!readOnly ? (
+            <Button
+              startIcon={<AddIcon />}
+              variant="contained"
+              onClick={() => void handleOpenImport()}
+              sx={{ backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)' }}
+            >
+              Import Plant
+            </Button>
+          ) : null}
         </Stack>
       </Stack>
 
@@ -317,20 +320,14 @@ export default function CommonPlantTab({ nurseryId }: CommonPlantTabProps) {
 
       <TableContainer component={Paper} sx={{ border: '1px solid var(--card-border)' }}>
         <Table size="small">
-          <TableHead sx={{ backgroundColor: '#f4fff8' }}>
+          <TableHead sx={{ backgroundColor: 'var(--primary)' }}>
             <TableRow>
-              <TableCell sx={{ fontWeight: 700 }}>ID</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="center">ID</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>Plant Name</TableCell>
-              <TableCell sx={{ fontWeight: 700 }} align="right">
-                Quantity
-              </TableCell>
-              <TableCell sx={{ fontWeight: 700 }} align="right">
-                Reserved
-              </TableCell>
-              <TableCell sx={{ fontWeight: 700 }} align="right">
-                Available
-              </TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="center">Quantity</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="center">Reserved</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="center">Available</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="center">Status</TableCell>
               <TableCell sx={{ fontWeight: 700 }} align="center">
                 Actions
               </TableCell>
@@ -354,7 +351,7 @@ export default function CommonPlantTab({ nurseryId }: CommonPlantTabProps) {
             ) : (
               items.map((item) => (
                 <TableRow key={item.id} hover>
-                  <TableCell>{item.id}</TableCell>
+                  <TableCell align="center">{item.id}</TableCell>
                   <TableCell>
                     <Typography variant="body2" fontWeight={600}>
                       {item.plantName}
@@ -363,10 +360,10 @@ export default function CommonPlantTab({ nurseryId }: CommonPlantTabProps) {
                       Plant ID: {item.plantId}
                     </Typography>
                   </TableCell>
-                  <TableCell align="right">{item.quantity}</TableCell>
-                  <TableCell align="right">{item.reservedQuantity}</TableCell>
-                  <TableCell align="right">{item.availableQuantity}</TableCell>
-                  <TableCell>
+                  <TableCell align="center">{item.quantity}</TableCell>
+                  <TableCell align="center">{item.reservedQuantity}</TableCell>
+                  <TableCell align="center">{item.availableQuantity}</TableCell>
+                  <TableCell align="center">
                     <Chip
                       size="small"
                       label={item.isActive ? 'Active' : 'Inactive'}
@@ -375,22 +372,28 @@ export default function CommonPlantTab({ nurseryId }: CommonPlantTabProps) {
                     />
                   </TableCell>
                   <TableCell align="center">
-                    <Stack direction="row" spacing={0.5} justifyContent="center">
-                      <Tooltip title="Edit">
-                        <IconButton size="small" color="primary" onClick={() => handleEdit(item)}>
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title={item.isActive ? 'Deactivate' : 'Activate'}>
-                        <IconButton
-                          size="small"
-                          color={item.isActive ? 'success' : 'default'}
-                          onClick={() => handleToggle(item)}
-                        >
-                          {item.isActive ? <ToggleOnIcon fontSize="small" /> : <ToggleOffIcon fontSize="small" />}
-                        </IconButton>
-                      </Tooltip>
-                    </Stack>
+                    {!readOnly ? (
+                      <Stack direction="row" spacing={0.5} justifyContent="center">
+                        <Tooltip title="Edit">
+                          <IconButton size="small" color="primary" onClick={() => handleEdit(item)}>
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title={item.isActive ? 'Deactivate' : 'Activate'}>
+                          <IconButton
+                            size="small"
+                            color={item.isActive ? 'success' : 'default'}
+                            onClick={() => handleToggle(item)}
+                          >
+                            {item.isActive ? <ToggleOnIcon fontSize="small" /> : <ToggleOffIcon fontSize="small" />}
+                          </IconButton>
+                        </Tooltip>
+                      </Stack>
+                    ) : (
+                      <Typography variant="caption" color="text.secondary">
+                        Read-only
+                      </Typography>
+                    )}
                   </TableCell>
                 </TableRow>
               ))
@@ -409,55 +412,57 @@ export default function CommonPlantTab({ nurseryId }: CommonPlantTabProps) {
         />
       </TableContainer>
 
-      <CommonPlantImportDialog
-        open={importOpen}
-        availablePlants={availablePlants}
-        loadingAvailable={availableLoading}
-        submitting={submitting}
-        form={importForm}
-        onFormChange={setImportForm}
-        onClose={() => {
-          setImportOpen(false);
-          setImportForm(DEFAULT_IMPORT_FORM);
-        }}
-        onSubmit={handleImportSubmit}
-      />
+      {!readOnly ? (
+        <>
+          <CommonPlantImportDialog
+            open={importOpen}
+            availablePlants={availablePlants}
+            loadingAvailable={availableLoading}
+            submitting={submitting}
+            form={importForm}
+            onFormChange={setImportForm}
+            onClose={() => {
+              setImportOpen(false);
+              setImportForm(DEFAULT_IMPORT_FORM);
+            }}
+            onSubmit={handleImportSubmit}
+          />
 
-      <CommonPlantEditDialog
-        open={editOpen}
-        item={editingItem}
-        submitting={submitting}
-        form={editForm}
-        onFormChange={setEditForm}
-        onClose={() => {
-          setEditOpen(false);
-          setEditingItem(null);
-          setEditForm(DEFAULT_EDIT_FORM);
-        }}
-        onSubmit={handleEditSubmit}
-      />
+          <CommonPlantEditDialog
+            open={editOpen}
+            item={editingItem}
+            submitting={submitting}
+            form={editForm}
+            onFormChange={setEditForm}
+            onClose={() => {
+              setEditOpen(false);
+              setEditingItem(null);
+              setEditForm(DEFAULT_EDIT_FORM);
+            }}
+            onSubmit={handleEditSubmit}
+          />
 
-      <Dialog open={toggleOpen} onClose={() => setToggleOpen(false)}>
-        <DialogTitle>Confirm status change</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2">
-            {toggleItem
-              ? `Change status for ${toggleItem.plantName}?`
-              : 'Change status for this common plant?'}
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setToggleOpen(false)}>Cancel</Button>
-          <Button
-            onClick={() => void confirmToggle()}
-            variant="contained"
-            disabled={submitting}
-            sx={{ backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)' }}
-          >
-            Confirm
-          </Button>
-        </DialogActions>
-      </Dialog>
+          <Dialog open={toggleOpen} onClose={() => setToggleOpen(false)}>
+            <DialogTitle>Confirm status change</DialogTitle>
+            <DialogContent>
+              <Typography variant="body2">
+                {toggleItem ? `Change status for ${toggleItem.plantName}?` : 'Change status for this common plant?'}
+              </Typography>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setToggleOpen(false)}>Cancel</Button>
+              <Button
+                onClick={() => void confirmToggle()}
+                variant="contained"
+                disabled={submitting}
+                sx={{ backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)' }}
+              >
+                Confirm
+              </Button>
+            </DialogActions>
+          </Dialog>
+        </>
+      ) : null}
     </Box>
   );
 }

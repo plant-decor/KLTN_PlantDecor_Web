@@ -11,7 +11,12 @@ import {
   getAllAdminCareServicePackages,
   getCareServiceTypeOptions,
   updateAdminCareServicePackage,
+  updateAdminCareServicePackageSpecializations,
+  updateAdminCareServicePackageSuitabilityRules,
 } from "@/lib/api/adminCareServicePackagesService";
+import { getCategoriesByType, type CategoryResponse } from "@/lib/api/categoriesService";
+import { getSystemEnumValues } from "@/lib/api/careServiceService";
+import type { EnumOption } from "@/types/care-service.types";
 import type {
   AdminCareServicePackageCreateRequest,
   AdminCareServicePackageDetail,
@@ -27,6 +32,7 @@ import {
   buildFormFromDetail,
   emptyFormValue,
   getErrorMessage,
+  MAX_VISITS_PER_WEEK,
   type ModalMode,
   type ServicePackageFormValue,
 } from "@/components/service/service-management/types";
@@ -38,6 +44,8 @@ export default function AdminServiceManagementPageClient() {
 
   const [serviceTypeOptions, setServiceTypeOptions] = useState<CareServiceTypeOption[]>([]);
   const [specializationOptions, setSpecializationOptions] = useState<AdminSpecializationOption[]>([]);
+  const [categoryOptions, setCategoryOptions] = useState<CategoryResponse[]>([]);
+  const [careLevelOptions, setCareLevelOptions] = useState<EnumOption[]>([]);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<ModalMode>("create");
@@ -65,17 +73,22 @@ export default function AdminServiceManagementPageClient() {
       setLoading(true);
       setPageError(null);
 
-      const [listResult, enumResult, specializationResult] = await Promise.all([
+      const [listResult, enumResult, specializationResult, categoryResult, careLevelResult] = await Promise.all([
         getAllAdminCareServicePackages(false),
         getCareServiceTypeOptions(false),
         getActiveSpecializations(false),
+        getCategoriesByType({ categoryType: 1, activeOnly: true }, false),
+        getSystemEnumValues("CareLevelType", false),
       ]);
 
       setPackages(listResult);
       setServiceTypeOptions(enumResult);
       setSpecializationOptions(specializationResult);
+      const categoryPayload = categoryResult.payload ?? (categoryResult as unknown as { data?: CategoryResponse[] }).data ?? [];
+      setCategoryOptions(Array.isArray(categoryPayload) ? categoryPayload : []);
+      setCareLevelOptions(Array.isArray(careLevelResult) ? careLevelResult : []);
     } catch (error) {
-      const message = getErrorMessage(error, "Không thể tải dữ liệu quản lý gói dịch vụ");
+      const message = getErrorMessage(error, "Failed to load service package management data");
       setPageError(message);
       toast.error(message);
     } finally {
@@ -126,7 +139,7 @@ export default function AdminServiceManagementPageClient() {
         setDetail(latestDetail);
         setFormValue(buildFormFromDetail(latestDetail));
       } catch (error) {
-        const message = getErrorMessage(error, "Không thể tải chi tiết gói dịch vụ");
+        const message = getErrorMessage(error, "Failed to load service package details");
         setDetailError(message);
         toast.error(message);
       } finally {
@@ -149,26 +162,34 @@ export default function AdminServiceManagementPageClient() {
   }, [submitting]);
 
   const validateForm = useCallback((): string | null => {
-    if (!formValue.name.trim()) return "Tên gói không được để trống";
-    if (!formValue.description.trim()) return "Mô tả không được để trống";
-    if (!formValue.features.trim()) return "Features không được để trống";
-    if (!Number.isFinite(formValue.serviceType) || formValue.serviceType <= 0) return "Loại dịch vụ không hợp lệ";
+    if (!formValue.name.trim()) return "Package name is required";
+    if (!formValue.description.trim()) return "Description is required";
+    if (!formValue.features.trim()) return "Features are required";
+    if (!Number.isFinite(formValue.serviceType) || formValue.serviceType <= 0) return "Invalid service type";
     if (
       formValue.visitPerWeek !== null &&
       (!Number.isFinite(formValue.visitPerWeek) || formValue.visitPerWeek < 0)
     ) {
-      return "Số lần/tuần không hợp lệ";
+      return "Visits per week is invalid";
+    }
+
+    if (
+      formValue.visitPerWeek !== null &&
+      Number.isFinite(formValue.visitPerWeek) &&
+      formValue.visitPerWeek > MAX_VISITS_PER_WEEK
+    ) {
+      return `Visits per week cannot exceed ${MAX_VISITS_PER_WEEK}`;
     }
 
     if (formValue.serviceType === 2 && (!formValue.visitPerWeek || formValue.visitPerWeek <= 0)) {
-      return "Gói định kỳ cần số lần/tuần lớn hơn 0";
+      return "Recurring packages require visits per week greater than 0";
     }
 
-    if (!Number.isFinite(formValue.durationDays) || formValue.durationDays <= 0) return "Thời lượng phải lớn hơn 0";
-    if (!Number.isFinite(formValue.areaLimit) || formValue.areaLimit < 0) return "Diện tích không hợp lệ";
-    if (!Number.isFinite(formValue.unitPrice) || formValue.unitPrice < 0) return "Đơn giá không hợp lệ";
-    if (modalMode === "create" && formValue.specializationIds.length === 0) {
-      return "Vui lòng chọn ít nhất một chuyên môn";
+    if (!Number.isFinite(formValue.durationDays) || formValue.durationDays <= 0) return "Duration must be greater than 0";
+    if (!Number.isFinite(formValue.areaLimit) || formValue.areaLimit < 0) return "Area limit is invalid";
+    if (!Number.isFinite(formValue.unitPrice) || formValue.unitPrice < 0) return "Unit price is invalid";
+    if ((modalMode === "create" || modalMode === "edit") && formValue.specializationIds.length === 0) {
+      return "Please select at least one specialization";
     }
 
     return null;
@@ -185,41 +206,60 @@ export default function AdminServiceManagementPageClient() {
       setSubmitting(true);
 
       if (modalMode === "create") {
+        const suitabilityRules =
+          formValue.categoryIds.length > 0
+            ? formValue.categoryIds.map((categoryId) => ({ categoryId }))
+            : formValue.careDifficultyLevels.length > 0
+              ? formValue.careDifficultyLevels.map((careDifficultyLevel) => ({ careDifficultyLevel }))
+              : [];
+
         const payload: AdminCareServicePackageCreateRequest = {
           name: formValue.name.trim(),
           description: formValue.description.trim(),
           features: formValue.features.trim(),
           serviceType: formValue.serviceType,
-          visitPerWeek: formValue.visitPerWeek ?? 0,
-          durationDays: formValue.durationDays,
+          visitPerWeek: formValue.serviceType === 1 ? 1 : (formValue.visitPerWeek ?? 0),
+          durationDays: formValue.serviceType === 1 ? 1 : formValue.durationDays,
           areaLimit: formValue.areaLimit,
           unitPrice: formValue.unitPrice,
           specializationIds: formValue.specializationIds,
+          suitabilityRules,
         };
 
         await createAdminCareServicePackage(payload, false);
-        // toast.success("Tạo gói dịch vụ thành công");
+        // toast.success("Service package created successfully");
       } else if (modalMode === "edit" && selectedId !== null) {
         const payload: AdminCareServicePackageUpdateRequest = {
           name: formValue.name.trim(),
           description: formValue.description.trim(),
           features: formValue.features.trim(),
           serviceType: formValue.serviceType,
-          visitPerWeek: formValue.visitPerWeek ?? 0,
-          durationDays: formValue.durationDays,
+          visitPerWeek: formValue.serviceType === 1 ? 1 : (formValue.visitPerWeek ?? 0),
+          durationDays: formValue.serviceType === 1 ? 1 : formValue.durationDays,
           areaLimit: formValue.areaLimit,
           unitPrice: formValue.unitPrice,
           isActive: formValue.isActive,
         };
 
+        const suitabilityRules =
+          formValue.categoryIds.length > 0
+            ? formValue.categoryIds.map((categoryId) => ({ categoryId }))
+            : formValue.careDifficultyLevels.length > 0
+              ? formValue.careDifficultyLevels.map((careDifficultyLevel) => ({ careDifficultyLevel }))
+              : [];
+
         await updateAdminCareServicePackage(selectedId, payload, false);
-        // toast.success("Cập nhật gói dịch vụ thành công");
+        await updateAdminCareServicePackageSpecializations(selectedId, formValue.specializationIds, false);
+        if (suitabilityRules.length > 0) {
+          await updateAdminCareServicePackageSuitabilityRules(selectedId, suitabilityRules, false);
+        }
+        // toast.success("Service package updated successfully");
       }
 
       await loadPackages();
       closeModal();
     } catch (error) {
-      const message = getErrorMessage(error, "Can not save package");
+      const message = getErrorMessage(error, "Unable to save package");
       toast.error(message);
     } finally {
       setSubmitting(false);
@@ -234,7 +274,7 @@ export default function AdminServiceManagementPageClient() {
       // Keep inactive rows visible by always syncing back to the server's /all response.
       await loadPackages();
     } catch (error) {
-      const message = getErrorMessage(error, "Can not deactivate package");
+      const message = getErrorMessage(error, "Unable to deactivate package");
       toast.error(message);
     }
   };
@@ -275,10 +315,16 @@ export default function AdminServiceManagementPageClient() {
         formValue={formValue}
         serviceTypeOptions={serviceTypeOptions}
         specializationOptions={specializationOptions}
+        categoryOptions={categoryOptions}
+        careLevelOptions={careLevelOptions}
         submitting={submitting}
         onClose={closeModal}
         onFormChange={(updater) => setFormValue(updater)}
         onSubmit={handleSubmit}
+        onRequestEdit={() => {
+          if (selectedId === null || submitting) return;
+          setModalMode("edit");
+        }}
       />
     </Box>
   );

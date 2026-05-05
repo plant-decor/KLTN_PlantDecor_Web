@@ -8,6 +8,7 @@ import type { CategoryResponse } from '@/lib/api/categoriesService';
 import { ExpandMore as ExpandMoreIcon} from '@mui/icons-material';
 import type { PlantEnumValue, ShopNurserySearchPayload } from '@/lib/api/shopPlantsService';
 import type { ShopUnifiedSearchRequest } from '@/lib/api/shopUnifiedService';
+import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils/formatUtil';
 
 interface PlantStoreFilterTexts {
   title: string;
@@ -85,6 +86,16 @@ export default function PlantStoreFilters({
       for (const [key, value] of formData.entries()) {
         if (key === 'includePlants' || key === 'includeMaterials' || key === 'includeCombos') {
           // Skip - we'll handle these explicitly
+          continue;
+        }
+
+        if (key === 'minPrice' || key === 'maxPrice') {
+          const raw = String(value).trim();
+          if (!raw) {
+            continue;
+          }
+
+          params.append(key, String(parseCurrencyInput(raw)));
           continue;
         }
         params.append(key, String(value));
@@ -172,6 +183,7 @@ export default function PlantStoreFilters({
           {/* Drawer Content */}
           <div className="p-6 space-y-6">
             <FilterFormContent
+              locale={locale}
               texts={texts}
               requestBody={requestBody}
               categoryOptions={categoryOptions}
@@ -228,6 +240,7 @@ export default function PlantStoreFilters({
       className="mobile-filter-form bg-white rounded-lg shadow-md p-6 space-y-6 sticky top-4"
     >
       <FilterFormContent
+        locale={locale}
         texts={texts}
         requestBody={requestBody}
         categoryOptions={categoryOptions}
@@ -262,6 +275,7 @@ export default function PlantStoreFilters({
 }
 
 interface FilterFormContentProps {
+  locale: string;
   texts: PlantStoreFilterTexts;
   requestBody: ShopUnifiedSearchRequest;
   categoryOptions: CategoryResponse[];
@@ -276,6 +290,7 @@ interface FilterFormContentProps {
 }
 
 function FilterFormContent({
+  locale,
   texts,
   requestBody,
   categoryOptions,
@@ -288,6 +303,17 @@ function FilterFormContent({
   fengShuiElementOptions,
   nurseriesPayload,
 }: FilterFormContentProps) {
+  const [minPriceDisplay, setMinPriceDisplay] = useState(() =>
+    requestBody.minPrice !== undefined && requestBody.minPrice !== null
+      ? formatCurrencyInput(requestBody.minPrice, locale)
+      : ''
+  );
+  const [maxPriceDisplay, setMaxPriceDisplay] = useState(() =>
+    requestBody.maxPrice !== undefined && requestBody.maxPrice !== null
+      ? formatCurrencyInput(requestBody.maxPrice, locale)
+      : ''
+  );
+
   return (
     <>
       <h2 className="text-lg font-bold text-gray-900">{texts.title}</h2>
@@ -410,7 +436,7 @@ function FilterFormContent({
           }
           className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
         >
-          <option value="">{texts.all}</option>
+          {/* <option value="">{texts.all}</option> */}
           {seasonOptions.map((option) => (
             <option key={option.value} value={String(option.value)}>
               {option.name}
@@ -445,8 +471,10 @@ function FilterFormContent({
           <input
             id="minBasePrice"
             name="minPrice"
-            type="number"
-            defaultValue={requestBody.minPrice ?? ''}
+            type="text"
+            inputMode="numeric"
+            value={minPriceDisplay}
+            onChange={(e) => setMinPriceDisplay(formatCurrencyInput(e.target.value, locale))}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
           />
         </div>
@@ -457,8 +485,10 @@ function FilterFormContent({
           <input
             id="maxBasePrice"
             name="maxPrice"
-            type="number"
-            defaultValue={requestBody.maxPrice ?? ''}
+            type="text"
+            inputMode="numeric"
+            value={maxPriceDisplay}
+            onChange={(e) => setMaxPriceDisplay(formatCurrencyInput(e.target.value, locale))}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
           />
         </div>

@@ -3,9 +3,11 @@ import type { ResponseModel } from '@/types/api.types';
 import type {
   AllergyPlantOption,
   AnalyzeRoomUploadPayload,
-  AnalyzeRoomUploadRequest,
+  AnalyzeRoomRequest,
   GenerateLayoutImagesPayload,
   GeneratedImageItem,
+  RoomViewAngle,
+  UploadRoomImagesPayload,
 } from '@/types/ai-recommendation.types';
 
 const unwrapResponse = <T,>(response: ResponseModel<T> | null | undefined): T | null => {
@@ -34,50 +36,51 @@ export const getAllergyPlants = async (
   return unwrapResponse(response) ?? [];
 };
 
-const appendIfDefined = (formData: FormData, key: string, value: string | number | boolean | null | undefined) => {
-  if (value === undefined || value === null) {
-    return;
-  }
-
-  formData.append(key, String(value));
+const isNonEmptyFile = (file: unknown): file is File => {
+  return typeof File !== 'undefined' && file instanceof File;
 };
 
-export const analyzeRoomUpload = async (
-  request: AnalyzeRoomUploadRequest,
+export const uploadRoomImages = async (
+  request: { imagesByViewAngle: Partial<Record<RoomViewAngle, File>> },
   isServer = false,
   loading = false
-): Promise<AnalyzeRoomUploadPayload | null> => {
+): Promise<UploadRoomImagesPayload | null> => {
   const formData = new FormData();
-  formData.append('Image', request.image);
-  appendIfDefined(formData, 'FengShuiElement', request.fengShuiElement);
-  appendIfDefined(formData, 'RoomType', request.roomType);
-  appendIfDefined(formData, 'RoomStyle', request.roomStyle);
-  appendIfDefined(formData, 'MinBudget', request.minBudget);
-  appendIfDefined(formData, 'MaxBudget', request.maxBudget);
-  appendIfDefined(formData, 'CareLevelType', request.careLevelType);
-  appendIfDefined(formData, 'HasAllergy', request.hasAllergy);
-  appendIfDefined(formData, 'AllergyNote', request.allergyNote);
-  appendIfDefined(formData, 'PetSafe', request.petSafe);
-  appendIfDefined(formData, 'ChildSafe', request.childSafe);
 
-  request.allergicPlantIds?.forEach((id) => {
-    formData.append('AllergicPlantIds', String(id));
+  Object.entries(request.imagesByViewAngle).forEach(([viewAngle, file]) => {
+    if (!file || !isNonEmptyFile(file)) {
+      return;
+    }
+    // Backend expects repeated keys: Images[] + ViewAngles[]
+    formData.append('Images', file);
+    formData.append('ViewAngles', viewAngle);
   });
 
-  request.preferredNurseryIds?.forEach((id) => {
-    formData.append('PreferredNurseryIds', String(id));
-  });
-
-  const response = await post<ResponseModel<AnalyzeRoomUploadPayload>>(
-    '/RoomDesign/analyze-upload',
+  const response = await post<ResponseModel<UploadRoomImagesPayload>>(
+    '/RoomImages/upload',
     formData,
     isServer,
-    loading, // Don't show global loading for this endpoint since it can be long-running and we want to allow users to cancel it.
+    loading,
     {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     }
+  );
+
+  return unwrapResponse(response);
+};
+
+export const analyzeRoom = async (
+  request: AnalyzeRoomRequest,
+  isServer = false,
+  loading = false
+): Promise<AnalyzeRoomUploadPayload | null> => {
+  const response = await post<ResponseModel<AnalyzeRoomUploadPayload>>(
+    '/RoomDesign/analyze',
+    request,
+    isServer,
+    loading
   );
 
   return unwrapResponse(response);

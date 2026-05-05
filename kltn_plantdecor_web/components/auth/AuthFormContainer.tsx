@@ -69,10 +69,10 @@ export default function AuthFormContainer() {
 
       const result = await loginAction(email, password, deviceId);
       if (!result.success) {
-        const loginMessage = result.message || 'Đăng nhập thất bại';
+        const loginMessage = result.message || 'Login failed';
 
         if (loginMessage.toLowerCase().includes('not been verified')) {
-          setError('Tài khoản chưa xác thực email. Vui lòng kiểm tra mailbox và bấm link xác thực.');
+          setError('Account not verified. Please check your mailbox and click the verification link.');
           return;
         }
         setError(loginMessage);
@@ -98,7 +98,7 @@ export default function AuthFormContainer() {
       if (resolvedUser) {
         setUser(resolvedUser);
       }
-      toast.success(result.message || 'Đăng nhập thành công');
+      toast.success(result.message || 'Login successful');
       const resolvedRedirectTo = resolvePostLoginRedirect({
         redirectToRaw: searchParams.get('redirectTo'),
         userId: resolvedUser?.id,
@@ -111,8 +111,8 @@ export default function AuthFormContainer() {
       }, 500);
     } catch (err) {
       console.error('Login error:', err);
-      setError('Lỗi khi đăng nhập');
-      toast.error('Lỗi khi đăng nhập');
+      setError('Login error');
+      toast.error('Login error');
     } finally {
       endSubmit();
     }
@@ -125,21 +125,21 @@ export default function AuthFormContainer() {
 
     try {
       if (!email) {
-        setError('Vui lòng nhập email');
+        setError('Please enter your email');
         return;
       }
 
       const result = await forgotPasswordAction({ email: email.trim() });
 
       if (!result.success) {
-        setError(result.message || 'Lỗi khi gửi link đặt lại mật khẩu');
+        setError(result.message || 'Error sending reset password link');
         return;
       }
 
-      setMessage(result.message || 'Link đặt lại mật khẩu đã được gửi đến email của bạn');
+      setMessage(result.message || 'Reset password link has been sent to your email');
     } catch (err) {
       console.error('Forgot password error:', err);
-      setError('Lỗi khi gửi link đặt lại mật khẩu');
+      setError('Error sending reset password link');
     } finally {
       endSubmit();
     }
@@ -159,22 +159,22 @@ export default function AuthFormContainer() {
 
     try {
       if (formData.password !== formData.confirmPassword) {
-        setError('Mật khẩu không khớp');
+        setError('Passwords do not match');
         return;
       }
 
       if (formData.fullName.trim() === '') {
-        setError('Vui lòng nhập tên đầy đủ');
+        setError('Please enter your full name');
         return;
       }
 
       if (formData.userName.trim() === '') {
-        setError('Vui lòng nhập tên đăng nhập');
+        setError('Please enter your username');
         return;
       }
 
       if (formData.phoneNumber.trim() === '') {
-        setError('Vui lòng nhập số điện thoại');
+        setError('Please enter your phone number');
         return;
       }
 
@@ -188,11 +188,11 @@ export default function AuthFormContainer() {
       });
 
       if (!result.success) {
-        setError(result.message || 'Error during sign up');
+        setError(result.message || 'Error during sign up process');
         return;
       }
 
-      const successMessage = result.message || 'Sign up successful! Please check your email to verify your account.';
+      const successMessage = result.message || 'Sign up successful! Please check your email to verify your account';
       toast.success(successMessage);
       setMessage(successMessage);
       setTimeout(() => {
@@ -201,7 +201,7 @@ export default function AuthFormContainer() {
       }, 2000);
     } catch (err) {
       console.error('Sign up error:', err);
-      setError('Error during sign up');
+      setError('Error during sign up process');
     } finally {
       endSubmit();
     }

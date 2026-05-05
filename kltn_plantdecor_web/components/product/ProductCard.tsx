@@ -7,7 +7,6 @@ import { useEffect, useMemo, useState, type MouseEvent } from 'react';
 import { Button, Chip, Drawer, Stack } from '@mui/material';
 import {
   DeleteOutline as DeleteOutlineIcon,
-  Favorite as FavoriteIcon,
   FavoriteBorder as FavoriteBorderIcon,
   ShoppingCartOutlined,
 } from '@mui/icons-material';
@@ -42,7 +41,7 @@ interface ProductCardProps {
   newBadgeLabel?: string;
 }
 
-type PendingAction = 'cart' | 'wishlist-add' | 'wishlist-remove' | null;
+type PendingAction = 'cart' | 'wishlist-add' | null;
 
 export default function ProductCard({
   plant,
@@ -139,7 +138,7 @@ export default function ProductCard({
   }, [plant.id, plant.availableCommonQuantity, isNurseryDrawerOpen]);
 
   useEffect(() => {
-    const needsInstanceSelection = pendingAction === 'wishlist-add' || pendingAction === 'wishlist-remove';
+    const needsInstanceSelection = pendingAction === 'wishlist-add';
     if (!isNurseryDrawerOpen || !needsInstanceSelection || !selectedNurseryId || !plant.id) {
       setInstanceItems([]);
       setSelectedInstanceId(null);
@@ -218,7 +217,7 @@ export default function ProductCard({
     setSelectedNurseryId(null);
     setSelectedNursery(null);
     setSelectedInstanceId(null);
-    setPendingAction(isWishlisted ? 'wishlist-remove' : 'wishlist-add');
+    setPendingAction('wishlist-add');
     setIsNurseryDrawerOpen(true);
   };
 
@@ -280,19 +279,13 @@ export default function ProductCard({
 
     try {
       setIsWishlistLoading(true);
-
-      if (pendingAction === 'wishlist-add') {
-        await addPlantInstanceToWishlist(selectedInstanceId);
-      } else {
-        await removeItemFromWishlist('PlantInstance', selectedInstanceId);
-      }
-
+      await addPlantInstanceToWishlist(selectedInstanceId);
       const stillWishlisted = await checkWishlistPlantInstanceByPlantId(plant.id, false, false);
       setIsWishlisted(stillWishlisted);
       setIsNurseryDrawerOpen(false);
       setPendingAction(null);
     } catch (error) {
-      console.error('Toggle plant-instance wishlist error:', error);
+      console.error('Add plant-instance to wishlist error:', error);
     } finally {
       setIsWishlistLoading(false);
     }
@@ -361,9 +354,6 @@ export default function ProductCard({
   //     return tWishlist('addToWishlistCompact');
   //   }
 
-  //   if (pendingAction === 'wishlist-remove') {
-  //     return tWishlist('removeItem');
-  //   }
 
   //   return tProducts('nurseryDrawer.continue');
   // }, [pendingAction, tProducts, tWishlist]);
@@ -439,8 +429,8 @@ export default function ProductCard({
                     variant="outlined"
                     size="medium"
                     fullWidth
-                    startIcon={isWishlisted ? <FavoriteIcon /> : <FavoriteBorderIcon />}
-                    color={isWishlisted ? 'error' : 'inherit'}
+                    startIcon={<FavoriteBorderIcon />}
+                    color="inherit"
                     disabled={isActionDisabled}
                     sx={{
                       textTransform: 'none',
@@ -585,7 +575,7 @@ export default function ProductCard({
           ) : null}
           </div>
 
-          {(pendingAction === 'wishlist-add' || pendingAction === 'wishlist-remove') && selectedNursery ? (
+          {pendingAction === 'wishlist-add' && selectedNursery ? (
             <div className="mt-4 space-y-2">
               {isLoadingInstances ? (
                 <p className="text-sm text-gray-500">Loading plant instances...</p>
@@ -605,8 +595,16 @@ export default function ProductCard({
                       }`}
                     >
                       <p className="font-medium text-gray-900">SKU: {instance.sku}</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="flex flex-col gap-2">
                       <p className="text-sm text-gray-600">Height: {instance.height} cm</p>
                       <p className="text-sm text-gray-600">Health: {instance.healthStatus}</p>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                      <p className="text-sm text-gray-600">Status: {instance.trunkDiameter}</p>
+                      <p className="text-sm text-gray-600">Age: {instance.age}</p>
+                        </div>
+                      </div>
                       <p className="text-sm font-semibold text-green-700">{formatCurrency(instance.specificPrice, locale)}</p>
                     </button>
                   ))}
@@ -619,7 +617,21 @@ export default function ProductCard({
             <Button variant="outlined" fullWidth onClick={handleCancelNurserySelection}>
               {tCommon('cancel')}
             </Button>
-            
+            {pendingAction === 'wishlist-add' && selectedNursery ? (
+              <Button
+                variant="contained"
+                fullWidth
+                onClick={handleConfirmWithNursery}
+                disabled={drawerConfirmDisabled || isWishlistLoading || isLoadingInstances}
+                startIcon={<FavoriteBorderIcon />}
+                sx={{
+                  bgcolor: 'var(--primary)',
+                  '&:hover': { bgcolor: '#45a049' },
+                }}
+              >
+                {tWishlist('addToWishlist')}
+              </Button>
+            ) : null}
           </div>
         </div>
       </Drawer>

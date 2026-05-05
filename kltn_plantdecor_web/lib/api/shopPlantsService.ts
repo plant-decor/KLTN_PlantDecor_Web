@@ -2,6 +2,7 @@ import { Category, Tag } from '@/data/storeCatalogData';
 import * as apiClient from '@/lib/api/apiService.client';
 import * as apiServer from '@/lib/api/apiService.server';
 import type { ResponseModel } from '@/types/api.types';
+import type { NurseryResponse } from '@/types/nursery.types';
 
 export interface ShopPlantSearchRequest {
   pagination: {
@@ -73,7 +74,9 @@ export interface NurseryPlantInstanceItem {
   sku: string;
   specificPrice: number;
   height: number;
+  trunkDiameter: number;
   healthStatus: string;
+  age: number;
   status: number;
   statusName: string;
   primaryImageUrl: string | null;
@@ -153,6 +156,7 @@ export interface ShopNurserySearchRequest {
     pageNumber: number;
     pageSize: number;
   };
+  isActive?: boolean;
 }
 
 export interface ShopNurserySearchPayload {
@@ -224,6 +228,30 @@ export const searchShopNurseries = async (
   }
 
   return apiClient.post('/shop/nurseries/search', data, loading, {showToast});
+};
+
+export const getShopPlantCommonNurseries = async (
+  plantId: number,
+  isServer: boolean,
+  loading = true
+): Promise<ResponseModel<NurseryResponse[]>> => {
+  if (isServer) {
+    return apiServer.get(`/shop/plants/${plantId}/common-nurseries`);
+  }
+
+  return apiClient.get(`/shop/plants/${plantId}/common-nurseries`, undefined, loading);
+};
+
+export const getPlantNurseries = async (
+  plantId: number,
+  isServer: boolean,
+  loading = true
+): Promise<ResponseModel<NurseryResponse[]>> => {
+  if (isServer) {
+    return apiServer.get(`/plants/${plantId}/nurseries`);
+  }
+
+  return apiClient.get(`/plants/${plantId}/nurseries`, undefined, loading);
 };
 
 export const getPlantComboNurseries = async (

@@ -15,12 +15,13 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { useTranslations } from 'next-intl';
 import type { Order, OrderInvoiceDetail } from '@/types/order.types';
-import { formatCurrency, formatDate, getStatusInfo } from './orderHistoryUtils';
+import { canUserCancelOrder, formatCurrency, getStatusInfo } from './orderHistoryUtils';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 import Image from 'next/image';
 import { CustomLoading } from '@/components/CustomLoading';
+import { formatDateTime } from '@/lib/utils/dateUtils';
 
-const SERVICE_ORDER_TYPE = 4;
+const SERVICE_ORDER_TYPE = [4, 5]; 
 const ORDER_ITEM_FALLBACK_IMAGE = '/img/fallbackplant.avif';
 
 type OrderDisplayItem = {
@@ -41,7 +42,7 @@ function mapInvoiceDetailToDisplayItem(detail: OrderInvoiceDetail): OrderDisplay
 }
 
 function getDisplayItems(order: Order): OrderDisplayItem[] {
-  if (order.orderType !== SERVICE_ORDER_TYPE) {
+  if (!SERVICE_ORDER_TYPE.includes(order.orderType)) {
     return order.items;
   }
 
@@ -78,7 +79,9 @@ export default function OrderHistoryList({
         return tOrderHistory('orderType.uniquePlant');
       case 3:
         return tOrderHistory('orderType.buyNow');
-      case SERVICE_ORDER_TYPE:
+      case SERVICE_ORDER_TYPE[0]:
+        return tOrderHistory('orderType.service');
+      case SERVICE_ORDER_TYPE[1]:
         return tOrderHistory('orderType.service');
       default:
         return tOrderHistory('orderType.product');
@@ -86,8 +89,8 @@ export default function OrderHistoryList({
   };
 
   const getOrderItemIcon = (orderType: number) => {
-    if (orderType === SERVICE_ORDER_TYPE) {
-      return <MiscellaneousServicesIcon />;
+    if (SERVICE_ORDER_TYPE.includes(orderType)) {
+      return <MiscellaneousServicesIcon sx={{color: 'var(--primary)'}} fontSize='large' />;
     }
 
     return <ShoppingCartIcon />;
@@ -125,9 +128,8 @@ export default function OrderHistoryList({
         const remainingItems = totalDisplayItems - displayItems.length;
         const retryOrderId = order.statusName === 'Pending' ? order.id : null;
         const isRetrying = retryOrderId !== null && retryLoadingOrderId === retryOrderId;
-        const canCancelOrder = order.statusName === 'Pending' || order.statusName === 'DepositPaid' || order.statusName === 'Paid';
+        const canCancelOrder = canUserCancelOrder(order.statusName);
         const isCancelling = canCancelOrder && cancelLoadingOrderId === order.id;
-        console.log('items', displayItems.map((item) => item.imageUrl));
         return (
           <Card key={order.id} sx={{ boxShadow: 2, '&:hover': { boxShadow: 4 } }}>
             <CardContent>
@@ -160,7 +162,7 @@ export default function OrderHistoryList({
               </Box>
 
               <Typography variant="body2" color="text.secondary" gutterBottom>
-                {tOrderHistory('orderedAt')}: {formatDate(order.createdAt)}
+                {tOrderHistory('orderedAt')}: {formatDateTime(order.createdAt)}
               </Typography>
 
               <Divider sx={{ my: 2 }} />
@@ -176,7 +178,7 @@ export default function OrderHistoryList({
                       mb: index < displayItems.length - 1 ? 1.5 : 0,
                     }}
                   >
-                    {order.orderType === SERVICE_ORDER_TYPE ? (
+                    {SERVICE_ORDER_TYPE.includes(order.orderType) ? (
                       <Avatar variant="rounded" sx={{ width: 60, height: 60, bgcolor: 'grey.200' }}>
                         {getOrderItemIcon(order.orderType)}
                       </Avatar>

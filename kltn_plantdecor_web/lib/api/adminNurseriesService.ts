@@ -1,6 +1,7 @@
 "use client";
 
 import * as apiClient from "@/lib/api/apiService.client";
+import type { ApiClientRequestConfig } from "@/lib/api/apiService.client";
 import type { ResponseModel } from "@/types/api.types";
 import type {
   AdminNursery,
@@ -11,9 +12,10 @@ import type {
 
 export const searchAdminNurseries = async (
   data: AdminNurserySearchRequest,
-  loading = true
+  loading = true,
+  config: ApiClientRequestConfig = {}
 ): Promise<ResponseModel<AdminNurserySearchPayload>> => {
-  return apiClient.post("/system/nurseries/search", data, loading);
+  return apiClient.post("/system/nurseries/search", data, loading, config);
 };
 
 export const createAdminNursery = async (

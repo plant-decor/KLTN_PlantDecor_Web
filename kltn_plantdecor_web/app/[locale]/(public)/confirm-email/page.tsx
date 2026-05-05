@@ -29,7 +29,7 @@ export default function ConfirmEmailPage() {
   const email = useMemo(() => (searchParams.get('email') || '').trim(), [searchParams]);
   const token = useMemo(() => (searchParams.get('token') || '').trim(), [searchParams]);
 
-  const [message, setMessage] = useState('Đang xác thực email...');
+  const [message, setMessage] = useState('email verification is in progress...');
   const [isLoading, setIsLoading] = useState(true);
   const [isSuccess, setIsSuccess] = useState<boolean | null>(null);
   const [isRedirecting, setIsRedirecting] = useState(false);
@@ -46,7 +46,7 @@ export default function ConfirmEmailPage() {
           return;
         }
 
-        setMessage('Liên kết xác thực không hợp lệ hoặc đã thiếu thông tin. Vui lòng nhập email để gửi lại.');
+        setMessage('Verification link is invalid or missing information. Please enter your email to resend.');
         setIsSuccess(false);
         setIsLoading(false);
         return;
@@ -85,7 +85,7 @@ export default function ConfirmEmailPage() {
 
   const handleResendToken = async () => {
     if (!resendEmail.trim()) {
-      setResendMessage('Vui lòng nhập email.');
+      setResendMessage('Please enter your email.');
       return;
     }
 
@@ -114,7 +114,7 @@ export default function ConfirmEmailPage() {
           >
             <div className="text-center">
               <LoadingOverlay />
-              <p className="mt-4 text-orange-600 font-medium">Đang chuyển đến trang đăng nhập...</p>
+              <p className="mt-4 text-orange-600 font-medium">Redirecting to login page...</p>
             </div>
           </motion.div>
         ) : (
@@ -126,7 +126,7 @@ export default function ConfirmEmailPage() {
             transition={{ duration: 0.5 }}
             className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full"
           >
-            <h2 className="text-2xl font-bold mb-6 text-center text-orange-500">Xác thực Email</h2>
+            <h2 className="text-2xl font-bold mb-6 text-center text-orange-500">Email Verification</h2>
 
             {isLoading ? (
               <motion.div
@@ -175,7 +175,7 @@ export default function ConfirmEmailPage() {
                         <input
                           type="email"
                           className="w-full p-2 border border-gray-300 rounded-md"
-                          placeholder="Nhập email để nhận lại link xác thực"
+                          placeholder="Enter email to resend verification link"
                           value={resendEmail}
                           onChange={(e) => setResendEmail(e.target.value)}
                         />
@@ -187,7 +187,7 @@ export default function ConfirmEmailPage() {
                         onClick={handleResendToken}
                         disabled={isResending}
                       >
-                        {isResending ? 'Đang gửi...' : 'Gửi lại email xác thực'}
+                        {isResending ? 'Sending...' : 'Resend verification email'}
                       </button>
 
                       {resendMessage && (

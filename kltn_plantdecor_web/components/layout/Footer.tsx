@@ -2,9 +2,6 @@
 
 import Link from 'next/link';
 import {
-  Facebook as FacebookIcon,
-  X as XIcon,
-  Pinterest as PinterestIcon,
   LocationOn as LocationOnIcon,
   Phone as PhoneIcon,
   Email as EmailIcon,
@@ -22,12 +19,13 @@ export default function Footer() {
           {/* Company Info */}
           <div className="col-span-1 lg:col-span-1">
             <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-transparent rounded-full flex items-center justify-center">
+              <div className="w-12 h-12 bg-transparent rounded-full flex items-center justify-center overflow-hidden">
                 <Image src="/logo/logo-square.png" 
                   alt="Plant Decor Logo"
-                  width={20}
-                  height={20}
-                  className="w-full rounded-full scale-150 h-auto object-fit"
+                  width={1920}
+                  height={1080}
+                  loading="eager"
+                  className="w-full scale-x-150 rounded-full h-full object-cover"
                 />
               </div>
               <span className="text-xl font-bold">Plant Decor</span>
@@ -35,7 +33,7 @@ export default function Footer() {
             <p className="text-gray-400 text-sm leading-relaxed">
               {t('tagline')}
             </p>
-            <div className="flex space-x-4 mt-6">
+            {/* <div className="flex space-x-4 mt-6">
               <a href="#" className="text-gray-400 hover:text-green-600 transition-colors duration-200">
                 <FacebookIcon sx={{ fontSize: 20 }} />
               </a>
@@ -45,23 +43,28 @@ export default function Footer() {
               <a href="#" className="text-gray-400 hover:text-green-600 transition-colors duration-200">
                 <PinterestIcon sx={{ fontSize: 20 }} />
               </a>
-            </div>
+            </div> */}
           </div>
 
           {/* Quick Links */}
           <div>
             <h3 className="text-lg font-semibold mb-4">{t('quickLinks')}</h3>
             <ul className="space-y-2">
-              <li>
-                <Link href="/products" className="text-gray-400 hover:text-green-600 transition-colors duration-200">
-                  {t('products')}
+            <li>
+                <Link href="/" className="text-gray-400 hover:text-green-600 transition-colors duration-200">
+                  Home
                 </Link>
               </li>
               <li>
+                <Link href="/plant-store" className="text-gray-400 hover:text-green-600 transition-colors duration-200">
+                  {t('plantStore')}
+                </Link>
+              </li>
+              {/* <li>
                 <Link href="/services" className="text-gray-400 hover:text-green-600 transition-colors duration-200">
                   {t('services')}
                 </Link>
-              </li>
+              </li> */}
               <li>
                 <Link href="/about" className="text-gray-400 hover:text-green-600 transition-colors duration-200">
                   {t('about')}
@@ -85,17 +88,17 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/" className="text-gray-400 hover:text-green-600 transition-colors duration-200">
+                <Link href="/return-policy" className="text-gray-400 hover:text-green-600 transition-colors duration-200">
                   {t('returnPolicy')}
                 </Link>
               </li>
               <li>
-                <Link href="/" className="text-gray-400 hover:text-green-600 transition-colors duration-200">
-                  {t('privacyPolicy')}
+                <Link href="/user-policy" className="text-gray-400 hover:text-green-600 transition-colors duration-200">
+                  {t('userPolicy')}
                 </Link>
               </li>
               <li>
-                <Link href="/" className="text-gray-400 hover:text-green-600 transition-colors duration-200">
+                <Link href="/terms" className="text-gray-400 hover:text-green-600 transition-colors duration-200">
                   {t('termsOfService')}
                 </Link>
               </li>
@@ -129,8 +132,8 @@ export default function Footer() {
               &copy; 2026 Plant Decor. {t('rights')}
             </p>
             <div className="flex space-x-6 mt-4 md:mt-0">
-              <Link href="/privacy" className="text-gray-400 hover:text-green-600 text-sm transition-colors duration-200">
-                {t('privacyPolicy')}
+              <Link href="/user-policy" className="text-gray-400 hover:text-green-600 text-sm transition-colors duration-200">
+                {t('userPolicy')}
               </Link>
               <Link href="/terms" className="text-gray-400 hover:text-green-600 text-sm transition-colors duration-200">
                 {t('termsOfService')}

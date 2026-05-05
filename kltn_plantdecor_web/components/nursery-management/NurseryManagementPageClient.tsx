@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Alert,
   Box,
@@ -30,19 +30,12 @@ export default function NurseryManagementPageClient() {
     saving,
     error,
     pagination,
-    fetchNurseries,
     saveNursery,
     toggleNurseryActive,
     setPage,
     setPageSize,
     clearError,
   } = useAdminNurseries();
-
-  useEffect(() => {
-    void fetchNurseries({
-      pagination: { pageNumber: 1, pageSize: 10 },
-    });
-  }, [fetchNurseries]);
 
   const handleCreate = useCallback(() => {
     setEditingData(undefined);

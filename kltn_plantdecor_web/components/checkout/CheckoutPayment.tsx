@@ -1,28 +1,37 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Alert,
   Box,
   Button,
   Card,
   CardContent,
+  Divider,
   FormControlLabel,
+  Grid,
   Radio,
   RadioGroup,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Typography,
 } from '@mui/material';
+import { useTranslations } from 'next-intl';
 import type { CheckoutData } from '@/types/cart.types';
 import type { OrderInvoice, OrderCreatePayload } from '@/types/order.types';
-import { createPaymentUrl, getInvoicesByOrderId, createOrder } from '@/lib/api/orderService';
-import type { OrderCreateRequest } from '@/types/order.types';
+import { createPaymentUrl } from '@/lib/api/orderService';
 import Image from 'next/image';
+import { formatCurrency } from '@/lib/utils/formatUtil';
 
 interface CheckoutPaymentProps {
   checkoutData: CheckoutData;
   onDataChange: (data: Partial<CheckoutData>) => void;
-  orderId?: number;
-  onPaymentCompleted: () => void;
+  createdOrder: OrderCreatePayload;
+  invoices: OrderInvoice[];
 }
 
 const PAYMENT_METHODS = [
@@ -30,102 +39,52 @@ const PAYMENT_METHODS = [
     id: 'credit_debit',
     icon: <Image src="/logo/vnpay_icon.svg" alt="VNPay" width={100} height={100} />,
   },
-];
+] as const;
+
+const DEFAULT_PAYMENT_METHOD_ID = PAYMENT_METHODS[0]!.id;
+
+function selectPayableInvoice(invoices: OrderInvoice[]): OrderInvoice | null {
+  if (invoices.length === 0) return null;
+  return (
+    invoices.find((inv) => inv.statusName.toLowerCase() === 'pending') ?? invoices[0] ?? null
+  );
+}
 
 export default function CheckoutPayment({
   checkoutData,
   onDataChange,
-  orderId,
-  onPaymentCompleted,
+  createdOrder,
+  invoices,
 }: CheckoutPaymentProps) {
-  const [selectedMethod, setSelectedMethod] = useState(
-    checkoutData.paymentMethod || 'credit_debit'
-  );
-  const [isLoadingInvoice, setIsLoadingInvoice] = useState(false);
-  const [invoiceError, setInvoiceError] = useState('');
-  const [invoices, setInvoices] = useState<OrderInvoice[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [createdOrderId, setCreatedOrderId] = useState<number | undefined>(orderId);
-  const [isCreatingOrder, setIsCreatingOrder] = useState(false);
-  const [orderError, setOrderError] = useState('');
-  const [shouldAutoPayAfterOrderCreation, setShouldAutoPayAfterOrderCreation] = useState(false);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadInvoices() {
-      if (!createdOrderId) {
-        setIsLoadingInvoice(false);
-        return;
-      }
-
-      setIsLoadingInvoice(true);
-      setInvoiceError('');
-
-      try {
-        const response = await getInvoicesByOrderId(createdOrderId);
-        if (!isMounted) return;
-
-        if (response.length === 0) {
-          setInvoiceError('No invoice found for this order. Please try again later.');
-          setInvoices([]);
-          setShouldAutoPayAfterOrderCreation(false);
-          return;
-        }
-
-        setInvoices(response);
-      } catch (err) {
-        if (!isMounted) return;
-        const message = err instanceof Error ? err.message : 'Failed to load invoice data.';
-        setInvoiceError(message);
-        setShouldAutoPayAfterOrderCreation(false);
-      } finally {
-        if (!isMounted) return;
-        setIsLoadingInvoice(false);
-      }
+  const tCheckout = useTranslations('checkout');
+  const [selectedMethod, setSelectedMethod] = useState(() => {
+    const fromCheckout = checkoutData.paymentMethod;
+    if (
+      fromCheckout &&
+      PAYMENT_METHODS.some((m) => m.id === fromCheckout)
+    ) {
+      return fromCheckout;
     }
+    return DEFAULT_PAYMENT_METHOD_ID;
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [paymentError, setPaymentError] = useState('');
 
-    void loadInvoices();
-    return () => {
-      isMounted = false;
-    };
-  }, [createdOrderId]);
+  const selectedInvoice = useMemo(
+    () => selectPayableInvoice(invoices),
+    [invoices]
+  );
 
-  const selectedInvoice = useMemo(() => {
-    if (invoices.length === 0) return null;
-    return (
-      invoices.find((invoice) => invoice.statusName.toLowerCase() === 'pending') ??
-      invoices[0]
-    );
-  }, [invoices]);
+  const reviewItems = createdOrder.items.map((item) => ({
+    id: item.id,
+    imageUrl: item.imageUrl,
+    name: item.itemName,
+    quantity: item.quantity,
+    price: item.price,
+    lineTotal: item.quantity * item.price,
+  }));
 
-  // Auto-proceed to payment after invoices are loaded
-  useEffect(() => {
-    const proceedToPayment = async () => {
-      if (!shouldAutoPayAfterOrderCreation || isLoadingInvoice || !selectedInvoice) {
-        return;
-      }
-
-      try {
-        setShouldAutoPayAfterOrderCreation(false);
-        setIsSubmitting(true);
-        setInvoiceError('');
-        const paymentUrl = await createPaymentUrl(selectedInvoice.id);
-        onPaymentCompleted();
-        window.location.assign(paymentUrl);
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to create payment URL.';
-        setInvoiceError(message);
-        setIsSubmitting(false);
-      }
-    };
-
-    void proceedToPayment();
-  }, [shouldAutoPayAfterOrderCreation, isLoadingInvoice, selectedInvoice, onPaymentCompleted]);
-
-  const handlePaymentMethodChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handlePaymentMethodChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newMethod = e.target.value;
     setSelectedMethod(newMethod);
     onDataChange({
@@ -133,176 +92,301 @@ export default function CheckoutPayment({
     });
   };
 
-  const handleCreateOrderAndPay = async () => {
-    if (isCreatingOrder || isSubmitting) return;
+  const handlePay = async () => {
+    if (!selectedInvoice) {
+      setPaymentError(tCheckout('errors.noInvoice'));
+      return;
+    }
+    if (isSubmitting) return;
 
     try {
-      setIsCreatingOrder(true);
-      setOrderError('');
-
-      if (!checkoutData.shippingInfo) {
-        setOrderError('Shipping information is missing.');
-        return;
-      }
-
-      const { fullName, phone, address, notes } = checkoutData.shippingInfo;
-
-      const basePayload = {
-        address,
-        phone,
-        customerName: fullName,
-        note: notes ?? '',
-        paymentStrategy: checkoutData.orderType === 2 ? (checkoutData.paymentStrategy ?? 1) : 1,
-      };
-
-      let payload: OrderCreateRequest;
-      if (checkoutData.orderType === 2) {
-        payload = {
-          ...basePayload,
-          orderType: 2,
-          plantInstanceId: checkoutData.plantInstanceId ?? 0,
-        };
-      } else if (checkoutData.orderType === 3) {
-        payload = {
-          ...basePayload,
-          orderType: 3,
-          buyNowItemId: checkoutData.buyNowItemId ?? checkoutData.items[0]?.id ?? 0,
-          buyNowItemType: (checkoutData.buyNowItemType ?? 1) as 1 | 2 | 3,
-          buyNowQuantity: checkoutData.buyNowQuantity ?? checkoutData.items[0]?.quantity ?? 1,
-        };
-      } else {
-        payload = {
-          ...basePayload,
-          orderType: 1,
-          cartItemIds: checkoutData.items.map((item) => item.id),
-        };
-      }
-
-      // Create order
-      const created: OrderCreatePayload = await createOrder(payload);
-      setCreatedOrderId(created.id);
-
-      // Set flag to auto-proceed to payment once invoices are loaded
-      setShouldAutoPayAfterOrderCreation(true);
+      setIsSubmitting(true);
+      setPaymentError('');
+      const paymentUrl = await createPaymentUrl(selectedInvoice.id);
+      window.location.assign(paymentUrl);
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to create order.';
-      setOrderError(errorMessage);
-    } finally {
-      setIsCreatingOrder(false);
+      const message = err instanceof Error ? err.message : tCheckout('errors.paymentUrlFailed');
+      setPaymentError(message);
+      setIsSubmitting(false);
     }
   };
 
-  // const handleCreatePayment = async (orderIdToUse: number) => {
-  //   if (!selectedInvoice && !isLoadingInvoice) {
-  //     setInvoiceError('Invoice is unavailable for payment.');
-  //     return;
-  //   }
-
-  //   // If we're still loading invoices, wait for the selectedInvoice to be available
-  //   if (isLoadingInvoice) {
-  //     // This function will be called again once invoices are loaded
-  //     return;
-  //   }
-
-  //   if (!selectedInvoice) {
-  //     setInvoiceError('Invoice is unavailable for payment.');
-  //     return;
-  //   }
-
-  //   try {
-  //     setIsSubmitting(true);
-  //     setInvoiceError('');
-  //     const paymentUrl = await createPaymentUrl(selectedInvoice.id);
-  //     onPaymentCompleted();
-  //     window.location.assign(paymentUrl);
-  //   } catch (err) {
-  //     const message = err instanceof Error ? err.message : 'Failed to create payment URL.';
-  //     setInvoiceError(message);
-  //   } finally {
-  //     setIsSubmitting(false);
-  //   }
-  // };
-
   return (
-    <Card sx={{ boxShadow: 1 }}>
-      <CardContent>
-        <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 3 }}>
-          Payment Method
-        </Typography>
+    <Grid container spacing={3} alignItems="flex-start">
+      <Grid size={{ xs: 12, md: 7 }}>
+        {createdOrder && (
+          <Card sx={{ boxShadow: 1, mb: 3 }}>
+            <CardContent>
+              <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
+                {tCheckout('completeDetails.shippingDetails')}
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                <Typography variant="body2">
+                  <strong>{tCheckout('fullName')}:</strong> {createdOrder.customerName}
+                </Typography>
+                <Typography variant="body2">
+                  <strong>{tCheckout('phone')}:</strong> {createdOrder.phone}
+                </Typography>
+                <Typography variant="body2">
+                  <strong>{tCheckout('address')}:</strong> {createdOrder.address}
+                </Typography>
+                {createdOrder.note ? (
+                  <Typography variant="body2">
+                    <strong>{tCheckout('notesLabel')}:</strong> {createdOrder.note}
+                  </Typography>
+                ) : null}
+              </Box>
+            </CardContent>
+          </Card>
+        )}
 
-        <RadioGroup value={selectedMethod} onChange={handlePaymentMethodChange}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {PAYMENT_METHODS.map((method) => (
-              <Box key={method.id}>
+        <Card sx={{ boxShadow: 1 }}>
+          <CardContent>
+            <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
+              {tCheckout('orderSummary')}
+            </Typography>
+            <Divider sx={{ mb: 2 }} />
+            <TableContainer sx={{ overflowX: 'auto' }}>
+              <Table size="small">
+                <TableHead >
+                  <TableRow sx={{ backgroundColor: 'action.hover' }}>
+                    <TableCell sx={{ fontWeight: 700 }}>{tCheckout('itemsTable.product')}</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 700, width: 64 }}>
+                      {tCheckout('itemsTable.qty')}
+                    </TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}>
+                      {tCheckout('itemsTable.price')}
+                    </TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}>
+                      {tCheckout('itemsTable.lineTotal')}
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {reviewItems.map((item) => (
+                    <TableRow key={item.id} hover>
+                      <TableCell>
+                        <Box className='w-full flex items-center gap-2!'>
+                        {item.imageUrl && (
+                          <Image src={item.imageUrl || '/img/fallbackplant.avif'} alt={item.name} width={50} height={50} style={{ objectFit: 'cover', borderRadius: 4 }} />
+                        )}
+                        <Typography variant="body2">{item.name}</Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell align="center">
+                        <Typography variant="body2">{item.quantity}</Typography>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Typography variant="body2" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+                          {formatCurrency(item.price, 'vi-VN')}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Typography variant="body2" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+                          {formatCurrency(item.lineTotal, 'vi-VN')}
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, md: 5 }}>
+        {selectedInvoice && (
+          <Card
+            variant="outlined"
+            sx={{
+              mb: 3,
+              borderColor: 'var(--primary)',
+              borderWidth: 2,
+              boxShadow: 1,
+              bgcolor: 'action.hover',
+            }}
+          >
+            <CardContent sx={{ py: 2.5, borderRadius: 8 }}>
+              <Typography variant="h6" sx={{ fontWeight: 800, mb: 0.5, color: 'text.primary' }}>
+                {tCheckout('paymentBreakdownTitle')}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
+                {tCheckout('orderIdLabel')} #{createdOrder.id}
+              </Typography>
+
+              <TableContainer
+                component={Box}
+                sx={{
+                  borderRadius: 1,
+                  overflow: 'hidden',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  bgcolor: 'background.paper',
+                }}
+              >
+                <Table size="small" aria-label={tCheckout('paymentBreakdownTitle')}>
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: 'grey.100' }}>
+                      <TableCell sx={{ fontWeight: 700, py: 1.5, width: '60%' }}>
+                        {tCheckout('breakdownTable.description')}
+                      </TableCell>
+                      <TableCell
+                        align="right"
+                        sx={{ fontWeight: 700, py: 1.5, fontVariantNumeric: 'tabular-nums' }}
+                      >
+                        {tCheckout('breakdownTable.amount')}
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell sx={{ py: 1.5 }}>
+                        <Typography variant="body2">{tCheckout('orderTotalValue')}</Typography>
+                      </TableCell>
+                      <TableCell align="right" sx={{ py: 1.5 }}>
+                        <Typography
+                          variant="body2"
+                          sx={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}
+                        >
+                          {formatCurrency(createdOrder.totalAmount, 'vi-VN')}
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                    {createdOrder.depositAmount != null && createdOrder.depositAmount > 0 && (
+                      <TableRow>
+                        <TableCell sx={{ py: 1.5 }}>
+                          <Typography variant="body2" color="text.secondary">
+                            {tCheckout('depositInfo')}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="right" sx={{ py: 1.5 }}>
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{ fontVariantNumeric: 'tabular-nums' }}
+                          >
+                            {formatCurrency(createdOrder.depositAmount, 'vi-VN')}
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    {createdOrder.remainingAmount != null && createdOrder.remainingAmount > 0 && (
+                      <TableRow>
+                        <TableCell sx={{ py: 1.5, borderBottom: 0 }}>
+                          <Typography variant="body2" color="text.secondary">
+                            {tCheckout('remainingInfo')}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="right" sx={{ py: 1.5, borderBottom: 0 }}>
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{ fontVariantNumeric: 'tabular-nums' }}
+                          >
+                            {formatCurrency(createdOrder.remainingAmount, 'vi-VN')}
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    <TableRow
+                    className='border-primary! bg-primary! text-primary-contrastText border-bottom-0 py-4! font-bold!'
+                    >
+                      <TableCell>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+                          {tCheckout('amountDueThisPayment')}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Typography
+                          variant="h6"
+                          component="p"
+                          sx={{ fontWeight: 800, fontVariantNumeric: 'tabular-nums', lineHeight: 1.3 }}
+                        >
+                          {formatCurrency(selectedInvoice.totalAmount, 'vi-VN')}
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </CardContent>
+          </Card>
+        )}
+
+        <Card sx={{ boxShadow: 1, position: { md: 'sticky' }, top: { md: 16 } }}>
+          <CardContent>
+            <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 1 }}>
+              {tCheckout('paymentMethod')}
+            </Typography>
+            {/* <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}> */}
+              {/* {tCheckout('paymentMethodHint')} */}
+            {/* </Typography> */}
+
+            <RadioGroup
+              className="w-full!"
+              value={selectedMethod}
+              onChange={handlePaymentMethodChange}
+            >
+              {PAYMENT_METHODS.map((method) => (
                 <FormControlLabel
+                  key={method.id}
                   value={method.id}
                   control={<Radio />}
                   label={
                     <Box
+                      className="w-full!"
                       sx={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: 1,
-                        ml: 1,
+                        gap: 1.5,
+                        pl: 0.5,
+                        py: 1.5,
+                        pr: 2,
+                        width: '100%',
+                        border: '2px solid',
+                        borderColor:
+                          selectedMethod === method.id ? 'primary.main' : 'divider',
+                        borderRadius: 1,
+                        bgcolor:
+                          selectedMethod === method.id ? 'action.selected' : 'background.paper',
                       }}
                     >
                       {method.icon}
-                      {/* <Typography variant="body1">{method.label}</Typography> */}
                     </Box>
                   }
-                  sx={{
-                    border: '1px solid',
-                    borderColor:
-                      selectedMethod === method.id ? '#4CAF50' : '#ddd',
-                    borderRadius: 1,
-                    p: 2,
-                    width: '100%',
-                    m: 0,
-                    backgroundColor:
-                      selectedMethod === method.id ? '#f1f8f4' : 'white',
-                    transition: 'all 0.2s',
-                    '&:hover': {
-                      borderColor: '#4CAF50',
-                    },
-                  }}
+                  sx={{ alignItems: 'flex-start', m: 0, width: '100%' }}
                 />
-              </Box>
-            ))}
-          </Box>
-        </RadioGroup>
+              ))}
+            </RadioGroup>
 
-        <Box sx={{ mt: 3, p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
-            Selected Payment Method
-          </Typography>
-          <Typography variant="body2">
-            {PAYMENT_METHODS.find((m) => m.id === selectedMethod)?.icon}
-          </Typography>
-        </Box>
+            {paymentError && (
+              <Alert severity="error" sx={{ mt: 2 }}>
+                {paymentError}
+              </Alert>
+            )}
 
-        {orderError && (
-          <Alert severity="error" sx={{ mt: 2 }}>
-            {orderError}
-          </Alert>
-        )}
-
-        {invoiceError && (
-          <Alert severity="error" sx={{ mt: 2 }}>
-            {invoiceError}
-          </Alert>
-        )}
-
-        <Button
-          fullWidth
-          variant="contained"
-          onClick={() => void handleCreateOrderAndPay()}
-          disabled={isLoadingInvoice || isSubmitting || isCreatingOrder}
-          sx={{ mt: 3, backgroundColor: 'var(--primary)', fontWeight: 'bold', fontSize: '16px', '&:hover': { backgroundColor: '#45a049' } }}
-        >
-          {isCreatingOrder ? 'Creating order...' : isSubmitting ? 'Creating payment...' : `Pay with VNPay`}
-        </Button>
-      </CardContent>
-    </Card>
+            <Button
+              fullWidth
+              variant="contained"
+              size="large"
+              onClick={() => void handlePay()}
+              disabled={isSubmitting || !selectedInvoice}
+              sx={{
+                mt: 3,
+                py: 1.5,
+                backgroundColor: 'var(--primary)',
+                fontWeight: 700,
+                fontSize: '1rem',
+                '&:hover': { backgroundColor: '#45a049' },
+              }}
+            >
+              {isSubmitting ? tCheckout('actions.creatingPayment') : tCheckout('actions.payWithVnPay')}
+            </Button>
+          </CardContent>
+        </Card>
+      </Grid>
+    </Grid>
   );
 }

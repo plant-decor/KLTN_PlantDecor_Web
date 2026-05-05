@@ -1,35 +1,16 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  Alert,
-  Box,
-  Button,
-  Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  FormControl,
-  IconButton,
-  InputLabel,
-  MenuItem,
-  Paper,
-  Select,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography,
-} from '@mui/material';
-import { Add, DeleteOutline, Refresh, ToggleOff, ToggleOn } from '@mui/icons-material';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Alert, Box } from '@mui/material';
 import { toast } from 'react-toastify';
 import ManagementHeader from '@/components/layout/ManagementHeader';
-import { CustomLoading } from '@/components/CustomLoading';
+import DesignTemplateFormDialog, { type DesignTemplateFormValue } from '@/components/design-template-management/DesignTemplateFormDialog';
+import DesignTemplateTierDialog, { type DesignTemplateTierFormValue } from '@/components/design-template-management/DesignTemplateTierDialog';
+import { mapRoomTypeOptions, mapStyleOptions } from '@/components/design-template-management/designTemplateManagement.constants';
+import {
+  fetchRoomDesignEnumOptionsForTemplates,
+  getAdminDesignTemplateDetail,
+} from '@/lib/api/adminDesignTemplatesService';
 import {
   createNurseryDesignTemplate,
   deleteNurseryDesignTemplate,
@@ -37,19 +18,60 @@ import {
   getNotOfferedDesignTemplates,
   toggleNurseryDesignTemplate,
 } from '@/lib/api/managerNurseryDesignTemplatesService';
+import type {
+  AdminDesignTemplateDetail,
+  DesignTemplateRoomTypeOption,
+  DesignTemplateStyleOption,
+  DesignTemplateTier,
+} from '@/types/admin-design-template.types';
 import type { ManagerNotOfferedDesignTemplate, ManagerNurseryDesignTemplateListItem } from '@/types/manager-design-template.types';
+import {
+  getNurseryDesignTemplateErrorMessage,
+  type NurseryDesignTemplateListFilter,
+} from './managerNurseryDesignTemplate.constants';
+import ManagerNurseryDesignTemplateDialogs from './ManagerNurseryDesignTemplateDialogs';
+import ManagerNurseryDesignTemplateHeader from './ManagerNurseryDesignTemplateHeader';
+import ManagerNurseryDesignTemplatesTable from './ManagerNurseryDesignTemplatesTable';
 
-const getErrorMessage = (error: unknown, fallback: string) => {
-  if (!error || typeof error !== 'object') {
-    return fallback;
-  }
+const emptyTemplateForm = (defaultStyle = 1): DesignTemplateFormValue => ({
+  name: '',
+  description: '',
+  style: defaultStyle,
+  roomTypes: [],
+  imageFile: null,
+  specializationIds: [],
+});
 
-  const candidate = error as { response?: { data?: { message?: string } }; message?: string };
-  return candidate.response?.data?.message || candidate.message || fallback;
-};
+const emptyTierFormValue = (): DesignTemplateTierFormValue => ({
+  tierName: '',
+  minArea: 0,
+  maxArea: 0,
+  packagePrice: 0,
+  scopedOfWork: '',
+  estimatedDays: 1,
+  isActive: true,
+  items: [{ materialId: null, plantId: null, itemType: 1, quantity: 1 }],
+});
+
+const mapTierToFormValue = (tier: DesignTemplateTier): DesignTemplateTierFormValue => ({
+  tierName: tier.tierName,
+  minArea: tier.minArea,
+  maxArea: tier.maxArea,
+  packagePrice: tier.packagePrice,
+  scopedOfWork: tier.scopedOfWork,
+  estimatedDays: tier.estimatedDays,
+  isActive: tier.isActive,
+  items: tier.items.map((item) => ({
+    materialId: item.materialId,
+    plantId: item.plantId,
+    itemType: item.itemType,
+    quantity: item.quantity,
+  })),
+});
 
 export default function ManagerNurseryDesignTemplateManagementPageClient() {
   const [items, setItems] = useState<ManagerNurseryDesignTemplateListItem[]>([]);
+  const [listFilter, setListFilter] = useState<NurseryDesignTemplateListFilter>('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notOfferedTemplates, setNotOfferedTemplates] = useState<ManagerNotOfferedDesignTemplate[]>([]);
@@ -59,32 +81,128 @@ export default function ManagerNurseryDesignTemplateManagementPageClient() {
   const [toggleTarget, setToggleTarget] = useState<ManagerNurseryDesignTemplateListItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ManagerNurseryDesignTemplateListItem | null>(null);
 
-  const activeCount = useMemo(() => items.filter((item) => item.isActive).length, [items]);
+  const [styleOptions, setStyleOptions] = useState<DesignTemplateStyleOption[]>([]);
+  const [roomTypeOptions, setRoomTypeOptions] = useState<DesignTemplateRoomTypeOption[]>([]);
+  const [templateDetailOpen, setTemplateDetailOpen] = useState(false);
+  const [selectedTemplateDetail, setSelectedTemplateDetail] = useState<AdminDesignTemplateDetail | null>(null);
+  const [templateDetailLoading, setTemplateDetailLoading] = useState(false);
+  const [templateDetailError, setTemplateDetailError] = useState<string | null>(null);
+  const [templateFormValue, setTemplateFormValue] = useState<DesignTemplateFormValue>(emptyTemplateForm());
+
+  const [tierViewDialogOpen, setTierViewDialogOpen] = useState(false);
+  const [tierViewSelected, setTierViewSelected] = useState<DesignTemplateTier | null>(null);
+  const [tierViewFormValue, setTierViewFormValue] = useState<DesignTemplateTierFormValue>(emptyTierFormValue());
+
+  const { activeCount, inactiveCount } = useMemo(() => {
+    if (listFilter === 'active') {
+      return { activeCount: items.length, inactiveCount: 0 };
+    }
+    const active = items.filter((item) => item.isActive).length;
+    return { activeCount: active, inactiveCount: items.length - active };
+  }, [items, listFilter]);
 
   const loadInitialData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
+      const activeOnly = listFilter === 'active';
       const [currentMappings, availableTemplates] = await Promise.all([
-        getMyNurseryDesignTemplates(false, false),
+        getMyNurseryDesignTemplates(activeOnly, false),
         getNotOfferedDesignTemplates(false),
       ]);
 
       setItems(currentMappings);
       setNotOfferedTemplates(availableTemplates);
     } catch (loadError) {
-      const message = getErrorMessage(loadError, 'Cannot load nursery design templates');
+      const message = getNurseryDesignTemplateErrorMessage(loadError, 'Cannot load nursery design templates');
       setError(message);
       toast.error(message);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [listFilter]);
 
   useEffect(() => {
     void loadInitialData();
   }, [loadInitialData]);
+
+  const loadRoomDesignEnums = useCallback(async () => {
+    try {
+      const response = await fetchRoomDesignEnumOptionsForTemplates(false);
+      setStyleOptions(mapStyleOptions(response.roomStyles));
+      setRoomTypeOptions(mapRoomTypeOptions(response.roomTypes));
+    } catch (loadError) {
+      toast.error(getNurseryDesignTemplateErrorMessage(loadError, 'Cannot load room design enums'));
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadRoomDesignEnums();
+  }, [loadRoomDesignEnums]);
+
+  const closeTierViewDialog = useCallback(() => {
+    setTierViewDialogOpen(false);
+    setTierViewSelected(null);
+    setTierViewFormValue(emptyTierFormValue());
+  }, []);
+
+  const closeTemplateDetailDialog = useCallback(() => {
+    closeTierViewDialog();
+    setTemplateDetailOpen(false);
+    setSelectedTemplateDetail(null);
+    setTemplateDetailError(null);
+    setTemplateFormValue(emptyTemplateForm(styleOptions[0]?.value ?? 1));
+  }, [closeTierViewDialog, styleOptions]);
+
+  const handleViewTierFromTemplate = useCallback((tier: DesignTemplateTier) => {
+    setTierViewSelected(tier);
+    setTierViewFormValue(mapTierToFormValue(tier));
+    setTierViewDialogOpen(true);
+  }, []);
+
+  const handleTierViewSelectExisting = useCallback((tier: DesignTemplateTier) => {
+    setTierViewSelected(tier);
+    setTierViewFormValue(mapTierToFormValue(tier));
+  }, []);
+
+  const handleBackToTierListInViewDialog = useCallback(() => {
+    setTierViewSelected(null);
+    setTierViewFormValue(emptyTierFormValue());
+  }, []);
+
+  const noopTierListAction = useCallback((tier: DesignTemplateTier) => {
+    void tier;
+  }, []);
+
+  const handleViewDesignTemplateDetail = useCallback(
+    async (row: ManagerNurseryDesignTemplateListItem) => {
+      setTemplateDetailOpen(true);
+      setTemplateDetailError(null);
+      setTemplateDetailLoading(true);
+      setSelectedTemplateDetail(null);
+      setTemplateFormValue(emptyTemplateForm(styleOptions[0]?.value ?? 1));
+      try {
+        const detail = await getAdminDesignTemplateDetail(row.designTemplateId, false);
+        setSelectedTemplateDetail(detail);
+        setTemplateFormValue({
+          name: detail.name,
+          description: detail.description,
+          style: detail.style,
+          roomTypes: detail.roomTypes,
+          imageFile: null,
+          specializationIds: detail.specializations.map((s) => s.id),
+        });
+      } catch (loadError) {
+        const message = getNurseryDesignTemplateErrorMessage(loadError, 'Cannot load design template detail');
+        setTemplateDetailError(message);
+        toast.error(message);
+      } finally {
+        setTemplateDetailLoading(false);
+      }
+    },
+    [styleOptions]
+  );
 
   const handleOpenAddDialog = useCallback(async () => {
     try {
@@ -93,7 +211,7 @@ export default function ManagerNurseryDesignTemplateManagementPageClient() {
       setSelectedTemplateId(availableTemplates[0]?.id ?? 0);
       setAddDialogOpen(true);
     } catch (loadError) {
-      toast.error(getErrorMessage(loadError, 'Cannot load available design templates'));
+      toast.error(getNurseryDesignTemplateErrorMessage(loadError, 'Cannot load available design templates'));
     }
   }, []);
 
@@ -110,7 +228,7 @@ export default function ManagerNurseryDesignTemplateManagementPageClient() {
       setAddDialogOpen(false);
       await loadInitialData();
     } catch (addError) {
-      toast.error(getErrorMessage(addError, 'Cannot add design template'));
+      toast.error(getNurseryDesignTemplateErrorMessage(addError, 'Cannot add design template'));
     } finally {
       setSubmitting(false);
     }
@@ -124,11 +242,15 @@ export default function ManagerNurseryDesignTemplateManagementPageClient() {
     try {
       setSubmitting(true);
       await toggleNurseryDesignTemplate(toggleTarget.id, false);
-      toast.success(toggleTarget.isActive ? 'Nursery design template deactivated successfully' : 'Nursery design template activated successfully');
+      toast.success(
+        toggleTarget.isActive
+          ? 'Nursery design template deactivated successfully'
+          : 'Nursery design template activated successfully'
+      );
       setToggleTarget(null);
       await loadInitialData();
     } catch (toggleError) {
-      toast.error(getErrorMessage(toggleError, 'Cannot change mapping status'));
+      toast.error(getNurseryDesignTemplateErrorMessage(toggleError, 'Cannot change mapping status'));
     } finally {
       setSubmitting(false);
     }
@@ -146,7 +268,7 @@ export default function ManagerNurseryDesignTemplateManagementPageClient() {
       setDeleteTarget(null);
       await loadInitialData();
     } catch (deleteError) {
-      toast.error(getErrorMessage(deleteError, 'Cannot remove design template'));
+      toast.error(getNurseryDesignTemplateErrorMessage(deleteError, 'Cannot remove design template'));
     } finally {
       setSubmitting(false);
     }
@@ -163,13 +285,12 @@ export default function ManagerNurseryDesignTemplateManagementPageClient() {
         onAction={() => void handleOpenAddDialog()}
       />
 
-      <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
-        <Chip label={`Active: ${activeCount}`} color="success" variant="outlined" />
-        <Chip label={`Inactive: ${items.length - activeCount}`} variant="outlined" />
-        <Button size="small" variant="outlined" startIcon={<Refresh />} onClick={() => void loadInitialData()} disabled={loading}>
-          Reload
-        </Button>
-      </Stack>
+      <ManagerNurseryDesignTemplateHeader
+        listFilter={listFilter}
+        onListFilterChange={setListFilter}
+        activeCount={activeCount}
+        inactiveCount={inactiveCount}
+      />
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
@@ -177,131 +298,66 @@ export default function ManagerNurseryDesignTemplateManagementPageClient() {
         </Alert>
       )}
 
-      <TableContainer component={Paper} sx={{ borderRadius: 3, border: '1px solid var(--card-border)' }}>
-        <Table size="small">
-          <TableHead sx={{ backgroundColor: 'var(--primary)' }}>
-            <TableRow>
-              <TableCell sx={{ fontWeight: 700 }}>ID</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Design Template</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Nursery</TableCell>
-              <TableCell sx={{ fontWeight: 700 }} align="center">Status</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Created At</TableCell>
-              <TableCell sx={{ fontWeight: 700 }} align="center">Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                  <CustomLoading size={24} />
-                </TableCell>
-              </TableRow>
-            ) : items.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                  <Typography color="text.secondary">No nursery design templates found.</Typography>
-                </TableCell>
-              </TableRow>
-            ) : (
-              items.map((item) => (
-                <TableRow key={item.id} hover sx={{ opacity: item.isActive ? 1 : 0.7 }}>
-                  <TableCell>{item.id}</TableCell>
-                  <TableCell>
-                    <Typography fontWeight={700}>{item.designTemplateName}</Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Design Template ID: {item.designTemplateId}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography>{item.nurseryName}</Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Nursery ID: {item.nurseryId}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="center">
-                    <Chip size="small" label={item.isActive ? 'Active' : 'Inactive'} color={item.isActive ? 'success' : 'default'} />
-                  </TableCell>
-                  <TableCell>{item.createdAt ? new Date(item.createdAt).toLocaleString('vi-VN') : '-'}</TableCell>
-                  <TableCell align="center">
-                    <Stack direction="row" spacing={1} justifyContent="center">
-                      <IconButton size="small" color={item.isActive ? 'success' : 'default'} onClick={() => setToggleTarget(item)}>
-                        {item.isActive ? <ToggleOff fontSize="small" /> : <ToggleOn fontSize="small" />}
-                      </IconButton>
-                      <IconButton size="small" color="error" onClick={() => setDeleteTarget(item)}>
-                        <DeleteOutline fontSize="small" />
-                      </IconButton>
-                    </Stack>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <ManagerNurseryDesignTemplatesTable
+        items={items}
+        loading={loading}
+        onViewDetailClick={(row) => void handleViewDesignTemplateDetail(row)}
+        onToggleClick={setToggleTarget}
+        onDeleteClick={setDeleteTarget}
+      />
 
-      <Dialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>Add Design Template</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ pt: 1 }}>
-            <FormControl fullWidth>
-              <InputLabel id="not-offered-template-label">Design Template</InputLabel>
-              <Select
-                labelId="not-offered-template-label"
-                label="Design Template"
-                value={selectedTemplateId}
-                onChange={(event) => setSelectedTemplateId(Number(event.target.value))}
-              >
-                {notOfferedTemplates.map((item) => (
-                  <MenuItem key={item.id} value={item.id}>
-                    {item.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            {notOfferedTemplates.length === 0 && (
-              <Alert severity="info">No more templates are currently available to add.</Alert>
-            )}
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setAddDialogOpen(false)} disabled={submitting}>
-            Cancel
-          </Button>
-          <Button variant="contained" startIcon={<Add />} onClick={() => void handleAddTemplate()} disabled={submitting || notOfferedTemplates.length === 0}>
-            Add
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <DesignTemplateFormDialog
+        open={templateDetailOpen}
+        mode="view"
+        template={selectedTemplateDetail}
+        detailLoading={templateDetailLoading}
+        detailError={templateDetailError}
+        formValue={templateFormValue}
+        styleOptions={styleOptions}
+        roomTypeOptions={roomTypeOptions}
+        specializationOptions={[]}
+        submitting={false}
+        onClose={closeTemplateDetailDialog}
+        onSubmit={async () => {}}
+        onFormChange={setTemplateFormValue}
+        onViewTier={handleViewTierFromTemplate}
+      />
 
-      <Dialog open={Boolean(toggleTarget)} onClose={() => setToggleTarget(null)}>
-        <DialogTitle>{toggleTarget?.isActive ? 'Deactivate mapping?' : 'Activate mapping?'}</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            This changes the offering status for <strong>{toggleTarget?.designTemplateName}</strong>.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setToggleTarget(null)}>Cancel</Button>
-          <Button variant="contained" className='bg-primary!' onClick={() => void handleToggle()} disabled={submitting}>
-            Confirm
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <DesignTemplateTierDialog
+        open={tierViewDialogOpen}
+        mode="view"
+        template={selectedTemplateDetail}
+        tier={tierViewSelected}
+        existingTiers={selectedTemplateDetail?.tiers ?? []}
+        showCreateTierForm={false}
+        detailLoading={false}
+        detailError={null}
+        formValue={tierViewFormValue}
+        submitting={false}
+        onClose={closeTierViewDialog}
+        onSubmit={async () => {}}
+        onFormChange={setTierViewFormValue}
+        onEditExistingTier={noopTierListAction}
+        onViewExistingTier={handleTierViewSelectExisting}
+        onDeactivateExistingTier={noopTierListAction}
+        onBackToTierList={handleBackToTierListInViewDialog}
+      />
 
-      <Dialog open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)}>
-        <DialogTitle>Remove mapping?</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            This will remove <strong>{deleteTarget?.designTemplateName}</strong> from your nursery offerings.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)}>Cancel</Button>
-          <Button color="error" variant="contained" onClick={() => void handleDelete()} disabled={submitting}>
-            Remove
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ManagerNurseryDesignTemplateDialogs
+        addDialogOpen={addDialogOpen}
+        onCloseAddDialog={() => setAddDialogOpen(false)}
+        notOfferedTemplates={notOfferedTemplates}
+        selectedTemplateId={selectedTemplateId}
+        onSelectedTemplateIdChange={setSelectedTemplateId}
+        onConfirmAdd={() => void handleAddTemplate()}
+        submitting={submitting}
+        toggleTarget={toggleTarget}
+        onCloseToggleDialog={() => setToggleTarget(null)}
+        onConfirmToggle={() => void handleToggle()}
+        deleteTarget={deleteTarget}
+        onCloseDeleteDialog={() => setDeleteTarget(null)}
+        onConfirmDelete={() => void handleDelete()}
+      />
     </Box>
   );
 }

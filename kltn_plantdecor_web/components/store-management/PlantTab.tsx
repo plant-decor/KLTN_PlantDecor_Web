@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Box,
@@ -20,10 +20,10 @@ import PlantViewDialog from './PlantViewDialog';
 import type { Plant, PlantDetail, PlantFormData, ImageUploadData } from '@/types/store-management.types';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 import { useAdminPlants } from '@/lib/api/admin/useAdminPlants';
-import { useAdminCategories } from '@/lib/api/admin/useAdminCategories';
 import { useAdminTags } from '@/lib/api/admin/useAdminTags';
 import { getAdminPlantGuideByPlantId } from '@/lib/api/adminPlantGuidesService';
 import type { PlantGuideFormData } from '@/types/admin-plant-guide.types';
+import { getCategoriesByType } from '@/lib/api/categoriesService';
 
 interface PlantTabProps {
   initialPlants?: Plant[];
@@ -34,47 +34,6 @@ interface OptionItem {
   name: string;
 }
 
-interface CategoryTreeNodeLike {
-  id?: number | string;
-  name?: string;
-  subCategories?: CategoryTreeNodeLike[];
-  children?: CategoryTreeNodeLike[];
-}
-
-const flattenCategoryTree = (nodes: CategoryTreeNodeLike[]): OptionItem[] => {
-  const results: OptionItem[] = [];
-
-  const visit = (items: CategoryTreeNodeLike[]) => {
-    items.forEach((node) => {
-      if (!node || typeof node !== 'object') {
-        return;
-      }
-
-      const id = Number(node.id);
-      if (Number.isFinite(id)) {
-        results.push({ id, name: String(node.name ?? id) });
-      }
-
-      const children = Array.isArray(node.subCategories)
-        ? node.subCategories
-        : Array.isArray(node.children)
-          ? node.children
-          : [];
-
-      if (children.length > 0) {
-        visit(children);
-      }
-    });
-  };
-
-  visit(nodes);
-
-  const deduped = new Map<number, OptionItem>();
-  results.forEach((item) => deduped.set(item.id, item));
-
-  return Array.from(deduped.values());
-};
-
 export default function PlantTab({}: PlantTabProps) {
   const [formOpen, setFormOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
@@ -83,6 +42,8 @@ export default function PlantTab({}: PlantTabProps) {
   const [editingPlantGuide, setEditingPlantGuide] = useState<PlantGuideFormData | undefined>();
   const [viewingData, setViewingData] = useState<PlantDetail | undefined>();
   const [toggleTarget, setToggleTarget] = useState<Plant | null>(null);
+  const [categoryOptions, setCategoryOptions] = useState<OptionItem[]>([]);
+  const [categoryError, setCategoryError] = useState<string | null>(null);
 
   const {
     plants,
@@ -105,11 +66,8 @@ export default function PlantTab({}: PlantTabProps) {
     loadEnums,
     clearError,
   } = useAdminPlants();
-  const {
-    categoryTree,
-    error: categoryError,
-    fetchCategoryTree,
-  } = useAdminCategories();
+
+  const didInitFetchRef = useRef(false);
 
   const {
     tags,
@@ -118,6 +76,11 @@ export default function PlantTab({}: PlantTabProps) {
   } = useAdminTags();
 
   useEffect(() => {
+    if (didInitFetchRef.current) {
+      return;
+    }
+    didInitFetchRef.current = true;
+
     void loadEnums();
     void fetchPlants({
       pagination: { pageNumber: 1, pageSize: 10 },
@@ -125,14 +88,39 @@ export default function PlantTab({}: PlantTabProps) {
       sortBy: '',
       sortDirection: '',
     });
-    void fetchCategoryTree();
     void fetchTags({ pageNumber: 1, pageSize: 1000 });
-  }, [fetchCategoryTree, fetchPlants, fetchTags, loadEnums]);
+  }, [fetchPlants, fetchTags, loadEnums]);
 
-  const categoryOptions = useMemo(
-    () => flattenCategoryTree(categoryTree as CategoryTreeNodeLike[]),
-    [categoryTree]
-  );
+  useEffect(() => {
+    let mounted = true;
+
+    const loadCategories = async () => {
+      if (mounted) {
+        setCategoryError(null);
+      }
+      try {
+        const response = await getCategoriesByType({ categoryType: 1, activeOnly: true }, true);
+        const payload = response.payload ?? response.data ?? [];
+        const options = payload
+          .map((item) => ({ id: item.id, name: item.name }))
+          .filter((item) => Number.isFinite(item.id) && Boolean(item.name));
+        if (mounted) {
+          setCategoryOptions(options);
+        }
+      } catch {
+        if (mounted) {
+          setCategoryError('Failed to load categories.');
+          setCategoryOptions([]);
+        }
+      }
+    };
+
+    void loadCategories();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const tagOptions = useMemo<OptionItem[]>(() => {
     return tags.map((tag) => ({ id: tag.id, name: tag.tagName }));

@@ -8,6 +8,11 @@ import type {
   ManagerNurseryOrdersListQuery,
   ManagerNurseryOrderShipper,
 } from '@/types/manager-sales-orders.types';
+import type {
+  NurseryFailedOrdersPayload,
+  NurseryOrderStatusSummaryPayload,
+  NurseryRevenueSummaryPayload,
+} from '@/types/manager-dashboard.types';
 
 type WrappedResponse<T> = ResponseModel<T> | T;
 
@@ -41,6 +46,48 @@ const buildListQueryParams = (query?: ManagerNurseryOrdersListQuery) => {
     ...(typeof query.pageNumber === 'number' ? { pageNumber: query.pageNumber } : {}),
     ...(typeof query.pageSize === 'number' ? { pageSize: query.pageSize } : {}),
   };
+};
+
+export const getManagerNurseryOrderStatusSummary = async (
+  from: string,
+  to: string,
+  loading = false
+): Promise<NurseryOrderStatusSummaryPayload> => {
+  const response = await apiClient.get<ResponseModel<NurseryOrderStatusSummaryPayload>>(
+    '/manager/nursery-orders/status-summary',
+    { from, to },
+    loading,
+    { showToast: false, showErrorToast: false }
+  );
+  return unwrapPayloadData(response);
+};
+
+export const getManagerNurseryFailedOrdersSummary = async (
+  from: string,
+  to: string,
+  loading = false
+): Promise<NurseryFailedOrdersPayload> => {
+  const response = await apiClient.get<ResponseModel<NurseryFailedOrdersPayload>>(
+    '/manager/nursery-orders/failed',
+    { from, to },
+    loading,
+    { showToast: false, showErrorToast: false }
+  );
+  return unwrapPayloadData(response);
+};
+
+export const getManagerNurseryRevenueSummary = async (
+  from: string,
+  to: string,
+  loading = false
+): Promise<NurseryRevenueSummaryPayload> => {
+  const response = await apiClient.get<ResponseModel<NurseryRevenueSummaryPayload>>(
+    '/manager/nursery-orders/revenue/summary',
+    { from, to },
+    loading,
+    { showToast: false, showErrorToast: false }
+  );
+  return unwrapPayloadData(response);
 };
 
 export const getManagerNurseryOrders = async (
@@ -101,6 +148,23 @@ export const updateManagerNurseryOrderShipper = async (
   const response = await apiClient.put<ResponseModel<ManagerNurseryOrderDetail>>(
     `/manager/nursery-orders/${nurseryOrderId}/shipper`,
     { shipperId },
+    loading,
+    {
+      showToast: false,
+      showErrorToast: false,
+    }
+  );
+
+  return unwrapPayloadData(response);
+};
+
+export const markManagerNurseryOrderAsAssigned = async (
+  nurseryOrderId: number,
+  loading = true
+): Promise<ManagerNurseryOrderDetail> => {
+  const response = await apiClient.put<ResponseModel<ManagerNurseryOrderDetail>>(
+    `/manager/nursery-orders/${nurseryOrderId}/mark-assigned`,
+    {},
     loading,
     {
       showToast: false,

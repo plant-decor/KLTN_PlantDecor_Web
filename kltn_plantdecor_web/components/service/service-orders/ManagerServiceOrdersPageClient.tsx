@@ -21,6 +21,7 @@ import {
   assignDesignTask,
   approveDesignRegistration,
   buildDesignFlowLabelMap,
+  getDesignTaskDetail,
   getDesignFlowEnums,
   getDesignTasksByRegistration,
   getEligibleCaretakersForDesignRegistration,
@@ -54,6 +55,7 @@ import ManagementHeader from '@/components/layout/ManagementHeader';
 import { formatEnumLabel } from '@/lib/utils/enumLabelUtil';
 import { DESIGN_STATUS } from './utils/designStatusConstants';
 import DesignTaskRescheduleDialog from './dialogs/DesignTaskRescheduleDialog';
+import DesignTaskDetailDialog from '@/components/design-registration/DesignTaskDetailDialog';
 
 interface ManagerServiceOrdersPageClientProps {
   pageTitle?: string;
@@ -110,6 +112,10 @@ export default function ManagerServiceOrdersPageClient({
   const [designDetailOpen, setDesignDetailOpen] = useState(false);
   const [designDetailLoading, setDesignDetailLoading] = useState(false);
   const [designDetailItem, setDesignDetailItem] = useState<CustomerDesignRegistrationDetail | null>(null);
+  const [designTaskDetailOpen, setDesignTaskDetailOpen] = useState(false);
+  const [designTaskDetailLoading, setDesignTaskDetailLoading] = useState(false);
+  const [designTaskDetailError, setDesignTaskDetailError] = useState<string | null>(null);
+  const [designTaskDetail, setDesignTaskDetail] = useState<DesignRegistrationTask | null>(null);
   const [designCancelTarget, setDesignCancelTarget] = useState<CustomerDesignRegistrationListItem | null>(null);
   const [designCancelReason, setDesignCancelReason] = useState('');
   const [designRejectTarget, setDesignRejectTarget] = useState<CustomerDesignRegistrationListItem | null>(null);
@@ -357,6 +363,25 @@ export default function ManagerServiceOrdersPageClient({
       setDesignDetailItem(null);
     } finally {
       setDesignDetailLoading(false);
+    }
+  };
+
+  const handleViewDesignTaskDetail = async (taskId: number) => {
+    setDesignTaskDetailOpen(true);
+    setDesignTaskDetailLoading(true);
+    setDesignTaskDetailError(null);
+    setDesignTaskDetail(null);
+
+    try {
+      const detailPayload = await getDesignTaskDetail(taskId, false);
+      setDesignTaskDetail(detailPayload);
+    } catch (viewError) {
+      const message = getErrorMessage(viewError, 'Cannot load design task details');
+      setDesignTaskDetailError(message);
+      setDesignTaskDetail(null);
+      toast.error(message);
+    } finally {
+      setDesignTaskDetailLoading(false);
     }
   };
 
@@ -978,6 +1003,7 @@ export default function ManagerServiceOrdersPageClient({
           }}
           onRefresh={() => void loadDesignOrders()}
           onViewDetail={(id) => void handleViewDesignDetail(id)}
+          onViewTaskDetail={(taskId) => void handleViewDesignTaskDetail(taskId)}
           onApprove={(id) => void handleDesignApprove(id)}
           onOpenRejectDialog={(item) => {
             setDesignRejectTarget(item);
@@ -1029,6 +1055,18 @@ export default function ManagerServiceOrdersPageClient({
         }}
         onConfirm={() => void handleDesignTaskReschedule()}
         getDesignTaskTypeLabel={getDesignTaskTypeLabel}
+      />
+
+      <DesignTaskDetailDialog
+        open={designTaskDetailOpen}
+        loading={designTaskDetailLoading}
+        error={designTaskDetailError}
+        detail={designTaskDetail}
+        onClose={() => {
+          setDesignTaskDetailOpen(false);
+          setDesignTaskDetailError(null);
+          setDesignTaskDetail(null);
+        }}
       />
     </Box>
   );

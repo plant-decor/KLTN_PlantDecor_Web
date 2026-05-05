@@ -1,7 +1,7 @@
 ﻿'use client';
 
-import { Button, Chip, FormControl, InputLabel, MenuItem, Select, Stack } from '@mui/material';
-import RefreshIcon from '@mui/icons-material/Refresh';
+import { FormControl, InputLabel, MenuItem, Select, Stack } from '@mui/material';
+// import RefreshIcon from '@mui/icons-material/Refresh';
 import type { ServiceStatusFilterValue, ServiceStatusOption } from './managerServiceOrders.constants';
 
 interface ServiceOrdersHeaderProps {
@@ -19,13 +19,13 @@ interface ServiceOrdersHeaderProps {
 export default function ServiceOrdersHeader({
   statusFilter,
   statusOptions,
-  activeFilterLabel,
-  pendingCount,
-  awaitingPaymentCount,
-  activeCount,
-  loading,
+  // activeFilterLabel,
+  // pendingCount,
+  // awaitingPaymentCount,
+  // activeCount,
+  // loading,
   onStatusFilterChange,
-  onRefresh,
+  // onRefresh,
 }: ServiceOrdersHeaderProps) {
   return (
     <>
@@ -48,16 +48,16 @@ export default function ServiceOrdersHeader({
           </Select>
         </FormControl>
 
-        <Button variant="outlined" startIcon={<RefreshIcon />} onClick={onRefresh} disabled={loading}>
+        {/* <Button variant="outlined" startIcon={<RefreshIcon />} onClick={onRefresh} disabled={loading}>
           Reload
-        </Button>
+        </Button> */}
 
-        <Stack direction="row" spacing={1} flexWrap="wrap" alignItems="center">
+        {/* <Stack direction="row" spacing={1} flexWrap="wrap" alignItems="center">
           <Chip label={`Filter: ${activeFilterLabel}`} variant="outlined" />
           <Chip label={`Pending: ${pendingCount}`} variant="outlined" />
           <Chip label={`Awaiting payment: ${awaitingPaymentCount}`} variant="outlined" />
           <Chip label={`Active: ${activeCount}`} variant="outlined" />
-        </Stack>
+        </Stack> */}
       </Stack>
     </>
   );

@@ -633,6 +633,14 @@ export default function UserServicePage({ params }: PageProps) {
 
   return (
     <Box sx={{ py: 4, px: { xs: 2, md: 4 }, maxWidth: 1400, mx: 'auto' }}>
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="h4" fontWeight="bold" gutterBottom>
+          {t('myRequests')}
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          {t('myRequestsDesc')}
+        </Typography>
+      </Box>
       <Tabs
         value={currentTab}
         onChange={handleTabChange}
@@ -650,15 +658,7 @@ export default function UserServicePage({ params }: PageProps) {
       {currentTab === 0 ? (
         <>
           {/* Page Header */}
-          <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
-            <Box>
-              <Typography variant="h4" fontWeight="bold" gutterBottom>
-                {t('myRequests')}
-              </Typography>
-              <Typography variant="body1" color="text.secondary">
-                {t('myRequestsDesc')}
-              </Typography>
-            </Box>
+          <Box sx={{ my: 2, display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-end', flexWrap: 'wrap', gap: 2 }}>
             <Button
               variant="contained"
               startIcon={<AddIcon />}

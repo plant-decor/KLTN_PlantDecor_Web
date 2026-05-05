@@ -66,34 +66,34 @@ export default function ServiceRequestTable({
     { id: 'phone', label: t('phone') },
     ...(showStatus
       ? [
-          {
-            id: 'status',
-            label: t('status'),
-            format: (value: unknown) => <ServiceStatusChip status={Number(value)} label={statusLabels?.[Number(value)]} />,
-          },
-        ]
+        {
+          id: 'status',
+          label: t('status'),
+          format: (value: unknown) => <ServiceStatusChip status={Number(value)} label={statusLabels?.[Number(value)]} />,
+        },
+      ]
       : []),
     ...(showCaretaker
       ? [
-          {
-            id: 'mainCaretakerId',
-            label: t('caretaker'),
-            format: (value: unknown) => (value ? `Caretaker #${String(value)}` : '-'),
-          },
-        ]
+        {
+          id: 'mainCaretakerId',
+          label: t('caretaker'),
+          format: (value: unknown) => (value ? `Caretaker #${String(value)}` : '-'),
+        },
+      ]
       : []),
   ];
 
   return (
     <TableContainer component={Paper} sx={{ boxShadow: 2 }}>
-      <Table>
-        <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
-          <TableRow>
+      <Table size='small'>
+        <TableHead>
+          <TableRow sx={{ backgroundColor: 'var(--primary)' }}>
             {defaultColumns.map((column) => (
               <TableCell
                 key={column.id}
                 align={column.align}
-                sx={{ fontWeight: 'bold', minWidth: column.minWidth }}
+                sx={{ fontWeight: 'bold' }}
               >
                 {column.label}
               </TableCell>
@@ -124,8 +124,8 @@ export default function ServiceRequestTable({
                     {column.format
                       ? column.format(value, request)
                       : typeof value === 'object' && value !== null
-                      ? JSON.stringify(value)
-                      : String(value ?? '')}
+                        ? JSON.stringify(value)
+                        : String(value ?? '')}
                   </TableCell>
                 );
               })}
@@ -139,7 +139,7 @@ export default function ServiceRequestTable({
                       size="small"
                       startIcon={<VisibilityIcon />}
                       onClick={() => onViewDetails(request)}
-                      sx={{...hoverLiftStyle}}
+                      sx={{ ...hoverLiftStyle }}
                     >
                       {tCommon('view')}
                     </Button>

@@ -14,6 +14,8 @@ import {
 } from '@mui/material';
 import type { ServiceProgressDetail } from '@/types/care-service.types';
 import ServiceRatingReadOnlySection from '@/components/service/ServiceRatingReadOnlySection';
+import { formatDateTime } from '@/components/manager/return-ticket-management/managerReturnTicket.constants';
+import { formatDate } from '../service-orders/managerServiceOrders.constants';
 
 interface ServiceProgressDetailDialogProps {
   open: boolean;
@@ -23,18 +25,6 @@ interface ServiceProgressDetailDialogProps {
   onClose: () => void;
 }
 
-const formatDateForDisplay = (value: string): string => {
-  if (!value) {
-    return '-';
-  }
-
-  const parts = value.split('-');
-  if (parts.length !== 3) {
-    return value;
-  }
-
-  return `${parts[2]}/${parts[1]}/${parts[0]}`;
-};
 
 interface DetailRowProps {
   label: string;
@@ -81,14 +71,14 @@ export default function ServiceProgressDetailDialog({
 
         {!loading && !error && detail && (
           <Stack spacing={2}>
-            <DetailRow label='Service date' value={formatDateForDisplay(detail.taskDate)} />
+            <DetailRow label='Service date' value={detail.taskDate ? formatDate(detail.taskDate) : '-'} />
             <DetailRow
               label='Shift'
               value={detail.shift ? `${detail.shift.shiftName} (${detail.shift.startTime} - ${detail.shift.endTime})` : '-'}
             />
             <DetailRow label='Status' value={detail.statusName || '-'} />
-            <DetailRow label='Actual start time' value={detail.actualStartTime || '-'} />
-            <DetailRow label='Actual end time' value={detail.actualEndTime || '-'} />
+            <DetailRow label='Actual start time' value={detail.actualStartTime ? formatDateTime(detail.actualStartTime) : '-'} />
+            <DetailRow label='Actual end time' value={detail.actualEndTime ? formatDateTime(detail.actualEndTime) : '-'} />
             <DetailRow label='Task description' value={detail.description || '-'} />
 
             <Divider sx={{ my: 0.5 }} />

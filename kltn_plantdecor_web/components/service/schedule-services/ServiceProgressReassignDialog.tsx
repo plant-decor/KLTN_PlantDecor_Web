@@ -47,7 +47,7 @@ export default function ServiceProgressReassignDialog({
   return (
     <Dialog open={open} onClose={submitting ? undefined : onClose} maxWidth='sm' fullWidth>
       <DialogTitle sx={{ pr: 6 }}>
-        Chuyển caretaker cho phiên #{target?.id || '-'}
+        Reassign Caretaker for Session #{target?.id || '-'}
         <IconButton
           aria-label='close'
           onClick={onClose}
@@ -61,7 +61,7 @@ export default function ServiceProgressReassignDialog({
       <DialogContent dividers>
         <Stack spacing={2}>
           <Typography variant='body2' color='text.secondary'>
-            Chọn caretaker mới đủ điều kiện (đúng chuyên môn, không trùng lịch) để thay thế cho phiên chăm sóc này.
+            Select a new caretaker to reassign this service session. The current caretaker will be notified of the change. Please ensure that the new caretaker is available during the scheduled time.
           </Typography>
 
           {error && <Alert severity='error'>{error}</Alert>}
@@ -69,20 +69,20 @@ export default function ServiceProgressReassignDialog({
           {loading ? (
             <Stack direction='row' spacing={1} alignItems='center'>
               <CustomLoading size={22} />
-              <Typography variant='body2'>Đang tải caretaker đủ điều kiện...</Typography>
+              <Typography variant='body2'>Loading eligible caretakers...</Typography>
             </Stack>
           ) : (
             <FormControl fullWidth size='small' disabled={submitting || caretakers.length === 0}>
-              <InputLabel id='reassign-caretaker-label'>Caretaker mới</InputLabel>
+              <InputLabel id='reassign-caretaker-label'>New Caretaker</InputLabel>
               <Select
                 labelId='reassign-caretaker-label'
-                label='Caretaker mới'
+                label='New Caretaker'
                 value={selectedCaretakerId || ''}
                 onChange={(event) => onChangeCaretakerId(Number(event.target.value))}
               >
                 {caretakers.map((caretaker) => (
                   <MenuItem key={caretaker.id} value={caretaker.id}>
-                    {caretaker.username} - {caretaker.email || 'Không có email'}
+                    {caretaker.username} - {caretaker.email || 'No email'}
                   </MenuItem>
                 ))}
               </Select>
@@ -90,14 +90,14 @@ export default function ServiceProgressReassignDialog({
           )}
 
           {!loading && caretakers.length === 0 && (
-            <Alert severity='warning'>Không có caretaker phù hợp để chuyển cho phiên này.</Alert>
+            <Alert severity='warning'>No eligible caretakers found.</Alert>
           )}
         </Stack>
       </DialogContent>
 
       <DialogActions sx={{ px: 3, py: 2 }}>
         <Button onClick={onClose} disabled={submitting}>
-          Hủy
+          Cancel
         </Button>
         <Button
           variant='contained'
@@ -105,7 +105,7 @@ export default function ServiceProgressReassignDialog({
           disabled={loading || submitting || !selectedCaretakerId || caretakers.length === 0}
           className='bg-primary!'
         >
-          {submitting ? 'Đang chuyển...' : 'Xác nhận chuyển'}
+          {submitting ? 'Updating...' : 'Confirm Reassignment'}
         </Button>
       </DialogActions>
     </Dialog>

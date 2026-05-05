@@ -285,38 +285,38 @@ const normalizeServiceRegistration = (item: unknown): MyServiceRegistration | nu
     },
     prefferedShift: prefferedShift
       ? {
-          id: toNumber(prefferedShift.id),
-          shiftName: toText(prefferedShift.shiftName),
-          startTime: toText(prefferedShift.startTime),
-          endTime: toText(prefferedShift.endTime),
-        }
+        id: toNumber(prefferedShift.id),
+        shiftName: toText(prefferedShift.shiftName),
+        startTime: toText(prefferedShift.startTime),
+        endTime: toText(prefferedShift.endTime),
+      }
       : null,
     customer: customer
       ? {
-          id: toNumber(customer.id),
-          fullName: toText(customer.fullName),
-          email: toText(customer.email),
-          phone: toText(customer.phone),
-          avatar: toNullableText(customer.avatar),
-        }
+        id: toNumber(customer.id),
+        fullName: toText(customer.fullName),
+        email: toText(customer.email),
+        phone: toText(customer.phone),
+        avatar: toNullableText(customer.avatar),
+      }
       : null,
     mainCaretaker: mainCaretaker
       ? {
-          id: toNumber(mainCaretaker.id),
-          fullName: toText(mainCaretaker.fullName),
-          email: toText(mainCaretaker.email),
-          phone: toText(mainCaretaker.phone),
-          avatar: toNullableText(mainCaretaker.avatar),
-        }
+        id: toNumber(mainCaretaker.id),
+        fullName: toText(mainCaretaker.fullName),
+        email: toText(mainCaretaker.email),
+        phone: toText(mainCaretaker.phone),
+        avatar: toNullableText(mainCaretaker.avatar),
+      }
       : null,
     currentCaretaker: currentCaretaker
       ? {
-          id: toNumber(currentCaretaker.id),
-          fullName: toText(currentCaretaker.fullName),
-          email: toText(currentCaretaker.email),
-          phone: toText(currentCaretaker.phone),
-          avatar: toNullableText(currentCaretaker.avatar),
-        }
+        id: toNumber(currentCaretaker.id),
+        fullName: toText(currentCaretaker.fullName),
+        email: toText(currentCaretaker.email),
+        phone: toText(currentCaretaker.phone),
+        avatar: toNullableText(currentCaretaker.avatar),
+      }
       : null,
     progresses: progresses
       .map((progress) => {
@@ -362,25 +362,25 @@ const normalizeEligibleCaretaker = (item: unknown): EligibleCaretaker | null => 
 
   const specializations = Array.isArray(item.specializations)
     ? item.specializations
-        .map((specialization) => {
-          if (!isRecord(specialization)) {
-            return null;
-          }
+      .map((specialization) => {
+        if (!isRecord(specialization)) {
+          return null;
+        }
 
-          const specializationId = toNumber(specialization.id, Number.NaN);
-          if (!Number.isFinite(specializationId)) {
-            return null;
-          }
+        const specializationId = toNumber(specialization.id, Number.NaN);
+        if (!Number.isFinite(specializationId)) {
+          return null;
+        }
 
-          return {
-            id: specializationId,
-            name: toText(specialization.name),
-            description: toText(specialization.description),
-          };
-        })
-        .filter((specialization): specialization is EligibleCaretaker["specializations"][number] =>
-          Boolean(specialization)
-        )
+        return {
+          id: specializationId,
+          name: toText(specialization.name),
+          description: toText(specialization.description),
+        };
+      })
+      .filter((specialization): specialization is EligibleCaretaker["specializations"][number] =>
+        Boolean(specialization)
+      )
     : [];
 
   return {
@@ -415,66 +415,103 @@ const normalizeNurseryServiceScheduleItem = (item: unknown): NurseryServiceSched
     nurseryCareService && isRecord(nurseryCareService.careServicePackage)
       ? nurseryCareService.careServicePackage
       : null;
-  const customer = serviceRegistration && isRecord(serviceRegistration.customer) ? serviceRegistration.customer : null;
+  const customer = isRecord(item.customer)
+    ? item.customer
+    : serviceRegistration && isRecord(serviceRegistration.customer)
+      ? serviceRegistration.customer
+      : null;
+
+  const statusValue = typeof item.status === "string" ? item.status : toNumber(item.status);
+  const statusName = toText(item.statusName) || (typeof item.status === "string" ? item.status : "");
 
   return {
     id,
     serviceRegistrationId: toNumber(item.serviceRegistrationId),
-    status: toNumber(item.status),
-    statusName: toText(item.statusName),
-    taskDate: toText(item.taskDate),
+    status: statusValue,
+    statusName,
+    taskType: toNullableText(item.taskType) ?? undefined,
+    taskTypeName: toNullableText(item.taskTypeName) ?? undefined,
+    taskDate: toText(item.taskDate || item.date || item.scheduledDate),
     actualStartTime: toNullableText(item.actualStartTime),
     actualEndTime: toNullableText(item.actualEndTime),
     description: toNullableText(item.description),
     evidenceImageUrl: toNullableText(item.evidenceImageUrl),
     shift: shift
       ? {
-          id: toNumber(shift.id),
-          shiftName: toText(shift.shiftName),
-          startTime: toText(shift.startTime),
-          endTime: toText(shift.endTime),
-        }
+        id: toNumber(shift.id),
+        shiftName: toText(shift.shiftName),
+        startTime: toText(shift.startTime),
+        endTime: toText(shift.endTime),
+      }
       : null,
     caretaker: caretaker
       ? {
-          id: toNumber(caretaker.id),
-          fullName: toText(caretaker.fullName),
-          email: toText(caretaker.email),
-          phone: toText(caretaker.phone),
-          avatar: toNullableText(caretaker.avatar),
-        }
+        id: toNumber(caretaker.id),
+        fullName: toText(caretaker.fullName),
+        email: toText(caretaker.email),
+        phone: toText(caretaker.phone),
+        avatar: toNullableText(caretaker.avatar),
+      }
+      : null,
+    customer: customer
+      ? {
+        id: toNumber(customer.id),
+        fullName: toText(customer.fullName),
+        email: toText(customer.email),
+        phone: toNullableText(customer.phone),
+        avatar: toNullableText(customer.avatar),
+      }
+      : null,
+    servicePackage: isRecord(item.servicePackage)
+      ? {
+        id: toNumber(item.servicePackage.id),
+        name: toText(item.servicePackage.name),
+        description: toNullableText(item.servicePackage.description),
+      }
       : null,
     serviceRegistration: serviceRegistration
       ? {
-          id: toNumber(serviceRegistration.id),
-          address: toText(serviceRegistration.address),
-          phone: toText(serviceRegistration.phone),
-          nurseryCareService: {
-            id: toNumber(nurseryCareService?.id),
-            nurseryId: toNumber(nurseryCareService?.nurseryId),
-            nurseryName: toText(nurseryCareService?.nurseryName),
-            careServicePackage: {
-              id: toNumber(careServicePackage?.id),
-              name: toText(careServicePackage?.name),
-              description: toText(careServicePackage?.description),
-              visitPerWeek: toNullableNumber(careServicePackage?.visitPerWeek),
-              durationDays: toNumber(careServicePackage?.durationDays),
-              serviceType: toNumber(careServicePackage?.serviceType),
-              unitPrice: toNumber(careServicePackage?.unitPrice),
-            },
+        id: toNumber(serviceRegistration.id),
+        address: toText(serviceRegistration.address),
+        phone: toText(serviceRegistration.phone),
+        nurseryCareService: {
+          id: toNumber(nurseryCareService?.id),
+          nurseryId: toNumber(nurseryCareService?.nurseryId),
+          nurseryName: toText(nurseryCareService?.nurseryName),
+          careServicePackage: {
+            id: toNumber(careServicePackage?.id),
+            name: toText(careServicePackage?.name),
+            description: toText(careServicePackage?.description),
+            visitPerWeek: toNullableNumber(careServicePackage?.visitPerWeek),
+            durationDays: toNumber(careServicePackage?.durationDays),
+            serviceType: toNumber(careServicePackage?.serviceType),
+            unitPrice: toNumber(careServicePackage?.unitPrice),
           },
-          customer: customer
-            ? {
-                id: toNumber(customer.id),
-                fullName: toText(customer.fullName),
-                email: toText(customer.email),
-                phone: toNullableText(customer.phone),
-                avatar: toNullableText(customer.avatar),
-              }
-            : null,
-        }
+        },
+        customer: customer
+          ? {
+            id: toNumber(customer.id),
+            fullName: toText(customer.fullName),
+            email: toText(customer.email),
+            phone: toNullableText(customer.phone),
+            avatar: toNullableText(customer.avatar),
+          }
+          : null,
+      }
       : null,
   };
+};
+
+const parseNurseryServiceScheduleItems = (payload: unknown): NurseryServiceScheduleItem[] => {
+  const rawItems = Array.isArray(payload)
+    ? payload
+    : isRecord(payload) && Array.isArray(payload.items)
+      ? payload.items
+      : [];
+
+  return rawItems
+    .map((item) => normalizeNurseryServiceScheduleItem(item))
+    .filter((item): item is NurseryServiceScheduleItem => Boolean(item));
 };
 
 const buildPaginationParams = (query?: ServiceRegistrationsQuery) => {
@@ -772,7 +809,7 @@ export const getServiceRegistrationDetail = async (
 
   const normalized = normalizeServiceRegistration(unwrapPayloadData(response));
   if (!normalized) {
-    throw new Error("Không thể tải chi tiết yêu cầu dịch vụ");
+    throw new Error("Can not load service registration detail");
   }
 
   return normalized;
@@ -795,7 +832,7 @@ export const cancelServiceRegistration = async (
 
   const normalized = normalizeServiceRegistration(unwrapPayloadData(response));
   if (!normalized) {
-    throw new Error("Không thể hủy yêu cầu dịch vụ");
+    throw new Error("Can not cancel service order");
   }
 
   return normalized;
@@ -1052,18 +1089,27 @@ export const getCaretakerScheduleByRange = async (
   loading = true
 ): Promise<NurseryServiceScheduleItem[]> => {
   const response = await apiClient.get<WrappedResponse<unknown>>(
-    `service-progress/nursery-schedule/caretaker/${caretakerId}`,
+    `service-progress/nursery-schedule/caretaker/${caretakerId}/all-services`,
     { from, to },
     loading,
     QUERY_CONFIG
   );
 
-  const payload = unwrapPayloadData(response);
-  if (!Array.isArray(payload)) {
-    return [];
-  }
+  return parseNurseryServiceScheduleItems(unwrapPayloadData(response));
+};
 
-  return payload
-    .map((item) => normalizeNurseryServiceScheduleItem(item))
-    .filter((item): item is NurseryServiceScheduleItem => Boolean(item));
+export const getStaffScheduleByRange = async (
+  staffId: number,
+  from: string,
+  to: string,
+  loading = true
+): Promise<NurseryServiceScheduleItem[]> => {
+  const response = await apiClient.get<WrappedResponse<unknown>>(
+    `service-progress/nursery-schedule/caretaker/${staffId}/all-services`,
+    { from, to },
+    loading,
+    QUERY_CONFIG
+  );
+
+  return parseNurseryServiceScheduleItems(unwrapPayloadData(response));
 };

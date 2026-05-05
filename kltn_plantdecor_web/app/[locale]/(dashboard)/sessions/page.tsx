@@ -34,13 +34,13 @@ export default function SessionsPage() {
     try {
       const data = await authService.getActiveSessions();
       const currentDeviceId = getDeviceId();
-      
+
       // Map data và đánh dấu device hiện tại
       const mappedSessions = data.map((session) => ({
         ...session,
         isCurrentDevice: session.deviceId === currentDeviceId,
       }));
-      
+
       setSessions(mappedSessions);
     } catch (error) {
       console.error('Failed to load sessions:', error);
@@ -140,7 +140,7 @@ export default function SessionsPage() {
 
         {sessions.length === 0 && (
           <div className="text-center text-gray-500 py-8">
-            Không có thiết bị nào đang đăng nhập
+            No active sessions found. You are only logged in on this device.
           </div>
         )}
       </div>

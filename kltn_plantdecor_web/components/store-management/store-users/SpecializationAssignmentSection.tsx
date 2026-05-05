@@ -41,15 +41,15 @@ export default function SpecializationAssignmentSection({
   return (
     <Stack spacing={2}>
       <Box className="flex items-center justify-between">
-      <Typography variant="subtitle1" fontWeight={700}>
-        Manage specializations
-      </Typography>
+        <Typography variant="subtitle1" fontWeight={700}>
+          Manage specializations
+        </Typography>
 
-      {!readOnly && (
-        <Button variant="contained" startIcon={<SaveIcon />} onClick={onSaveAll} disabled={submitting} sx={{backgroundColor: 'var(--primary)', ...hoverLiftStyle}}>
+        {!readOnly && (
+          <Button variant="contained" startIcon={<SaveIcon />} onClick={onSaveAll} disabled={submitting} sx={{ backgroundColor: 'var(--primary)', ...hoverLiftStyle }}>
             Save
           </Button>
-      )}
+        )}
 
       </Box>
       <Divider />
@@ -70,7 +70,7 @@ export default function SpecializationAssignmentSection({
             </Box>
           ) : (
             <Typography variant="body2" color="text.secondary">
-              Không có chuyên môn được gán.
+              No specializations assigned.
             </Typography>
           )}
         </Stack>
@@ -102,7 +102,7 @@ export default function SpecializationAssignmentSection({
                       {specialization.name}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {specialization.description || "Không có mô tả"}
+                      {specialization.description || "No description available."}
                     </Typography>
                   </Box>
                 }
@@ -111,7 +111,7 @@ export default function SpecializationAssignmentSection({
 
             {options.length === 0 && (
               <Typography variant="body2" color="text.secondary">
-                Không có chuyên môn khả dụng.
+                No available specializations.
               </Typography>
             )}
           </Stack>

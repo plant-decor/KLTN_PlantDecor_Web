@@ -270,8 +270,10 @@ export interface ServiceProgressServiceRegistration {
 export interface NurseryServiceScheduleItem {
   id: number;
   serviceRegistrationId: number;
-  status: number;
+  status: number | string;
   statusName: string;
+  taskType?: "CareService" | "DesignService" | (string & {});
+  taskTypeName?: string;
   taskDate: string;
   actualStartTime: string | null;
   actualEndTime: string | null;
@@ -279,6 +281,18 @@ export interface NurseryServiceScheduleItem {
   evidenceImageUrl: string | null;
   shift: ServiceProgressShift | null;
   caretaker: ServiceProgressCaretaker | null;
+  customer?: {
+    id: number;
+    fullName: string;
+    email: string;
+    phone?: string | null;
+    avatar?: string | null;
+  } | null;
+  servicePackage?: {
+    id: number;
+    name: string;
+    description?: string | null;
+  } | null;
   serviceRegistration: ServiceProgressServiceRegistration | null;
 }
 

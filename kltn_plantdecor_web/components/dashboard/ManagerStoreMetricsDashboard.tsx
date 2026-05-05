@@ -30,6 +30,11 @@ import type {
   NurseryTopProductItem,
 } from '@/types/manager-dashboard.types';
 import type { ManagerNurseryOrder } from '@/types/manager-sales-orders.types';
+import { formatCurrency } from '@/lib/utils/formatUtil';
+import {
+  SALES_ORDER_STATUS_CHIP_COLOR,
+  SALES_ORDER_STATUS_LABELS,
+} from '@/components/manager/sales-orders/managerSalesOrders.constants';
 
 export interface ManagerStoreMetricsDashboardProps {
   revenue: NurseryRevenueSummaryPayload | null;
@@ -83,13 +88,6 @@ function StatCard({ title, value, icon, color, subtitle }: StatCardProps) {
     </Card>
   );
 }
-
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
-  }).format(value);
-};
 
 export default function ManagerStoreMetricsDashboard({
   revenue,
@@ -145,7 +143,7 @@ export default function ManagerStoreMetricsDashboard({
           >
             <StatCard
               title="Total revenue (period)"
-              value={formatCurrency(totalRevenue)}
+              value={formatCurrency(totalRevenue, 'vi-VN')}
               icon={<AttachMoney sx={{ color: 'white', fontSize: 32 }} />}
               color="#4caf50"
               subtitle={revenue ? `${revenue.from?.slice(0, 10)} → ${revenue.to?.slice(0, 10)}` : undefined}
@@ -159,7 +157,7 @@ export default function ManagerStoreMetricsDashboard({
             />
             <StatCard
               title="Avg. order value"
-              value={totalOrdersInPeriod > 0 ? formatCurrency(avgOrder) : '—'}
+              value={totalOrdersInPeriod > 0 ? formatCurrency(avgOrder, 'vi-VN') : '—'}
               icon={<TrendingUp sx={{ color: 'white', fontSize: 32 }} />}
               color="#ff9800"
               subtitle={totalOrdersInPeriod === 0 ? 'No orders in the period' : undefined}
@@ -218,22 +216,31 @@ export default function ManagerStoreMetricsDashboard({
                 <TableContainer>
                   <Table size="small">
                     <TableHead>
-                      <TableRow>
-                        <TableCell>Customer</TableCell>
-                        <TableCell align="right">Total</TableCell>
-                        <TableCell>Status</TableCell>
+                      <TableRow sx={{ backgroundColor: 'var(--primary)' }}>
+                        <TableCell sx={{ fontWeight: '700' }}>Customer</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: '700' }}>Total</TableCell>
+                        <TableCell align='center' sx={{ fontWeight: '700' }}>Status</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {recentOrders.map((o) => (
-                        <TableRow key={o.id}>
-                          <TableCell>{o.customerName}</TableCell>
-                          <TableCell align="right">{formatCurrency(o.totalAmount ?? o.subTotalAmount)}</TableCell>
-                          <TableCell>
-                            <Chip label={o.statusName} size="small" variant="outlined" />
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {recentOrders.map((o) => {
+                        const mappedStatus = o.status as keyof typeof SALES_ORDER_STATUS_LABELS;
+
+                        return (
+                          <TableRow key={o.id}>
+                            <TableCell>{o.customerName}</TableCell>
+                            <TableCell align="center">{formatCurrency(o.totalAmount ?? o.subTotalAmount, 'vi-VN')}</TableCell>
+                            <TableCell align='center'>
+                              <Chip
+                                label={SALES_ORDER_STATUS_LABELS[mappedStatus] || o.statusName || `#${o.status}`}
+                                size="small"
+                                variant="outlined"
+                                color={SALES_ORDER_STATUS_CHIP_COLOR[mappedStatus] || 'default'}
+                              />
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 </TableContainer>
@@ -250,23 +257,23 @@ export default function ManagerStoreMetricsDashboard({
             ) : (
               <TableContainer>
                 <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Name</TableCell>
-                      <TableCell align="right">Quantity</TableCell>
-                      <TableCell align="right">Revenue</TableCell>
-                      <TableCell align="right">Avg. price</TableCell>
+                  <TableHead >
+                    <TableRow sx={{ backgroundColor: 'var(--primary)' }}>
+                      <TableCell sx={{ fontWeight: '700' }}>Name</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: '700' }}>Quantity</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: '700' }}>Revenue</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: '700' }}>Avg. price</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {topProducts.map((p) => (
                       <TableRow key={`${p.productType}-${p.productId}`}>
                         <TableCell>{p.productName}</TableCell>
-                        <TableCell align="right">{p.totalQuantity.toLocaleString('vi-VN')}</TableCell>
-                        <TableCell align="right">{formatCurrency(p.totalRevenue)}</TableCell>
-                        <TableCell align="right">
+                        <TableCell align="center">{p.totalQuantity.toLocaleString('vi-VN')}</TableCell>
+                        <TableCell align="center">{formatCurrency(p.totalRevenue, 'vi-VN')}</TableCell>
+                        <TableCell align="center">
                           {p.totalQuantity > 0
-                            ? formatCurrency(Math.round(p.totalRevenue / p.totalQuantity))
+                            ? formatCurrency(Math.round(p.totalRevenue / p.totalQuantity), 'vi-VN')
                             : '—'}
                         </TableCell>
                       </TableRow>

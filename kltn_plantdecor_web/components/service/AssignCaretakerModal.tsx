@@ -52,7 +52,7 @@ export const AssignCaretakerModal: React.FC<AssignCaretakerModalProps> = ({
         // TODO: Replace with actual API call
         const data = await get<CaretakerInfo[]>('/api/services/caretakers/available', undefined, false);
         setCaretakers(data || []);
-        
+
         if (data && data.length > 0) {
           setSelectedCaretakerId(data[0].id);
         }
@@ -105,7 +105,7 @@ export const AssignCaretakerModal: React.FC<AssignCaretakerModalProps> = ({
           </Box>
         ) : caretakers.length === 0 ? (
           <Alert severity="warning">
-            Hiện tại không có nhân viên chăm sóc khả dụng
+            No available caretakers found. Please try again later or check your service details.
           </Alert>
         ) : (
           <Box>

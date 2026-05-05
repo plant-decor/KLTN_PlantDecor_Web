@@ -608,10 +608,10 @@ export const rejectDesignRegistration = async (
 
 export const assignCaretakerToDesignRegistration = async (
   id: number,
-  payload: { caretakerId: number },
+  payload: { caretakerId: number, startDate: string },
   loading = true
 ): Promise<CustomerDesignRegistrationDetail> => {
-  const response = await apiClient.post<WrappedResponse<unknown>>(
+  const response = await apiClient.put<WrappedResponse<unknown>>(
     `design-registrations/${id}/assign-caretaker`,
     payload,
     loading,

@@ -47,7 +47,7 @@ export const ServiceCatalog: React.FC<ServiceCatalogProps> = ({
     return (
       <Container maxWidth="md" sx={{ py: 5, textAlign: "center" }}>
         <Typography variant="h6" color="textSecondary">
-          Hiện tại không có gói dịch vụ nào
+          No service packages found. Please create a new package to get started.
         </Typography>
       </Container>
     );

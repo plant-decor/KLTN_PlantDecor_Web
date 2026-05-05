@@ -17,6 +17,7 @@ import {
   rescheduleManagerServiceRegistration,
 } from '@/lib/api/careServiceService';
 import {
+  assignCaretakerToDesignRegistration,
   assignDesignTask,
   approveDesignRegistration,
   buildDesignFlowLabelMap,
@@ -124,6 +125,13 @@ export default function ManagerServiceOrdersPageClient({
   const [designTaskRescheduleTarget, setDesignTaskRescheduleTarget] = useState<DesignRegistrationTask | null>(null);
   const [designTaskRescheduleRegistration, setDesignTaskRescheduleRegistration] = useState<CustomerDesignRegistrationListItem | CustomerDesignRegistrationDetail | null>(null);
   const [designTaskRescheduleDate, setDesignTaskRescheduleDate] = useState(getLocalDateInputValue());
+
+  const [designCaretakerAssignTarget, setDesignCaretakerAssignTarget] = useState<CustomerDesignRegistrationListItem | CustomerDesignRegistrationDetail | null>(null);
+  const [eligibleCaretakersForAssign, setEligibleCaretakersForAssign] = useState<DesignEligibleCaretaker[]>([]);
+  const [eligibleCaretakerAvailabilityForAssign, setEligibleCaretakerAvailabilityForAssign] = useState<DesignEligibleCaretakerAvailability[]>([]);
+  const [designCaretakerAssignLoading, setDesignCaretakerAssignLoading] = useState(false);
+  const [selectedCaretakerIdForAssign, setSelectedCaretakerIdForAssign] = useState<number>(0);
+  const [designCaretakerAssignStartDate, setDesignCaretakerAssignStartDate] = useState(getLocalDateInputValue());
 
   useEffect(() => {
     const loadStatusEnums = async () => {
@@ -506,6 +514,97 @@ export default function ManagerServiceOrdersPageClient({
     }
   };
 
+  const loadEligibleCaretakersForAssignment = useCallback(
+    async (registrationId: number, startDate: string) => {
+      if (startDate) {
+        const availability = await getEligibleCaretakersWithAvailabilityForDesignRegistration(registrationId, startDate, false);
+        setEligibleCaretakerAvailabilityForAssign(availability);
+        setEligibleCaretakersForAssign(availability.map((item) => item.staff));
+        const firstAvailable = availability.find((item) => item.isAvailable)?.staff ?? availability[0]?.staff;
+        setSelectedCaretakerIdForAssign(firstAvailable?.id ?? 0);
+        return;
+      }
+
+      const caretakers = await getEligibleCaretakersForDesignRegistration(registrationId, false);
+      setEligibleCaretakersForAssign(caretakers);
+      setEligibleCaretakerAvailabilityForAssign([]);
+      const firstCaretaker = caretakers[0];
+      setSelectedCaretakerIdForAssign(firstCaretaker?.id ?? 0);
+    },
+    []
+  );
+
+  const openDesignCaretakerAssignDialog = async (
+    registration: CustomerDesignRegistrationListItem | CustomerDesignRegistrationDetail
+  ) => {
+    try {
+      const initialDate = getLocalDateInputValue();
+      setDesignCaretakerAssignTarget(registration);
+      setDesignCaretakerAssignStartDate(initialDate);
+      setDesignCaretakerAssignLoading(true);
+      setSelectedCaretakerIdForAssign(0);
+      await loadEligibleCaretakersForAssignment(registration.id, initialDate);
+    } catch (loadError) {
+      toast.error(getErrorMessage(loadError, 'Cannot load eligible caretakers'));
+      setDesignCaretakerAssignTarget(null);
+      setEligibleCaretakersForAssign([]);
+      setEligibleCaretakerAvailabilityForAssign([]);
+    } finally {
+      setDesignCaretakerAssignLoading(false);
+    }
+  };
+
+  const handleDesignCaretakerAssignStartDateChange = async (value: string) => {
+    setDesignCaretakerAssignStartDate(value);
+    if (!designCaretakerAssignTarget) {
+      return;
+    }
+
+    try {
+      setDesignCaretakerAssignLoading(true);
+      await loadEligibleCaretakersForAssignment(designCaretakerAssignTarget.id, value);
+    } catch (availabilityError) {
+      toast.error(getErrorMessage(availabilityError, 'Cannot check caretaker availability'));
+      setEligibleCaretakersForAssign([]);
+      setEligibleCaretakerAvailabilityForAssign([]);
+      setSelectedCaretakerIdForAssign(0);
+    } finally {
+      setDesignCaretakerAssignLoading(false);
+    }
+  };
+
+  const handleDesignCaretakerAssign = async () => {
+    if (!designCaretakerAssignTarget || !selectedCaretakerIdForAssign) {
+      toast.error('Please select a caretaker');
+      return;
+    }
+
+    if (!designCaretakerAssignStartDate) {
+      toast.error('Please select a start date');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await assignCaretakerToDesignRegistration(
+        designCaretakerAssignTarget.id,
+        { caretakerId: selectedCaretakerIdForAssign, startDate: designCaretakerAssignStartDate },
+        false
+      );
+      toast.success('Caretaker assigned successfully');
+      const registrationId = designCaretakerAssignTarget.id;
+      setDesignCaretakerAssignTarget(null);
+      setEligibleCaretakersForAssign([]);
+      setEligibleCaretakerAvailabilityForAssign([]);
+      setSelectedCaretakerIdForAssign(0);
+      await Promise.all([loadDesignOrders(), refreshDesignDetailIfNeeded(registrationId)]);
+    } catch (assignError) {
+      toast.error(getErrorMessage(assignError, 'Cannot assign caretaker'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleDesignReject = async () => {
     if (!designRejectTarget) {
       return;
@@ -708,7 +807,7 @@ export default function ManagerServiceOrdersPageClient({
             '& .MuiTab-root': { fontWeight: 600, textTransform: 'none', fontSize: '1rem' },
             '& .Mui-selected': { backgroundColor: 'var(--primary) !important', color: '#fff !important' },
           }}
-          >
+        >
           <Tab label="Care Service" />
           <Tab label="Design Service" />
         </Tabs>
@@ -865,6 +964,12 @@ export default function ManagerServiceOrdersPageClient({
           designAssignLoading={designAssignLoading}
           selectedDesignCaretakerId={selectedDesignCaretakerId}
           designTaskScheduledDate={designTaskScheduledDate}
+          designCaretakerAssignTarget={designCaretakerAssignTarget}
+          eligibleCaretakersForAssign={eligibleCaretakersForAssign}
+          eligibleCaretakerAvailabilityForAssign={eligibleCaretakerAvailabilityForAssign}
+          designCaretakerAssignLoading={designCaretakerAssignLoading}
+          selectedCaretakerIdForAssign={selectedCaretakerIdForAssign}
+          designCaretakerAssignStartDate={designCaretakerAssignStartDate}
           getDesignRegistrationStatusLabel={getDesignRegistrationStatusLabel}
           getDesignTaskStatusLabel={getDesignTaskStatusLabel}
           getDesignTaskTypeLabel={getDesignTaskTypeLabel}
@@ -882,11 +987,17 @@ export default function ManagerServiceOrdersPageClient({
             setDesignCancelTarget(item);
             setDesignCancelReason('');
           }}
+          onOpenCaretakerAssignDialog={(registration) => void openDesignCaretakerAssignDialog(registration)}
           onOpenTaskAssignDialog={(task, registration) => void openDesignTaskAssignDialog(task, registration)}
           onOpenTaskRescheduleDialog={(task, registration) => openDesignTaskRescheduleDialog(task, registration)}
           onCloseDetail={() => setDesignDetailOpen(false)}
           onCloseCancel={() => setDesignCancelTarget(null)}
           onCloseReject={() => setDesignRejectTarget(null)}
+          onCloseCaretakerAssign={() => {
+            setDesignCaretakerAssignTarget(null);
+            setEligibleCaretakersForAssign([]);
+            setEligibleCaretakerAvailabilityForAssign([]);
+          }}
           onCloseTaskAssign={() => {
             setDesignTaskAssignTarget(null);
             setDesignTaskAssignRegistration(null);
@@ -895,7 +1006,10 @@ export default function ManagerServiceOrdersPageClient({
           }}
           onConfirmCancel={() => void handleDesignCancel()}
           onConfirmReject={() => void handleDesignReject()}
+          onConfirmCaretakerAssign={() => void handleDesignCaretakerAssign()}
           onConfirmAssign={() => void handleDesignAssign()}
+          onCaretakerAssignStartDateChange={(date) => void handleDesignCaretakerAssignStartDateChange(date)}
+          onSelectedCaretakerIdForAssignChange={setSelectedCaretakerIdForAssign}
           onScheduledDateChange={(date) => void handleDesignTaskScheduledDateChange(date)}
           onSelectedCaretakerIdChange={setSelectedDesignCaretakerId}
           onCancelReasonChange={setDesignCancelReason}

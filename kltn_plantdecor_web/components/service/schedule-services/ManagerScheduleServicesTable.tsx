@@ -27,7 +27,25 @@ interface ManagerScheduleServicesTableProps {
   onReassign: (item: NurseryServiceScheduleItem) => void;
 }
 
-const getStatusColor = (status: number): 'warning' | 'info' | 'success' | 'error' | 'default' => {
+const getStatusColor = (status: number | string): 'warning' | 'info' | 'success' | 'error' | 'default' => {
+  if (typeof status === 'string') {
+    const normalized = status.toLowerCase();
+    if (normalized.includes('pending') || normalized.includes('assigned') || normalized.includes('waiting')) {
+      return 'warning';
+    }
+    if (normalized.includes('in progress') || normalized.includes('processing') || normalized.includes('ongoing')) {
+      return 'info';
+    }
+    if (normalized.includes('completed') || normalized.includes('done') || normalized.includes('approved')) {
+      return 'success';
+    }
+    if (normalized.includes('cancelled') || normalized.includes('cancel') || normalized.includes('rejected') || normalized.includes('failed')) {
+      return 'error';
+    }
+
+    return 'default';
+  }
+
   switch (status) {
     case 1:
       return 'warning';
@@ -79,10 +97,10 @@ export default function ManagerScheduleServicesTable({
             <TableCell sx={{ fontWeight: 700 }} align='center'>Session</TableCell>
             <TableCell sx={{ fontWeight: 700 }} align='center'>Date</TableCell>
             <TableCell sx={{ fontWeight: 700 }} align='center'>Shift</TableCell>
-            <TableCell sx={{ fontWeight: 700 }}align='center'>Customer</TableCell>
-            <TableCell sx={{ fontWeight: 700 }}align='center'>Service Package</TableCell>
-            <TableCell sx={{ fontWeight: 700 }}align='center'>Caretaker</TableCell>
-            <TableCell sx={{ fontWeight: 700 }}align='center'>Status</TableCell>
+            <TableCell sx={{ fontWeight: 700 }} align='center'>Customer</TableCell>
+            <TableCell sx={{ fontWeight: 700 }} align='center'>Service Package</TableCell>
+            <TableCell sx={{ fontWeight: 700 }} align='center'>Caretaker</TableCell>
+            <TableCell sx={{ fontWeight: 700 }} align='center'>Status</TableCell>
             <TableCell align='center' sx={{ fontWeight: 700 }}>
               Actions
             </TableCell>
@@ -103,7 +121,7 @@ export default function ManagerScheduleServicesTable({
           {!loading && items.length === 0 && (
             <TableRow>
               <TableCell colSpan={8} align='center' sx={{ py: 4, color: 'text.secondary' }}>
-                Không có lịch chăm sóc trong ngày đã chọn.
+                No scheduled services found. Please check back later or create a new service schedule.
               </TableCell>
             </TableRow>
           )}

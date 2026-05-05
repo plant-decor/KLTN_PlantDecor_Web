@@ -40,7 +40,7 @@ export const ServiceRequestList: React.FC<ServiceRequestListProps> = ({
     return (
       <Container maxWidth="md" sx={{ py: 5, textAlign: "center" }}>
         <Typography variant="h6" color="textSecondary">
-          Không có yêu cầu dịch vụ mới
+          No service requests found. Please check back later or create a new service request.
         </Typography>
       </Container>
     );

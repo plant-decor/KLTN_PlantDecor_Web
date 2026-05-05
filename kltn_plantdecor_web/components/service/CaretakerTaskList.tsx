@@ -86,7 +86,7 @@ export const CaretakerTaskList: React.FC<CaretakerTaskListProps> = ({
     return (
       <Container maxWidth="md" sx={{ py: 5, textAlign: "center" }}>
         <Typography variant="h6" color="textSecondary">
-          Hôm nay không có công việc
+          No tasks scheduled for today. Enjoy your free time or check back later!
         </Typography>
       </Container>
     );
@@ -111,13 +111,12 @@ export const CaretakerTaskList: React.FC<CaretakerTaskListProps> = ({
                   boxShadow: 4,
                   transform: "translateY(-2px)",
                 },
-                borderLeft: `4px solid ${
-                  task.status === ServiceRegistrationStatus.IN_PROGRESS
+                borderLeft: `4px solid ${task.status === ServiceRegistrationStatus.IN_PROGRESS
                     ? "#ff9800"
                     : task.status === ServiceRegistrationStatus.COMPLETED
-                    ? "#4caf50"
-                    : "#2196f3"
-                }`,
+                      ? "#4caf50"
+                      : "#2196f3"
+                  }`,
               }}
             >
               <CardContent sx={{ flexGrow: 1 }}>

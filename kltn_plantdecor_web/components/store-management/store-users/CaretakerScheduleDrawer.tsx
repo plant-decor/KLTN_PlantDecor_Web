@@ -36,7 +36,7 @@ interface CaretakerScheduleDrawerProps {
   onChangeFromDate: (value: string) => void;
   onChangeToDate: (value: string) => void;
   onRefresh: () => void;
-  onViewProgressDetail: (serviceProgressId: number) => void;
+  onViewTaskDetail: (item: NurseryServiceScheduleItem) => void;
 }
 
 const formatDateForDisplay = (value: string): string => {
@@ -52,7 +52,25 @@ const formatDateForDisplay = (value: string): string => {
   return `${parts[2]}/${parts[1]}/${parts[0]}`;
 };
 
-const getStatusColor = (status: number): "warning" | "info" | "success" | "error" | "default" => {
+const getStatusColor = (status: number | string): "warning" | "info" | "success" | "error" | "default" => {
+  if (typeof status === "string") {
+    const normalized = status.toLowerCase();
+    if (normalized.includes("pending") || normalized.includes("assigned") || normalized.includes("waiting")) {
+      return "warning";
+    }
+    if (normalized.includes("in progress") || normalized.includes("processing") || normalized.includes("ongoing")) {
+      return "info";
+    }
+    if (normalized.includes("completed") || normalized.includes("done") || normalized.includes("approved")) {
+      return "success";
+    }
+    if (normalized.includes("cancelled") || normalized.includes("cancel") || normalized.includes("rejected") || normalized.includes("failed")) {
+      return "error";
+    }
+
+    return "default";
+  }
+
   switch (status) {
     case 1:
       return "warning";
@@ -81,10 +99,10 @@ export default function CaretakerScheduleDrawer({
   onChangeFromDate,
   onChangeToDate,
   onRefresh,
-  onViewProgressDetail,
+  onViewTaskDetail,
 }: CaretakerScheduleDrawerProps) {
   return (
-    <Drawer anchor="right" open={open} onClose={onClose} PaperProps={{ sx: { width: { xs: "100%", md: 820 } } }}>
+    <Drawer anchor="right" open={open} onClose={onClose} PaperProps={{ sx: { width: { xs: "100%", md: "70%" } } }}>
       <Stack sx={{ height: "100%" }}>
         <Box sx={{ p: 2.5 }}>
           <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
@@ -136,7 +154,7 @@ export default function CaretakerScheduleDrawer({
 
           {!error && (
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Total {items.length} care sessions in the selected period.
+              Total {items.length} scheduled tasks in the selected period.
             </Typography>
           )}
 
@@ -145,8 +163,9 @@ export default function CaretakerScheduleDrawer({
               <TableHead sx={{ backgroundColor: "var(--primary)" }}>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 600 }} align="center">Session</TableCell>
-             
+
                   <TableCell sx={{ fontWeight: 600 }} align="center">Date</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }} align="center">Task</TableCell>
                   <TableCell sx={{ fontWeight: 600 }} align="center">Shifts</TableCell>
                   <TableCell sx={{ fontWeight: 600 }} align="center">Customer</TableCell>
                   <TableCell sx={{ fontWeight: 600 }} align="center">Service Package</TableCell>
@@ -160,45 +179,62 @@ export default function CaretakerScheduleDrawer({
               <TableBody>
                 {!loading && items.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={7} align="center" sx={{ py: 4, color: "text.secondary" }}>
-                      Caretaker has no care sessions in this period.
+                    <TableCell colSpan={8} align="center" sx={{ py: 4, color: "text.secondary" }}>
+                      Caretaker has no scheduled tasks in this period.
                     </TableCell>
                   </TableRow>
                 )}
 
                 {loading && (
                   <TableRow>
-                    <TableCell colSpan={7} align="center" sx={{ py: 4, color: "text.secondary" }}>
-                      Loading care schedule...
+                    <TableCell colSpan={8} align="center" sx={{ py: 4, color: "text.secondary" }}>
+                      Loading schedule...
                     </TableCell>
                   </TableRow>
                 )}
 
                 {!loading &&
-                  items.map((item) => (
-                    <TableRow key={item.id} hover>
-                      <TableCell>#{item.id}</TableCell>
-                      <TableCell>{formatDateForDisplay(item.taskDate)}</TableCell>
-                      <TableCell>
-                        {item.shift ? `${item.shift.shiftName} (${item.shift.startTime} - ${item.shift.endTime})` : "-"}
-                      </TableCell>
-                      <TableCell>{item.serviceRegistration?.customer?.fullName || "-"}</TableCell>
-                      <TableCell>{item.serviceRegistration?.nurseryCareService.careServicePackage.name || "-"}</TableCell>
-                      <TableCell>
-                        <Chip
-                          size="small"
-                          variant="outlined"
-                          color={getStatusColor(item.status)}
-                          label={item.statusName || "-"}
-                        />
-                      </TableCell>
-                      <TableCell align="right">
-                        <IconButton color="primary" onClick={() => onViewProgressDetail(item.id)}>
-                          <VisibilityIcon />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  items.map((item) => {
+                    const taskLabel =
+                      item.taskTypeName ||
+                      item.servicePackage?.name ||
+                      item.serviceRegistration?.nurseryCareService.careServicePackage.name ||
+                      "-";
+                    const customerName = item.customer?.fullName || item.serviceRegistration?.customer?.fullName || "-";
+                    const servicePackageName =
+                      item.servicePackage?.name || item.serviceRegistration?.nurseryCareService.careServicePackage.name || "-";
+
+                    return (
+                      <TableRow key={item.id} hover>
+                        <TableCell align="center">{item.id}</TableCell>
+                        <TableCell>{formatDateForDisplay(item.taskDate)}</TableCell>
+                        <TableCell>
+                          {taskLabel}
+                        </TableCell>
+                        <TableCell>
+                          {item.shift ? `${item.shift.shiftName} (${item.shift.startTime} - ${item.shift.endTime})` : "-"}
+                        </TableCell>
+                        <TableCell>{customerName}</TableCell>
+                        <TableCell>{servicePackageName}</TableCell>
+                        <TableCell>
+                          <Chip
+                            size="small"
+                            variant="outlined"
+                            color={getStatusColor(item.status)}
+                            label={item.statusName || "-"}
+                          />
+                        </TableCell>
+                        <TableCell align="right">
+                          <IconButton
+                            color="primary"
+                            onClick={() => onViewTaskDetail(item)}
+                          >
+                            <VisibilityIcon />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
               </TableBody>
             </Table>
           </TableContainer>

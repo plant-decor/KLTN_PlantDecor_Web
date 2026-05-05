@@ -1,18 +1,21 @@
 'use client';
 
-import { Alert, Box, Button, Chip, IconButton, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, Typography } from '@mui/material';
+import { Alert, Box, Button, Chip, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, Typography } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import PersonAddAltOutlinedIcon from '@mui/icons-material/PersonAddAltOutlined';
 import ServiceOrdersHeader from './ServiceOrdersHeader';
 import DesignOrderDetailDialog from './dialogs/DesignOrderDetailDialog';
 import DesignOrderCancelDialog from './dialogs/DesignOrderCancelDialog';
 import DesignOrderRejectDialog from './dialogs/DesignOrderRejectDialog';
 import DesignTaskAssignDialog from './dialogs/DesignTaskAssignDialog';
-import { canApproveDesign, canManagerCancelDesign, canRejectDesign, getDesignStatusChipColor } from './utils/designStatusUtil';
+import DesignCaretakerAssignDialog from './dialogs/DesignCaretakerAssignDialog';
+import { canApproveDesign, canManagerCancelDesign, canRejectDesign, canAssignCaretakerToDesign, getDesignStatusChipColor } from './utils/designStatusUtil';
 import { formatCurrency } from '@/lib/utils/formatUtil';
 import type { CustomerDesignRegistrationDetail, CustomerDesignRegistrationListItem, DesignEligibleCaretaker, DesignEligibleCaretakerAvailability, DesignRegistrationTask } from '@/types/design-registration.types';
 import type { ServiceStatusOption, ServiceStatusFilterValue } from './managerServiceOrders.constants';
+import { formatDate } from '@/lib/utils/dateUtils';
 
 interface DesignServiceTabProps {
   designOrders: CustomerDesignRegistrationListItem[];
@@ -41,6 +44,12 @@ interface DesignServiceTabProps {
   designAssignLoading: boolean;
   selectedDesignCaretakerId: number;
   designTaskScheduledDate: string;
+  designCaretakerAssignTarget: CustomerDesignRegistrationListItem | CustomerDesignRegistrationDetail | null;
+  eligibleCaretakersForAssign: DesignEligibleCaretaker[];
+  eligibleCaretakerAvailabilityForAssign: DesignEligibleCaretakerAvailability[];
+  designCaretakerAssignLoading: boolean;
+  selectedCaretakerIdForAssign: number;
+  designCaretakerAssignStartDate: string;
   getDesignRegistrationStatusLabel: (item: Pick<CustomerDesignRegistrationListItem, 'status' | 'statusName'>) => string;
   getDesignTaskStatusLabel: (task: DesignRegistrationTask) => string;
   getDesignTaskTypeLabel: (task: DesignRegistrationTask) => string;
@@ -50,15 +59,20 @@ interface DesignServiceTabProps {
   onApprove: (id: number) => void;
   onOpenRejectDialog: (item: CustomerDesignRegistrationListItem) => void;
   onOpenCancelDialog: (item: CustomerDesignRegistrationListItem) => void;
+  onOpenCaretakerAssignDialog: (registration: CustomerDesignRegistrationListItem | CustomerDesignRegistrationDetail) => void;
   onOpenTaskAssignDialog: (task: DesignRegistrationTask, registration: CustomerDesignRegistrationListItem | CustomerDesignRegistrationDetail) => void;
   onOpenTaskRescheduleDialog: (task: DesignRegistrationTask, registration: CustomerDesignRegistrationListItem | CustomerDesignRegistrationDetail) => void;
   onCloseDetail: () => void;
   onCloseCancel: () => void;
   onCloseReject: () => void;
+  onCloseCaretakerAssign: () => void;
   onCloseTaskAssign: () => void;
   onConfirmCancel: () => void;
   onConfirmReject: () => void;
+  onConfirmCaretakerAssign: () => void;
   onConfirmAssign: () => void;
+  onCaretakerAssignStartDateChange: (value: string) => void;
+  onSelectedCaretakerIdForAssignChange: (value: number) => void;
   onScheduledDateChange: (value: string) => void;
   onSelectedCaretakerIdChange: (value: number) => void;
   onCancelReasonChange: (value: string) => void;
@@ -88,6 +102,12 @@ export default function DesignServiceTab({
   designAssignLoading,
   selectedDesignCaretakerId,
   designTaskScheduledDate,
+  designCaretakerAssignTarget,
+  eligibleCaretakersForAssign,
+  eligibleCaretakerAvailabilityForAssign,
+  designCaretakerAssignLoading,
+  selectedCaretakerIdForAssign,
+  designCaretakerAssignStartDate,
   getDesignRegistrationStatusLabel,
   getDesignTaskStatusLabel,
   getDesignTaskTypeLabel,
@@ -97,21 +117,31 @@ export default function DesignServiceTab({
   onApprove,
   onOpenRejectDialog,
   onOpenCancelDialog,
+  onOpenCaretakerAssignDialog,
   onOpenTaskAssignDialog,
   onOpenTaskRescheduleDialog,
   onCloseDetail,
   onCloseCancel,
   onCloseReject,
+  onCloseCaretakerAssign,
   onCloseTaskAssign,
   onConfirmCancel,
   onConfirmReject,
+  onConfirmCaretakerAssign,
   onConfirmAssign,
+  onCaretakerAssignStartDateChange,
+  onSelectedCaretakerIdForAssignChange,
   onScheduledDateChange,
   onSelectedCaretakerIdChange,
   onCancelReasonChange,
   onRejectReasonChange,
 }: DesignServiceTabProps) {
   const availabilityByStaffId = eligibleDesignAvailability.reduce<Record<number, DesignEligibleCaretakerAvailability>>((acc, item) => {
+    acc[item.staff.id] = item;
+    return acc;
+  }, {});
+
+  const availabilityByStaffIdForAssign = eligibleCaretakerAvailabilityForAssign.reduce<Record<number, DesignEligibleCaretakerAvailability>>((acc, item) => {
     acc[item.staff.id] = item;
     return acc;
   }, {});
@@ -190,14 +220,12 @@ export default function DesignServiceTab({
                         />
                       </TableCell>
                       <TableCell align="center">{formatCurrency(order.totalPrice, 'vi-VN')}</TableCell>
-                      <TableCell>{order.createdAt ? new Date(order.createdAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-'}</TableCell>
+                      <TableCell>{order.createdAt ? formatDate(order.createdAt) : '-'}</TableCell>
                       <TableCell align="center">
                         <Stack direction="row" spacing={1} justifyContent="center" useFlexGap flexWrap="nowrap" maxHeight={40}>
-                          <Tooltip title="View details and tasks">
-                            <IconButton size="small" onClick={() => onViewDetail(order.id)}>
-                              <VisibilityIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
+                            <Button size="small" variant='contained' title='View Detail' className='bg-transparent! aspect-square! rounded-full!' onClick={() => onViewDetail(order.id)}>
+                              <VisibilityIcon fontSize="medium" />
+                            </Button>
                           {canApproveDesign(order.status) && (
                             <Button
                               size="small"
@@ -234,6 +262,19 @@ export default function DesignServiceTab({
                             >
                               <CancelOutlinedIcon />
                             </Button>
+                          )}
+                          {canAssignCaretakerToDesign(order.status) && (
+                            <Tooltip title="Assign caretaker">
+                              <Button
+                                size="small"
+                                variant="contained"
+                                className="bg-blue-400! aspect-square! rounded-full!"
+                                disabled={submitting}
+                                onClick={() => onOpenCaretakerAssignDialog(order)}
+                              >
+                                <PersonAddAltOutlinedIcon fontSize="small" />
+                              </Button>
+                            </Tooltip>
                           )}
                         </Stack>
                       </TableCell>
@@ -297,6 +338,21 @@ export default function DesignServiceTab({
         onSelectedCaretakerIdChange={onSelectedCaretakerIdChange}
         onConfirm={onConfirmAssign}
         getDesignTaskTypeLabel={getDesignTaskTypeLabel}
+      />
+
+      <DesignCaretakerAssignDialog
+        open={Boolean(designCaretakerAssignTarget)}
+        registration={designCaretakerAssignTarget}
+        caretakers={eligibleCaretakersForAssign}
+        availabilityByStaffId={availabilityByStaffIdForAssign}
+        startDate={designCaretakerAssignStartDate}
+        loading={designCaretakerAssignLoading}
+        submitting={submitting}
+        selectedCaretakerId={selectedCaretakerIdForAssign}
+        onClose={onCloseCaretakerAssign}
+        onStartDateChange={onCaretakerAssignStartDateChange}
+        onSelectedCaretakerIdChange={onSelectedCaretakerIdForAssignChange}
+        onConfirm={onConfirmCaretakerAssign}
       />
     </>
   );

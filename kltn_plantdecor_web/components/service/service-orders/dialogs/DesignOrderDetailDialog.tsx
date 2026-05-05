@@ -3,6 +3,7 @@
 import { Alert, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Divider, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
 import type { CustomerDesignRegistrationDetail, DesignRegistrationTask } from '@/types/design-registration.types';
 import { canApproveDesign, canManagerCancelDesign, canRejectDesign, getDesignStatusChipColor } from '../utils/designStatusUtil';
+import { formatDateTime } from '@/lib/utils/dateUtils';
 
 interface DesignOrderDetailDialogProps {
   open: boolean;
@@ -68,8 +69,8 @@ export default function DesignOrderDetailDialog({
             <Typography variant="body2"><strong>Order ID:</strong> {detailItem.orderId ? `#${detailItem.orderId}` : '-'}</Typography>
             <Typography variant="body2"><strong>Assigned caretaker:</strong> {detailItem.assignedCaretaker?.fullName || '-'}</Typography>
             <Typography variant="body2"><strong>Customer note:</strong> {detailItem.customerNote || '-'}</Typography>
-            <Typography variant="body2"><strong>Created at:</strong> {detailItem.createdAt || '-'}</Typography>
-            <Typography variant="body2"><strong>Approved at:</strong> {detailItem.approvedAt || '-'}</Typography>
+            <Typography variant="body2"><strong>Created at:</strong> {detailItem.createdAt ? formatDateTime(detailItem.createdAt) : '-'}</Typography>
+            <Typography variant="body2"><strong>Approved at:</strong> {detailItem.approvedAt ? formatDateTime(detailItem.approvedAt) : '-'}</Typography>
             {detailItem.cancelReason && (
               <Typography variant="body2" color="error">
                 <strong>Cancel Reason:</strong> {detailItem.cancelReason}
@@ -141,7 +142,7 @@ export default function DesignOrderDetailDialog({
           <Typography>No detail data available.</Typography>
         )}
       </DialogContent>
-      <DialogActions sx={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
+      <DialogActions sx={{ justifyContent: 'flex-end', flexWrap: 'wrap', gap: 1 }}>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
           {detailItem && canApproveDesign(detailItem.status) && (
             <Button

@@ -30,5 +30,8 @@ export const canManagerCancelDesign = (status: number): boolean =>
   status !== DESIGN_STATUS.PendingApproval &&
   status !== DESIGN_STATUS.AwaitDeposit;
 
+export const canAssignCaretakerToDesign = (status: number): boolean =>
+  status === DESIGN_STATUS.DepositPaid;
+
 export const canAssignDesignTask = (task: DesignRegistrationTask): boolean =>
   task.status !== DESIGN_TASK_STATUS.Completed && task.status !== DESIGN_TASK_STATUS.Cancelled;

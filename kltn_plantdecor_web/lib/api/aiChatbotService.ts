@@ -4,11 +4,14 @@ import * as apiClient from "@/lib/api/apiService.client";
 import type {
   AIChatbotRequest,
   AIChatbotResponse,
+  CloseAIChatSessionResponse,
   CreateAIChatSessionRequest,
   CreateAIChatSessionResponse,
   GetAIChatEnumsResponse,
   GetAIChatHistoryResponse,
   GetAIChatSessionsResponse,
+  RenameAIChatSessionRequest,
+  RenameAIChatSessionResponse,
 } from "@/types/ai-chatbot.types";
 
 const silentConfig = {
@@ -30,6 +33,30 @@ export const createAiChatSession = async (
   return apiClient.post(
     "/ai-search/chatbot/sessions",
     data,
+    loading,
+    silentConfig,
+  );
+};
+
+export const renameAiChatSession = async (
+  sessionId: number,
+  data: RenameAIChatSessionRequest,
+  loading = true,
+): Promise<RenameAIChatSessionResponse> => {
+  return apiClient.patch(
+    `/ai-search/chatbot/sessions/${sessionId}/title`,
+    data,
+    loading,
+    silentConfig,
+  );
+};
+
+export const closeAiChatSession = async (
+  sessionId: number,
+  loading = true,
+): Promise<CloseAIChatSessionResponse> => {
+  return apiClient.del(
+    `/ai-search/chatbot/sessions/${sessionId}`,
     loading,
     silentConfig,
   );

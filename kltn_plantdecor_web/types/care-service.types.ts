@@ -278,6 +278,9 @@ export interface NurseryServiceScheduleItem {
   actualStartTime: string | null;
   actualEndTime: string | null;
   description: string | null;
+  incidentReason: string | null;
+  incidentImageUrl: string | null;
+  hasIncidents: boolean;
   evidenceImageUrl: string | null;
   shift: ServiceProgressShift | null;
   caretaker: ServiceProgressCaretaker | null;

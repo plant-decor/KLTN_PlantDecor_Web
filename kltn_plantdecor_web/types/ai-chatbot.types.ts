@@ -50,6 +50,10 @@ export type CreateAIChatSessionRequest = {
   title: string;
 };
 
+export type RenameAIChatSessionRequest = {
+  title: string;
+};
+
 export type AIChatSessionStatus = "active" | "closed" | string;
 
 export type AIChatSession = {
@@ -69,6 +73,17 @@ export type CreateAIChatSessionPayload = {
 };
 
 export type CreateAIChatSessionResponse = ResponseModel<CreateAIChatSessionPayload>;
+
+export type RenameAIChatSessionPayload = {
+  sessionId: number;
+  title?: string | null;
+  startedAt?: string | null;
+  status?: number | string | null;
+};
+
+export type RenameAIChatSessionResponse = ResponseModel<RenameAIChatSessionPayload>;
+
+export type CloseAIChatSessionResponse = ResponseModel<unknown>;
 
 export type PaginatedSessionsPayload = {
   items: AIChatSession[];

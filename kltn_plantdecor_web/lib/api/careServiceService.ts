@@ -6,6 +6,7 @@ import type {
   AssignServiceRegistrationCaretakerRequest,
   CareServicePackage,
   CareServiceSpecialization,
+  CareServicePackageSuitabilityRule,
   CreateServiceRegistrationRequest,
   CreatedServiceRegistration,
   EligibleCaretaker,
@@ -128,6 +129,57 @@ const normalizePackage = (item: unknown): CareServicePackage | null => {
       Boolean(specialization),
     );
 
+  const rawSuitabilityRules = Array.isArray(item.suitabilityRules)
+    ? item.suitabilityRules
+    : [];
+  const suitabilityRules: CareServicePackageSuitabilityRule[] = rawSuitabilityRules
+    .map((rule) => {
+      if (!isRecord(rule)) {
+        return null;
+      }
+
+      const normalized: CareServicePackageSuitabilityRule = {};
+
+      const ruleId =
+        rule.id == null ? null : toNumber(rule.id, Number.NaN);
+      if (ruleId != null && Number.isFinite(ruleId)) {
+        normalized.id = ruleId;
+      }
+
+      const careServicePackageId =
+        rule.careServicePackageId == null
+          ? null
+          : toNumber(rule.careServicePackageId, Number.NaN);
+      if (careServicePackageId != null && Number.isFinite(careServicePackageId)) {
+        normalized.careServicePackageId = careServicePackageId;
+      }
+
+      if (rule.categoryId == null) {
+        normalized.categoryId = null;
+      } else {
+        const categoryId = toNumber(rule.categoryId, Number.NaN);
+        normalized.categoryId = Number.isFinite(categoryId) ? categoryId : null;
+      }
+
+      normalized.categoryName = toNullableText(rule.categoryName);
+
+      if (rule.careDifficultyLevel == null) {
+        normalized.careDifficultyLevel = null;
+      } else {
+        const careDifficultyLevel = toNumber(rule.careDifficultyLevel, Number.NaN);
+        normalized.careDifficultyLevel = Number.isFinite(careDifficultyLevel)
+          ? careDifficultyLevel
+          : null;
+      }
+
+      normalized.careDifficultyLevelName = toNullableText(rule.careDifficultyLevelName);
+
+      return normalized;
+    })
+    .filter(
+      (rule): rule is CareServicePackageSuitabilityRule => Boolean(rule),
+    );
+
   return {
     id,
     name: toText(item.name),
@@ -143,6 +195,7 @@ const normalizePackage = (item: unknown): CareServicePackage | null => {
     isActive: toBoolean(item.isActive, true),
     createdAt: toText(item.createdAt) || undefined,
     specializations,
+    suitabilityRules: suitabilityRules.length ? suitabilityRules : undefined,
   };
 };
 

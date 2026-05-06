@@ -128,12 +128,12 @@ export const ServiceProgressDetail: React.FC<ServiceProgressDetailProps> = ({
 
         {/* Progress Logs Section */}
         <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
-          📋 Nhật Ký Tiến Độ
+          Progress Logs
         </Typography>
 
         {progressLogs.length === 0 ? (
           <Alert severity="info" sx={{ mb: 3 }}>
-            Chưa có cập nhật tiến độ
+            No progress logs available for this service registration.
           </Alert>
         ) : (
           <Box sx={{ mb: 3, p: 2, bgcolor: "#f5f5f5", borderRadius: 1 }}>

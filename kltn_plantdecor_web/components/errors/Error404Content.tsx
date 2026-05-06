@@ -11,9 +11,9 @@ interface Error404ContentProps {
 
 export default function Error404Content({
   homeHref = '/',
-  title = 'Không tìm thấy trang',
-  description = 'Trang bạn đang tìm kiếm không tồn tại hoặc đã được di chuyển.',
-  buttonLabel = 'Về trang chủ',
+  title = 'Page Not Found',
+  description = 'The page you are looking for does not exist or has been moved.',
+  buttonLabel = 'Go to Homepage',
   imageAlt = '404 Not Found',
 }: Error404ContentProps) {
   return (

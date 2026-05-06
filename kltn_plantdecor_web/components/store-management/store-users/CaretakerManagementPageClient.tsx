@@ -8,6 +8,7 @@ import {
   getCaretakerScheduleByRange,
   getServiceProgressDetail,
 } from "@/lib/api/careServiceService";
+import { getDesignTaskDetail } from "@/lib/api/designRegistrationService";
 import {
   assignSpecializationToStaff,
   getActiveSpecializationsForStaff,
@@ -16,9 +17,11 @@ import {
   replaceStaffSpecializations,
 } from "@/lib/api/managerStoreUsersService";
 import type { NurseryServiceScheduleItem, ServiceProgressDetail } from "@/types/care-service.types";
+import type { DesignRegistrationTask } from "@/types/design-registration.types";
 import type { StoreUserItem, StoreUserSpecializationOption } from "@/types/store-management.types";
 import ServiceProgressDetailDialog from "@/components/service/schedule-services/ServiceProgressDetailDialog";
 import CaretakerScheduleDrawer from "./CaretakerScheduleDrawer";
+import DesignTaskDetailDialog from "./DesignTaskDetailDialog";
 import StoreUserDetailDialog from "./StoreUserDetailDialog";
 import StoreUsersTable from "./StoreUsersTable";
 
@@ -91,6 +94,10 @@ export default function CaretakerManagementPageClient() {
   const [scheduleDetailLoading, setScheduleDetailLoading] = useState(false);
   const [scheduleDetailError, setScheduleDetailError] = useState<string | null>(null);
   const [scheduleDetail, setScheduleDetail] = useState<ServiceProgressDetail | null>(null);
+  const [designTaskDetailOpen, setDesignTaskDetailOpen] = useState(false);
+  const [designTaskDetailLoading, setDesignTaskDetailLoading] = useState(false);
+  const [designTaskDetailError, setDesignTaskDetailError] = useState<string | null>(null);
+  const [designTaskDetail, setDesignTaskDetail] = useState<DesignRegistrationTask | null>(null);
 
   const fetchList = useCallback(async (nextPage: number, nextSize: number) => {
     setLoading(true);
@@ -105,7 +112,7 @@ export default function CaretakerManagementPageClient() {
         totalCount: payload.totalCount,
       });
     } catch (loadError) {
-      const message = getErrorMessage(loadError, "Không thể tải danh sách nhân viên");
+      const message = getErrorMessage(loadError, "Cannot load caretaker list");
       setError(message);
       setItems([]);
       toast.error(message);
@@ -128,7 +135,7 @@ export default function CaretakerManagementPageClient() {
       setSelectedSpecializationIds(staffDetail.specializations.map((item) => item.id));
       setSpecializationOptions(options);
     } catch (detailFetchError) {
-      const message = getErrorMessage(detailFetchError, "Không thể tải chi tiết nhân viên");
+      const message = getErrorMessage(detailFetchError, "Cannot load caretaker detail");
       setDetailError(message);
       setDetailItem(null);
       toast.error(message);
@@ -142,7 +149,7 @@ export default function CaretakerManagementPageClient() {
       const options = await getActiveSpecializationsForStaff(false);
       setSpecializationOptions(options);
     } catch (optionsError) {
-      toast.error(getErrorMessage(optionsError, "Không thể tải danh sách chuyên môn"));
+      toast.error(getErrorMessage(optionsError, "Cannot load specialization options"));
       setSpecializationOptions([]);
     }
   }, []);
@@ -165,7 +172,7 @@ export default function CaretakerManagementPageClient() {
       const payload = await getCaretakerScheduleByRange(caretakerId, from, to, false);
       setScheduleItems(payload);
     } catch (loadError) {
-      const message = getErrorMessage(loadError, "Không thể tải lịch công việc caretaker");
+      const message = getErrorMessage(loadError, "Cannot load caretaker schedule");
       setScheduleError(message);
       setScheduleItems([]);
       toast.error(message);
@@ -177,7 +184,7 @@ export default function CaretakerManagementPageClient() {
   const handleViewSchedule = (staffId: number) => {
     const caretaker = items.find((staff) => staff.id === staffId) ?? null;
     if (!caretaker) {
-      toast.error("Không tìm thấy caretaker trong danh sách hiện tại");
+      toast.error("Cannot find caretaker in the current list");
       return;
     }
 
@@ -202,12 +209,12 @@ export default function CaretakerManagementPageClient() {
     }
 
     if (!scheduleFromDate || !scheduleToDate) {
-      toast.error("Vui lòng chọn đầy đủ khoảng ngày");
+      toast.error("Please select a complete date range");
       return;
     }
 
     if (scheduleFromDate > scheduleToDate) {
-      toast.error("Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc");
+      toast.error("Start date must be less than or equal to end date");
       return;
     }
 
@@ -215,15 +222,19 @@ export default function CaretakerManagementPageClient() {
   };
 
   const handleViewScheduleProgressDetail = async (serviceProgressId: number) => {
+    setDesignTaskDetailOpen(false);
+    setDesignTaskDetailError(null);
+    setDesignTaskDetail(null);
     setScheduleDetailOpen(true);
     setScheduleDetailLoading(true);
     setScheduleDetailError(null);
+    setScheduleDetail(null);
 
     try {
       const detailPayload = await getServiceProgressDetail(serviceProgressId, false);
       setScheduleDetail(detailPayload);
     } catch (detailLoadError) {
-      const message = getErrorMessage(detailLoadError, "Không thể tải chi tiết phiên chăm sóc");
+      const message = getErrorMessage(detailLoadError, "Cannot load caretaker schedule details");
       setScheduleDetailError(message);
       setScheduleDetail(null);
       toast.error(message);
@@ -232,10 +243,54 @@ export default function CaretakerManagementPageClient() {
     }
   };
 
+  const handleViewScheduleDesignTaskDetail = async (designTaskId: number) => {
+    setScheduleDetailOpen(false);
+    setScheduleDetailError(null);
+    setScheduleDetail(null);
+    setDesignTaskDetailOpen(true);
+    setDesignTaskDetailLoading(true);
+    setDesignTaskDetailError(null);
+    setDesignTaskDetail(null);
+
+    try {
+      const detailPayload = await getDesignTaskDetail(designTaskId, false);
+      setDesignTaskDetail(detailPayload);
+    } catch (detailLoadError) {
+      const message = getErrorMessage(detailLoadError, "Cannot load design task details");
+      setDesignTaskDetailError(message);
+      setDesignTaskDetail(null);
+      toast.error(message);
+    } finally {
+      setDesignTaskDetailLoading(false);
+    }
+  };
+
+  const handleViewScheduleTaskDetail = (item: NurseryServiceScheduleItem) => {
+    const taskType = item.taskType?.trim();
+
+    if (taskType === "CareService") {
+      void handleViewScheduleProgressDetail(item.id);
+      return;
+    }
+
+    if (taskType === "DesignService") {
+      void handleViewScheduleDesignTaskDetail(item.id);
+      return;
+    }
+
+    toast.error(taskType ? `Unsupported schedule task type: ${taskType}` : "Cannot determine schedule task type");
+  };
+
   const closeScheduleProgressDetailDialog = () => {
     setScheduleDetailOpen(false);
     setScheduleDetailError(null);
     setScheduleDetail(null);
+  };
+
+  const closeScheduleDesignTaskDetailDialog = () => {
+    setDesignTaskDetailOpen(false);
+    setDesignTaskDetailError(null);
+    setDesignTaskDetail(null);
   };
 
   const closeDetailDialog = () => {
@@ -270,7 +325,7 @@ export default function CaretakerManagementPageClient() {
 
   const handleAssignQuick = async (staffId: number, specializationId: number) => {
     if (!staffId || !specializationId) {
-      toast.error("Vui lòng chọn nhân viên và chuyên môn để gán nhanh");
+      toast.error("Please select a staff member and specialization to assign quickly");
       return;
     }
 
@@ -284,9 +339,9 @@ export default function CaretakerManagementPageClient() {
         await fetchList(pagination.pageNumber, pagination.pageSize);
       }
 
-      toast.success("Gán chuyên môn thành công");
+      toast.success("Specialization assigned successfully");
     } catch (assignError) {
-      toast.error(getErrorMessage(assignError, "Không thể gán chuyên môn"));
+      toast.error(getErrorMessage(assignError, "Cannot assign specialization to staff "));
     } finally {
       setSubmitting(false);
     }
@@ -307,9 +362,9 @@ export default function CaretakerManagementPageClient() {
         false
       );
       await refreshDetailAndList(detailItem.id);
-      toast.success("Cập nhật danh sách chuyên môn thành công");
+      toast.success("Update specializations successfully");
     } catch (saveError) {
-      toast.error(getErrorMessage(saveError, "Không thể cập nhật danh sách chuyên môn"));
+      toast.error(getErrorMessage(saveError, "Cannot update specializations"));
     } finally {
       setSubmitting(false);
     }
@@ -319,9 +374,9 @@ export default function CaretakerManagementPageClient() {
     <Box sx={{ bgcolor: "#f5f5f5", minHeight: "100vh", p: { xs: 2, md: 4 } }}>
       <Paper elevation={0} sx={{ p: { xs: 2, md: 3 }, borderRadius: 2 }}>
         <ManagementHeader
-          title="Nhân viên chăm sóc"
-          description="Xem danh sách nhân viên chăm sóc của vựa và chuyên môn tương ứng"
-          entityLabel="nhân viên chăm sóc"
+          title="Caretakers"
+          description="View the list of caretakers in the nursery and their corresponding specializations"
+          entityLabel="caretakers"
           count={pagination.totalCount}
         />
 
@@ -377,7 +432,7 @@ export default function CaretakerManagementPageClient() {
         onChangeFromDate={setScheduleFromDate}
         onChangeToDate={setScheduleToDate}
         onRefresh={handleRefreshSchedule}
-        onViewProgressDetail={handleViewScheduleProgressDetail}
+        onViewTaskDetail={handleViewScheduleTaskDetail}
       />
 
       <ServiceProgressDetailDialog
@@ -386,6 +441,14 @@ export default function CaretakerManagementPageClient() {
         error={scheduleDetailError}
         detail={scheduleDetail}
         onClose={closeScheduleProgressDetailDialog}
+      />
+
+      <DesignTaskDetailDialog
+        open={designTaskDetailOpen}
+        loading={designTaskDetailLoading}
+        error={designTaskDetailError}
+        detail={designTaskDetail}
+        onClose={closeScheduleDesignTaskDetailDialog}
       />
     </Box>
   );

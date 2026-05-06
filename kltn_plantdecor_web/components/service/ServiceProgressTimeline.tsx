@@ -17,6 +17,7 @@ import {
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import PendingIcon from "@mui/icons-material/Pending";
 import { ServiceRegistration, ServiceProgress } from "@/types/service.types";
+import { formatDateTime } from "../manager/return-ticket-management/managerReturnTicket.constants";
 
 interface ServiceProgressTimelineProps {
   registration: ServiceRegistration;
@@ -32,13 +33,13 @@ export const ServiceProgressTimeline: React.FC<ServiceProgressTimelineProps> = (
 }) => {
   const getActionLabel = (action: string) => {
     const labels: Record<string, string> = {
-      CHECK_IN: "✓ Check-in",
-      SURVEY: "📋 Khảo sát",
-      WORK_IN_PROGRESS: "🔧 Đang thực hiện",
-      PHOTO_EVIDENCE: "📸 Ảnh bằng chứng",
-      ADDON_PROPOSAL: "➕ Đề xuất phát sinh",
-      CHECK_OUT: "✓ Check-out",
-      COMPLETED: "✅ Hoàn thành",
+      CHECK_IN: "Check-in",
+      SURVEY: "Survey",
+      WORK_IN_PROGRESS: "In progress",
+      PHOTO_EVIDENCE: "Photo Evidence",
+      ADDON_PROPOSAL: "Add-on Proposal",
+      CHECK_OUT: "Check-out",
+      COMPLETED: "Completed",
     };
     return labels[action] || action;
   };
@@ -59,14 +60,14 @@ export const ServiceProgressTimeline: React.FC<ServiceProgressTimelineProps> = (
           color="primary"
           onClick={() => onSelectRegistration(registration)}
         >
-          Xem Chi Tiết
+          View Details
         </Button>
       </Box>
 
       {progressLogs.length === 0 ? (
         <Card sx={{ p: 3, textAlign: "center" }}>
           <Typography variant="body2" color="textSecondary">
-            Chưa có cập nhật tiến độ
+            No progress updates available for this service registration yet. Please check back later or contact support for more information.
           </Typography>
         </Card>
       ) : (
@@ -79,8 +80,8 @@ export const ServiceProgressTimeline: React.FC<ServiceProgressTimelineProps> = (
                     log.action === "COMPLETED"
                       ? "success"
                       : log.action === "CHECK_IN"
-                      ? "primary"
-                      : "inherit"
+                        ? "primary"
+                        : "inherit"
                   }
                 >
                   {log.action === "COMPLETED" ? (
@@ -99,7 +100,7 @@ export const ServiceProgressTimeline: React.FC<ServiceProgressTimelineProps> = (
                         {getActionLabel(log.action)}
                       </Typography>
                       <Typography variant="caption" color="textSecondary">
-                        {new Date(log.createdAt).toLocaleString("vi-VN")}
+                        {log.createdAt ? formatDateTime(log.createdAt) : '-'}
                       </Typography>
                     </Box>
 
@@ -109,15 +110,15 @@ export const ServiceProgressTimeline: React.FC<ServiceProgressTimelineProps> = (
 
                     {log.actualStartTime && (
                       <Typography variant="caption" color="textSecondary" display="block" mt={1}>
-                        ⏱️ {new Date(log.actualStartTime).toLocaleTimeString("vi-VN")}
-                        {log.actualEndTime && ` - ${new Date(log.actualEndTime).toLocaleTimeString("vi-VN")}`}
+                        {log.actualStartTime ? formatDateTime(log.actualStartTime) : '-'}
+                        {log.actualEndTime && ` - ${log.actualEndTime ? formatDateTime(log.actualEndTime) : '-'}`}
                       </Typography>
                     )}
 
                     {log.evidenceImageUrl && (
                       <Box mt={1}>
                         <Typography variant="caption" color="textSecondary">
-                          📸 Bằng chứng ảnh
+                          Photo Evidence
                         </Typography>
                         <Box
                           component="img"

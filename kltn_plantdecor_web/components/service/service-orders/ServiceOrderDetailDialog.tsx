@@ -147,7 +147,7 @@ export default function ServiceOrderDetailDialog({
           </Stack>
         )}
       </DialogContent>
-      <DialogActions sx={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
+      <DialogActions sx={{ justifyContent: 'flex-end', flexWrap: 'wrap', gap: 1 }}>
         <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
           {detailItem && canApproveOrReject(detailItem.status) && (
             <Button

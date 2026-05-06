@@ -62,6 +62,7 @@ import type {
   MarketedDesignTemplateTier,
   MarketedDesignTemplateTierNursery,
 } from '@/types/design-registration.types';
+import { formatDate } from '@/lib/utils/dateUtils';
 
 const DESIGN_STATUS = {
   PendingApproval: 1,
@@ -93,22 +94,6 @@ const formatCurrency = (value?: number) => {
   return value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
 };
 
-const formatDate = (value?: string | null) => {
-  if (!value) {
-    return '-';
-  }
-
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return value;
-  }
-
-  return parsed.toLocaleDateString('vi-VN', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  });
-};
 
 const formatEnumLabel = (value: string) => {
   if (!value) {
@@ -542,15 +527,7 @@ export default function DesignRegistrationPageClient() {
 
   return (
     <Box>
-      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
-        <Box>
-          <Typography variant="h4" fontWeight="bold" gutterBottom>
-            My Design Services
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Track design registrations, payments, and assigned design tasks.
-          </Typography>
-        </Box>
+      <Box sx={{ my: 2, display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
@@ -879,7 +856,7 @@ export default function DesignRegistrationPageClient() {
                           <TableRow key={task.id}>
                             <TableCell>{taskTypeLabels[task.taskType] || formatEnumLabel(task.taskTypeName) || `#${task.taskType}`}</TableCell>
                             <TableCell>{taskStatusLabels[task.status] || formatEnumLabel(task.statusName) || `#${task.status}`}</TableCell>
-                            <TableCell>{formatDate(task.scheduledDate)}</TableCell>
+                            <TableCell>{task.scheduledDate ? formatDate(task.scheduledDate) : '-'}</TableCell>
                             <TableCell>{task.assignedStaff?.fullName || '-'}</TableCell>
                           </TableRow>
                         ))}

@@ -1,18 +1,24 @@
 'use client';
 
-import { Alert, Box, Button, Chip, IconButton, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, Typography } from '@mui/material';
+import { useState } from 'react';
+import { Alert, Box, Button, Chip, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, Typography } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
+import PersonAddAltOutlinedIcon from '@mui/icons-material/PersonAddAltOutlined';
 import ServiceOrdersHeader from './ServiceOrdersHeader';
 import DesignOrderDetailDialog from './dialogs/DesignOrderDetailDialog';
 import DesignOrderCancelDialog from './dialogs/DesignOrderCancelDialog';
 import DesignOrderRejectDialog from './dialogs/DesignOrderRejectDialog';
 import DesignTaskAssignDialog from './dialogs/DesignTaskAssignDialog';
-import { canApproveDesign, canManagerCancelDesign, canRejectDesign, getDesignStatusChipColor } from './utils/designStatusUtil';
+import DesignCaretakerAssignDialog from './dialogs/DesignCaretakerAssignDialog';
+import FullscreenImageModal from '@/components/image-view/FullscreenImageModal';
+import { canApproveDesign, canManagerCancelDesign, canRejectDesign, canAssignCaretakerToDesign, getDesignStatusChipColor } from './utils/designStatusUtil';
 import { formatCurrency } from '@/lib/utils/formatUtil';
 import type { CustomerDesignRegistrationDetail, CustomerDesignRegistrationListItem, DesignEligibleCaretaker, DesignEligibleCaretakerAvailability, DesignRegistrationTask } from '@/types/design-registration.types';
 import type { ServiceStatusOption, ServiceStatusFilterValue } from './managerServiceOrders.constants';
+import { formatDate } from '@/lib/utils/dateUtils';
 
 interface DesignServiceTabProps {
   designOrders: CustomerDesignRegistrationListItem[];
@@ -41,24 +47,36 @@ interface DesignServiceTabProps {
   designAssignLoading: boolean;
   selectedDesignCaretakerId: number;
   designTaskScheduledDate: string;
+  designCaretakerAssignTarget: CustomerDesignRegistrationListItem | CustomerDesignRegistrationDetail | null;
+  eligibleCaretakersForAssign: DesignEligibleCaretaker[];
+  eligibleCaretakerAvailabilityForAssign: DesignEligibleCaretakerAvailability[];
+  designCaretakerAssignLoading: boolean;
+  selectedCaretakerIdForAssign: number;
+  designCaretakerAssignStartDate: string;
   getDesignRegistrationStatusLabel: (item: Pick<CustomerDesignRegistrationListItem, 'status' | 'statusName'>) => string;
   getDesignTaskStatusLabel: (task: DesignRegistrationTask) => string;
   getDesignTaskTypeLabel: (task: DesignRegistrationTask) => string;
   onStatusFilterChange: (value: ServiceStatusFilterValue) => void;
   onRefresh: () => void;
   onViewDetail: (id: number) => void;
+  onViewTaskDetail: (taskId: number) => void;
   onApprove: (id: number) => void;
   onOpenRejectDialog: (item: CustomerDesignRegistrationListItem) => void;
   onOpenCancelDialog: (item: CustomerDesignRegistrationListItem) => void;
+  onOpenCaretakerAssignDialog: (registration: CustomerDesignRegistrationListItem | CustomerDesignRegistrationDetail) => void;
   onOpenTaskAssignDialog: (task: DesignRegistrationTask, registration: CustomerDesignRegistrationListItem | CustomerDesignRegistrationDetail) => void;
   onOpenTaskRescheduleDialog: (task: DesignRegistrationTask, registration: CustomerDesignRegistrationListItem | CustomerDesignRegistrationDetail) => void;
   onCloseDetail: () => void;
   onCloseCancel: () => void;
   onCloseReject: () => void;
+  onCloseCaretakerAssign: () => void;
   onCloseTaskAssign: () => void;
   onConfirmCancel: () => void;
   onConfirmReject: () => void;
+  onConfirmCaretakerAssign: () => void;
   onConfirmAssign: () => void;
+  onCaretakerAssignStartDateChange: (value: string) => void;
+  onSelectedCaretakerIdForAssignChange: (value: number) => void;
   onScheduledDateChange: (value: string) => void;
   onSelectedCaretakerIdChange: (value: number) => void;
   onCancelReasonChange: (value: string) => void;
@@ -88,30 +106,49 @@ export default function DesignServiceTab({
   designAssignLoading,
   selectedDesignCaretakerId,
   designTaskScheduledDate,
+  designCaretakerAssignTarget,
+  eligibleCaretakersForAssign,
+  eligibleCaretakerAvailabilityForAssign,
+  designCaretakerAssignLoading,
+  selectedCaretakerIdForAssign,
+  designCaretakerAssignStartDate,
   getDesignRegistrationStatusLabel,
   getDesignTaskStatusLabel,
   getDesignTaskTypeLabel,
   onStatusFilterChange,
   onRefresh,
   onViewDetail,
+  onViewTaskDetail,
   onApprove,
   onOpenRejectDialog,
   onOpenCancelDialog,
+  onOpenCaretakerAssignDialog,
   onOpenTaskAssignDialog,
   onOpenTaskRescheduleDialog,
   onCloseDetail,
   onCloseCancel,
   onCloseReject,
+  onCloseCaretakerAssign,
   onCloseTaskAssign,
   onConfirmCancel,
   onConfirmReject,
+  onConfirmCaretakerAssign,
   onConfirmAssign,
+  onCaretakerAssignStartDateChange,
+  onSelectedCaretakerIdForAssignChange,
   onScheduledDateChange,
   onSelectedCaretakerIdChange,
   onCancelReasonChange,
   onRejectReasonChange,
 }: DesignServiceTabProps) {
+  const [fullscreenCurrentStateImage, setFullscreenCurrentStateImage] = useState<string | null>(null);
+
   const availabilityByStaffId = eligibleDesignAvailability.reduce<Record<number, DesignEligibleCaretakerAvailability>>((acc, item) => {
+    acc[item.staff.id] = item;
+    return acc;
+  }, {});
+
+  const availabilityByStaffIdForAssign = eligibleCaretakerAvailabilityForAssign.reduce<Record<number, DesignEligibleCaretakerAvailability>>((acc, item) => {
     acc[item.staff.id] = item;
     return acc;
   }, {});
@@ -163,82 +200,109 @@ export default function DesignServiceTab({
                     </TableCell>
                   </TableRow>
                 ) : (
-                  designOrders.map((order) => (
-                    <TableRow key={order.id} hover>
-                      <TableCell>{order.id}</TableCell>
-                      <TableCell>
-                        <Typography variant="body2" fontWeight={600}>
-                          {order.customer?.fullName || '-'}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {order.customer?.email || '-'}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" fontWeight={600}>
-                          {order.designTemplateTier.designTemplate.name || '-'}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {order.designTemplateTier.tierName || '-'}
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="center">
-                        <Chip
-                          size="small"
-                          color={getDesignStatusChipColor(order.status)}
-                          label={getDesignRegistrationStatusLabel(order)}
-                        />
-                      </TableCell>
-                      <TableCell align="center">{formatCurrency(order.totalPrice, 'vi-VN')}</TableCell>
-                      <TableCell>{order.createdAt ? new Date(order.createdAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-'}</TableCell>
-                      <TableCell align="center">
-                        <Stack direction="row" spacing={1} justifyContent="center" useFlexGap flexWrap="nowrap" maxHeight={40}>
-                          <Tooltip title="View details and tasks">
-                            <IconButton size="small" onClick={() => onViewDetail(order.id)}>
-                              <VisibilityIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                          {canApproveDesign(order.status) && (
-                            <Button
-                              size="small"
-                              variant="contained"
-                              className="bg-primary! aspect-square! rounded-full!"
-                              disabled={submitting}
-                              title="Approve"
-                              onClick={() => onApprove(order.id)}
-                            >
-                              <CheckCircleOutlineIcon />
-                            </Button>
-                          )}
-                          {canRejectDesign(order.status) && (
-                            <Button
-                              size="small"
-                              variant="contained"
-                              className="bg-error! aspect-square! rounded-full!"
-                              disabled={submitting}
-                              title="Reject"
-                              onClick={() => onOpenRejectDialog(order)}
-                            >
-                              <CancelOutlinedIcon />
-                            </Button>
-                          )}
-                          {canManagerCancelDesign(order.status) && (
-                            <Button
-                              size="small"
-                              variant="contained"
-                              color="error"
-                              className="bg-error! aspect-square! rounded-full!"
-                              disabled={submitting}
-                              title="Cancel"
-                              onClick={() => onOpenCancelDialog(order)}
-                            >
-                              <CancelOutlinedIcon />
-                            </Button>
-                          )}
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  designOrders.map((order) => {
+                    const currentStateImageUrl = order.currentStateImageUrl?.trim();
+
+                    return (
+                      <TableRow key={order.id} hover>
+                        <TableCell>{order.id}</TableCell>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight={600}>
+                            {order.customer?.fullName || '-'}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {order.customer?.email || '-'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight={600}>
+                            {order.designTemplateTier.designTemplate.name || '-'}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {order.designTemplateTier.tierName || '-'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="center">
+                          <Chip
+                            size="small"
+                            color={getDesignStatusChipColor(order.status)}
+                            label={getDesignRegistrationStatusLabel(order)}
+                          />
+                        </TableCell>
+                        <TableCell align="center">{formatCurrency(order.totalPrice, 'vi-VN')}</TableCell>
+                        <TableCell>{order.createdAt ? formatDate(order.createdAt) : '-'}</TableCell>
+                        <TableCell align="center">
+                          <Stack direction="row" spacing={1} justifyContent="center" useFlexGap flexWrap="nowrap" maxHeight={40}>
+                              <Button size="small" variant='contained' title='View Detail' className='bg-transparent! aspect-square! rounded-full!' onClick={() => onViewDetail(order.id)}>
+                                <VisibilityIcon fontSize="medium" />
+                              </Button>
+                            {currentStateImageUrl && (
+                              <Tooltip title="View current state image">
+                                <Button
+                                  size="small"
+                                  variant="contained"
+                                  className="bg-green-500! aspect-square! rounded-full!"
+                                  onClick={() => setFullscreenCurrentStateImage(currentStateImageUrl)}
+                                >
+                                  <ImageOutlinedIcon fontSize="small" />
+                                </Button>
+                              </Tooltip>
+                            )}
+                            {canApproveDesign(order.status) && (
+                              <Button
+                                size="small"
+                                variant="contained"
+                                className="bg-primary! aspect-square! rounded-full!"
+                                disabled={submitting}
+                                title="Approve"
+                                onClick={() => onApprove(order.id)}
+                              >
+                                <CheckCircleOutlineIcon />
+                              </Button>
+                            )}
+                            {canRejectDesign(order.status) && (
+                              <Button
+                                size="small"
+                                variant="contained"
+                                className="bg-error! aspect-square! rounded-full!"
+                                disabled={submitting}
+                                title="Reject"
+                                onClick={() => onOpenRejectDialog(order)}
+                              >
+                                <CancelOutlinedIcon />
+                              </Button>
+                            )}
+                            {canManagerCancelDesign(order.status) && (
+                              <Button
+                                size="small"
+                                variant="contained"
+                                color="error"
+                                className="bg-error! aspect-square! rounded-full!"
+                                disabled={submitting}
+                                title="Cancel"
+                                onClick={() => onOpenCancelDialog(order)}
+                              >
+                                <CancelOutlinedIcon />
+                              </Button>
+                            )}
+                            {canAssignCaretakerToDesign(order.status) && (
+                              <Tooltip title="Assign caretaker">
+                                <Button
+                                  size="small"
+                                  variant="contained"
+                                  className="bg-blue-400! aspect-square! rounded-full!"
+                                  disabled={submitting}
+                                  onClick={() => onOpenCaretakerAssignDialog(order)}
+                                >
+                                  <PersonAddAltOutlinedIcon fontSize="small" />
+                                </Button>
+                              </Tooltip>
+                            )}
+                          </Stack>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 )}
               </TableBody>
             </Table>
@@ -257,6 +321,7 @@ export default function DesignServiceTab({
         onCancel={(item) => onOpenCancelDialog(item as CustomerDesignRegistrationListItem)}
         onAssignTask={onOpenTaskAssignDialog}
         onRescheduleTask={onOpenTaskRescheduleDialog}
+        onViewTaskDetail={onViewTaskDetail}
         getDesignRegistrationStatusLabel={getDesignRegistrationStatusLabel}
         getDesignTaskStatusLabel={getDesignTaskStatusLabel}
         getDesignTaskTypeLabel={getDesignTaskTypeLabel}
@@ -297,6 +362,28 @@ export default function DesignServiceTab({
         onSelectedCaretakerIdChange={onSelectedCaretakerIdChange}
         onConfirm={onConfirmAssign}
         getDesignTaskTypeLabel={getDesignTaskTypeLabel}
+      />
+
+      <DesignCaretakerAssignDialog
+        open={Boolean(designCaretakerAssignTarget)}
+        registration={designCaretakerAssignTarget}
+        caretakers={eligibleCaretakersForAssign}
+        availabilityByStaffId={availabilityByStaffIdForAssign}
+        startDate={designCaretakerAssignStartDate}
+        loading={designCaretakerAssignLoading}
+        submitting={submitting}
+        selectedCaretakerId={selectedCaretakerIdForAssign}
+        onClose={onCloseCaretakerAssign}
+        onStartDateChange={onCaretakerAssignStartDateChange}
+        onSelectedCaretakerIdChange={onSelectedCaretakerIdForAssignChange}
+        onConfirm={onConfirmCaretakerAssign}
+      />
+
+      <FullscreenImageModal
+        images={fullscreenCurrentStateImage ? [fullscreenCurrentStateImage] : []}
+        isOpen={Boolean(fullscreenCurrentStateImage)}
+        onClose={() => setFullscreenCurrentStateImage(null)}
+        alt="Current state image"
       />
     </>
   );

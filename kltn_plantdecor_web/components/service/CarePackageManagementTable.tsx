@@ -63,7 +63,7 @@ export const CarePackageManagementTable: React.FC<CarePackageManagementTableProp
 
   const handleConfirmDelete = async () => {
     if (!selectedPackageId) return;
-    
+
     setDeleting(true);
     try {
       await onDelete(selectedPackageId);
@@ -93,7 +93,7 @@ export const CarePackageManagementTable: React.FC<CarePackageManagementTableProp
     return (
       <Container maxWidth="lg" sx={{ py: 5, textAlign: "center" }}>
         <Typography variant="h6" color="textSecondary">
-          Không có gói dịch vụ nào
+          No service packages found. Please create a new package to get started.
         </Typography>
       </Container>
     );

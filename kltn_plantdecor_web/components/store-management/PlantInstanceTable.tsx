@@ -106,7 +106,7 @@ export default function PlantInstanceTable({
             {filteredInstances.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
-                  <Typography color="text.secondary">Không có dữ liệu</Typography>
+                  <Typography color="text.secondary">No data available</Typography>
                 </TableCell>
               </TableRow>
             ) : (

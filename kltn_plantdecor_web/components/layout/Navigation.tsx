@@ -6,6 +6,8 @@ import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import CartBadge from '@/components/cart/CartBadge';
 import HeaderUnifiedSearch from './HeaderUnifiedSearch';
+import HeaderNotificationDropdown from './HeaderNotificationDropdown';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import { getCategoryTree, type CategoryResponse } from '@/lib/api/categoriesService';
 import {
   Home as HomeIcon,
@@ -48,6 +50,7 @@ const USER_MENU_LABEL_KEYS: Record<string, string> = {
   '/profile/[userid]': 'profile',
   '/orders/[userid]': 'orderHistory',
   '/wishlist/[userid]': 'wishlist',
+  '/care-reminders/[userid]': 'careReminders',
   '/logout': 'logout',
 };
 
@@ -93,6 +96,7 @@ export default function Navigation({ initialStoreCategories = [] }: NavigationPr
   const tNav = useTranslations('nav');
   const tAuth = useTranslations('auth');
   const tUserMenu = useTranslations('headerUserMenu');
+  const isMobileViewport = useMediaQuery('(max-width:767px)', { noSsr: true });
 
   const getUserMenuLabel = (href: string) => {
     const key = USER_MENU_LABEL_KEYS[href];
@@ -290,6 +294,9 @@ export default function Navigation({ initialStoreCategories = [] }: NavigationPr
 
           <div className="flex items-center gap-3">
             <CartBadge />
+            {isCustomerLike && userId && isMobileViewport && (
+              <HeaderNotificationDropdown userId={userId} />
+            )}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="text-gray-700 hover:text-green-600 focus:outline-none p-1"

@@ -94,7 +94,9 @@ const normalizePackage = (item: unknown): CareServicePackage | null => {
     return null;
   }
 
-  const rawSpecializations = Array.isArray(item.specializations) ? item.specializations : [];
+  const rawSpecializations = Array.isArray(item.specializations)
+    ? item.specializations
+    : [];
   const specializations: CareServiceSpecialization[] = rawSpecializations
     .map((specialization) => {
       if (!isRecord(specialization)) {
@@ -122,7 +124,9 @@ const normalizePackage = (item: unknown): CareServicePackage | null => {
 
       return normalized;
     })
-    .filter((specialization): specialization is CareServiceSpecialization => Boolean(specialization));
+    .filter((specialization): specialization is CareServiceSpecialization =>
+      Boolean(specialization),
+    );
 
   return {
     id,
@@ -131,7 +135,8 @@ const normalizePackage = (item: unknown): CareServicePackage | null => {
     features: toText(item.features),
     visitPerWeek: toNumber(item.visitPerWeek),
     durationDays: toNumber(item.durationDays),
-    totalSessions: item.totalSessions == null ? undefined : toNumber(item.totalSessions),
+    totalSessions:
+      item.totalSessions == null ? undefined : toNumber(item.totalSessions),
     serviceType: toNumber(item.serviceType),
     areaLimit: toNumber(item.areaLimit),
     unitPrice: toNumber(item.unitPrice),
@@ -141,7 +146,9 @@ const normalizePackage = (item: unknown): CareServicePackage | null => {
   };
 };
 
-const normalizeNurseryCareService = (item: unknown): NurseryCareService | null => {
+const normalizeNurseryCareService = (
+  item: unknown,
+): NurseryCareService | null => {
   if (!isRecord(item)) {
     return null;
   }
@@ -232,7 +239,9 @@ const parseScheduleDaysOfWeek = (value: unknown): number[] => {
   }
 };
 
-const normalizeServiceRegistration = (item: unknown): MyServiceRegistration | null => {
+const normalizeServiceRegistration = (
+  item: unknown,
+): MyServiceRegistration | null => {
   if (!isRecord(item)) {
     return null;
   }
@@ -242,14 +251,22 @@ const normalizeServiceRegistration = (item: unknown): MyServiceRegistration | nu
     return null;
   }
 
-  const nurseryCareService = isRecord(item.nurseryCareService) ? item.nurseryCareService : {};
+  const nurseryCareService = isRecord(item.nurseryCareService)
+    ? item.nurseryCareService
+    : {};
   const careServicePackage = isRecord(nurseryCareService.careServicePackage)
     ? nurseryCareService.careServicePackage
     : {};
-  const prefferedShift = isRecord(item.prefferedShift) ? item.prefferedShift : null;
+  const prefferedShift = isRecord(item.prefferedShift)
+    ? item.prefferedShift
+    : null;
   const customer = isRecord(item.customer) ? item.customer : null;
-  const mainCaretaker = isRecord(item.mainCaretaker) ? item.mainCaretaker : null;
-  const currentCaretaker = isRecord(item.currentCaretaker) ? item.currentCaretaker : null;
+  const mainCaretaker = isRecord(item.mainCaretaker)
+    ? item.mainCaretaker
+    : null;
+  const currentCaretaker = isRecord(item.currentCaretaker)
+    ? item.currentCaretaker
+    : null;
   const progresses = Array.isArray(item.progresses) ? item.progresses : [];
   const rating = isRecord(item.rating) ? item.rating : null;
 
@@ -331,7 +348,10 @@ const normalizeServiceRegistration = (item: unknown): MyServiceRegistration | nu
           createdAt: toText(progress.createdAt),
         };
       })
-      .filter((progress): progress is MyServiceRegistration["progresses"][number] => Boolean(progress)),
+      .filter(
+        (progress): progress is MyServiceRegistration["progresses"][number] =>
+          Boolean(progress),
+      ),
     rating: (() => {
       if (!rating) {
         return null;
@@ -339,18 +359,21 @@ const normalizeServiceRegistration = (item: unknown): MyServiceRegistration | nu
       const ratingId = toNumber(rating.id, Number.NaN);
       const score = toNumber(
         rating.score !== undefined ? rating.score : rating.rating,
-        Number.NaN
+        Number.NaN,
       );
       if (!Number.isFinite(ratingId) || !Number.isFinite(score)) {
         return null;
       }
-      const comment = toText(rating.comment) || toText(rating.description) || undefined;
+      const comment =
+        toText(rating.comment) || toText(rating.description) || undefined;
       return { id: ratingId, score, comment };
     })(),
   };
 };
 
-const normalizeEligibleCaretaker = (item: unknown): EligibleCaretaker | null => {
+const normalizeEligibleCaretaker = (
+  item: unknown,
+): EligibleCaretaker | null => {
   if (!isRecord(item)) {
     return null;
   }
@@ -394,7 +417,9 @@ const normalizeEligibleCaretaker = (item: unknown): EligibleCaretaker | null => 
   };
 };
 
-const normalizeNurseryServiceScheduleItem = (item: unknown): NurseryServiceScheduleItem | null => {
+const normalizeNurseryServiceScheduleItem = (
+  item: unknown,
+): NurseryServiceScheduleItem | null => {
   if (!isRecord(item)) {
     return null;
   }
@@ -406,7 +431,9 @@ const normalizeNurseryServiceScheduleItem = (item: unknown): NurseryServiceSched
 
   const shift = isRecord(item.shift) ? item.shift : null;
   const caretaker = isRecord(item.caretaker) ? item.caretaker : null;
-  const serviceRegistration = isRecord(item.serviceRegistration) ? item.serviceRegistration : null;
+  const serviceRegistration = isRecord(item.serviceRegistration)
+    ? item.serviceRegistration
+    : null;
   const nurseryCareService =
     serviceRegistration && isRecord(serviceRegistration.nurseryCareService)
       ? serviceRegistration.nurseryCareService
@@ -415,14 +442,7 @@ const normalizeNurseryServiceScheduleItem = (item: unknown): NurseryServiceSched
     nurseryCareService && isRecord(nurseryCareService.careServicePackage)
       ? nurseryCareService.careServicePackage
       : null;
-  const customer = isRecord(item.customer)
-    ? item.customer
-    : serviceRegistration && isRecord(serviceRegistration.customer)
-      ? serviceRegistration.customer
-      : null;
-
-  const statusValue = typeof item.status === "string" ? item.status : toNumber(item.status);
-  const statusName = toText(item.statusName) || (typeof item.status === "string" ? item.status : "");
+  const customer = serviceRegistration && isRecord(serviceRegistration.customer) ? serviceRegistration.customer : null;
 
   return {
     id,
@@ -520,18 +540,24 @@ const buildPaginationParams = (query?: ServiceRegistrationsQuery) => {
   }
 
   return {
-    ...(typeof query.pageNumber === "number" ? { PageNumber: query.pageNumber } : {}),
+    ...(typeof query.pageNumber === "number"
+      ? { PageNumber: query.pageNumber }
+      : {}),
     ...(typeof query.pageSize === "number" ? { PageSize: query.pageSize } : {}),
   };
 };
 
-const buildManagerRegistrationParams = (query?: ManagerServiceRegistrationsQuery) => {
+const buildManagerRegistrationParams = (
+  query?: ManagerServiceRegistrationsQuery,
+) => {
   if (!query) {
     return undefined;
   }
 
   return {
-    ...(typeof query.pageNumber === "number" ? { PageNumber: query.pageNumber } : {}),
+    ...(typeof query.pageNumber === "number"
+      ? { PageNumber: query.pageNumber }
+      : {}),
     ...(typeof query.pageSize === "number" ? { PageSize: query.pageSize } : {}),
     ...(typeof query.skip === "number" ? { Skip: query.skip } : {}),
     ...(typeof query.take === "number" ? { Take: query.take } : {}),
@@ -539,12 +565,14 @@ const buildManagerRegistrationParams = (query?: ManagerServiceRegistrationsQuery
   };
 };
 
-export const getManagerNurseryCareServices = async (loading = true): Promise<NurseryCareService[]> => {
+export const getManagerNurseryCareServices = async (
+  loading = true,
+): Promise<NurseryCareService[]> => {
   const response = await apiClient.get<WrappedResponse<unknown>>(
     "nursery-care-services/my",
     undefined,
     loading,
-    QUERY_CONFIG
+    QUERY_CONFIG,
   );
 
   const raw = unwrapPayloadData(response);
@@ -557,12 +585,14 @@ export const getManagerNurseryCareServices = async (loading = true): Promise<Nur
     .filter((item): item is NurseryCareService => Boolean(item));
 };
 
-export const getManagerNotOfferedPackages = async (loading = true): Promise<CareServicePackage[]> => {
+export const getManagerNotOfferedPackages = async (
+  loading = true,
+): Promise<CareServicePackage[]> => {
   const response = await apiClient.get<WrappedResponse<unknown>>(
     "nursery-care-services/not-offered-packages",
     undefined,
     loading,
-    QUERY_CONFIG
+    QUERY_CONFIG,
   );
 
   const raw = unwrapPayloadData(response);
@@ -570,18 +600,20 @@ export const getManagerNotOfferedPackages = async (loading = true): Promise<Care
     return [];
   }
 
-  return raw.map(normalizePackage).filter((item): item is CareServicePackage => Boolean(item));
+  return raw
+    .map(normalizePackage)
+    .filter((item): item is CareServicePackage => Boolean(item));
 };
 
 export const addManagerPackageToNursery = async (
   careServicePackageId: number,
-  loading = true
+  loading = true,
 ): Promise<NurseryCareService> => {
   const response = await apiClient.post<WrappedResponse<unknown>>(
     "nursery-care-services",
     { careServicePackageId },
     loading,
-    MUTATION_CONFIG
+    MUTATION_CONFIG,
   );
 
   const raw = unwrapPayloadData(response);
@@ -595,13 +627,13 @@ export const addManagerPackageToNursery = async (
 
 export const toggleManagerNurseryCareService = async (
   id: number,
-  loading = true
+  loading = true,
 ): Promise<NurseryCareService> => {
   const response = await apiClient.patch<WrappedResponse<unknown>>(
     `nursery-care-services/${id}/toggle`,
     undefined,
     loading,
-    MUTATION_CONFIG
+    MUTATION_CONFIG,
   );
 
   const raw = unwrapPayloadData(response);
@@ -613,16 +645,21 @@ export const toggleManagerNurseryCareService = async (
   return normalized;
 };
 
-export const deleteManagerNurseryCareService = async (id: number, loading = true): Promise<void> => {
+export const deleteManagerNurseryCareService = async (
+  id: number,
+  loading = true,
+): Promise<void> => {
   await apiClient.del(`nursery-care-services/${id}`, loading, MUTATION_CONFIG);
 };
 
-export const getPublicCareServicePackages = async (loading = true): Promise<CareServicePackage[]> => {
+export const getPublicCareServicePackages = async (
+  loading = true,
+): Promise<CareServicePackage[]> => {
   const response = await apiClient.get<WrappedResponse<unknown>>(
     "care-service-packages",
     undefined,
     loading,
-    QUERY_CONFIG
+    QUERY_CONFIG,
   );
 
   const raw = unwrapPayloadData(response);
@@ -630,18 +667,20 @@ export const getPublicCareServicePackages = async (loading = true): Promise<Care
     return [];
   }
 
-  return raw.map(normalizePackage).filter((item): item is CareServicePackage => Boolean(item));
+  return raw
+    .map(normalizePackage)
+    .filter((item): item is CareServicePackage => Boolean(item));
 };
 
 export const getPublicNurseryCareServicesByPackage = async (
   careServicePackageId: number,
-  loading = true
+  loading = true,
 ): Promise<NurseryCareService[]> => {
   const response = await apiClient.get<WrappedResponse<unknown>>(
     "nursery-care-services/by-package",
     { careServicePackageId },
     loading,
-    QUERY_CONFIG
+    QUERY_CONFIG,
   );
 
   const payload = unwrapPayloadData(response);
@@ -654,12 +693,15 @@ export const getPublicNurseryCareServicesByPackage = async (
     .filter((item): item is NurseryCareService => Boolean(item));
 };
 
-export const getCareServicePackageDetail = async (id: number, loading = true): Promise<CareServicePackage | null> => {
+export const getCareServicePackageDetail = async (
+  id: number,
+  loading = true,
+): Promise<CareServicePackage | null> => {
   const response = await apiClient.get<WrappedResponse<unknown>>(
     `care-service-packages/${id}`,
     undefined,
     loading,
-    QUERY_CONFIG
+    QUERY_CONFIG,
   );
 
   return normalizePackage(unwrapPayloadData(response));
@@ -667,24 +709,23 @@ export const getCareServicePackageDetail = async (id: number, loading = true): P
 
 export const createServiceRegistration = async (
   data: CreateServiceRegistrationRequest,
-  loading = true
+  loading = true,
 ): Promise<CreatedServiceRegistration> => {
-  const response = await apiClient.post<WrappedResponse<CreatedServiceRegistration>>(
-    "service-registrations",
-    data,
-    loading,
-    MUTATION_CONFIG
-  );
+  const response = await apiClient.post<
+    WrappedResponse<CreatedServiceRegistration>
+  >("service-registrations", data, loading, MUTATION_CONFIG);
 
   return unwrapPayloadData(response);
 };
 
-export const getCareServiceTypeEnums = async (loading = true): Promise<EnumOption[]> => {
+export const getCareServiceTypeEnums = async (
+  loading = true,
+): Promise<EnumOption[]> => {
   const response = await apiClient.get<WrappedResponse<unknown>>(
     "system/enums/care-services",
     undefined,
     loading,
-    QUERY_CONFIG
+    QUERY_CONFIG,
   );
 
   const payload = unwrapPayloadData(response);
@@ -695,23 +736,46 @@ export const getCareServiceTypeEnums = async (loading = true): Promise<EnumOptio
   return [];
 };
 
-export const getDayOfWeekEnums = async (loading = true): Promise<EnumOption[]> => {
+export const getCareReminderTypeEnums = async (
+  loading = true,
+): Promise<EnumOption[]> => {
+  const response = await apiClient.get<WrappedResponse<unknown>>(
+    "system/enums/care-reminders",
+    undefined,
+    loading,
+    QUERY_CONFIG,
+  );
+
+  const payload = unwrapPayloadData(response);
+  if (Array.isArray(payload) && payload.length > 0) {
+    return normalizeEnumOptions({ payload: payload[0] });
+  }
+
+  return [];
+};
+
+export const getDayOfWeekEnums = async (
+  loading = true,
+): Promise<EnumOption[]> => {
   const response = await apiClient.get<WrappedResponse<unknown>>(
     "system/enums/DayOfWeek",
     undefined,
     loading,
-    QUERY_CONFIG
+    QUERY_CONFIG,
   );
 
   return normalizeEnumOptions(response);
 };
 
-export const getSystemEnumValues = async (enumName: string, loading = true): Promise<EnumOption[]> => {
+export const getSystemEnumValues = async (
+  enumName: string,
+  loading = true,
+): Promise<EnumOption[]> => {
   const response = await apiClient.get<WrappedResponse<unknown>>(
     `system/enums/${encodeURIComponent(enumName)}`,
     undefined,
     loading,
-    QUERY_CONFIG
+    QUERY_CONFIG,
   );
 
   const payload = unwrapPayloadData(response);
@@ -743,12 +807,14 @@ export const getSystemEnumValues = async (enumName: string, loading = true): Pro
   return normalizeEnumOptions(response);
 };
 
-export const getPublicShifts = async (loading = true): Promise<PublicShift[]> => {
+export const getPublicShifts = async (
+  loading = true,
+): Promise<PublicShift[]> => {
   const response = await apiClient.get<WrappedResponse<unknown>>(
     "shifts",
     undefined,
     loading,
-    QUERY_CONFIG
+    QUERY_CONFIG,
   );
 
   const payload = unwrapPayloadData(response);
@@ -756,18 +822,20 @@ export const getPublicShifts = async (loading = true): Promise<PublicShift[]> =>
     return [];
   }
 
-  return payload.map((item) => normalizePublicShift(item)).filter((item): item is PublicShift => Boolean(item));
+  return payload
+    .map((item) => normalizePublicShift(item))
+    .filter((item): item is PublicShift => Boolean(item));
 };
 
 export const getMyServiceRegistrations = async (
   query?: ServiceRegistrationsQuery,
-  loading = true
+  loading = true,
 ): Promise<PaginatedApiResponse<MyServiceRegistration>> => {
   const response = await apiClient.get<WrappedResponse<unknown>>(
     "service-registrations/my",
     buildPaginationParams(query),
     loading,
-    QUERY_CONFIG
+    QUERY_CONFIG,
   );
 
   const payload = unwrapPayloadData(response);
@@ -798,13 +866,13 @@ export const getMyServiceRegistrations = async (
 
 export const getServiceRegistrationDetail = async (
   id: number,
-  loading = true
+  loading = true,
 ): Promise<MyServiceRegistration> => {
   const response = await apiClient.get<WrappedResponse<unknown>>(
     `service-registrations/${id}`,
     undefined,
     loading,
-    QUERY_CONFIG
+    QUERY_CONFIG,
   );
 
   const normalized = normalizeServiceRegistration(unwrapPayloadData(response));
@@ -818,7 +886,7 @@ export const getServiceRegistrationDetail = async (
 export const cancelServiceRegistration = async (
   id: number,
   cancelReason: string,
-  loading = true
+  loading = true,
 ): Promise<MyServiceRegistration> => {
   const trimmedReason = cancelReason.trim();
   const endpoint = `service-registrations/${id}/cancel?cancelReason=${encodeURIComponent(trimmedReason)}`;
@@ -827,7 +895,7 @@ export const cancelServiceRegistration = async (
     endpoint,
     undefined,
     loading,
-    MUTATION_CONFIG
+    MUTATION_CONFIG,
   );
 
   const normalized = normalizeServiceRegistration(unwrapPayloadData(response));
@@ -840,13 +908,13 @@ export const cancelServiceRegistration = async (
 
 export const getManagerNurseryServiceRegistrations = async (
   query?: ManagerServiceRegistrationsQuery,
-  loading = true
+  loading = true,
 ): Promise<PaginatedApiResponse<ManagerServiceRegistration>> => {
   const response = await apiClient.get<WrappedResponse<unknown>>(
     "service-registrations/nursery",
     buildManagerRegistrationParams(query),
     loading,
-    QUERY_CONFIG
+    QUERY_CONFIG,
   );
 
   const payload = unwrapPayloadData(response);
@@ -877,13 +945,13 @@ export const getManagerNurseryServiceRegistrations = async (
 
 export const getManagerNurseryServiceRegistrationDetail = async (
   id: number,
-  loading = true
+  loading = true,
 ): Promise<ManagerServiceRegistration> => {
   const response = await apiClient.get<WrappedResponse<unknown>>(
     `service-registrations/nursery/${id}`,
     undefined,
     loading,
-    QUERY_CONFIG
+    QUERY_CONFIG,
   );
 
   const normalized = normalizeServiceRegistration(unwrapPayloadData(response));
@@ -896,13 +964,13 @@ export const getManagerNurseryServiceRegistrationDetail = async (
 
 export const approveManagerServiceRegistration = async (
   id: number,
-  loading = true
+  loading = true,
 ): Promise<ManagerServiceRegistration> => {
   const response = await apiClient.post<WrappedResponse<unknown>>(
     `service-registrations/${id}/approve`,
     undefined,
     loading,
-    MUTATION_CONFIG
+    MUTATION_CONFIG,
   );
 
   const normalized = normalizeServiceRegistration(unwrapPayloadData(response));
@@ -916,7 +984,7 @@ export const approveManagerServiceRegistration = async (
 export const rejectManagerServiceRegistration = async (
   id: number,
   rejectReason: string,
-  loading = true
+  loading = true,
 ): Promise<ManagerServiceRegistration> => {
   const trimmedReason = rejectReason.trim();
   const endpoint = `service-registrations/${id}/reject?rejectReason=${encodeURIComponent(trimmedReason)}`;
@@ -925,7 +993,7 @@ export const rejectManagerServiceRegistration = async (
     endpoint,
     undefined,
     loading,
-    MUTATION_CONFIG
+    MUTATION_CONFIG,
   );
 
   const normalized = normalizeServiceRegistration(unwrapPayloadData(response));
@@ -939,7 +1007,7 @@ export const rejectManagerServiceRegistration = async (
 export const managerCancelServiceRegistration = async (
   id: number,
   cancelReason: string,
-  loading = true
+  loading = true,
 ): Promise<ManagerServiceRegistration> => {
   const trimmedReason = cancelReason.trim();
   const endpoint = `service-registrations/${id}/manager-cancel?cancelReason=${encodeURIComponent(trimmedReason)}`;
@@ -948,7 +1016,7 @@ export const managerCancelServiceRegistration = async (
     endpoint,
     undefined,
     loading,
-    MUTATION_CONFIG
+    MUTATION_CONFIG,
   );
 
   const normalized = normalizeServiceRegistration(unwrapPayloadData(response));
@@ -961,13 +1029,13 @@ export const managerCancelServiceRegistration = async (
 
 export const getEligibleCaretakersForServiceRegistration = async (
   id: number,
-  loading = true
+  loading = true,
 ): Promise<EligibleCaretaker[]> => {
   const response = await apiClient.get<WrappedResponse<unknown>>(
     `service-registrations/${id}/eligible-caretakers`,
     undefined,
     loading,
-    QUERY_CONFIG
+    QUERY_CONFIG,
   );
 
   const payload = unwrapPayloadData(response);
@@ -983,13 +1051,13 @@ export const getEligibleCaretakersForServiceRegistration = async (
 export const assignCaretakerToManagerServiceRegistration = async (
   id: number,
   data: AssignServiceRegistrationCaretakerRequest,
-  loading = true
+  loading = true,
 ): Promise<ManagerServiceRegistration> => {
   const response = await apiClient.put<WrappedResponse<unknown>>(
     `service-registrations/${id}/assign-caretaker`,
     data,
     loading,
-    MUTATION_CONFIG
+    MUTATION_CONFIG,
   );
 
   const normalized = normalizeServiceRegistration(unwrapPayloadData(response));
@@ -1008,13 +1076,13 @@ export interface RescheduleServiceRegistrationRequest {
 export const rescheduleManagerServiceRegistration = async (
   id: number,
   data: RescheduleServiceRegistrationRequest,
-  loading = true
+  loading = true,
 ): Promise<ManagerServiceRegistration> => {
   const response = await apiClient.put<WrappedResponse<unknown>>(
     `service-registrations/${id}/reschedule`,
     data,
     loading,
-    MUTATION_CONFIG
+    MUTATION_CONFIG,
   );
 
   const normalized = normalizeServiceRegistration(unwrapPayloadData(response));
@@ -1027,13 +1095,13 @@ export const rescheduleManagerServiceRegistration = async (
 
 export const getNurseryScheduleByDate = async (
   date: string,
-  loading = true
+  loading = true,
 ): Promise<NurseryServiceScheduleItem[]> => {
   const response = await apiClient.get<WrappedResponse<unknown>>(
     "service-progress/nursery-schedule",
     { date },
     loading,
-    QUERY_CONFIG
+    QUERY_CONFIG,
   );
 
   const payload = unwrapPayloadData(response);
@@ -1046,15 +1114,20 @@ export const getNurseryScheduleByDate = async (
     .filter((item): item is NurseryServiceScheduleItem => Boolean(item));
 };
 
-export const getServiceProgressDetail = async (id: number, loading = true): Promise<ServiceProgressDetail> => {
+export const getServiceProgressDetail = async (
+  id: number,
+  loading = true,
+): Promise<ServiceProgressDetail> => {
   const response = await apiClient.get<WrappedResponse<unknown>>(
     `service-progress/${id}`,
     undefined,
     loading,
-    QUERY_CONFIG
+    QUERY_CONFIG,
   );
 
-  const normalized = normalizeNurseryServiceScheduleItem(unwrapPayloadData(response));
+  const normalized = normalizeNurseryServiceScheduleItem(
+    unwrapPayloadData(response),
+  );
   if (!normalized) {
     throw new Error("Cannot load service progress detail");
   }
@@ -1065,16 +1138,18 @@ export const getServiceProgressDetail = async (id: number, loading = true): Prom
 export const reassignServiceProgressCaretaker = async (
   id: number,
   data: ServiceProgressReassignRequest,
-  loading = true
+  loading = true,
 ): Promise<ServiceProgressDetail> => {
   const response = await apiClient.put<WrappedResponse<unknown>>(
     `service-progress/${id}/reassign`,
     data,
     loading,
-    MUTATION_CONFIG
+    MUTATION_CONFIG,
   );
 
-  const normalized = normalizeNurseryServiceScheduleItem(unwrapPayloadData(response));
+  const normalized = normalizeNurseryServiceScheduleItem(
+    unwrapPayloadData(response),
+  );
   if (!normalized) {
     throw new Error("Cannot reassign caretaker for service progress");
   }
@@ -1086,13 +1161,13 @@ export const getCaretakerScheduleByRange = async (
   caretakerId: number,
   from: string,
   to: string,
-  loading = true
+  loading = true,
 ): Promise<NurseryServiceScheduleItem[]> => {
   const response = await apiClient.get<WrappedResponse<unknown>>(
     `service-progress/nursery-schedule/caretaker/${caretakerId}/all-services`,
     { from, to },
     loading,
-    QUERY_CONFIG
+    QUERY_CONFIG,
   );
 
   return parseNurseryServiceScheduleItems(unwrapPayloadData(response));

@@ -14,7 +14,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import ManagementHeader from '@/components/layout/ManagementHeader';
 import {
-  getEligibleCaretakersForServiceRegistration,
+  getEligibleCaretakersForReassgiCaretaker,
   getNurseryScheduleByDate,
   getServiceProgressDetail,
   reassignServiceProgressCaretaker,
@@ -122,7 +122,7 @@ export default function ManagerScheduleServicesPageClient() {
     setSelectedCaretakerId(0);
 
     try {
-      const caretakers = await getEligibleCaretakersForServiceRegistration(item.serviceRegistrationId, false);
+      const caretakers = await getEligibleCaretakersForReassgiCaretaker(item.serviceRegistrationId, false);
       setEligibleCaretakers(caretakers);
       if (caretakers.length > 0) {
         setSelectedCaretakerId(caretakers[0].id);

@@ -170,6 +170,7 @@ export default function CaretakerManagementPageClient() {
 
     try {
       const payload = await getCaretakerScheduleByRange(caretakerId, from, to, false);
+      console.log("Fetched caretaker schedule", payload);
       setScheduleItems(payload);
     } catch (loadError) {
       const message = getErrorMessage(loadError, "Cannot load caretaker schedule");

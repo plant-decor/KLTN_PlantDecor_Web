@@ -1,7 +1,25 @@
 "use client";
 
-import { Avatar, Badge, Box, Button, Stack, Typography } from "@mui/material";
-import { ChatBubbleOutline as ChatIcon } from "@mui/icons-material";
+import { useState, type MouseEvent } from "react";
+import {
+  Avatar,
+  Badge,
+  Box,
+  Button,
+  IconButton,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
+  Stack,
+  Typography,
+} from "@mui/material";
+import {
+  ChatBubbleOutline as ChatIcon,
+  CloseRounded as CloseIcon,
+  EditOutlined as EditIcon,
+  MoreVert as MoreVertIcon,
+} from "@mui/icons-material";
 import { CustomLoading } from "@/components/CustomLoading";
 import type { AIChatSession } from "@/types/ai-chatbot.types";
 import { hoverLiftStyle } from "@/lib/styles/buttonStyles";
@@ -10,10 +28,14 @@ interface SessionsPanelProps {
   sessions: AIChatSession[];
   selectedSessionId: number | null;
   isLoading: boolean;
+  isLoadingHistory: boolean;
   isSending: boolean;
   isCreatingSession: boolean;
+  mutatingSessionId: number | null;
   onNewChat: () => void;
   onSelectSession: (sessionId: number) => void;
+  onRenameSession: (session: AIChatSession) => void;
+  onCloseSession: (session: AIChatSession) => void;
   formatTime: (value?: string | null) => string;
 }
 
@@ -21,15 +43,49 @@ export function SessionsPanel({
   sessions,
   selectedSessionId,
   isLoading,
+  isLoadingHistory,
   isSending,
   isCreatingSession,
+  mutatingSessionId,
   onNewChat,
   onSelectSession,
+  onRenameSession,
+  onCloseSession,
   formatTime,
 }: SessionsPanelProps) {
+  const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null);
+  const [menuSession, setMenuSession] = useState<AIChatSession | null>(null);
+
   const sortedSessions = [...sessions].sort(
     (a, b) => (b.sessionId ?? 0) - (a.sessionId ?? 0),
   );
+  const actionsDisabled =
+    isLoading || isLoadingHistory || isSending || isCreatingSession || mutatingSessionId !== null;
+
+  const handleOpenMenu = (event: MouseEvent<HTMLElement>, session: AIChatSession) => {
+    event.stopPropagation();
+    setMenuAnchorEl(event.currentTarget);
+    setMenuSession(session);
+  };
+
+  const handleCloseMenu = () => {
+    setMenuAnchorEl(null);
+    setMenuSession(null);
+  };
+
+  const handleRename = () => {
+    if (!menuSession) return;
+    const session = menuSession;
+    handleCloseMenu();
+    onRenameSession(session);
+  };
+
+  const handleCloseSession = () => {
+    if (!menuSession) return;
+    const session = menuSession;
+    handleCloseMenu();
+    onCloseSession(session);
+  };
 
   return (
     <Box
@@ -53,7 +109,7 @@ export function SessionsPanel({
             size="small"
             variant="contained"
             onClick={onNewChat}
-            disabled={isCreatingSession || isSending || isLoading}
+            disabled={actionsDisabled}
             sx={{
               textTransform: "none",
               fontWeight: 900,
@@ -146,11 +202,50 @@ export function SessionsPanel({
                     {s.status ? `Status: ${String(s.status)}` : " "}
                   </Typography>
                 </Box>
+
+                <IconButton
+                  size="small"
+                  onClick={(event) => handleOpenMenu(event, s)}
+                  disabled={actionsDisabled}
+                  aria-label={`Open actions for ${label}`}
+                  sx={{
+                    color: "#64748b",
+                    "&:hover": { bgcolor: "rgba(15,23,42,0.08)" },
+                  }}
+                >
+                  {mutatingSessionId === s.sessionId ? (
+                    <CustomLoading size={16} />
+                  ) : (
+                    <MoreVertIcon fontSize="small" />
+                  )}
+                </IconButton>
               </Box>
             );
           })}
         </Stack>
       </Box>
+
+      <Menu
+        anchorEl={menuAnchorEl}
+        open={Boolean(menuAnchorEl)}
+        onClose={handleCloseMenu}
+        onClick={(event) => event.stopPropagation()}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <MenuItem onClick={handleRename} disabled={actionsDisabled}>
+          <ListItemIcon>
+            <EditIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Rename</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={handleCloseSession} disabled={actionsDisabled} sx={{ color: "#dc2626" }}>
+          <ListItemIcon sx={{ color: "inherit" }}>
+            <CloseIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Close</ListItemText>
+        </MenuItem>
+      </Menu>
     </Box>
   );
 }

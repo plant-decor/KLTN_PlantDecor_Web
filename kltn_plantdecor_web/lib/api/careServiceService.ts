@@ -445,7 +445,9 @@ const normalizeNurseryServiceScheduleItem = (
   const customer =
     serviceRegistration && isRecord(serviceRegistration.customer)
       ? serviceRegistration.customer
-      : null;
+      : isRecord(item.customer)
+        ? item.customer
+        : null;
   const statusValue =
     typeof item.status === "string" ? item.status : toNumber(item.status);
   const statusName = toText(item.statusName);
@@ -461,6 +463,9 @@ const normalizeNurseryServiceScheduleItem = (
     actualStartTime: toNullableText(item.actualStartTime),
     actualEndTime: toNullableText(item.actualEndTime),
     description: toNullableText(item.description),
+    incidentReason: toNullableText(item.incidentReason),
+    incidentImageUrl: toNullableText(item.incidentImageUrl),
+    hasIncidents: toBoolean(item.hasIncidents, false),
     evidenceImageUrl: toNullableText(item.evidenceImageUrl),
     shift: shift
       ? {
@@ -1054,6 +1059,27 @@ export const getEligibleCaretakersForServiceRegistration = async (
     .filter((item): item is EligibleCaretaker => Boolean(item));
 };
 
+export const getEligibleCaretakersForReassgiCaretaker = async (
+  id: number,
+  loading = true,
+): Promise<EligibleCaretaker[]> => {
+  const response = await apiClient.get<WrappedResponse<unknown>>(
+    `service-progress/${id}/eligible-caretakers`,
+    undefined,
+    loading,
+    QUERY_CONFIG,
+  );
+
+  const payload = unwrapPayloadData(response);
+  if (!Array.isArray(payload)) {
+    return [];
+  }
+
+  return payload
+    .map((item) => normalizeEligibleCaretaker(item))
+    .filter((item): item is EligibleCaretaker => Boolean(item));
+};
+
 export const assignCaretakerToManagerServiceRegistration = async (
   id: number,
   data: AssignServiceRegistrationCaretakerRequest,
@@ -1175,8 +1201,7 @@ export const getCaretakerScheduleByRange = async (
     loading,
     QUERY_CONFIG,
   );
-
-  return parseNurseryServiceScheduleItems(unwrapPayloadData(response));
+  return parseNurseryServiceScheduleItems(unwrapPayloadData(response));;
 };
 
 export const getStaffScheduleByRange = async (

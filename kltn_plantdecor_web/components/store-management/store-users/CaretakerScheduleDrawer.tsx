@@ -23,6 +23,7 @@ import {
 } from "@mui/material";
 import type { NurseryServiceScheduleItem } from "@/types/care-service.types";
 import type { StoreUserItem } from "@/types/store-management.types";
+import { formatDate } from "@/lib/utils/dateUtils";
 
 interface CaretakerScheduleDrawerProps {
   open: boolean;
@@ -38,19 +39,6 @@ interface CaretakerScheduleDrawerProps {
   onRefresh: () => void;
   onViewTaskDetail: (item: NurseryServiceScheduleItem) => void;
 }
-
-const formatDateForDisplay = (value: string): string => {
-  if (!value) {
-    return "-";
-  }
-
-  const parts = value.split("-");
-  if (parts.length !== 3) {
-    return value;
-  }
-
-  return `${parts[2]}/${parts[1]}/${parts[0]}`;
-};
 
 const getStatusColor = (status: number | string): "warning" | "info" | "success" | "error" | "default" => {
   if (typeof status === "string") {
@@ -194,6 +182,7 @@ export default function CaretakerScheduleDrawer({
                 )}
 
                 {!loading &&
+                console.log(items) ||
                   items.map((item) => {
                     const taskLabel =
                       item.taskTypeName ||
@@ -207,24 +196,24 @@ export default function CaretakerScheduleDrawer({
                     return (
                       <TableRow key={item.id} hover>
                         <TableCell align="center">{item.id}</TableCell>
-                        <TableCell>{formatDateForDisplay(item.taskDate)}</TableCell>
+                        <TableCell>{formatDate(item.taskDate)}</TableCell>
                         <TableCell>
                           {taskLabel}
                         </TableCell>
                         <TableCell>
                           {item.shift ? `${item.shift.shiftName} (${item.shift.startTime} - ${item.shift.endTime})` : "-"}
                         </TableCell>
-                        <TableCell>{customerName}</TableCell>
-                        <TableCell>{servicePackageName}</TableCell>
-                        <TableCell>
+                        <TableCell align="center">{customerName}</TableCell>
+                        <TableCell align="center">{servicePackageName}</TableCell>
+                        <TableCell align="center">
                           <Chip
                             size="small"
                             variant="outlined"
                             color={getStatusColor(item.status)}
-                            label={item.statusName || "-"}
+                            label={item.status || "-"}
                           />
                         </TableCell>
-                        <TableCell align="right">
+                        <TableCell align="center">
                           <IconButton
                             color="primary"
                             onClick={() => onViewTaskDetail(item)}

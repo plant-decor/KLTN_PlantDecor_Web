@@ -91,6 +91,7 @@
     "profile": "Profile",
     "orderHistory": "Order history",
     "wishlist": "Wishlist",
+    "careReminders": "Care reminders",
     "logout": "Log out"
   },
   "sidebar": {
@@ -535,6 +536,7 @@
   "myPlantPage": {
     "title": "My Plants",
     "description": "A list of plants you purchased with detailed care guides for each one.",
+    "createReminder": "Create reminder",
     "errors": {
       "loadPlants": "Unable to load your plants list."
     },
@@ -543,6 +545,23 @@
       "description": "Explore the store to choose suitable plants and start caring for them today.",
       "visitStore": "Visit store"
     }
+  },
+  "careRemindersPage": {
+    "title": "Care reminders",
+    "description": "Create, update, complete, and review your plant care notes in one place.",
+    "errors": {
+      "loadPlants": "Unable to load your plants list."
+    }
+  },
+  "careReminderNotifications": {
+    "tooltip": "Care reminders",
+    "title": "Today's reminders",
+    "subtitle": "{count} reminder(s) today",
+    "loading": "Loading reminders...",
+    "loadError": "Unable to load today's reminders.",
+    "empty": "No care reminders for today.",
+    "markDone": "Mark as done",
+    "viewAll": "View all reminders"
   },
   "myPlantClient": {
     "common": {

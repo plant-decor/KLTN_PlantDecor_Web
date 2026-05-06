@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/authStore';
 import CartBadge from '@/components/cart/CartBadge';
-// import { NotificationBell } from '@/components/notifications/NotificationBell';
+import HeaderNotificationDropdown from './HeaderNotificationDropdown';
 import Navigation from './Navigation';
 // import LanguageSwitcher from './LanguageSwitcher';
 import { Link } from '@/i18n/navigation';
@@ -18,6 +18,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  useMediaQuery,
 } from '@mui/material';
 import { useTranslations } from 'next-intl';
 import type { CategoryResponse } from '@/lib/api/categoriesService';
@@ -28,6 +29,7 @@ const USER_MENU_LABEL_KEYS: Record<string, string> = {
   '/profile/[userid]': 'profile',
   '/orders/[userid]': 'orderHistory',
   '/wishlist/[userid]': 'wishlist',
+  '/care-reminders/[userid]': 'careReminders',
   '/logout': 'logout',
 };
 
@@ -60,6 +62,8 @@ export default function Header({ initialStoreCategories = [] }: HeaderProps) {
   const isUser = !!user;
   const isGuest = !user;
   const userId = user?.id || null;
+  const isCustomer = String(user?.role ?? '').trim().toLowerCase() === 'customer';
+  const isDesktopViewport = useMediaQuery('(min-width:768px)', { noSsr: true });
   const avatarImageSrc = user?.avatar?.trim() || null;
   const avatarLabel = user?.name ? user.name.charAt(0).toUpperCase() : 'U';
   const [failedAvatarSrc, setFailedAvatarSrc] = useState<string | null>(null);
@@ -136,8 +140,9 @@ export default function Header({ initialStoreCategories = [] }: HeaderProps) {
               {/* Cart Badge */}
               <CartBadge />
 
-              {/* Notification Bell (for staff, manager, admin, shipper, caretaker) */}
-              {/* {hasNotificationAccess && <NotificationBell />} */}
+              {isCustomer && userId && isDesktopViewport && (
+                <HeaderNotificationDropdown userId={userId} />
+              )}
 
               {/* Auth Actions */}
               <div className="flex items-center gap-2 lg:gap-4">

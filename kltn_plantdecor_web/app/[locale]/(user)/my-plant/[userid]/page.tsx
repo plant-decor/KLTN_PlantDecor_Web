@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { Box, Button, Container, Stack, Typography } from '@mui/material';
+import AddAlertIcon from '@mui/icons-material/AddAlert';
 import { getTranslations } from 'next-intl/server';
 import MyPlantsClient from '@/components/plant/MyPlantsClient';
 import { getCurrentUser } from '@/lib/auth/getCurrentUser';
@@ -62,13 +63,34 @@ export default async function MyPlantPage({ params }: PageProps) {
   return (
     <Container maxWidth="xl" sx={{ py: { xs: 4, md: 8 } }}>
       <Stack spacing={3} sx={{ mb: 4 }}>
-        <Box>
-          <Typography variant="h3" fontWeight={700} gutterBottom className="font-Inter">
-            {t('title')}
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            {t('description')}
-          </Typography>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: { xs: 'flex-start', md: 'center' },
+            justifyContent: 'space-between',
+            gap: 2,
+            flexDirection: { xs: 'column', md: 'row' },
+          }}
+        >
+          <Box>
+            <Typography variant="h3" fontWeight={700} gutterBottom className="font-Inter">
+              {t('title')}
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              {t('description')}
+            </Typography>
+          </Box>
+
+          <Link href={`/care-reminders/${parsedUserId}`} style={{ textDecoration: 'none' }}>
+            <Button
+              variant="contained"
+              size="large"
+              startIcon={<AddAlertIcon />}
+              sx={{ fontWeight: 700, backgroundColor: 'var(--primary)', ...hoverLiftStyle }}
+            >
+              {t('createReminder')}
+            </Button>
+          </Link>
         </Box>
 
         {/* {errorMessage && <Alert severity="error">{errorMessage}</Alert>} */}

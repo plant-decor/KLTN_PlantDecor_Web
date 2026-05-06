@@ -38,3 +38,37 @@ export interface PlantGuideDetail {
 export interface MyPlantItemWithGuide extends MyPlantItem {
   guide?: PlantGuideDetail | null;
 }
+
+export interface MyCareReminderItem {
+  id: number;
+  userPlantId: number;
+  userId?: number;
+  careType: number;
+  careTypeName: string;
+  plantName: string;
+  plantImageUrl?: string | null;
+  title?: string;
+  message?: string;
+  content?: string;
+  reminderDate: string;
+  scheduledDate: string | null;
+  isCompleted?: boolean;
+  createdAt: string;
+}
+
+export interface MyCareReminderListPayload {
+  items: MyCareReminderItem[];
+  totalCount: number;
+  pageNumber: number;
+  pageSize: number;
+  totalPages: number;
+  hasPrevious: boolean;
+  hasNext: boolean;
+}
+
+export interface MyCareReminderCreateRequest {
+  userPlantId: number;
+  careType: number;
+  content: string;
+  reminderDate: string;
+}

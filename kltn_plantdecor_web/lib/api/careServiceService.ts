@@ -442,7 +442,13 @@ const normalizeNurseryServiceScheduleItem = (
     nurseryCareService && isRecord(nurseryCareService.careServicePackage)
       ? nurseryCareService.careServicePackage
       : null;
-  const customer = serviceRegistration && isRecord(serviceRegistration.customer) ? serviceRegistration.customer : null;
+  const customer =
+    serviceRegistration && isRecord(serviceRegistration.customer)
+      ? serviceRegistration.customer
+      : null;
+  const statusValue =
+    typeof item.status === "string" ? item.status : toNumber(item.status);
+  const statusName = toText(item.statusName);
 
   return {
     id,

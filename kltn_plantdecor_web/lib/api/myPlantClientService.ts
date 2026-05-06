@@ -103,8 +103,8 @@ export const getMyCareReminders = async (
   );
 
   const payload = unwrapPayloadData(response);
-  if (payload && typeof payload === "object" && Array.isArray(payload.items)) {
-    return payload as MyCareReminderListPayload;
+  if (isRecord(payload) && Array.isArray(payload.items)) {
+    return payload as unknown as MyCareReminderListPayload;
   }
 
   return {

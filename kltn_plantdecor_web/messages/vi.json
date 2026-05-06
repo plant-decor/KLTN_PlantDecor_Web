@@ -91,6 +91,7 @@
     "profile": "Hồ sơ",
     "orderHistory": "Lịch sử đơn hàng",
     "wishlist": "Danh sách yêu thích",
+    "careReminders": "Nhắc nhở chăm sóc",
     "logout": "Đăng xuất"
   },
   "sidebar": {
@@ -535,6 +536,7 @@
   "myPlantPage": {
     "title": "Cây của tôi",
     "description": "Danh sách cây bạn đã mua cùng với hướng dẫn chăm sóc chi tiết cho từng loại.",
+    "createReminder": "Tạo lời nhắc",
     "errors": {
       "loadPlants": "Không thể tải danh sách cây của bạn."
     },
@@ -543,6 +545,23 @@
       "description": "Khám phá cửa hàng để chọn những cây phù hợp và bắt đầu chăm sóc chúng ngay hôm nay.",
       "visitStore": "Thăm cửa hàng"
     }
+  },
+  "careRemindersPage": {
+    "title": "Nhắc nhở chăm sóc",
+    "description": "Tạo, cập nhật, hoàn thành và xem lại các ghi chú chăm sóc cây của bạn.",
+    "errors": {
+      "loadPlants": "Không thể tải danh sách cây của bạn."
+    }
+  },
+  "careReminderNotifications": {
+    "tooltip": "Nhắc nhở chăm sóc",
+    "title": "Nhắc nhở hôm nay",
+    "subtitle": "{count} nhắc nhở hôm nay",
+    "loading": "Đang tải nhắc nhở...",
+    "loadError": "Không thể tải nhắc nhở hôm nay.",
+    "empty": "Hôm nay không có nhắc nhở chăm sóc.",
+    "markDone": "Đánh dấu hoàn thành",
+    "viewAll": "Xem tất cả nhắc nhở"
   },
   "myPlantClient": {
     "common": {

@@ -21,6 +21,7 @@ import type {
   AdminCareServicePackageCreateRequest,
   AdminCareServicePackageDetail,
   AdminCareServicePackageListItem,
+  AdminCareServicePackageSuitabilityRuleCreateRequest,
   AdminCareServicePackageUpdateRequest,
   AdminSpecializationOption,
   CareServiceTypeOption,
@@ -36,6 +37,13 @@ import {
   type ModalMode,
   type ServicePackageFormValue,
 } from "@/components/service/service-management/types";
+
+const buildSuitabilityRules = (
+  formValue: ServicePackageFormValue
+): AdminCareServicePackageSuitabilityRuleCreateRequest[] => [
+  ...formValue.categoryIds.map((categoryId) => ({ categoryId })),
+  ...formValue.careDifficultyLevels.map((careDifficultyLevel) => ({ careDifficultyLevel })),
+];
 
 export default function AdminServiceManagementPageClient() {
   const [packages, setPackages] = useState<AdminCareServicePackageListItem[]>([]);
@@ -206,12 +214,7 @@ export default function AdminServiceManagementPageClient() {
       setSubmitting(true);
 
       if (modalMode === "create") {
-        const suitabilityRules =
-          formValue.categoryIds.length > 0
-            ? formValue.categoryIds.map((categoryId) => ({ categoryId }))
-            : formValue.careDifficultyLevels.length > 0
-              ? formValue.careDifficultyLevels.map((careDifficultyLevel) => ({ careDifficultyLevel }))
-              : [];
+        const suitabilityRules = buildSuitabilityRules(formValue);
 
         const payload: AdminCareServicePackageCreateRequest = {
           name: formValue.name.trim(),
@@ -241,18 +244,11 @@ export default function AdminServiceManagementPageClient() {
           isActive: formValue.isActive,
         };
 
-        const suitabilityRules =
-          formValue.categoryIds.length > 0
-            ? formValue.categoryIds.map((categoryId) => ({ categoryId }))
-            : formValue.careDifficultyLevels.length > 0
-              ? formValue.careDifficultyLevels.map((careDifficultyLevel) => ({ careDifficultyLevel }))
-              : [];
+        const suitabilityRules = buildSuitabilityRules(formValue);
 
         await updateAdminCareServicePackage(selectedId, payload, false);
         await updateAdminCareServicePackageSpecializations(selectedId, formValue.specializationIds, false);
-        if (suitabilityRules.length > 0) {
-          await updateAdminCareServicePackageSuitabilityRules(selectedId, suitabilityRules, false);
-        }
+        await updateAdminCareServicePackageSuitabilityRules(selectedId, suitabilityRules, false);
         // toast.success("Service package updated successfully");
       }
 

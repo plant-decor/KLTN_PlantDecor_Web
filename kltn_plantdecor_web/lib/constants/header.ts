@@ -84,5 +84,6 @@ export const USER_MENU_ITEMS: HeaderActionItem[] = [
   { label: 'Profile', href: '/profile/[userid]', requiresUserId: true },
   { label: 'Order history', href: '/orders/[userid]', requiresUserId: true },
   { label: 'Wishlist', href: '/wishlist/[userid]', requiresUserId: true },
+  { label: 'Care reminders', href: '/care-reminders/[userid]', requiresUserId: true },
   { label: 'Log out', href: '/logout' },
 ];

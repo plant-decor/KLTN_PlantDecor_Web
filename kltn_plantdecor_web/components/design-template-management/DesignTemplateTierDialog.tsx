@@ -338,7 +338,12 @@ function TierCreateItemPlantMaterialFields({
 
   const handlePickPlant = useCallback(
     (plant: Plant) => {
-      onPatch({ plantId: plant.id, plantDisplayName: plant.name });
+      onPatch({
+        materialId: null,
+        plantId: plant.id,
+        plantDisplayName: plant.name,
+        materialDisplayName: undefined,
+      });
       setPlantKeyword('');
       setPlantSearchOpen(false);
     },
@@ -347,7 +352,12 @@ function TierCreateItemPlantMaterialFields({
 
   const handlePickMaterial = useCallback(
     (material: Material) => {
-      onPatch({ materialId: material.id, materialDisplayName: material.name });
+      onPatch({
+        materialId: material.id,
+        plantId: null,
+        plantDisplayName: undefined,
+        materialDisplayName: material.name,
+      });
       setMaterialKeyword('');
       setMaterialSearchOpen(false);
     },
@@ -495,14 +505,24 @@ function TierCreateItemPlantMaterialFields({
             onChange={(event) => {
               const nextId = Number(event.target.value);
               if (!nextId) {
-                onPatch({ plantId: null, plantDisplayName: undefined });
+                onPatch({
+                  materialId: null,
+                  plantId: null,
+                  plantDisplayName: undefined,
+                  materialDisplayName: undefined,
+                });
                 return;
               }
               const name =
                 selectPlantOptions.find((o) => o.id === nextId)?.name ||
                 item.plantDisplayName ||
                 `Plant #${nextId}`;
-              onPatch({ plantId: nextId, plantDisplayName: name });
+              onPatch({
+                materialId: null,
+                plantId: nextId,
+                plantDisplayName: name,
+                materialDisplayName: undefined,
+              });
             }}
             MenuProps={plantSelectMenuProps}
           >
@@ -660,14 +680,24 @@ function TierCreateItemPlantMaterialFields({
           onChange={(event) => {
             const nextId = Number(event.target.value);
             if (!nextId) {
-              onPatch({ materialId: null, materialDisplayName: undefined });
+              onPatch({
+                materialId: null,
+                plantId: null,
+                plantDisplayName: undefined,
+                materialDisplayName: undefined,
+              });
               return;
             }
             const name =
               selectMaterialOptions.find((o) => o.id === nextId)?.name ||
               item.materialDisplayName ||
               `Material #${nextId}`;
-            onPatch({ materialId: nextId, materialDisplayName: name });
+            onPatch({
+              materialId: nextId,
+              plantId: null,
+              plantDisplayName: undefined,
+              materialDisplayName: name,
+            });
           }}
           MenuProps={plantSelectMenuProps}
         >

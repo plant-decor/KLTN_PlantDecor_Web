@@ -12,7 +12,6 @@ import {
   Typography,
 } from "@mui/material";
 import {
-  ChatBubbleOutline as ChatIcon,
   Close as CloseIcon,
   SendRounded as SendRoundedIcon,
 } from "@mui/icons-material";
@@ -227,11 +226,11 @@ export default function SupportChatWidget() {
               sx={{ minWidth: 0 }}
             >
               <Image
-                src="/logo/logo-square.png"
-                alt="Plant Decor"
+                src="/img/consultantChat.png"
+                alt="Plant Decor consultant"
                 width={40}
                 height={40}
-                style={{ borderRadius: 8, objectFit: "contain" }}
+                style={{ borderRadius: 9999, objectFit: "cover" }}
               />
 
               <Box sx={{ minWidth: 0 }}>
@@ -485,15 +484,35 @@ export default function SupportChatWidget() {
           onClick={() => setIsOpen(true)}
           aria-label="Open chat support"
           sx={{
-            width: 66,
-            height: 66,
+            width: 74,
+            height: 74,
             borderRadius: 9999,
-            bgcolor: "#0f67e6",
+            bgcolor: "#ffffff",
             color: "white",
-            "&:hover": { bgcolor: "#0a54bd" },
+            p: 0.5,
+            overflow: "hidden",
+            border: "2px solid #22c55e",
+            boxShadow: "0 10px 30px rgba(34,197,94,0.3)",
+            "&:hover": {
+              bgcolor: "#ffffff",
+              transform: "translateY(-2px)",
+              boxShadow: "0 14px 34px rgba(34,197,94,0.36)",
+            },
+            transition: "transform 0.2s ease, box-shadow 0.2s ease",
           }}
         >
-          <ChatIcon sx={{ fontSize: 34 }} />
+          <Image
+            src="/img/consultantChat.png"
+            alt="Open chat support"
+            width={68}
+            height={68}
+            style={{
+              width: "100%",
+              height: "100%",
+              borderRadius: "9999px",
+              objectFit: "cover",
+            }}
+          />
         </Fab>
       )}
     </Box>

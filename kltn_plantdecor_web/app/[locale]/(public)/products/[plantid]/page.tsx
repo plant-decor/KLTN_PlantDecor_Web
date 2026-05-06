@@ -200,7 +200,7 @@ const buildProductTitle = (plant: PlantDetailResponse, locale: string): string =
     return `${plant.name} - ${plant.sizeName || 'Unknown size'} - Care ${plant.careLevelTypeName || 'Unknown'} | ${SITE_NAME}`;
   }
 
-  return `${plant.name} - ${plant.sizeName || 'Kích thước chưa rõ'} - Chăm sóc ${plant.careLevelTypeName || 'chưa rõ'} | ${SITE_NAME}`;
+  return `${plant.name} - ${plant.sizeName || 'Plant size not available'} - Care ${plant.careLevelTypeName || 'Unknown'} | ${SITE_NAME}`;
 };
 
 const buildProductDescription = (plant: PlantDetailResponse, locale: string): string => {
@@ -327,7 +327,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
     getPlantEnums(true, false).catch(() => null),
   ]);
   const plant = getPayload<PlantDetailResponse>(response);
-  console.log('plant',plant);
+  console.log('plant', plant);
   if (!plant) {
     notFound();
   }
@@ -444,39 +444,39 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
             <div className="mb-6 space-y-3 border-t border-gray-100 pt-6">
               <h1 className="text-4xl font-bold text-gray-900 mb-2">{plant.name}</h1>
               {plant.specificName && <p className="text-xl text-gray-600 italic mb-6">{plant.specificName}</p>}
-            <div className='grid grid-cols-2'>
-            {Array.isArray(plant.categories) && plant.categories.length > 0 && (
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('categories')}</h3>
-                <div className="flex flex-wrap gap-2">
-                  {plant.categories.map((category, index) => (
-                    <span
-                      key={`${category.name || 'category'}-${index}`}
-                      className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm"
-                    >
-                      {category.name || t('categoryFallback', { index: index + 1 })}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
+              <div className='grid grid-cols-2'>
+                {Array.isArray(plant.categories) && plant.categories.length > 0 && (
+                  <div className="mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('categories')}</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {plant.categories.map((category, index) => (
+                        <span
+                          key={`${category.name || 'category'}-${index}`}
+                          className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm"
+                        >
+                          {category.name || t('categoryFallback', { index: index + 1 })}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-            {Array.isArray(plant.tags) && plant.tags.length > 0 && (
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('tags')}</h3>
-                <div className="flex flex-wrap gap-2">
-                  {plant.tags.map((tag, index) => (
-                    <span
-                      key={`${tag.tagName || 'tag'}-${index}`}
-                      className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm"
-                    >
-                      {tag.tagName || t('tagFallback', { index: index + 1 })}
-                    </span>
-                  ))}
-                </div>
+                {Array.isArray(plant.tags) && plant.tags.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('tags')}</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {plant.tags.map((tag, index) => (
+                        <span
+                          key={`${tag.tagName || 'tag'}-${index}`}
+                          className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm"
+                        >
+                          {tag.tagName || t('tagFallback', { index: index + 1 })}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-            </div>
               <div className="mb-6">
                 <span className="text-3xl font-bold text-green-600">{formatCurrency(plant.basePrice, locale)}</span>
               </div>

@@ -17,14 +17,17 @@ import {
   getOrdersByEmail,
   getRecommendedPackagesByPlant,
 } from "@/lib/api/orderService";
+import { getCareServicePackageDetail } from "@/lib/api/careServiceService";
 import { buildServiceBookingUrl } from "@/lib/utils/serviceBookingLink";
 import type {
   OrderByEmail,
   RecommendedPackage,
 } from "@/types/order.types";
+import type { CareServicePackage } from "@/types/care-service.types";
 import type { ChatSession } from "../types";
 import { OrderHistoryList } from "./OrderHistoryList";
 import { RecommendedPackageList } from "./RecommendedPackageList";
+import { CareServicePackageDetailDialog } from "./CareServicePackageDetailDialog";
 
 type Props = {
   activeSession: ChatSession | null;
@@ -50,6 +53,12 @@ export function RecommendationSidebar({
   const [recError, setRecError] = useState<string | null>(null);
 
   const [sendingPackageId, setSendingPackageId] = useState<number | null>(null);
+
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState<string | null>(null);
+  const [detail, setDetail] = useState<CareServicePackage | null>(null);
+  const [viewingPackageId, setViewingPackageId] = useState<number | null>(null);
 
   const customerEmail = activeSession?.customerEmail ?? "";
   const customerId = activeSession?.customerId ?? null;
@@ -143,6 +152,35 @@ export function RecommendationSidebar({
     },
     [customerId, locale, onSendBookingLink],
   );
+
+  const handleViewDetail = useCallback(async (recommendation: RecommendedPackage) => {
+    const id = recommendation.packageId;
+    try {
+      setDetailOpen(true);
+      setDetailLoading(true);
+      setDetailError(null);
+      setDetail(null);
+      setViewingPackageId(id);
+
+      const payload = await getCareServicePackageDetail(id, true);
+      if (!payload) {
+        throw new Error("Không thể tải chi tiết gói dịch vụ");
+      }
+      setDetail(payload);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Không thể tải chi tiết gói dịch vụ";
+      setDetailError(message);
+      toast.error(message);
+    } finally {
+      setDetailLoading(false);
+      setViewingPackageId(null);
+    }
+  }, []);
+
+  const handleCloseDetail = useCallback(() => {
+    setDetailOpen(false);
+  }, []);
 
   const sendDisabled = useMemo(
     () => disabled || !customerId || isSending,
@@ -264,10 +302,20 @@ export function RecommendationSidebar({
           loading={recLoading}
           error={recError}
           sendingPackageId={sendingPackageId}
+          viewingPackageId={viewingPackageId}
           disabled={sendDisabled}
           onSendBookingLink={handleSendBookingLink}
+          onViewDetail={handleViewDetail}
         />
       </Box>
+
+      <CareServicePackageDetailDialog
+        open={detailOpen}
+        loading={detailLoading}
+        error={detailError}
+        detail={detail}
+        onClose={handleCloseDetail}
+      />
     </Box>
   );
 }

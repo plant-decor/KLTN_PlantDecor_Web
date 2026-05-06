@@ -1,6 +1,7 @@
 "use client";
 
 import { Box, Button, Chip, Paper, Stack, Typography } from "@mui/material";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import SendIcon from "@mui/icons-material/Send";
 import type { RecommendedPackage } from "@/types/order.types";
 import { hoverLiftStyle } from "@/lib/styles/buttonStyles";
@@ -8,8 +9,10 @@ import { hoverLiftStyle } from "@/lib/styles/buttonStyles";
 type Props = {
   recommendation: RecommendedPackage;
   isSending: boolean;
+  isViewing: boolean;
   disabled: boolean;
   onSendBookingLink: (recommendation: RecommendedPackage) => void;
+  onViewDetail: (recommendation: RecommendedPackage) => void;
 };
 
 const formatCurrency = (value: number) =>
@@ -18,8 +21,10 @@ const formatCurrency = (value: number) =>
 export function RecommendationCard({
   recommendation,
   isSending,
+  isViewing,
   disabled,
   onSendBookingLink,
+  onViewDetail,
 }: Props) {
   return (
     <Paper
@@ -96,23 +101,39 @@ export function RecommendationCard({
         </Stack>
       ) : null}
 
-      <Button
-        size="small"
-        fullWidth
-        variant="contained"
-        startIcon={<SendIcon />}
-        disabled={disabled || isSending}
-        onClick={() => onSendBookingLink(recommendation)}
-        sx={{
-          mt: 1,
-          textTransform: "none",
-          fontWeight: 700,
-          backgroundColor: "var(--primary)",
-          ...hoverLiftStyle,
-        }}
-      >
-        {isSending ? "Sending..." : "Send booking link"}
-      </Button>
+      <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+        <Button
+          size="small"
+          fullWidth
+          variant="outlined"
+          startIcon={<VisibilityIcon />}
+          disabled={isViewing}
+          onClick={() => onViewDetail(recommendation)}
+          sx={{
+            textTransform: "none",
+            fontWeight: 700,
+            ...hoverLiftStyle,
+          }}
+        >
+          {isViewing ? "Loading..." : "Detail"}
+        </Button>
+        <Button
+          size="small"
+          fullWidth
+          variant="contained"
+          startIcon={<SendIcon />}
+          disabled={disabled || isSending}
+          onClick={() => onSendBookingLink(recommendation)}
+          sx={{
+            textTransform: "none",
+            fontWeight: 700,
+            backgroundColor: "var(--primary)",
+            ...hoverLiftStyle,
+          }}
+        >
+          {isSending ? "Sending..." : "Send"}
+        </Button>
+      </Stack>
     </Paper>
   );
 }

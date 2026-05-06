@@ -155,7 +155,7 @@ export default function ManagerScheduleServicesTable({
                 <TableCell>
                   <Stack spacing={0.25}>
                     <Typography variant='body2' fontWeight={500}>
-                      {item.caretaker?.fullName || 'Chưa phân công'}
+                      {item.caretaker?.fullName || 'Not assigned'}
                     </Typography>
                     <Typography variant='caption' color='text.secondary'>
                       {item.caretaker?.email || '-'}
@@ -172,7 +172,7 @@ export default function ManagerScheduleServicesTable({
                         <VisibilityIcon />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title='Chuyển caretaker'>
+                    <Tooltip title='Reassign Caretaker'>
                       <IconButton
                         color='secondary'
                         onClick={() => onReassign(item)}

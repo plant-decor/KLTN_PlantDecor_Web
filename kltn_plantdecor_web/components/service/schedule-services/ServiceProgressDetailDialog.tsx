@@ -16,6 +16,7 @@ import type { ServiceProgressDetail } from '@/types/care-service.types';
 import ServiceRatingReadOnlySection from '@/components/service/ServiceRatingReadOnlySection';
 import { formatDateTime } from '@/components/manager/return-ticket-management/managerReturnTicket.constants';
 import { formatDate } from '../service-orders/managerServiceOrders.constants';
+import ClickableImageViewer from '@/components/image-view/ClickableImageViewer';
 
 interface ServiceProgressDetailDialogProps {
   open: boolean;
@@ -102,10 +103,25 @@ export default function ServiceProgressDetailDialog({
             />
             <DetailRow label='Assigned nursery' value={detail.serviceRegistration?.nurseryCareService.nurseryName || '-'} />
             <DetailRow label='Current caretaker' value={detail.caretaker?.fullName || 'Unassigned'} />
-
+            {detail.hasIncidents && (
+              <Box>
+                <DetailRow label='Incidents' value={detail.incidentReason || '-'} />
+                <Typography sx={{ my: 0.75, fontWeight: 700 }}>
+                  Incidents Image
+                </Typography>
+                {detail.incidentImageUrl&& (
+                  <ClickableImageViewer
+                    images={[detail.incidentImageUrl]}
+                    alt='Incident photo'
+                    containerClassName='w-1/2 bg-gray-100'
+                    showZoomHint={true}
+                  />
+                )}
+              </Box>
+            )}
             {detail.evidenceImageUrl && (
               <Box>
-                <Typography variant='body2' color='text.secondary' sx={{ mb: 0.75 }}>
+                <Typography sx={{ mb: 0.75, fontWeight: 700 }}>
                   Evidence photo
                 </Typography>
                 <Box

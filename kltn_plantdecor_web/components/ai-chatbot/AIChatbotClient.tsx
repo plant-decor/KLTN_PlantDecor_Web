@@ -11,14 +11,17 @@ import {
   DialogTitle,
   Paper,
   TextField,
+  Typography,
 } from "@mui/material";
 import { useAuthStore } from "@/lib/store/authStore";
 import { useRouter } from "@/i18n/navigation";
 import {
+  closeAiChatSession,
   createAiChatSession,
   getAiChatEnums,
   getAiChatHistory,
   getAiChatSessions,
+  renameAiChatSession,
   sendAiChatMessage,
 } from "@/lib/api/aiChatbotService";
 import type { AIChatEnumDefinition, AIChatSession } from "@/types/ai-chatbot.types";
@@ -50,6 +53,7 @@ export default function AIChatbotClient() {
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
+  const [mutatingSessionId, setMutatingSessionId] = useState<number | null>(null);
 
   const [messages, setMessages] = useState<ChatMessageView[]>([]);
   const [draft, setDraft] = useState("");
@@ -57,6 +61,9 @@ export default function AIChatbotClient() {
 
   const [isNewChatDialogOpen, setIsNewChatDialogOpen] = useState(false);
   const [newChatTitle, setNewChatTitle] = useState("");
+  const [renameTarget, setRenameTarget] = useState<AIChatSession | null>(null);
+  const [renameTitle, setRenameTitle] = useState("");
+  const [closeTarget, setCloseTarget] = useState<AIChatSession | null>(null);
 
   const [enumDefs, setEnumDefs] = useState<AIChatEnumDefinition[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -77,6 +84,22 @@ export default function AIChatbotClient() {
   const activeSession = useMemo(() => {
     return sessions.find((s) => s.sessionId === selectedSessionId) ?? null;
   }, [sessions, selectedSessionId]);
+
+  const renameTargetTitle = renameTarget
+    ? renameTarget.title?.trim() || `Session #${renameTarget.sessionId}`
+    : "";
+  const trimmedRenameTitle = renameTitle.trim();
+  const isRenamingSession = renameTarget
+    ? mutatingSessionId === renameTarget.sessionId
+    : false;
+  const isClosingSession = closeTarget
+    ? mutatingSessionId === closeTarget.sessionId
+    : false;
+  const canRenameSession =
+    Boolean(trimmedRenameTitle) &&
+    Boolean(renameTarget) &&
+    trimmedRenameTitle !== renameTargetTitle &&
+    !isRenamingSession;
 
   useEffect(() => {
     if (!scrollRef.current) return;
@@ -289,6 +312,99 @@ export default function AIChatbotClient() {
     }
   };
 
+  const handleOpenRenameSession = (session: AIChatSession) => {
+    setError(null);
+    setRenameTarget(session);
+    setRenameTitle(session.title?.trim() || `Session #${session.sessionId}`);
+  };
+
+  const handleCloseRenameDialog = () => {
+    if (isRenamingSession) return;
+    setRenameTarget(null);
+    setRenameTitle("");
+  };
+
+  const handleRenameSession = async () => {
+    if (!renameTarget) return;
+
+    const title = renameTitle.trim();
+    const currentTitle = renameTarget.title?.trim() || `Session #${renameTarget.sessionId}`;
+    if (!title || title === currentTitle) return;
+
+    setError(null);
+    setMutatingSessionId(renameTarget.sessionId);
+    try {
+      const res = await renameAiChatSession(renameTarget.sessionId, { title }, false);
+      const payload = res.payload ?? res.data;
+      const nextTitle = payload?.title?.trim() || title;
+      const nextStatus = payload?.status == null ? undefined : String(payload.status);
+
+      setSessions((prev) =>
+        prev.map((session) =>
+          session.sessionId === renameTarget.sessionId
+            ? {
+                ...session,
+                title: nextTitle,
+                startedAt: payload?.startedAt ?? session.startedAt,
+                status: nextStatus ?? session.status,
+              }
+            : session,
+        ),
+      );
+      setRenameTarget(null);
+      setRenameTitle("");
+    } catch {
+      setError("Unable to rename this chat session. Please try again.");
+    } finally {
+      setMutatingSessionId(null);
+    }
+  };
+
+  const handleOpenCloseSession = (session: AIChatSession) => {
+    setError(null);
+    setCloseTarget(session);
+  };
+
+  const handleCloseCloseDialog = () => {
+    if (isClosingSession) return;
+    setCloseTarget(null);
+  };
+
+  const handleConfirmCloseSession = async () => {
+    if (!closeTarget) return;
+
+    const targetId = closeTarget.sessionId;
+    setError(null);
+    setMutatingSessionId(targetId);
+    try {
+      await closeAiChatSession(targetId, false);
+
+      const sortedSessions = [...sessions].sort(
+        (a, b) => (b.sessionId ?? 0) - (a.sessionId ?? 0),
+      );
+      const closedIndex = sortedSessions.findIndex((session) => session.sessionId === targetId);
+      const remainingSessions = sortedSessions.filter((session) => session.sessionId !== targetId);
+
+      setSessions((prev) => prev.filter((session) => session.sessionId !== targetId));
+
+      if (selectedSessionId === targetId) {
+        const nextSessionId =
+          remainingSessions[closedIndex]?.sessionId ??
+          remainingSessions[closedIndex - 1]?.sessionId ??
+          null;
+        setSelectedSessionId(nextSessionId);
+        setMessages([]);
+        setDraft("");
+      }
+
+      setCloseTarget(null);
+    } catch {
+      setError("Unable to close this chat session. Please try again.");
+    } finally {
+      setMutatingSessionId(null);
+    }
+  };
+
   if (!user) {
     return (
       <Box sx={{ px: { xs: 1, md: 3 }, py: 3 }}>
@@ -316,10 +432,14 @@ export default function AIChatbotClient() {
           sessions={sessions}
           selectedSessionId={selectedSessionId}
           isLoading={isLoadingSessions}
+          isLoadingHistory={isLoadingHistory}
           isSending={isSending}
           isCreatingSession={isCreatingSession}
+          mutatingSessionId={mutatingSessionId}
           onNewChat={handleOpenNewChat}
           onSelectSession={(sessionId) => setSelectedSessionId(sessionId)}
+          onRenameSession={handleOpenRenameSession}
+          onCloseSession={handleOpenCloseSession}
           formatTime={formatTime}
         />
 
@@ -393,6 +513,84 @@ export default function AIChatbotClient() {
 
           >
             {isCreatingSession ? <CustomLoading size={18} /> : "Create new"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(renameTarget)}
+        onClose={handleCloseRenameDialog}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle>Rename chat</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            fullWidth
+            margin="dense"
+            label="Chat name"
+            value={renameTitle}
+            onChange={(e) => setRenameTitle(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                void handleRenameSession();
+              }
+            }}
+            inputProps={{ maxLength: 80 }}
+            helperText="Maximum 80 characters"
+            disabled={isRenamingSession}
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={handleCloseRenameDialog}
+            disabled={isRenamingSession}
+            sx={{ textTransform: "none" }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => void handleRenameSession()}
+            disabled={!canRenameSession}
+            sx={{ textTransform: "none", fontWeight: 800, backgroundColor: 'var(--primary)', ...hoverLiftStyle }}
+          >
+            {isRenamingSession ? <CustomLoading size={18} /> : "Save"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(closeTarget)}
+        onClose={handleCloseCloseDialog}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle>Close chat session?</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ fontSize: 14, color: "#475569" }}>
+            This will close &quot;{closeTarget?.title?.trim() || (closeTarget ? `Session #${closeTarget.sessionId}` : "this chat")}&quot;
+            and remove it from your chat list.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={handleCloseCloseDialog}
+            disabled={isClosingSession}
+            sx={{ textTransform: "none" }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={() => void handleConfirmCloseSession()}
+            disabled={isClosingSession || !closeTarget}
+            sx={{ textTransform: "none", fontWeight: 800 }}
+          >
+            {isClosingSession ? <CustomLoading size={18} /> : "Close session"}
           </Button>
         </DialogActions>
       </Dialog>

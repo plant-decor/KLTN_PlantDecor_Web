@@ -74,8 +74,6 @@ export default function ServicePackageModal({
   const serviceTypeLabel =
     serviceTypeOptions.find((option) => option.value === formValue.serviceType)?.label ?? String(formValue.serviceType);
   const isServiceTypeFixed = formValue.serviceType === 1;
-  const isCategoryDisabled = formValue.careDifficultyLevels.length > 0;
-  const isCareLevelDisabled = formValue.categoryIds.length > 0;
 
   const title = isCreate
     ? "Create New Service Package"
@@ -314,14 +312,13 @@ export default function ServicePackageModal({
                     multiple
                     value={formValue.categoryIds}
                     label="Category"
-                    disabled={submitting || isCategoryDisabled}
+                    disabled={submitting}
                     MenuProps={selectMenuProps}
                     onChange={(event) => {
                       const next = (event.target.value as number[]).map(Number);
                       onFormChange((prev) => ({
                         ...prev,
                         categoryIds: next,
-                        ...(next.length > 0 ? { careDifficultyLevels: [] } : {}),
                       }));
                     }}
                     renderValue={(selected) =>
@@ -346,14 +343,13 @@ export default function ServicePackageModal({
                     multiple
                     value={formValue.careDifficultyLevels}
                     label="Care Difficulty Level"
-                    disabled={submitting || isCareLevelDisabled}
+                    disabled={submitting}
                     MenuProps={selectMenuProps}
                     onChange={(event) => {
                       const next = (event.target.value as number[]).map(Number);
                       onFormChange((prev) => ({
                         ...prev,
                         careDifficultyLevels: next,
-                        ...(next.length > 0 ? { categoryIds: [] } : {}),
                       }));
                     }}
                     renderValue={(selected) =>

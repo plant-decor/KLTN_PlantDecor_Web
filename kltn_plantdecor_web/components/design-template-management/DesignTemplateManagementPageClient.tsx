@@ -69,13 +69,33 @@ const emptyTierForm = (): DesignTemplateTierFormValue => ({
 const TIER_ITEM_TYPE_PLANT = 1;
 const TIER_ITEM_TYPE_MATERIAL = 2;
 
-const toCreateTierItems = (items: DesignTemplateTierItemFormRow[]): DesignTemplateTierItemCreateRequest[] =>
-  items.map((row) => ({
-    materialId: row.materialId,
+const normalizeTierItemIdsByType = (row: DesignTemplateTierItemCreateRequest): DesignTemplateTierItemCreateRequest => {
+  if (row.itemType === TIER_ITEM_TYPE_MATERIAL) {
+    return {
+      materialId: row.materialId,
+      plantId: null,
+      itemType: row.itemType,
+      quantity: row.quantity,
+    };
+  }
+
+  return {
+    materialId: null,
     plantId: row.plantId,
     itemType: row.itemType,
     quantity: row.quantity,
-  }));
+  };
+};
+
+const toCreateTierItems = (items: DesignTemplateTierItemFormRow[]): DesignTemplateTierItemCreateRequest[] =>
+  items.map((row) =>
+    normalizeTierItemIdsByType({
+      materialId: row.materialId,
+      plantId: row.plantId,
+      itemType: row.itemType,
+      quantity: row.quantity,
+    })
+  );
 
 const mapTierItemsToFormRows = (items: DesignTemplateTier['items']): DesignTemplateTierItemFormRow[] =>
   items.map((item) => {
@@ -91,12 +111,7 @@ const mapTierItemsToFormRows = (items: DesignTemplateTier['items']): DesignTempl
   });
 
 const toTierItemsApiBody = (items: DesignTemplateTierItemCreateRequest[]): AdminDesignTemplateTierItemApiBody[] =>
-  items.map((row) => ({
-    materialId: row.materialId ?? 0,
-    plantId: row.plantId ?? 0,
-    itemType: row.itemType,
-    quantity: row.quantity,
-  }));
+  items.map((row) => normalizeTierItemIdsByType(row));
 
 const validateTierFormItems = (items: DesignTemplateTierItemFormRow[]): string | null => {
   if (items.length === 0) {

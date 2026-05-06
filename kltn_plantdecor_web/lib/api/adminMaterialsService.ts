@@ -39,9 +39,9 @@ export interface AssignMaterialTagsRequest {
 
 export const searchAdminMaterials = async (
   data: AdminMaterialSearchRequest,
-  loading = true
+  loading = true, showToast = false
 ): Promise<ResponseModel<AdminMaterialSearchPayload>> => {
-  return apiClient.post('/system/materials/search', data, loading);
+  return apiClient.post('/system/materials/search', data, loading, { showToast});
 };
 
 export const getAdminMaterialById = async (

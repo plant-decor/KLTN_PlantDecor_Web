@@ -292,25 +292,6 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
   const router = useRouter();
   const locale = useLocale();
 
-  const handleProceedPlantInstanceCheckout = (item: GeneratedImageItem) => {
-    if (!user?.id) {
-      router.push(`/${locale}/login`);
-      return;
-    }
-    const instancePlantId = item.plantInstanceId ?? 0;
-
-    const query = new URLSearchParams({
-      orderType: '2',
-      paymentStrategy: '1',
-      plantId: String(instancePlantId),
-      plantInstanceId: String(item.plantInstanceId),
-      instanceName: String(item.name),
-      instancePrice: String(item.price),
-    });
-
-    router.push(`/${locale}/checkout/${user.id}/0?${query.toString()}`);
-  };
-
   return (
     <Box sx={{ py: 4, px: { xs: 2, md: 4 }, maxWidth: 1280, mx: 'auto' }}>
       <Stack

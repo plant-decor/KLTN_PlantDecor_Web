@@ -7,6 +7,8 @@ import type { GeneratedLayoutImageItem, RoomPlantRecommendation } from '@/types/
 import ClickableImageViewer from '@/components/image-view/ClickableImageViewer';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 import { formatCurrency } from '@/lib/utils/formatUtil';
+import { useAuthStore } from '@/lib/store/authStore';
+import { useRouter } from 'next/navigation';
 
 interface GeneratedImageItemProps {
   item: GeneratedLayoutImageItem;
@@ -28,6 +30,29 @@ export default function GeneratedImageItem({
   const canAddToCart = item.isSuccess && !!item.commonPlantId && item.commonPlantId > 0;
   const plantName = recommendation?.name ?? t('plantFallbackName');
   const plantDescription = recommendation?.description || t('plantDescriptionFallback');
+
+  const { user } = useAuthStore();
+  const router = useRouter();
+
+  const handleProceedPlantInstanceCheckout = (checkoutItem: GeneratedLayoutImageItem) => {
+    if (!user?.id) {
+      router.push(`/${locale}/login`);
+      return;
+    }
+
+    const instancePlantId = checkoutItem.plantInstanceId ?? 0;
+
+    const query = new URLSearchParams({
+      orderType: '2',
+      paymentStrategy: '1',
+      plantId: String(instancePlantId),
+      plantInstanceId: String(checkoutItem.plantInstanceId),
+      instanceName: String(recommendation?.name ?? plantName),
+      instancePrice: String(recommendation?.price ?? 0),
+    });
+
+    router.push(`/${locale}/checkout/${user.id}/0?${query.toString()}`);
+  };
 
   return (
     <Paper variant="outlined" sx={{ p: 2 }}>
@@ -69,6 +94,7 @@ export default function GeneratedImageItem({
         ) : (
           <Alert severity="info">{t('plantInfoPending')}</Alert>
         )}
+        {item.commonPlantId && (
       <Button
         variant="contained"
         size="small"
@@ -80,6 +106,17 @@ export default function GeneratedImageItem({
       >
         {isAddingToCart ? t('addingToCartButton') : recommendationT('addToCartButton')}
       </Button>
+      )}
+      {item.plantInstanceId && (
+        <Button 
+        variant="contained"
+        size="small"
+        sx={{ backgroundColor: 'var(--primary)', fontWeight: '700', ...hoverLiftStyle }}
+        onClick={() => void handleProceedPlantInstanceCheckout(item)}
+        >
+          Buy Now
+        </Button>
+      )}
       </Box>
 
       {!item.isSuccess && item.errorMessage && (

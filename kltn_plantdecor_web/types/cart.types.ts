@@ -11,7 +11,7 @@ export interface CartItem {
   price: number;
   productName: string;
   quantity: number;
-  imageUrl: string | null;
+  primaryImageUrl: string | null;
   subtotal: number;
   createdAt?: string;
   nurseryId?: number | null;

@@ -59,7 +59,6 @@ export default function CartItemRow({
   onQuantityChange,
   onRemove,
 }: CartItemRowProps) {
-  console.log('Rendering CartItemRow for item:', item);
   const itemHref = resolveCartItemHref(item);
 
   return (
@@ -69,7 +68,7 @@ export default function CartItemRow({
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <Box sx={{ position: 'relative', width: 60, height: 60 }}>
             <Image
-              src={item.imageUrl || '/img/fallbackplant.avif'}
+              src={item.primaryImageUrl || '/img/fallbackplant.avif'}
               alt={item.productName}
               loading='eager'
               fill

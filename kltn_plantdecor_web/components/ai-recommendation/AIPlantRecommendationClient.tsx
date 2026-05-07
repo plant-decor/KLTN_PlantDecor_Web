@@ -15,6 +15,7 @@ import {
 import type {
   AllergyPlantOption,
   AnalyzeRoomUploadPayload,
+  GeneratedImageItem,
   GeneratedLayoutImageItem,
   GenerateLayoutImagesPayload,
   RoomPlantRecommendation,
@@ -25,6 +26,9 @@ import RoomAnalysisCard from './RoomAnalysisCard';
 import GeneratedImagesCard from './GeneratedImagesCard';
 import MyDesignHistoryModal from './MyDesignHistoryModal';
 import { HistoryOutlined } from '@mui/icons-material';
+import { useAuthStore } from '@/lib/store/authStore';
+import { useRouter } from 'next/navigation';
+import { useLocale } from 'next-intl';
 
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/heif'];
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -283,6 +287,28 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
     } finally {
       setAddingLayoutDesignPlantId(null);
     }
+  };
+  const { user } = useAuthStore();
+  const router = useRouter();
+  const locale = useLocale();
+
+  const handleProceedPlantInstanceCheckout = (item: GeneratedImageItem) => {
+    if (!user?.id) {
+      router.push(`/${locale}/login`);
+      return;
+    }
+    const instancePlantId = item.plantInstanceId ?? 0;
+
+    const query = new URLSearchParams({
+      orderType: '2',
+      paymentStrategy: '1',
+      plantId: String(instancePlantId),
+      plantInstanceId: String(item.plantInstanceId),
+      instanceName: String(item.name),
+      instancePrice: String(item.price),
+    });
+
+    router.push(`/${locale}/checkout/${user.id}/0?${query.toString()}`);
   };
 
   return (

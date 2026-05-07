@@ -45,7 +45,7 @@ const toCartItem = (item: CartApiItem): CartItem => ({
   productName: item.productName,
   quantity: item.quantity,
   subtotal: item.subTotal ?? item.subtotal,
-  imageUrl: item.imageUrl,
+  primaryImageUrl: item.primaryImageUrl,
 });
 
 const parsePositiveInt = (value: string | null): number => {
@@ -174,7 +174,7 @@ export default function CheckoutPageClient({
                 instanceNameFromQuery || `Plant Instance #${plantInstanceIdFromQuery}`,
               quantity: 1,
               subtotal: resolvedPrice,
-              imageUrl: null,
+              primaryImageUrl: null,
             },
           ];
         } else if (isBuyNowOrder && buyNowItemIdFromQuery > 0) {
@@ -191,7 +191,7 @@ export default function CheckoutPageClient({
               productName: instanceNameFromQuery || `Buy now item #${buyNowItemIdFromQuery}`,
               quantity: buyNowQuantityFromQuery,
               subtotal: resolvedPrice * buyNowQuantityFromQuery,
-              imageUrl: null,
+              primaryImageUrl: null,
             },
           ];
         } else {

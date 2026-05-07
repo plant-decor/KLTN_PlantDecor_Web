@@ -15,6 +15,7 @@ import {
 import type {
   AllergyPlantOption,
   AnalyzeRoomUploadPayload,
+  GeneratedImageItem,
   GeneratedLayoutImageItem,
   GenerateLayoutImagesPayload,
   RoomPlantRecommendation,
@@ -25,6 +26,9 @@ import RoomAnalysisCard from './RoomAnalysisCard';
 import GeneratedImagesCard from './GeneratedImagesCard';
 import MyDesignHistoryModal from './MyDesignHistoryModal';
 import { HistoryOutlined } from '@mui/icons-material';
+import { useAuthStore } from '@/lib/store/authStore';
+import { useRouter } from 'next/navigation';
+import { useLocale } from 'next-intl';
 
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/heif'];
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -284,6 +288,9 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
       setAddingLayoutDesignPlantId(null);
     }
   };
+  const { user } = useAuthStore();
+  const router = useRouter();
+  const locale = useLocale();
 
   return (
     <Box sx={{ py: 4, px: { xs: 2, md: 4 }, maxWidth: 1280, mx: 'auto' }}>

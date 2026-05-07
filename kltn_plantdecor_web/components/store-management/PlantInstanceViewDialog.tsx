@@ -64,7 +64,7 @@ export default function PlantInstanceViewDialog({
                       />
                       {img.isThumbnail && (
                         <Chip
-                          label="Ảnh chính"
+                          label="Thumbnail"
                           size="small"
                           color="primary"
                           sx={{ position: 'absolute', top: 8, right: 8 }}

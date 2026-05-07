@@ -137,11 +137,11 @@ export default function ServiceRequestTable({
                     <Button
                       variant="outlined"
                       size="small"
-                      startIcon={<VisibilityIcon />}
+                      className="bg-transparent! rounded-full!"
                       onClick={() => onViewDetails(request)}
                       sx={{ ...hoverLiftStyle }}
                     >
-                      {tCommon('view')}
+                      <VisibilityIcon fontSize="medium" className="hover:scale-110" />
                     </Button>
                   ) : null}
                 </TableCell>

@@ -21,6 +21,7 @@ import {
 import { useTranslations } from 'next-intl';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/authStore';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import {
   DifficultyLevel,
   ServiceRegistration,
@@ -694,8 +695,9 @@ export default function UserServicePage({ params }: PageProps) {
 
                 return (
                   <Stack direction="row" spacing={1} justifyContent="center" alignItems="center" flexWrap="wrap">
-                    <Button sx={hoverLiftStyle} variant="outlined" size="small" onClick={() => void handleViewDetails(request)}>
-                      {tCommon('view')}
+                    <Button className="bg-transparent! rounded-full!" sx={hoverLiftStyle}  size="small" onClick={() => void handleViewDetails(request)}>
+                      <VisibilityIcon
+                        fontSize="medium" className="hover:scale-110" />
                     </Button>
                     {showRate ? (
                       <Tooltip title="Submit rating">

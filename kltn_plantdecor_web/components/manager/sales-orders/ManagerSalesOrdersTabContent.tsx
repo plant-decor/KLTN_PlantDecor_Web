@@ -7,6 +7,7 @@ import {
   getManagerNurseryOrderDetail,
   getManagerNurseryOrders,
   markManagerNurseryOrderAsAssigned,
+  markManagerNurseryOrderAsCompleted,
 } from '@/lib/api/managerSalesOrdersService';
 import type {
   ManagerNurseryOrder,
@@ -122,6 +123,11 @@ export default function ManagerSalesOrdersTabContent() {
       toast.error(getErrorMessage(error, 'Failed to mark order for redelivery'));
     }
   };
+  const handleMarkCompleted = async (nurseryOrderId: number) => {
+    await markManagerNurseryOrderAsCompleted(nurseryOrderId);
+    toast.success('Order marked as completed successfully');
+    await loadList();
+  };
 
   return (
     <>
@@ -161,6 +167,7 @@ export default function ManagerSalesOrdersTabContent() {
             onViewDetail={(item) => void handleViewDetail(item)}
             onAssignShipper={(item) => void handleAssignShipper(item)}
             onRedelivery={(item) => void handleRedelivery(item)}
+            onMarkCompleted={(item) => void handleMarkCompleted(item.id)}
           />
         )}
       </Paper>

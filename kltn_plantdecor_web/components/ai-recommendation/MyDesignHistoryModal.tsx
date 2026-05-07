@@ -22,6 +22,8 @@ import { notifyCartUpdated } from '@/lib/utils/cartEvents';
 import { formatCurrency } from '@/lib/utils/formatUtil';
 import type { GeneratedImageItem } from '@/types/ai-recommendation.types';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
+import { useAuthStore } from '@/lib/store/authStore';
+import { useRouter } from 'next/navigation';
 
 interface MyDesignHistoryModalProps {
   open: boolean;
@@ -106,6 +108,27 @@ export default function MyDesignHistoryModal({ open, userId, onClose }: MyDesign
       setAddingId(null);
     }
   };
+  const { user } = useAuthStore();
+  const router = useRouter();
+
+  const handleProceedPlantInstanceCheckout = (item: GeneratedImageItem) => {
+    if (!user?.id) {
+      router.push(`/${locale}/login`);
+      return;
+    }
+    const instancePlantId = item.plantInstanceId ?? 0;
+
+    const query = new URLSearchParams({
+      orderType: '2',
+      paymentStrategy: '1',
+      plantId: String(instancePlantId),
+      plantInstanceId: String(item.plantInstanceId),
+      instanceName: String(item.name),
+      instancePrice: String(item.price),
+    });
+
+    router.push(`/${locale}/checkout/${user.id}/0?${query.toString()}`);
+  };
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
@@ -184,7 +207,8 @@ export default function MyDesignHistoryModal({ open, userId, onClose }: MyDesign
                     Plant instance ID: {item.plantInstanceId ?? '-'}
                   </Typography> */}
 
-                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ pt: 0.5 }}>
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ pt: 0.5, display: 'flex', justifyContent: 'space-between' }}>
+                    {item.commonPlantId && (
                     <Button
                       sx={{ backgroundColor: 'var(--primary)', fontWeight: '700', ...hoverLiftStyle }}
                       variant="contained"
@@ -193,6 +217,15 @@ export default function MyDesignHistoryModal({ open, userId, onClose }: MyDesign
                     >
                       {addingId === item.id ? 'Adding...' : 'Add to cart'}
                     </Button>
+                    )}
+                  {item.plantInstanceId && (
+                    <Button 
+                    sx={{ backgroundColor: 'var(--primary)', fontWeight: '700', ...hoverLiftStyle }}
+                    variant="contained"
+                    onClick={() => void handleProceedPlantInstanceCheckout(item)}>
+                      Buy Now
+                    </Button>
+                  )}
                   </Stack>
 
                   {/* <Typography

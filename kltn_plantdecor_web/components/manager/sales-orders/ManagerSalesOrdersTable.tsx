@@ -28,6 +28,8 @@ import {
   SALES_ORDER_STATUS_CHIP_COLOR,
   SALES_ORDER_STATUS_LABELS,
 } from './managerSalesOrders.constants';
+import { CheckOutlined } from '@mui/icons-material';
+import ConfirmActionDialog from '@/components/admin/categories-tags/ConfirmActionDialog';
 
 const ASSIGNABLE_STATUSES = new Set([1, 2, 3]);
 
@@ -46,6 +48,7 @@ interface ManagerSalesOrdersTableProps {
   onViewDetail: (item: ManagerNurseryOrder) => void;
   onAssignShipper?: (item: ManagerNurseryOrder) => void;
   onRedelivery?: (item: ManagerNurseryOrder) => void;
+  onMarkCompleted?: (item: ManagerNurseryOrder) => void;
 }
 
 export default function ManagerSalesOrdersTable({
@@ -58,11 +61,13 @@ export default function ManagerSalesOrdersTable({
   onViewDetail,
   onAssignShipper,
   onRedelivery,
+  onMarkCompleted,
 }: ManagerSalesOrdersTableProps) {
   const [shipImageOpen, setShipImageOpen] = useState(false);
   const [shipImageUrl, setShipImageUrl] = useState<string | null>(null);
   const shipImages = useMemo(() => (shipImageUrl ? [shipImageUrl] : []), [shipImageUrl]);
-
+  const [openConfirmMarkCompleted, setOpenConfirmMarkCompleted] = useState(false);
+  const [markCompletedTarget, setMarkCompletedTarget] = useState<ManagerNurseryOrder | null>(null);
   const [redeliveryTarget, setRedeliveryTarget] = useState<ManagerNurseryOrder | null>(null);
 
   const handleChangePage = (_event: unknown, newPage: number) => {
@@ -183,21 +188,30 @@ export default function ManagerSalesOrdersTable({
                         </Tooltip>
                       ) : null}
                       {item.deliveryImageUrl ? (
-                        <Tooltip title="View ship image">
-                          <Button
-                            size="small"
-                            onClick={() => {
-                              setShipImageUrl(item.deliveryImageUrl ?? null);
-                              setShipImageOpen(true);
-                            }}
-                          >
+                        <>
+                        <Tooltip title="Mark as completed">
+                          <Button size="small" onClick={() => {
+                            setShipImageUrl(item.deliveryImageUrl ?? null);
+                            setShipImageOpen(true);
+                          }}>
                             <ImageIcon fontSize="medium" className="hover:scale-110" />
                           </Button>
                         </Tooltip>
+                        </>
                       ) : null}
                       <Button size="small" onClick={() => onViewDetail(item)}>
                         <VisibilityIcon fontSize="medium" className="hover:scale-110" />
                       </Button>
+                      {onMarkCompleted && item.status === 13 ? (
+                        <Tooltip title="Mark as completed">
+                        <Button className='bg-primary! rounded-full!' size="small" onClick={() => {
+                          setMarkCompletedTarget(item);
+                          setOpenConfirmMarkCompleted(true);
+                        }}>
+                          <CheckOutlined fontSize="medium" className="hover:scale-110" />
+                        </Button>
+                      </Tooltip>
+                      ) : null}
                     </TableCell>
                   </TableRow>
                 );
@@ -237,6 +251,24 @@ export default function ManagerSalesOrdersTable({
             onRedelivery(redeliveryTarget);
           }
           setRedeliveryTarget(null);
+        }}
+      />
+
+      <ConfirmActionDialog
+        open={openConfirmMarkCompleted}
+        onClose={() => setOpenConfirmMarkCompleted(false)}
+        title="Mark as completed"
+        message="Are you sure you want to mark this order as completed?"
+        confirmLabel="Mark as completed"
+        cancelLabel="Cancel"
+        confirmColor="primary"
+        loading={false}
+        onConfirm={() => {
+          if (markCompletedTarget && onMarkCompleted) {
+            onMarkCompleted(markCompletedTarget);
+          }
+          setOpenConfirmMarkCompleted(false);
+          setMarkCompletedTarget(null);
         }}
       />
     </Box>

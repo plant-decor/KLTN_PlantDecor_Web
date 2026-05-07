@@ -618,7 +618,7 @@ export default function DesignRegistrationPageClient() {
                               setCancelTarget(item);
                               setCancelReason('');
                             }}
-                            sx={hoverLiftStyle}
+                            sx={{ backgroundColor: 'var(--error)', ...hoverLiftStyle }}
                           >
                             Cancel
                           </Button>

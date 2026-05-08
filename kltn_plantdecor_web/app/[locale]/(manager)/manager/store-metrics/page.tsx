@@ -75,7 +75,7 @@ const StatCard = ({
 );
 
 export default function StoreMetricsPage() {
-  const revenueDates = managerRevenueByDate.map((item) => formatDate(item.date));
+  const revenueDates = managerRevenueByDate.map((item) => formatDate(item.date ?? ''));
   const revenueValues = managerRevenueByDate.map((item) => item.revenue / 1000000);
 
   const orderStatusData = [

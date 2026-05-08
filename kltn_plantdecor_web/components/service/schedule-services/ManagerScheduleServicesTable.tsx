@@ -19,6 +19,7 @@ import {
 } from '@mui/material';
 import type { NurseryServiceScheduleItem } from '@/types/care-service.types';
 import { CustomLoading } from '@/components/CustomLoading';
+import { formatDate } from '@/lib/utils/dateUtils';
 
 interface ManagerScheduleServicesTableProps {
   items: NurseryServiceScheduleItem[];
@@ -62,22 +63,10 @@ const getStatusColor = (status: number | string): 'warning' | 'info' | 'success'
   }
 };
 
-const formatDateForDisplay = (value: string): string => {
-  if (!value) {
-    return '-';
-  }
-
-  const parts = value.split('-');
-  if (parts.length !== 3) {
-    return value;
-  }
-
-  return `${parts[2]}/${parts[1]}/${parts[0]}`;
-};
 
 const getShiftDisplay = (item: NurseryServiceScheduleItem): string => {
   if (!item.shift) {
-    return '-';
+    return '';
   }
 
   return `${item.shift.shiftName} (${item.shift.startTime} - ${item.shift.endTime})`;
@@ -130,7 +119,7 @@ export default function ManagerScheduleServicesTable({
             items.map((item) => (
               <TableRow key={item.id} hover>
                 <TableCell>#{item.id}</TableCell>
-                <TableCell>{formatDateForDisplay(item.taskDate)}</TableCell>
+                <TableCell>{formatDate(item.taskDate ?? '')}</TableCell>
                 <TableCell>{getShiftDisplay(item)}</TableCell>
                 <TableCell>
                   <Stack spacing={0.25}>
@@ -145,10 +134,10 @@ export default function ManagerScheduleServicesTable({
                 <TableCell>
                   <Stack spacing={0.25}>
                     <Typography variant='body2' fontWeight={500}>
-                      {item.serviceRegistration?.nurseryCareService.careServicePackage.name || '-'}
+                      {item.serviceRegistration?.nurseryCareService.careServicePackage.name || ''}
                     </Typography>
                     <Typography variant='caption' color='text.secondary'>
-                      {item.serviceRegistration?.nurseryCareService.nurseryName || '-'}
+                      {item.serviceRegistration?.nurseryCareService.nurseryName || ''}
                     </Typography>
                   </Stack>
                 </TableCell>
@@ -172,15 +161,17 @@ export default function ManagerScheduleServicesTable({
                         <VisibilityIcon />
                       </IconButton>
                     </Tooltip>
+                    {/* {item.status === 1 || item.status === 2 || item.status === 3 || item.status === 4 && ( */}
                     <Tooltip title='Reassign Caretaker'>
                       <IconButton
                         color='secondary'
                         onClick={() => onReassign(item)}
-                        disabled={!item.serviceRegistrationId}
+                        // disabled={!item.serviceRegistrationId}
                       >
                         <SwapHorizIcon />
-                      </IconButton>
+                      </IconButton> 
                     </Tooltip>
+                    {/* )} */}
                   </Stack>
                 </TableCell>
               </TableRow>

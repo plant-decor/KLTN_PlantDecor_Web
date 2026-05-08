@@ -16,6 +16,8 @@ import Image from 'next/image';
 import { searchShopUnified, type ShopUnifiedSearchItem } from '@/lib/api/shopUnifiedService';
 import { getPayload } from '@/lib/utils/plant-store/helpers';
 import { toMaterialCardMaterial, toProductCardPlant } from '@/lib/utils/shop-unified-card-mappers';
+import { cookies } from 'next/headers';
+import { getCurrentUser } from '@/lib/auth/getCurrentUser';
 
 interface HomePageProps {
   params: Promise<{ locale: string }>;
@@ -25,7 +27,11 @@ export default async function Home({ params }: HomePageProps) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'home' });
   const tProducts = await getTranslations({ locale, namespace: 'products' });
-
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get('accessToken')?.value || null;
+  
+  const user = accessToken ? await getCurrentUser() : null;
+  
   // const featuredPlants = SAMPLE_PLANTS.filter(
   //   (plant) => plant.isFeatured || plant.isBestSeller
   // ).slice(0, 8);
@@ -44,7 +50,7 @@ export default async function Home({ params }: HomePageProps) {
   ).catch(() => null);
 
   const showcaseItems = (getPayload(showcaseResponse)?.items.items ?? []).slice(0, 4);
-
+  // const userId = user?.id ?? null;
   return (
     <MainLayout>
       {/* Hero Section */}
@@ -63,7 +69,11 @@ export default async function Home({ params }: HomePageProps) {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 mt-8">
                 <Link
-                  href="/ai-plant-recommendation"
+                  href={
+                    user?.id
+                      ? `/ai-plant-recommendation/${user.id}`
+                      : `/login?redirectTo=${encodeURIComponent('/ai-plant-recommendation/[userid]')}`
+                  }
                   className="bg-[#20DF20] text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-green-700 transition-colors text-center"
                 >
                   {t('exploreAIDesignNow')}

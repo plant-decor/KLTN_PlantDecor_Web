@@ -14,9 +14,8 @@ import {
 } from '@mui/material';
 import type { ServiceProgressDetail } from '@/types/care-service.types';
 import ServiceRatingReadOnlySection from '@/components/service/ServiceRatingReadOnlySection';
-import { formatDateTime } from '@/components/manager/return-ticket-management/managerReturnTicket.constants';
-import { formatDate } from '../service-orders/managerServiceOrders.constants';
 import ClickableImageViewer from '@/components/image-view/ClickableImageViewer';
+import { formatDate, formatDateTime } from '@/lib/utils/dateUtils';
 
 interface ServiceProgressDetailDialogProps {
   open: boolean;

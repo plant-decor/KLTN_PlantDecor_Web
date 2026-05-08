@@ -308,6 +308,18 @@ export default function RoomInputCard({
     return INITIAL_VIEW_ANGLES;
   }, [imagesByViewAngle.Front]);
 
+  const roomTypeOptions = useMemo(() => enumMap.roomTypes.map((item) => item.name), [enumMap.roomTypes]);
+  const roomStyleOptions = useMemo(() => enumMap.roomStyles.map((item) => item.name), [enumMap.roomStyles]);
+
+  const safeRoomType = useMemo(
+    () => (roomTypeOptions.includes(roomType) ? roomType : ''),
+    [roomType, roomTypeOptions]
+  );
+  const safeRoomStyle = useMemo(
+    () => (roomStyleOptions.includes(roomStyle) ? roomStyle : ''),
+    [roomStyle, roomStyleOptions]
+  );
+
   return (
     <Card sx={{ mb: 3, boxShadow: 2 }}>
       <CardContent>
@@ -378,13 +390,14 @@ export default function RoomInputCard({
 
           <TextField
             label="Room type"
-            value={roomType}
+            value={safeRoomType}
             onChange={(event) => onRoomTypeChange(event.target.value)}
             select
             fullWidth
             required
             disabled={enumLoading}
           >
+            <MenuItem value="">{'--'}</MenuItem>
             {enumMap.roomTypes.map((option) => (
               <MenuItem key={option.value} value={option.name}>
                 {humanizeEnumName(option.name)}
@@ -394,13 +407,14 @@ export default function RoomInputCard({
 
           <TextField
             label="Room style"
-            value={roomStyle}
+            value={safeRoomStyle}
             onChange={(event) => onRoomStyleChange(event.target.value)}
             select
             fullWidth
             required
             disabled={enumLoading}
           >
+            <MenuItem value="">{'--'}</MenuItem>
             {enumMap.roomStyles.map((option) => (
               <MenuItem key={option.value} value={option.name}>
                 {humanizeEnumName(option.name)}

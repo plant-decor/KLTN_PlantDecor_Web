@@ -36,7 +36,7 @@ import {
 } from '@mui/material';
 import { DeleteOutline, Add, EditNoteOutlined, Search as SearchIcon, VisibilityOutlined } from '@mui/icons-material';
 import Image from 'next/image';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import type {
   AdminDesignTemplateDetail,
   DesignTemplateTier,
@@ -45,12 +45,11 @@ import type {
 } from '@/types/admin-design-template.types';
 import {
   DESIGN_TEMPLATE_TIER_ITEM_TYPE_OPTIONS,
-  formatCurrency,
   formControlDisabledSelectBlackTextSx,
   formControlLabelDisabledBlackTextSx,
   textFieldDisabledBlackInputSx,
 } from './designTemplateManagement.constants';
-import { formatCurrency as formatCurrencyLocale, formatCurrencyInput, parseCurrencyInput } from '@/lib/utils/formatUtil';
+import { formatCurrency, formatCurrencyInput, parseCurrencyInput } from '@/lib/utils/formatUtil';
 import { CustomLoading } from '@/components/CustomLoading';
 import { searchAdminPlantsForCombo } from '@/lib/api/adminPlantCombosService';
 import { searchAdminMaterials } from '@/lib/api/adminMaterialsService';
@@ -177,7 +176,6 @@ function TierCreateItemPlantMaterialFields({
   catalogMaterialsLoading,
   onPatch,
 }: TierCreateItemPlantMaterialFieldsProps) {
-  const locale = useLocale();
   const tCommon = useTranslations('common');
 
   const plantSearchRootRef = useRef<HTMLDivElement | null>(null);
@@ -475,7 +473,7 @@ function TierCreateItemPlantMaterialFields({
                           secondary={
                             plant.basePrice ? (
                               <Typography component="span" variant="caption" sx={{ color: 'var(--foreground)', fontWeight: 700 }}>
-                                {formatCurrencyLocale(plant.basePrice, locale)}
+                                {formatCurrency(plant.basePrice, 'vi-VN')}
                               </Typography>
                             ) : null
                           }
@@ -649,7 +647,7 @@ function TierCreateItemPlantMaterialFields({
                         }
                         secondary={
                           <Typography component="span" variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
-                            {[material.materialCode, material.basePrice != null ? formatCurrencyLocale(material.basePrice, locale) : '']
+                            {[material.materialCode, material.basePrice != null ? formatCurrency(material.basePrice, 'vi-VN') : '']
                               .filter(Boolean)
                               .join(' · ')}
                           </Typography>
@@ -943,7 +941,7 @@ export default function DesignTemplateTierDialog({
                       <Box>
                         <Typography fontWeight={700}>{item.tierName}</Typography>
                         <Typography variant="body2" color="text.secondary">
-                          {item.minArea} - {item.maxArea} m2 | {formatCurrency(item.packagePrice)} | {item.estimatedDays} days
+                          {item.minArea} - {item.maxArea} m2 | {formatCurrency(item.packagePrice, 'vi-VN')} | {item.estimatedDays} days
                         </Typography>
                       </Box>
                       <Stack direction="row" spacing={0.5} alignItems="center">

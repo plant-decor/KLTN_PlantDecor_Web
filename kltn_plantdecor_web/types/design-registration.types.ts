@@ -143,6 +143,7 @@ export interface DesignRegistrationTask {
   } | null;
   registration: {
     id: number;
+    customer: DesignRegistrationCustomer;
     userId: number;
     assignedCaretakerId: number | null;
     nurseryId: number;

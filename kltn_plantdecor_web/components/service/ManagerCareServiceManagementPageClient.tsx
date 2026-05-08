@@ -46,10 +46,7 @@ import {
 } from "@/lib/api/careServiceService";
 import type { AdminCareServicePackageDetail, CareServiceTypeOption } from "@/types/admin-service-package.types";
 import type { CareServicePackage, NurseryCareService } from "@/types/care-service.types";
-
-const formatCurrency = (value: number) => {
-  return value.toLocaleString("vi-VN", { style: "currency", currency: "VND" });
-};
+import { formatCurrency } from "@/lib/utils/formatUtil";
 
 const getErrorMessage = (error: unknown, fallback: string) => {
   if (!error || typeof error !== "object") {
@@ -292,7 +289,7 @@ export default function ManagerCareServiceManagementPageClient() {
                       </TableCell>
                       <TableCell align="center">{item.careServicePackage.visitPerWeek}</TableCell>
                       <TableCell align="center">{item.careServicePackage.durationDays}</TableCell>
-                      <TableCell align="center">{formatCurrency(item.careServicePackage.unitPrice)}</TableCell>
+                      <TableCell align="center">{formatCurrency(item.careServicePackage.unitPrice, 'vi-VN')}</TableCell>
                       <TableCell align="center">
                         <Chip
                           size="small"
@@ -358,7 +355,7 @@ export default function ManagerCareServiceManagementPageClient() {
               </MenuItem>
               {notOfferedPackages.map((item) => (
                 <MenuItem key={item.id} value={item.id}>
-                  {item.name} - {formatCurrency(item.unitPrice)}
+                  {item.name} - {formatCurrency(item.unitPrice, 'vi-VN')}
                 </MenuItem>
               ))}
             </Select>

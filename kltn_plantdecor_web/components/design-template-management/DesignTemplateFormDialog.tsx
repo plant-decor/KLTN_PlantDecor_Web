@@ -35,11 +35,11 @@ import { toast } from 'react-toastify';
 import { CustomLoading } from '@/components/CustomLoading';
 import {
   DESIGN_TEMPLATE_SAMPLE_IMAGE_MAX_BYTES,
-  formatCurrency,
   formControlDisabledSelectBlackTextSx,
   textFieldDisabledBlackInputSx,
 } from './designTemplateManagement.constants';
 import { resolveDesignSampleImageSrc } from '@/lib/utils/designTemplateSampleImage';
+import { formatCurrency } from '@/lib/utils/formatUtil';
 
 const MULTI_SELECT_MENU_MAX_HEIGHT = 280;
 
@@ -313,7 +313,7 @@ export default function DesignTemplateFormDialog({
                             {!tier.isActive ? <Chip size="small" label="Inactive" color="default" variant="outlined" /> : null}
                           </Stack>
                           <Typography variant="body2" color="text.secondary">
-                            {formatCurrency(tier.packagePrice)} · {tier.minArea}–{tier.maxArea} m² · {tier.estimatedDays} day(s)
+                            {formatCurrency(tier.packagePrice, 'vi-VN')} · {tier.minArea}–{tier.maxArea} m² · {tier.estimatedDays} day(s)
                           </Typography>
                         </Box>
                         <Stack direction="row" spacing={1} flexShrink={0} alignItems="center">

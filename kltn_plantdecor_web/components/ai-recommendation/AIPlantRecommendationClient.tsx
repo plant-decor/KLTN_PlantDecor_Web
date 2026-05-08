@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Box, Button, Card, CardContent, Stack, Step, StepLabel, Stepper, Typography } from '@mui/material';
 import { CustomLoading } from '@/components/CustomLoading';
 import { addItemToCart } from '@/lib/api/cartWishlistService';
@@ -15,7 +15,6 @@ import {
 import type {
   AllergyPlantOption,
   AnalyzeRoomUploadPayload,
-  GeneratedImageItem,
   GeneratedLayoutImageItem,
   GenerateLayoutImagesPayload,
   RoomPlantRecommendation,
@@ -26,9 +25,6 @@ import RoomAnalysisCard from './RoomAnalysisCard';
 import GeneratedImagesCard from './GeneratedImagesCard';
 import MyDesignHistoryModal from './MyDesignHistoryModal';
 import { HistoryOutlined } from '@mui/icons-material';
-import { useAuthStore } from '@/lib/store/authStore';
-import { useRouter } from 'next/navigation';
-import { useLocale } from 'next-intl';
 
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/heif'];
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -47,6 +43,7 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
   const [imagePreviewUrlsByViewAngle, setImagePreviewUrlsByViewAngle] = useState<Partial<Record<RoomViewAngle, string>>>(
     {}
   );
+  const imagePreviewUrlsRef = useRef(imagePreviewUrlsByViewAngle);
   const [fengShuiElement, setFengShuiElement] = useState('');
   const [roomType, setRoomType] = useState('LivingRoom');
   const [roomStyle, setRoomStyle] = useState('Minimalist');
@@ -75,14 +72,18 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
   const [isMyDesignModalOpen, setIsMyDesignModalOpen] = useState(false);
 
   useEffect(() => {
+    imagePreviewUrlsRef.current = imagePreviewUrlsByViewAngle;
+  }, [imagePreviewUrlsByViewAngle]);
+
+  useEffect(() => {
     return () => {
-      Object.values(imagePreviewUrlsByViewAngle).forEach((url) => {
+      Object.values(imagePreviewUrlsRef.current).forEach((url) => {
         if (url) {
           URL.revokeObjectURL(url);
         }
       });
     };
-  }, [imagePreviewUrlsByViewAngle]);
+  }, []);
 
   const selectedAllergyIds = useMemo(
     () => selectedAllergies.map((item) => item.plantId),
@@ -105,27 +106,56 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
     return 0;
   }, [analysisResult, generateResult, isAnalyzing, isGenerating]);
 
-  const recommendationsByAnyId = useMemo(() => {
+  const recommendationsByCommonPlantId = useMemo(() => {
     const map = new Map<number, RoomPlantRecommendation>();
 
-    (analysisResult?.recommendations ?? []).forEach((recommendation) => {
-      if (recommendation.entityId > 0 && !map.has(recommendation.entityId)) {
-        map.set(recommendation.entityId, recommendation);
-      }
-      if (recommendation.productId > 0 && !map.has(recommendation.productId)) {
-        map.set(recommendation.productId, recommendation);
-      }
-    });
+    (analysisResult?.recommendations ?? [])
+      .filter((recommendation) => recommendation.entityType === 'CommonPlant')
+      .forEach((recommendation) => {
+        if (recommendation.entityId > 0 && !map.has(recommendation.entityId)) {
+          map.set(recommendation.entityId, recommendation);
+        }
+        if (recommendation.productId > 0 && !map.has(recommendation.productId)) {
+          map.set(recommendation.productId, recommendation);
+        }
+      });
+
+    return map;
+  }, [analysisResult]);
+
+  const recommendationsByPlantInstanceId = useMemo(() => {
+    const map = new Map<number, RoomPlantRecommendation>();
+
+    (analysisResult?.recommendations ?? [])
+      .filter((recommendation) => recommendation.entityType === 'PlantInstance')
+      .forEach((recommendation) => {
+        if (recommendation.entityId > 0 && !map.has(recommendation.entityId)) {
+          map.set(recommendation.entityId, recommendation);
+        }
+        if (recommendation.productId > 0 && !map.has(recommendation.productId)) {
+          map.set(recommendation.productId, recommendation);
+        }
+      });
 
     return map;
   }, [analysisResult]);
 
   const resolveRecommendationFromGeneratedItem = (item: GeneratedLayoutImageItem): RoomPlantRecommendation | null => {
-    if (!item.commonPlantId || item.commonPlantId <= 0) {
-      return null;
+    if (item.commonPlantId && item.commonPlantId > 0) {
+      const matched = recommendationsByCommonPlantId.get(item.commonPlantId);
+      if (matched) {
+        return matched;
+      }
     }
 
-    return recommendationsByAnyId.get(item.commonPlantId) ?? null;
+    if (item.plantInstanceId && item.plantInstanceId > 0) {
+      const matched = recommendationsByPlantInstanceId.get(item.plantInstanceId);
+      if (matched) {
+        return matched;
+      }
+    }
+
+    return null;
   };
 
   const handleGenerateImages = async (layoutDesignId: number) => {
@@ -288,9 +318,6 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
       setAddingLayoutDesignPlantId(null);
     }
   };
-  const { user } = useAuthStore();
-  const router = useRouter();
-  const locale = useLocale();
 
   return (
     <Box sx={{ py: 4, px: { xs: 2, md: 4 }, maxWidth: 1280, mx: 'auto' }}>

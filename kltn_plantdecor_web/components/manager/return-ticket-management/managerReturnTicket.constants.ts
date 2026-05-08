@@ -38,26 +38,6 @@ export const RETURN_TICKET_ASSIGNMENT_STATUS_OPTIONS = [
   })),
 ];
 
-export const formatCurrency = (value?: number) => {
-  if (typeof value !== 'number' || !Number.isFinite(value)) {
-    return '-';
-  }
-
-  return value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
-};
-
-export const formatDateTime = (value?: string | null) => {
-  if (!value) {
-    return '-';
-  }
-
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return '-';
-  }
-
-  return parsed.toLocaleString('vi-VN');
-};
 
 export const getErrorMessage = (error: unknown, fallback: string): string => {
   if (!error || typeof error !== 'object') {

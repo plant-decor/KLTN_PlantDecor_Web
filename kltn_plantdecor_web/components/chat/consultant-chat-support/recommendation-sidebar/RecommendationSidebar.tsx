@@ -17,6 +17,7 @@ import {
   getOrdersByEmail,
   getRecommendedPackagesByPlant,
 } from "@/lib/api/orderService";
+import { getConsultantOrderById } from "@/lib/api/consultantOrdersService";
 import { getCareServicePackageDetail } from "@/lib/api/careServiceService";
 import { buildServiceBookingUrl } from "@/lib/utils/serviceBookingLink";
 import type {
@@ -24,10 +25,12 @@ import type {
   RecommendedPackage,
 } from "@/types/order.types";
 import type { CareServicePackage } from "@/types/care-service.types";
+import type { ConsultantOrder } from "@/types/consultant-order.types";
 import type { ChatSession } from "../types";
 import { OrderHistoryList } from "./OrderHistoryList";
 import { RecommendedPackageList } from "./RecommendedPackageList";
 import { CareServicePackageDetailDialog } from "./CareServicePackageDetailDialog";
+import { ConsultantOrderDetailDialog } from "./ConsultantOrderDetailDialogView";
 
 type Props = {
   activeSession: ChatSession | null;
@@ -59,6 +62,12 @@ export function RecommendationSidebar({
   const [detailError, setDetailError] = useState<string | null>(null);
   const [detail, setDetail] = useState<CareServicePackage | null>(null);
   const [viewingPackageId, setViewingPackageId] = useState<number | null>(null);
+
+  const [orderDetailOpen, setOrderDetailOpen] = useState(false);
+  const [orderDetailLoading, setOrderDetailLoading] = useState(false);
+  const [orderDetailError, setOrderDetailError] = useState<string | null>(null);
+  const [orderDetail, setOrderDetail] = useState<ConsultantOrder | null>(null);
+  const [viewingOrderId, setViewingOrderId] = useState<number | null>(null);
 
   const customerEmail = activeSession?.customerEmail ?? "";
   const customerId = activeSession?.customerId ?? null;
@@ -182,6 +191,34 @@ export function RecommendationSidebar({
     setDetailOpen(false);
   }, []);
 
+  const handleViewOrderDetail = useCallback(async (orderId: number) => {
+    try {
+      setOrderDetailOpen(true);
+      setOrderDetailLoading(true);
+      setOrderDetailError(null);
+      setOrderDetail(null);
+      setViewingOrderId(orderId);
+
+      const payload = await getConsultantOrderById(orderId, true);
+      if (!payload) {
+        throw new Error("Không thể tải chi tiết đơn hàng");
+      }
+      setOrderDetail(payload);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Không thể tải chi tiết đơn hàng";
+      setOrderDetailError(message);
+      toast.error(message);
+    } finally {
+      setOrderDetailLoading(false);
+      setViewingOrderId(null);
+    }
+  }, []);
+
+  const handleCloseOrderDetail = useCallback(() => {
+    setOrderDetailOpen(false);
+  }, []);
+
   const sendDisabled = useMemo(
     () => disabled || !customerId || isSending,
     [disabled, customerId, isSending],
@@ -260,6 +297,7 @@ export function RecommendationSidebar({
             orders={orders}
             selectedOrderId={selectedOrderId}
             onSelectOrder={setSelectedOrderId}
+            onViewDetail={(orderId) => void handleViewOrderDetail(orderId)}
           />
         )}
       </Box>
@@ -315,6 +353,15 @@ export function RecommendationSidebar({
         error={detailError}
         detail={detail}
         onClose={handleCloseDetail}
+      />
+
+      <ConsultantOrderDetailDialog
+        open={orderDetailOpen}
+        loading={orderDetailLoading}
+        error={orderDetailError}
+        detail={orderDetail}
+        viewingOrderId={viewingOrderId}
+        onClose={handleCloseOrderDetail}
       />
     </Box>
   );

@@ -19,8 +19,9 @@ import {
 } from '@mui/material';
 import { DeleteOutline, EditOutlined, VisibilityOutlined, TuneOutlined } from '@mui/icons-material';
 import type { AdminDesignTemplateListItem, DesignTemplateRoomTypeOption, DesignTemplateStyleOption } from '@/types/admin-design-template.types';
-import { DESIGN_TEMPLATE_TABLE_PAGE_SIZE_OPTIONS, formatCurrency, formatRoomTypes, formatStyle } from './designTemplateManagement.constants';
+import { DESIGN_TEMPLATE_TABLE_PAGE_SIZE_OPTIONS, formatRoomTypes, formatStyle } from './designTemplateManagement.constants';
 import { formatDateTime } from '@/lib/utils/dateUtils';
+import { formatCurrency } from '@/lib/utils/formatUtil';
 
 interface DesignTemplateTableProps {
   templates: AdminDesignTemplateListItem[];
@@ -120,7 +121,7 @@ export default function DesignTemplateTable({
                       <Chip size="small" color="primary" variant="outlined" label={`${template.tiers.length} tiers`} />
                       {template.tiers[0] && (
                         <Typography variant="caption" color="text.secondary">
-                          From {formatCurrency(template.tiers[0].packagePrice)}
+                          From {formatCurrency(template.tiers[0].packagePrice, 'vi-VN')}
                         </Typography>
                       )}
                     </Stack>

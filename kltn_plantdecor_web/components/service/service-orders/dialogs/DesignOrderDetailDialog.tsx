@@ -111,9 +111,7 @@ export default function DesignOrderDetailDialog({
                         const reportImageUrl = task.reportImageUrl?.trim();
 
                         return (
-                          <TableRow key={task.id} hover sx={{ 
-          height: '40px', // Cố định chiều cao
-        }}>
+                          <TableRow key={task.id} hover>
                             <TableCell>{getDesignTaskTypeLabel(task)}</TableCell>
                             <TableCell>
                               <Chip size="small" label={getDesignTaskStatusLabel(task)} />
@@ -127,7 +125,7 @@ export default function DesignOrderDetailDialog({
                                     size="small"
                                     variant="contained"
                                     onClick={() => onViewTaskDetail(task.id)}
-                                    className="bg-transparent! aspect-square! rounded-full!"
+                                    className="bg-transparent! rounded-full!"
                                   >
                                     <VisibilityOutlined fontSize="medium" />
                                   </Button>
@@ -141,7 +139,7 @@ export default function DesignOrderDetailDialog({
                                         variant="outlined"
                                         onClick={() => onAssignTask(task, detailItem)}
                                         disabled={submitting}
-                                        className="bg-blue-400! aspect-square! rounded-full!"
+                                        className="bg-blue-400! rounded-full!"
                                       >
                                         <PersonAddOutlined fontSize="medium" />
                                       </Button>
@@ -152,7 +150,7 @@ export default function DesignOrderDetailDialog({
                                         variant="outlined"
                                         onClick={() => onRescheduleTask(task, detailItem)}
                                         disabled={submitting}
-                                        className="bg-yellow-400! aspect-square! rounded-full!"
+                                        className="bg-yellow-400! rounded-full!"
                                       >
                                         <CalendarMonthOutlined fontSize="medium" />
                                       </Button>
@@ -166,7 +164,7 @@ export default function DesignOrderDetailDialog({
                                       size="small"
                                       variant="contained"
                                       onClick={() => setFullscreenReportImage(reportImageUrl)}
-                                      className="bg-green-500! aspect-square! rounded-full!"
+                                      className="bg-green-500! rounded-full!"
                                     >
                                       <ImageOutlined fontSize="small" />
                                     </Button>

@@ -1,22 +1,23 @@
 "use client";
 
-import { Box, Chip, Stack, Typography } from "@mui/material";
+import { Box, Chip, IconButton, Stack, Tooltip, Typography } from "@mui/material";
+import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import type { OrderByEmail } from "@/types/order.types";
 import { formatDate } from "@/lib/utils/dateUtils";
+import { formatCurrency } from "@/lib/utils/formatUtil";
 
 type Props = {
   orders: OrderByEmail[];
   selectedOrderId: number | null;
   onSelectOrder: (orderId: number) => void;
+  onViewDetail: (orderId: number) => void;
 };
-
-const formatCurrency = (value: number) =>
-  value.toLocaleString("vi-VN", { style: "currency", currency: "VND" });
 
 export function OrderHistoryList({
   orders,
   selectedOrderId,
   onSelectOrder,
+  onViewDetail,
 }: Props) {
   if (!orders.length) {
     return (
@@ -74,11 +75,25 @@ export function OrderHistoryList({
               <Typography sx={{ fontWeight: 700, fontSize: 13, color: "#0f172a" }}>
                 #{order.id}
               </Typography>
-              <Chip
-                size="small"
-                label={order.statusName}
-                sx={{ fontSize: 11, height: 20 }}
-              />
+              <Stack direction="row" alignItems="center" spacing={0.5}>
+                <Chip
+                  size="small"
+                  label={order.statusName}
+                  sx={{ fontSize: 11, height: 20 }}
+                />
+                <Tooltip title="Xem chi tiết">
+                  <IconButton
+                    size="small"
+                    aria-label={`View order #${order.id} detail`}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onViewDetail(order.id);
+                    }}
+                  >
+                    <VisibilityOutlinedIcon sx={{ fontSize: 18 }} />
+                  </IconButton>
+                </Tooltip>
+              </Stack>
             </Stack>
 
             <Typography
@@ -107,7 +122,7 @@ export function OrderHistoryList({
               <Typography
                 sx={{ fontSize: 12, fontWeight: 700, color: "#15803d" }}
               >
-                {formatCurrency(order.totalAmount)}
+                {formatCurrency(order.totalAmount, 'vi-VN')}
               </Typography>
             </Stack>
           </Box>

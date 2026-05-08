@@ -22,11 +22,10 @@ import {
   canAssignCaretaker,
   canManagerCancel,
   canReschedule,
-  formatCurrency,
-  formatDate,
   getStatusChipColor,
 } from './managerServiceOrders.constants';
-
+import { formatCurrency } from '@/lib/utils/formatUtil';
+import { formatDate } from '@/lib/utils/dateUtils';
 interface ServiceOrdersTableProps {
   items: ManagerServiceRegistration[];
   statusLabels: Record<number, string>;
@@ -95,10 +94,10 @@ export default function ServiceOrdersTable({
                     {item.nurseryCareService.careServicePackage.name}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    {formatCurrency(item.nurseryCareService.careServicePackage.unitPrice)}
+                    {formatCurrency(item.nurseryCareService.careServicePackage.unitPrice, 'vi-VN')}
                   </Typography>
                 </TableCell>
-                <TableCell>{formatDate(item.serviceDate)}</TableCell>
+                <TableCell>{formatDate(item.serviceDate ?? '')}</TableCell>
                 {/* <TableCell>
                   <Typography variant="body2">{item.phone || '-'}</Typography>
                   <Typography variant="caption" color="text.secondary">

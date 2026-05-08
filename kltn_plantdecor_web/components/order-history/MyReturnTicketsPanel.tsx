@@ -18,12 +18,12 @@ import {
   RETURN_TICKET_ITEM_STATUS_CHIP_COLOR,
   RETURN_TICKET_STATUS_CHIP_COLOR,
 } from './returnTicket.constants';
-import { formatCurrency } from './orderHistoryUtils';
 import FullscreenImageModal from '@/components/image-view/FullscreenImageModal';
 import { ImageOutlined } from '@mui/icons-material';
 import ClickableImageViewer from '../image-view/ClickableImageViewer';
 import { CustomLoading } from '../CustomLoading';
 import { formatDateTime } from '@/lib/utils/dateUtils';
+import { formatCurrency } from '@/lib/utils/formatUtil';
 
 interface MyReturnTicketsPanelProps {
   tickets: ReturnTicket[];
@@ -86,7 +86,7 @@ export default function MyReturnTicketsPanel({ tickets, loading, error }: MyRetu
                       size="small"
                     />
                     <Typography variant="body2" fontWeight={600}>
-                      Refunded: {formatCurrency(ticket.totalRefundedAmount)}
+                      Refunded: {formatCurrency(ticket.totalRefundedAmount, 'vi-VN')}
                     </Typography>
                   </Stack>
                 </Stack>

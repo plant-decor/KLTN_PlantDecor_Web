@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import {
   Alert,
   Box,
@@ -24,7 +25,6 @@ import { useTranslations } from 'next-intl';
 import type { Order } from '@/types/order.types';
 import {
   canUserCancelOrder,
-  formatCurrency,
   getStatusInfo,
 } from './orderHistoryUtils';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
@@ -32,6 +32,7 @@ import Image from 'next/image';
 import { canCreateReturnTicket } from './returnTicket.constants';
 import { CustomLoading } from '@/components/CustomLoading';
 import { formatDateTime } from '@/lib/utils/dateUtils';
+import { formatCurrency } from '@/lib/utils/formatUtil';
 
 const SERVICE_ORDER_TYPE = 4;
 
@@ -69,6 +70,16 @@ export default function OrderDetailModal({
   const isServiceOrder = order?.orderType === SERVICE_ORDER_TYPE;
   const canCancelOrder = !!order && canUserCancelOrder(order.statusName);
   const canCreateReturn = !!order && !isServiceOrder && canCreateReturnTicket(order.statusName);
+  const hasEligibleReturnItems = useMemo(() => {
+    if (!order) {
+      return false;
+    }
+
+    const refundFlowStatuses = new Set(['RefundRequested', 'Refunded', 'Rejected']);
+    return order.nurseryOrders.some((nurseryOrder) =>
+      nurseryOrder.items.some((item) => item.quantity > 0 && !refundFlowStatuses.has(item.statusName))
+    );
+  }, [order]);
   const isCancelling = !!order && cancelLoadingOrderId === order.id;
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
@@ -214,8 +225,8 @@ export default function OrderDetailModal({
                                   </Box>
                                 </TableCell>
                                 <TableCell align="center">{item.quantity}</TableCell>
-                                <TableCell align="right">{formatCurrency(item.price)}</TableCell>
-                                <TableCell align="right">{formatCurrency(item.price * item.quantity)}</TableCell>
+                                <TableCell align="right">{formatCurrency(item.price, 'vi-VN')}</TableCell>
+                                <TableCell align="right">{formatCurrency(item.price * item.quantity, 'vi-VN')}</TableCell>
                               </TableRow>
                             ))
                           ) : (
@@ -231,12 +242,12 @@ export default function OrderDetailModal({
                       </Table>
                     </TableContainer>
                     <Typography variant="body2" fontWeight="bold" sx={{ mt: 1 }} align="right">
-                      Subtotal: {formatCurrency(nurseryOrder.subTotalAmount)}
+                      Subtotal: {formatCurrency(nurseryOrder.subTotalAmount, 'vi-VN')}
                     </Typography>
                   </Card>
                 ))}
                 <Typography variant="subtitle1" fontWeight="bold" gutterBottom align='right' sx={{ mt: 2, backgroundColor: 'var(--primary)', padding: 1, borderRadius: 1 }}>
-                  Total: {formatCurrency(order.totalAmount)}
+                  Total: {formatCurrency(order.totalAmount, 'vi-VN')}
                 </Typography>
                 <Divider sx={{ my: 3 }} />
               </>
@@ -259,7 +270,7 @@ export default function OrderDetailModal({
                       Type: {invoice.typeName} - Date: {formatDateTime(invoice.issuedDate)}
                     </Typography>
                     <Typography variant="body1" fontWeight="bold" sx={{ mt: 1 }}>
-                      {formatCurrency(invoice.totalAmount)}
+                      {formatCurrency(invoice.totalAmount, 'vi-VN')}
                     </Typography>
 
                     {isServiceOrder ? (
@@ -287,8 +298,8 @@ export default function OrderDetailModal({
                                 <TableRow key={detail.id}>
                                   <TableCell>{detail.itemName}</TableCell>
                                   <TableCell align="center">{detail.quantity}</TableCell>
-                                  <TableCell align="right">{formatCurrency(detail.unitPrice)}</TableCell>
-                                  <TableCell align="right">{formatCurrency(detail.amount)}</TableCell>
+                                  <TableCell align="right">{formatCurrency(detail.unitPrice, 'vi-VN')}</TableCell>
+                                  <TableCell align="right">{formatCurrency(detail.amount, 'vi-VN')}</TableCell>
                                 </TableRow>
                               ))
                             ) : (
@@ -330,7 +341,7 @@ export default function OrderDetailModal({
       </DialogContent>
 
       <DialogActions>
-        {order && canCreateReturn ? (
+        {order && canCreateReturn && hasEligibleReturnItems ? (
           <Button
             variant="contained"
             onClick={() => onCreateReturnTicket(order.id)}

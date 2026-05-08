@@ -1,38 +1,39 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import {
   Box,
+  Button,
   Card,
   CardContent,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Divider,
   Grid,
   Stack,
+  TextField,
   Typography,
   Alert,
 } from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
+import SaveIcon from "@mui/icons-material/Save";
+import CloseIcon from "@mui/icons-material/Close";
 import { useTranslations } from "next-intl";
-import type { MyPlantItemWithGuide } from "@/types/my-plant.types";
-import { formatDate as formatDateUTC7 } from "@/lib/utils/dateUtils";
+import { toast } from "react-toastify";
+import type {
+  MyPlantItemWithGuide,
+  MyPlantUpdateRequest,
+} from "@/types/my-plant.types";
 import { localizeRoomDesignEnumLabel } from "@/lib/utils/roomDesignEnumI18n";
+import { useUpdateMyPlant } from "@/hooks/useUpdateMyPlant";
 import ClickableImageViewer from "../image-view/ClickableImageViewer";
 
 interface MyPlantsClientProps {
   plants: MyPlantItemWithGuide[];
 }
-
-const formatDate = (value: string | null | undefined, fallback: string) => {
-  if (!value) {
-    return fallback;
-  }
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return formatDateUTC7(date);
-};
 
 const formatNumber = (
   value: number | null | undefined,
@@ -44,6 +45,42 @@ const formatNumber = (
   }
 
   return `${value}${suffix}`;
+};
+
+type MyPlantFormState = {
+  location: string;
+  currentTrunkDiameter: string;
+  currentHeight: string;
+  healthStatus: string;
+  age: string;
+};
+
+const toDateOnly = (value: string | null | undefined) => {
+  if (!value) {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  return value.slice(0, 10);
+};
+
+const toFormState = (plant: MyPlantItemWithGuide): MyPlantFormState => ({
+  location: plant.location ?? "",
+  currentTrunkDiameter:
+    plant.currentTrunkDiameter === null ||
+    plant.currentTrunkDiameter === undefined
+      ? ""
+      : String(plant.currentTrunkDiameter),
+  currentHeight:
+    plant.currentHeight === null || plant.currentHeight === undefined
+      ? ""
+      : String(plant.currentHeight),
+  healthStatus: plant.healthStatus ?? "",
+  age: plant.age === null || plant.age === undefined ? "" : String(plant.age),
+});
+
+const toNumberOrZero = (value: string) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
 };
 
 const getHealthChipStyles = (value?: string | null) => {
@@ -106,10 +143,87 @@ const GuideField = ({
 export default function MyPlantsClient({ plants }: MyPlantsClientProps) {
   const t = useTranslations("myPlantClient");
   const tRoomDesignEnum = useTranslations("roomDesignEnums");
+  const [items, setItems] = useState<MyPlantItemWithGuide[]>(plants);
+  const [editingPlant, setEditingPlant] = useState<MyPlantItemWithGuide | null>(
+    null,
+  );
+  const [form, setForm] = useState<MyPlantFormState | null>(null);
+  const { updatePlant, isSaving } = useUpdateMyPlant();
+
+  useEffect(() => {
+    setItems(plants);
+  }, [plants]);
+
+  const isDialogOpen = Boolean(editingPlant && form);
+
+  const editTitle = useMemo(() => {
+    if (!editingPlant) {
+      return t("editDialog.title");
+    }
+
+    return t("editDialog.titleWithName", { plantName: editingPlant.plantName });
+  }, [editingPlant, t]);
+
+  const handleOpenEdit = (plant: MyPlantItemWithGuide) => {
+    setEditingPlant(plant);
+    setForm(toFormState(plant));
+  };
+
+  const handleCloseEdit = () => {
+    if (isSaving) {
+      return;
+    }
+
+    setEditingPlant(null);
+    setForm(null);
+  };
+
+  const handleFormChange = (field: keyof MyPlantFormState, value: string) => {
+    setForm((prev) => (prev ? { ...prev, [field]: value } : prev));
+  };
+
+  const handleSubmitEdit = async () => {
+    if (!editingPlant || !form) {
+      return;
+    }
+
+    const request: MyPlantUpdateRequest = {
+      purchaseDate: toDateOnly(editingPlant.purchaseDate),
+      lastWateredDate: toDateOnly(editingPlant.lastWateredDate),
+      lastFertilizedDate: toDateOnly(editingPlant.lastFertilizedDate),
+      lastPrunedDate: toDateOnly(editingPlant.lastPrunedDate),
+      location: form.location.trim(),
+      currentTrunkDiameter: toNumberOrZero(form.currentTrunkDiameter),
+      currentHeight: toNumberOrZero(form.currentHeight),
+      healthStatus: form.healthStatus.trim(),
+      age: toNumberOrZero(form.age),
+    };
+
+    const result = await updatePlant(editingPlant.id, request);
+
+    if (!result.success || !result.item) {
+      toast.error(result.message ?? t("editDialog.error"));
+      return;
+    }
+
+    setItems((prev) =>
+      prev.map((plant) =>
+        plant.id === editingPlant.id
+          ? {
+              ...plant,
+              ...result.item,
+              guide: plant.guide,
+            }
+          : plant,
+      ),
+    );
+    toast.success(result.message ?? t("editDialog.success"));
+    handleCloseEdit();
+  };
 
   return (
     <Stack spacing={3}>
-      {plants.map((plant) => {
+      {items.map((plant) => {
         const healthStyles = getHealthChipStyles(plant.healthStatus);
         const notUpdated = t("common.notUpdated");
 
@@ -162,20 +276,37 @@ export default function MyPlantsClient({ plants }: MyPlantsClientProps) {
                       <Stack
                         direction="row"
                         spacing={1}
+                        alignItems="center"
+                        justifyContent="space-between"
                         useFlexGap
                         flexWrap="wrap"
                         sx={{ mb: 1.5 }}
                       >
-                        <Chip
-                          label={t("plantCode", { id: plant.id })}
+                        <Stack
+                          direction="row"
+                          spacing={1}
+                          useFlexGap
+                          flexWrap="wrap"
+                        >
+                          <Chip
+                            label={t("plantCode", { id: plant.id })}
+                            size="small"
+                            variant="outlined"
+                          />
+                          <Chip
+                            label={plant.healthStatus || notUpdated}
+                            size="small"
+                            sx={healthStyles}
+                          />
+                        </Stack>
+                        <Button
                           size="small"
                           variant="outlined"
-                        />
-                        <Chip
-                          label={plant.healthStatus || notUpdated}
-                          size="small"
-                          sx={healthStyles}
-                        />
+                          startIcon={<EditIcon fontSize="small" />}
+                          onClick={() => handleOpenEdit(plant)}
+                        >
+                          {t("actions.edit")}
+                        </Button>
                       </Stack>
                       <Typography variant="h5" fontWeight={700} gutterBottom>
                         {plant.plantName}
@@ -203,11 +334,6 @@ export default function MyPlantsClient({ plants }: MyPlantsClientProps) {
                           }}
                         >
                           <Stack spacing={1.5}>
-                            <GuideField
-                              label={t("fields.purchaseDate")}
-                              value={formatDate(plant.purchaseDate, notUpdated)}
-                              fallback={notUpdated}
-                            />
                             <GuideField
                               label={t("fields.location")}
                               value={plant.location || notUpdated}
@@ -252,30 +378,6 @@ export default function MyPlantsClient({ plants }: MyPlantsClientProps) {
                                 plant.currentTrunkDiameter,
                                 notUpdated,
                                 t("units.cm"),
-                              )}
-                              fallback={notUpdated}
-                            />
-                            <GuideField
-                              label={t("fields.lastWatered")}
-                              value={formatDate(
-                                plant.lastWateredDate,
-                                notUpdated,
-                              )}
-                              fallback={notUpdated}
-                            />
-                            <GuideField
-                              label={t("fields.lastFertilized")}
-                              value={formatDate(
-                                plant.lastFertilizedDate,
-                                notUpdated,
-                              )}
-                              fallback={notUpdated}
-                            />
-                            <GuideField
-                              label={t("fields.lastPruned")}
-                              value={formatDate(
-                                plant.lastPrunedDate,
-                                notUpdated,
                               )}
                               fallback={notUpdated}
                             />
@@ -459,6 +561,94 @@ export default function MyPlantsClient({ plants }: MyPlantsClientProps) {
           </Card>
         );
       })}
+
+      <Dialog
+        open={isDialogOpen}
+        onClose={handleCloseEdit}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>{editTitle}</DialogTitle>
+        <DialogContent>
+          {form ? (
+            <Grid container spacing={2} sx={{ pt: 1 }}>
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  label={t("fields.location")}
+                  value={form.location}
+                  onChange={(event) =>
+                    handleFormChange("location", event.target.value)
+                  }
+                  fullWidth
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  label={t("fields.age")}
+                  value={form.age}
+                  onChange={(event) =>
+                    handleFormChange("age", event.target.value)
+                  }
+                  type="number"
+                  slotProps={{ htmlInput: { min: 0 } }}
+                  fullWidth
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  label={t("fields.height")}
+                  value={form.currentHeight}
+                  onChange={(event) =>
+                    handleFormChange("currentHeight", event.target.value)
+                  }
+                  type="number"
+                  slotProps={{ htmlInput: { min: 0, step: "0.1" } }}
+                  fullWidth
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  label={t("fields.trunkDiameter")}
+                  value={form.currentTrunkDiameter}
+                  onChange={(event) =>
+                    handleFormChange("currentTrunkDiameter", event.target.value)
+                  }
+                  type="number"
+                  slotProps={{ htmlInput: { min: 0, step: "0.1" } }}
+                  fullWidth
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  label={t("fields.healthStatus")}
+                  value={form.healthStatus}
+                  onChange={(event) =>
+                    handleFormChange("healthStatus", event.target.value)
+                  }
+                  fullWidth
+                />
+              </Grid>
+            </Grid>
+          ) : null}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button
+            onClick={handleCloseEdit}
+            disabled={isSaving}
+            startIcon={<CloseIcon fontSize="small" />}
+          >
+            {t("actions.cancel")}
+          </Button>
+          <Button
+            onClick={handleSubmitEdit}
+            disabled={isSaving}
+            variant="contained"
+            startIcon={<SaveIcon fontSize="small" />}
+          >
+            {isSaving ? t("actions.saving") : t("actions.save")}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Stack>
   );
 }

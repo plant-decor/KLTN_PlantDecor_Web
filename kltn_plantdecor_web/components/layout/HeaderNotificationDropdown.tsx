@@ -21,24 +21,13 @@ import { useTranslations } from "next-intl";
 import { useTodayMyCareReminders } from "@/hooks/useTodayMyCareReminders";
 import { useCompleteMyCareReminder } from "@/hooks/useCompleteMyCareReminder";
 import type { MyCareReminderItem } from "@/types/my-plant.types";
+import { formatDate } from "@/lib/utils/dateUtils";
 
 type HeaderNotificationDropdownProps = {
   userId: number;
   onNavigate?: () => void;
 };
 
-const formatDate = (value: string | null | undefined) => {
-  if (!value) {
-    return "";
-  }
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return date.toLocaleDateString();
-};
 
 const getReminderContent = (reminder: MyCareReminderItem) =>
   reminder.content || reminder.message || "";
@@ -164,7 +153,7 @@ export default function HeaderNotificationDropdown({
                     <Stack direction="row" spacing={1} alignItems="flex-start">
                       <Box sx={{ flex: 1, minWidth: 0 }}>
                         <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap" sx={{ mb: 0.75 }}>
-                          <Chip label={formatDate(reminder.reminderDate)} size="small" variant="outlined" />
+                          <Chip label={formatDate(reminder.reminderDate ?? '')} size="small" variant="outlined" />
                           <Chip label={reminder.careTypeName} size="small" color="success" />
                         </Stack>
                         <Typography variant="subtitle2" fontWeight={750} noWrap>

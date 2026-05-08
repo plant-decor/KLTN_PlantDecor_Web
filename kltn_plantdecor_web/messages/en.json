@@ -573,15 +573,28 @@
       "cm": " cm"
     },
     "plantCode": "Plant #{id}",
+    "actions": {
+      "edit": "Edit",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving..."
+    },
     "fields": {
       "purchaseDate": "Purchase date",
       "location": "Location",
       "age": "Plant age",
       "trunkDiameter": "Trunk diameter",
       "height": "Height",
+      "healthStatus": "Health status",
       "lastWatered": "Last watered",
       "lastFertilized": "Last fertilized",
       "lastPruned": "Last pruned"
+    },
+    "editDialog": {
+      "title": "Update plant",
+      "titleWithName": "Update {plantName}",
+      "success": "Plant updated successfully",
+      "error": "Unable to update plant"
     },
     "guide": {
       "title": "Care guide for {plantName}",

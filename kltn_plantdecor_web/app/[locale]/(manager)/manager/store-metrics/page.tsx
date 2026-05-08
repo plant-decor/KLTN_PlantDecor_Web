@@ -26,18 +26,8 @@ import {
   orderStatusDistribution,
   managerTopSellingPlants,
 } from '@/data/dashboardMockData';
-
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
-  }).format(value);
-};
-
-const formatDate = (dateStr: string) => {
-  const date = new Date(dateStr);
-  return `${date.getDate()}/${date.getMonth() + 1}`;
-};
+import { formatCurrency } from '@/lib/utils/formatUtil';
+import { formatDate } from '@/lib/utils/dateUtils';
 
 const StatCard = ({
   title,
@@ -119,7 +109,7 @@ export default function StoreMetricsPage() {
       >
         <StatCard
           title="Total Revenue"
-          value={formatCurrency(managerStoreStats.totalRevenue)}
+          value={formatCurrency(managerStoreStats.totalRevenue, 'vi-VN')}
           icon={<AttachMoneyIcon sx={{ color: '#2e7d32', fontSize: 32 }} />}
           color="#2e7d32"
           subtitle="This month"
@@ -133,7 +123,7 @@ export default function StoreMetricsPage() {
         />
         <StatCard
           title="Average Order Value"
-          value={formatCurrency(managerStoreStats.averageOrderValue)}
+          value={formatCurrency(managerStoreStats.averageOrderValue, 'vi-VN')}
           icon={<ShowChartIcon sx={{ color: '#ed6c02', fontSize: 32 }} />}
           color="#ed6c02"
           subtitle="Per order"
@@ -285,8 +275,8 @@ export default function StoreMetricsPage() {
                   >
                     <TableCell>{plant.name}</TableCell>
                     <TableCell align="right">{plant.quantity.toLocaleString()}</TableCell>
-                    <TableCell align="right">{formatCurrency(plant.revenue)}</TableCell>
-                    <TableCell align="right">{formatCurrency(plant.revenue / plant.quantity)}</TableCell>
+                    <TableCell align="right">{formatCurrency(plant.revenue, 'vi-VN')}</TableCell>
+                    <TableCell align="right">{formatCurrency(plant.revenue / plant.quantity, 'vi-VN')}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

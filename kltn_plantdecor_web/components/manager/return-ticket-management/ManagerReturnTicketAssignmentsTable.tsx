@@ -19,10 +19,9 @@ import type { ManagerReturnTicketAssignmentListItem } from '@/types/return-ticke
 import {
   RETURN_TICKET_ASSIGNMENT_STATUS_CHIP_COLOR,
   RETURN_TICKET_STATUS_CHIP_COLOR,
-  formatCurrency,
-  formatDateTime,
 } from './managerReturnTicket.constants';
-
+import { formatCurrency } from '@/lib/utils/formatUtil';
+import { formatDateTime } from '@/lib/utils/dateUtils';
 interface ManagerReturnTicketAssignmentsTableProps {
   items: ManagerReturnTicketAssignmentListItem[];
   pageNumber: number;
@@ -57,7 +56,7 @@ export default function ManagerReturnTicketAssignmentsTable({
           <TableHead sx={{ backgroundColor: 'var(--primary)' }}>
             <TableRow>
               <TableCell sx={{ fontWeight: 700 }}>ID</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Ticket ID</TableCell>
+              {/* <TableCell sx={{ fontWeight: 700 }}>Ticket ID</TableCell> */}
               <TableCell sx={{ fontWeight: 700 }}>Order ID</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>Nursery</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>Customer</TableCell>
@@ -89,7 +88,7 @@ export default function ManagerReturnTicketAssignmentsTable({
               items.map((item) => (
                 <TableRow key={item.assignmentId} hover>
                   <TableCell>#{item.assignmentId}</TableCell>
-                  <TableCell>#{item.returnTicketId}</TableCell>
+                  {/* <TableCell>#{item.returnTicketId}</TableCell> */}
                   <TableCell>#{item.orderId}</TableCell>
                   <TableCell>{item.nurseryName}</TableCell>
                   <TableCell>
@@ -114,7 +113,7 @@ export default function ManagerReturnTicketAssignmentsTable({
                       color={RETURN_TICKET_STATUS_CHIP_COLOR[item.ticketStatus] || 'default'}
                     />
                   </TableCell>
-                  <TableCell align="right">{formatCurrency(item.ticketTotalRefundedAmount)}</TableCell>
+                  <TableCell align="right">{formatCurrency(item.ticketTotalRefundedAmount, 'vi-VN')}</TableCell>
                   <TableCell align="center">{formatDateTime(item.assignedAt)}</TableCell>
                   <TableCell align="center">
                     <Button size="small" onClick={() => onViewDetail(item)}>

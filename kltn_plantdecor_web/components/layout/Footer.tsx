@@ -8,6 +8,7 @@ import {
 } from '@mui/icons-material';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
+import { POLICY_CATEGORIES } from '@/lib/constants/policyCategories';
 
 export default function Footer() {
   const t = useTranslations('footer');
@@ -78,30 +79,20 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Customer Support */}
+          {/* Policies */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">{t('customerSupport')}</h3>
+            <h3 className="text-lg font-semibold mb-4">Policies</h3>
             <ul className="space-y-2">
-              <li>
-                <Link href="/" className="text-gray-400 hover:text-green-600 transition-colors duration-200">
-                  {t('faq')}
-                </Link>
-              </li>
-              <li>
-                <Link href="/return-policy" className="text-gray-400 hover:text-green-600 transition-colors duration-200">
-                  {t('returnPolicy')}
-                </Link>
-              </li>
-              <li>
-                <Link href="/user-policy" className="text-gray-400 hover:text-green-600 transition-colors duration-200">
-                  {t('userPolicy')}
-                </Link>
-              </li>
-              <li>
-                <Link href="/terms" className="text-gray-400 hover:text-green-600 transition-colors duration-200">
-                  {t('termsOfService')}
-                </Link>
-              </li>
+              {POLICY_CATEGORIES.map((category) => (
+                <li key={category.value}>
+                  <Link
+                    href={`/policies/${category.slug}`}
+                    className="text-gray-400 hover:text-green-600 transition-colors duration-200"
+                  >
+                    {category.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -131,14 +122,6 @@ export default function Footer() {
             <p className="text-gray-400 text-sm">
               &copy; 2026 Plant Decor. {t('rights')}
             </p>
-            <div className="flex space-x-6 mt-4 md:mt-0">
-              <Link href="/user-policy" className="text-gray-400 hover:text-green-600 text-sm transition-colors duration-200">
-                {t('userPolicy')}
-              </Link>
-              <Link href="/terms" className="text-gray-400 hover:text-green-600 text-sm transition-colors duration-200">
-                {t('termsOfService')}
-              </Link>
-            </div>
           </div>
         </div>
 

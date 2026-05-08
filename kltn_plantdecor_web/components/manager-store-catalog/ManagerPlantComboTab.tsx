@@ -45,6 +45,7 @@ import {
 } from '@/lib/api/managerStoreCatalogService';
 // import { getAdminPlantCombos } from '@/lib/api/adminPlantCombosService';
 import { formatCurrency } from '@/lib/utils/formatUtil';
+import { formatDateTime } from '@/lib/utils/dateUtils';
 
 interface PaginationState {
   pageNumber: number;
@@ -113,15 +114,6 @@ const getErrorMessage = (error: unknown, fallback: string): string => {
   };
 
   return candidate.response?.data?.message || candidate.message || fallback;
-};
-
-const formatDateTime = (value: string): string => {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return '-';
-  }
-
-  return date.toLocaleString('vi-VN');
 };
 
 interface ManagerPlantComboTabProps {
@@ -384,7 +376,7 @@ export default function ManagerPlantComboTab({ readOnly = false }: ManagerPlantC
                       variant="outlined"
                     />
                   </TableCell>
-                  <TableCell align="center">{formatDateTime(item.updatedAt)}</TableCell>
+                  <TableCell align="center">{formatDateTime(item.updatedAt ?? '')}</TableCell>
                   <TableCell align="center">
                     {!readOnly ? (
                       <Button

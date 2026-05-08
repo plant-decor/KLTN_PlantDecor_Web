@@ -39,6 +39,18 @@ export interface MyPlantItemWithGuide extends MyPlantItem {
   guide?: PlantGuideDetail | null;
 }
 
+export interface MyPlantUpdateRequest {
+  purchaseDate: string;
+  lastWateredDate: string;
+  lastFertilizedDate: string;
+  lastPrunedDate: string;
+  location: string;
+  currentTrunkDiameter: number;
+  currentHeight: number;
+  healthStatus: string;
+  age: number;
+}
+
 export interface MyCareReminderItem {
   id: number;
   userPlantId: number;

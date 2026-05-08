@@ -104,7 +104,7 @@ export default function OrderHistoryList({
       </Box>
     );
   }
-  console.log('orders', orders);
+  // console.log('orders', orders);
   if (orders.length === 0) {
     return (
       <Card sx={{ boxShadow: 2 }}>

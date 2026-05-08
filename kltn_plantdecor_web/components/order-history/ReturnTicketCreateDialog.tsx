@@ -76,9 +76,10 @@ export default function ReturnTicketCreateDialog({
   onSubmit,
 }: ReturnTicketCreateDialogProps) {
   const eligibleItems = useMemo<EligibleItem[]>(() => {
+    const refundFlowStatuses = new Set(['RefundRequested', 'Refunded', 'Rejected']);
     return order.nurseryOrders.flatMap((nurseryOrder) =>
       nurseryOrder.items
-        .filter((item) => item.quantity > 0)
+        .filter((item) => item.quantity > 0 && !refundFlowStatuses.has(item.statusName))
         .map((item) => ({
           nurseryOrderDetailId: item.id,
           nurseryOrderId: nurseryOrder.id,
@@ -215,6 +216,7 @@ export default function ReturnTicketCreateDialog({
 
     try {
       await onSubmit(request, imagesByDetailId);
+      onClose();
     } catch {
       // Error state is managed by parent and displayed through submitError.
     }

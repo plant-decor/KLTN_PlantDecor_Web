@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import {
   Alert,
   Box,
@@ -69,6 +70,16 @@ export default function OrderDetailModal({
   const isServiceOrder = order?.orderType === SERVICE_ORDER_TYPE;
   const canCancelOrder = !!order && canUserCancelOrder(order.statusName);
   const canCreateReturn = !!order && !isServiceOrder && canCreateReturnTicket(order.statusName);
+  const hasEligibleReturnItems = useMemo(() => {
+    if (!order) {
+      return false;
+    }
+
+    const refundFlowStatuses = new Set(['RefundRequested', 'Refunded', 'Rejected']);
+    return order.nurseryOrders.some((nurseryOrder) =>
+      nurseryOrder.items.some((item) => item.quantity > 0 && !refundFlowStatuses.has(item.statusName))
+    );
+  }, [order]);
   const isCancelling = !!order && cancelLoadingOrderId === order.id;
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
@@ -330,7 +341,7 @@ export default function OrderDetailModal({
       </DialogContent>
 
       <DialogActions>
-        {order && canCreateReturn ? (
+        {order && canCreateReturn && hasEligibleReturnItems ? (
           <Button
             variant="contained"
             onClick={() => onCreateReturnTicket(order.id)}

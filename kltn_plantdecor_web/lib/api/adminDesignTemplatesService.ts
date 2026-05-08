@@ -312,11 +312,19 @@ export const getAdminDesignTemplates = async (loading = true): Promise<AdminDesi
   return normalizeTemplates(response);
 };
 
-export const getAdminDesignTemplateDetail = async (
+export const getDesignTemplateDetail = async (
   id: number,
   loading = true
 ): Promise<AdminDesignTemplateDetail> => {
   const response = await apiClient.get<WrappedResponse<unknown>>(`public/design-templates/${id}`, undefined, loading, QUERY_CONFIG);
+  return normalizeTemplateDetail(response);
+};
+
+export const getAdminDesignTemplateDetail = async (
+  id: number,
+  loading = true
+): Promise<AdminDesignTemplateDetail> => {
+  const response = await apiClient.get<WrappedResponse<unknown>>(`admin/design-templates/${id}`, undefined, loading, QUERY_CONFIG);
   return normalizeTemplateDetail(response);
 };
 

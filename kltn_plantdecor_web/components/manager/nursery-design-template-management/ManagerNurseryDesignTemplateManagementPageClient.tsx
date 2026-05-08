@@ -9,7 +9,7 @@ import DesignTemplateTierDialog, { type DesignTemplateTierFormValue } from '@/co
 import { mapRoomTypeOptions, mapStyleOptions } from '@/components/design-template-management/designTemplateManagement.constants';
 import {
   fetchRoomDesignEnumOptionsForTemplates,
-  getAdminDesignTemplateDetail,
+  getDesignTemplateDetail,
 } from '@/lib/api/adminDesignTemplatesService';
 import {
   createNurseryDesignTemplate,
@@ -183,7 +183,7 @@ export default function ManagerNurseryDesignTemplateManagementPageClient() {
       setSelectedTemplateDetail(null);
       setTemplateFormValue(emptyTemplateForm(styleOptions[0]?.value ?? 1));
       try {
-        const detail = await getAdminDesignTemplateDetail(row.designTemplateId, false);
+        const detail = await getDesignTemplateDetail(row.designTemplateId, false);
         setSelectedTemplateDetail(detail);
         setTemplateFormValue({
           name: detail.name,

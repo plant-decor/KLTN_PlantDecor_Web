@@ -93,10 +93,10 @@ export interface AdminDesignTemplateTierUpdateRequest {
   isActive: boolean;
 }
 
-/** Body for PUT `/api/admin/design-template-tiers/{id}/items` — plantId/materialId không dùng gửi 0. */
+/** Body for PUT `/api/admin/design-template-tiers/{id}/items`; unused plantId/materialId is sent as null. */
 export interface AdminDesignTemplateTierItemApiBody {
-  materialId: number;
-  plantId: number;
+  materialId: number | null;
+  plantId: number | null;
   itemType: number;
   quantity: number;
 }

@@ -14,7 +14,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import ManagementHeader from '@/components/layout/ManagementHeader';
 import {
-  getEligibleCaretakersForServiceRegistration,
+  getEligibleCaretakersForReassgiCaretaker,
   getNurseryScheduleByDate,
   getServiceProgressDetail,
   reassignServiceProgressCaretaker,
@@ -71,7 +71,7 @@ export default function ManagerScheduleServicesPageClient() {
       const payload = await getNurseryScheduleByDate(date, false);
       setItems(payload);
     } catch (loadError) {
-      const message = getErrorMessage(loadError, 'Không thể tải lịch chăm sóc theo ngày');
+      const message = getErrorMessage(loadError, 'Cannot load nursery schedule by date');
       setError(message);
       setItems([]);
       toast.error(message);
@@ -93,7 +93,7 @@ export default function ManagerScheduleServicesPageClient() {
       const payload = await getServiceProgressDetail(item.id, false);
       setDetail(payload);
     } catch (detailLoadError) {
-      const message = getErrorMessage(detailLoadError, 'Không thể tải chi tiết phiên chăm sóc');
+      const message = getErrorMessage(detailLoadError, 'Cannot load service progress detail');
       setDetailError(message);
       setDetail(null);
       toast.error(message);
@@ -110,7 +110,7 @@ export default function ManagerScheduleServicesPageClient() {
 
   const handleOpenReassign = async (item: NurseryServiceScheduleItem) => {
     if (!item.serviceRegistrationId) {
-      toast.error('Không tìm thấy service registration để lấy caretaker đủ điều kiện');
+      toast.error('Cannot find service registration to fetch eligible caretakers');
       return;
     }
 
@@ -122,13 +122,13 @@ export default function ManagerScheduleServicesPageClient() {
     setSelectedCaretakerId(0);
 
     try {
-      const caretakers = await getEligibleCaretakersForServiceRegistration(item.serviceRegistrationId, false);
+      const caretakers = await getEligibleCaretakersForReassgiCaretaker(item.serviceRegistrationId, false);
       setEligibleCaretakers(caretakers);
       if (caretakers.length > 0) {
         setSelectedCaretakerId(caretakers[0].id);
       }
     } catch (loadError) {
-      const message = getErrorMessage(loadError, 'Không thể tải danh sách caretaker đủ điều kiện');
+      const message = getErrorMessage(loadError, 'Cannot load list of eligible caretakers');
       setReassignError(message);
       toast.error(message);
     } finally {
@@ -166,7 +166,7 @@ export default function ManagerScheduleServicesPageClient() {
 
   const handleSubmitReassign = async () => {
     if (!reassignTarget?.id || !selectedCaretakerId) {
-      toast.error('Vui lòng chọn caretaker mới');
+      toast.error('Please select a new caretaker');
       return;
     }
 
@@ -180,11 +180,11 @@ export default function ManagerScheduleServicesPageClient() {
         false
       );
 
-      toast.success('Chuyển caretaker thành công');
+      toast.success('Reassign caretaker successfully');
       closeReassignDialog();
       await Promise.all([fetchSchedule(selectedDate), refreshDetailIfNeeded(reassignTarget.id)]);
     } catch (submitError) {
-      const message = getErrorMessage(submitError, 'Không thể chuyển caretaker cho phiên chăm sóc');
+      const message = getErrorMessage(submitError, 'Can not reassign caretaker');
       setReassignError(message);
       toast.error(message);
     } finally {

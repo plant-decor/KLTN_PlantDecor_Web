@@ -33,7 +33,7 @@ export interface CartApiItem {
   quantity: number;
   subtotal: number;
   subTotal?: number;
-  imageUrl: string | null;
+  primaryImageUrl: string | null;
 }
 
 export interface AddCartItemRequest {

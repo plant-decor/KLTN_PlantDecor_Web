@@ -138,7 +138,7 @@ export default function ImageUpload({
                   />
                   {image.isThumbnail && (
                     <Chip
-                      label="Ảnh Chính"
+                      label="Thumbnail"
                       size="small"
                       color="primary"
                       sx={{

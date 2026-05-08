@@ -74,7 +74,7 @@ export const mapConversationToSession = (
     customerName,
     customerEmail,
     customerAvatarUrl,
-    summary: conv.latestMessage?.content ?? "Chưa có tin nhắn",
+    summary: conv.latestMessage?.content ?? "No messages yet",
     waitingMinutes,
     lastMessageAt,
     lastMessageTimeLabel,

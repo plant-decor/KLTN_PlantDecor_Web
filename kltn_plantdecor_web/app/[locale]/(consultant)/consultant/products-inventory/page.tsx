@@ -575,10 +575,10 @@ export default function ProductsInventoryPage() {
                     <Button
                       size="small"
                       variant="outlined"
-                      startIcon={<VisibilityIcon />}
+                      className="bg-transparent! rounded-full!"
                       onClick={() => handleViewDetail(item)}
                     >
-                      View
+                      <VisibilityIcon fontSize="medium" className="hover:scale-110" />
                     </Button>
                   </TableCell>
                 </TableRow>

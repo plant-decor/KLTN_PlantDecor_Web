@@ -5,6 +5,15 @@ export interface CareServiceSpecialization {
   isActive?: boolean;
 }
 
+export interface CareServicePackageSuitabilityRule {
+  id?: number;
+  careServicePackageId?: number;
+  categoryId?: number | null;
+  categoryName?: string | null;
+  careDifficultyLevel?: number | null;
+  careDifficultyLevelName?: string | null;
+}
+
 export interface CareServicePackage {
   id: number;
   name: string;
@@ -19,6 +28,7 @@ export interface CareServicePackage {
   isActive: boolean;
   createdAt?: string;
   specializations: CareServiceSpecialization[];
+  suitabilityRules?: CareServicePackageSuitabilityRule[];
 }
 
 export interface NurseryCareService {
@@ -278,6 +288,9 @@ export interface NurseryServiceScheduleItem {
   actualStartTime: string | null;
   actualEndTime: string | null;
   description: string | null;
+  incidentReason: string | null;
+  incidentImageUrl: string | null;
+  hasIncidents: boolean;
   evidenceImageUrl: string | null;
   shift: ServiceProgressShift | null;
   caretaker: ServiceProgressCaretaker | null;

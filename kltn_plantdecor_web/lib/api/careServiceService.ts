@@ -6,6 +6,7 @@ import type {
   AssignServiceRegistrationCaretakerRequest,
   CareServicePackage,
   CareServiceSpecialization,
+  CareServicePackageSuitabilityRule,
   CreateServiceRegistrationRequest,
   CreatedServiceRegistration,
   EligibleCaretaker,
@@ -128,6 +129,57 @@ const normalizePackage = (item: unknown): CareServicePackage | null => {
       Boolean(specialization),
     );
 
+  const rawSuitabilityRules = Array.isArray(item.suitabilityRules)
+    ? item.suitabilityRules
+    : [];
+  const suitabilityRules: CareServicePackageSuitabilityRule[] = rawSuitabilityRules
+    .map((rule) => {
+      if (!isRecord(rule)) {
+        return null;
+      }
+
+      const normalized: CareServicePackageSuitabilityRule = {};
+
+      const ruleId =
+        rule.id == null ? null : toNumber(rule.id, Number.NaN);
+      if (ruleId != null && Number.isFinite(ruleId)) {
+        normalized.id = ruleId;
+      }
+
+      const careServicePackageId =
+        rule.careServicePackageId == null
+          ? null
+          : toNumber(rule.careServicePackageId, Number.NaN);
+      if (careServicePackageId != null && Number.isFinite(careServicePackageId)) {
+        normalized.careServicePackageId = careServicePackageId;
+      }
+
+      if (rule.categoryId == null) {
+        normalized.categoryId = null;
+      } else {
+        const categoryId = toNumber(rule.categoryId, Number.NaN);
+        normalized.categoryId = Number.isFinite(categoryId) ? categoryId : null;
+      }
+
+      normalized.categoryName = toNullableText(rule.categoryName);
+
+      if (rule.careDifficultyLevel == null) {
+        normalized.careDifficultyLevel = null;
+      } else {
+        const careDifficultyLevel = toNumber(rule.careDifficultyLevel, Number.NaN);
+        normalized.careDifficultyLevel = Number.isFinite(careDifficultyLevel)
+          ? careDifficultyLevel
+          : null;
+      }
+
+      normalized.careDifficultyLevelName = toNullableText(rule.careDifficultyLevelName);
+
+      return normalized;
+    })
+    .filter(
+      (rule): rule is CareServicePackageSuitabilityRule => Boolean(rule),
+    );
+
   return {
     id,
     name: toText(item.name),
@@ -143,6 +195,7 @@ const normalizePackage = (item: unknown): CareServicePackage | null => {
     isActive: toBoolean(item.isActive, true),
     createdAt: toText(item.createdAt) || undefined,
     specializations,
+    suitabilityRules: suitabilityRules.length ? suitabilityRules : undefined,
   };
 };
 
@@ -445,7 +498,9 @@ const normalizeNurseryServiceScheduleItem = (
   const customer =
     serviceRegistration && isRecord(serviceRegistration.customer)
       ? serviceRegistration.customer
-      : null;
+      : isRecord(item.customer)
+        ? item.customer
+        : null;
   const statusValue =
     typeof item.status === "string" ? item.status : toNumber(item.status);
   const statusName = toText(item.statusName);
@@ -461,6 +516,9 @@ const normalizeNurseryServiceScheduleItem = (
     actualStartTime: toNullableText(item.actualStartTime),
     actualEndTime: toNullableText(item.actualEndTime),
     description: toNullableText(item.description),
+    incidentReason: toNullableText(item.incidentReason),
+    incidentImageUrl: toNullableText(item.incidentImageUrl),
+    hasIncidents: toBoolean(item.hasIncidents, false),
     evidenceImageUrl: toNullableText(item.evidenceImageUrl),
     shift: shift
       ? {
@@ -1054,6 +1112,27 @@ export const getEligibleCaretakersForServiceRegistration = async (
     .filter((item): item is EligibleCaretaker => Boolean(item));
 };
 
+export const getEligibleCaretakersForReassgiCaretaker = async (
+  id: number,
+  loading = true,
+): Promise<EligibleCaretaker[]> => {
+  const response = await apiClient.get<WrappedResponse<unknown>>(
+    `service-progress/${id}/eligible-caretakers`,
+    undefined,
+    loading,
+    QUERY_CONFIG,
+  );
+
+  const payload = unwrapPayloadData(response);
+  if (!Array.isArray(payload)) {
+    return [];
+  }
+
+  return payload
+    .map((item) => normalizeEligibleCaretaker(item))
+    .filter((item): item is EligibleCaretaker => Boolean(item));
+};
+
 export const assignCaretakerToManagerServiceRegistration = async (
   id: number,
   data: AssignServiceRegistrationCaretakerRequest,
@@ -1175,8 +1254,7 @@ export const getCaretakerScheduleByRange = async (
     loading,
     QUERY_CONFIG,
   );
-
-  return parseNurseryServiceScheduleItems(unwrapPayloadData(response));
+  return parseNurseryServiceScheduleItems(unwrapPayloadData(response));;
 };
 
 export const getStaffScheduleByRange = async (

@@ -53,7 +53,7 @@ const toCartItem = (item: CartApiItem): CartItem => ({
   quantity: item.quantity,
   productName: item.productName,
   price: item.price,
-  imageUrl: item.imageUrl,
+  primaryImageUrl: item.primaryImageUrl ?? null,
   subtotal: item.subTotal ?? item.subtotal ?? item.price * item.quantity,
 });
 
@@ -114,7 +114,7 @@ export default function CartPageClient({ userid }: CartPageClientProps) {
       setIsLoading(true);
       setError('');
       const items = await fetchCartItems();
-      console.log('Fetched cart items:', items);
+    
       if (items.payload) {
         const mappedCartItems = items.payload.items.map(toCartItem);
         const nurseryNameMap = await fetchNurseryNameMap(

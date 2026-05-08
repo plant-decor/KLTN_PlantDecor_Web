@@ -10,8 +10,10 @@ type Props = {
   loading: boolean;
   error: string | null;
   sendingPackageId: number | null;
+  viewingPackageId: number | null;
   disabled: boolean;
   onSendBookingLink: (recommendation: RecommendedPackage) => void;
+  onViewDetail: (recommendation: RecommendedPackage) => void;
 };
 
 export function RecommendedPackageList({
@@ -19,8 +21,10 @@ export function RecommendedPackageList({
   loading,
   error,
   sendingPackageId,
+  viewingPackageId,
   disabled,
   onSendBookingLink,
+  onViewDetail,
 }: Props) {
   if (loading) {
     return (
@@ -53,8 +57,10 @@ export function RecommendedPackageList({
           key={recommendation.packageId}
           recommendation={recommendation}
           isSending={sendingPackageId === recommendation.packageId}
+          isViewing={viewingPackageId === recommendation.packageId}
           disabled={disabled}
           onSendBookingLink={onSendBookingLink}
+          onViewDetail={onViewDetail}
         />
       ))}
     </Stack>

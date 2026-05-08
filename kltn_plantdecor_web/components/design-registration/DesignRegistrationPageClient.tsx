@@ -64,6 +64,7 @@ import type {
 } from '@/types/design-registration.types';
 import { formatDate } from '@/lib/utils/dateUtils';
 import { formatCurrency } from '@/lib/utils/formatUtil';
+import ClickableImageViewer from '../image-view/ClickableImageViewer';
 
 const DESIGN_STATUS = {
   PendingApproval: 1,
@@ -688,6 +689,13 @@ export default function DesignRegistrationPageClient() {
                       <Chip label={`${selectedTier.minArea}-${selectedTier.maxArea} m2`} />
                       <Chip label={`${selectedTier.estimatedDays} days`} />
                     </Stack>
+                    <ClickableImageViewer
+                      images={[selectedTemplate.imageUrl]}
+                      alt={selectedTemplate.name}
+                      containerClassName="w-full mt-4"
+                      className="object-cover"
+                      showZoomHint={true}
+                    />
                   </CardContent>
                 </Card>
               ) : null}
@@ -730,8 +738,6 @@ export default function DesignRegistrationPageClient() {
                       placeholder="Search or enter your service address"
                       error={Boolean(fieldErrors.address)}
                       helperText={fieldErrors.address}
-                      multiline
-                      rows={2}
                       InputProps={{
                         ...params.InputProps,
                         endAdornment: (

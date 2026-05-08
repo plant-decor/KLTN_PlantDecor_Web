@@ -586,6 +586,60 @@ const normalizeNurseryServiceScheduleItem = (
   };
 };
 
+const mapDesignTaskToScheduleItem = (item: unknown): unknown => {
+  if (!isRecord(item)) {
+    return item;
+  }
+
+  const registration = isRecord(item.registration) ? item.registration : null;
+  const customer =
+    registration && isRecord(registration.customer) ? registration.customer : null;
+  const assignedStaff = isRecord(item.assignedStaff) ? item.assignedStaff : null;
+  const designTemplateName = registration
+    ? toText(registration.designTemplateName)
+    : "";
+  const taskTypeName = toText(item.taskTypeName, "Design Service");
+
+  return {
+    ...item,
+    taskType: "DesignService",
+    taskTypeName,
+    taskDate: toText(
+      (item.taskDate as unknown) ?? item.scheduledDate ?? item.createdAt,
+    ),
+    description: toNullableText(item.description) ?? taskTypeName,
+    evidenceImageUrl: toNullableText(item.reportImageUrl),
+    hasIncidents: false,
+    incidentReason: null,
+    incidentImageUrl: null,
+    shift: null,
+    caretaker: assignedStaff,
+    customer,
+    serviceRegistration: registration
+      ? {
+          id: toNumber(registration.id),
+          address: toText(registration.address),
+          phone: toText(registration.phone),
+          customer,
+          nurseryCareService: {
+            id: 0,
+            nurseryId: toNumber(registration.nurseryId),
+            nurseryName: "",
+            careServicePackage: {
+              id: 0,
+              name: designTemplateName || taskTypeName,
+              description: taskTypeName,
+              visitPerWeek: null,
+              durationDays: 0,
+              serviceType: 0,
+              unitPrice: 0,
+            },
+          },
+        }
+      : null,
+  };
+};
+
 const parseNurseryServiceScheduleItems = (payload: unknown): NurseryServiceScheduleItem[] => {
   if (Array.isArray(payload)) {
     return payload
@@ -617,15 +671,7 @@ const parseNurseryServiceScheduleItems = (payload: unknown): NurseryServiceSched
             }
           : item,
       ),
-      ...designTasks.map((item) =>
-        isRecord(item)
-          ? {
-              ...item,
-              taskType: "DesignService",
-              taskTypeName: toText(item.taskTypeName, "Design Service"),
-            }
-          : item,
-      ),
+      ...designTasks.map((item) => mapDesignTaskToScheduleItem(item)),
     ];
 
     return tagged

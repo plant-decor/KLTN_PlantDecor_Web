@@ -55,7 +55,7 @@ export function RecommendationCard({
             {formatCurrency(recommendation.unitPrice, 'vi-VN')}
           </Typography>
         </Box>
-        <Chip
+        {/* <Chip
           size="small"
           label={`Score ${recommendation.matchScore}`}
           sx={{
@@ -65,7 +65,7 @@ export function RecommendationCard({
             color: "#15803d",
             fontWeight: 700,
           }}
-        />
+        /> */}
       </Stack>
 
       {recommendation.matchReasons.length ? (

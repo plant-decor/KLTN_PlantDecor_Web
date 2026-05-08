@@ -56,6 +56,7 @@ export default function DesignTaskDetailDialog({
   detail,
   onClose,
 }: DesignTaskDetailDialogProps) {
+  console.log('detail', detail);
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle sx={{ pr: 6 }}>
@@ -95,7 +96,8 @@ export default function DesignTaskDetailDialog({
             <Typography variant="subtitle1" fontWeight={700}>
               Registration information
             </Typography>
-            <DetailRow label="Registration ID" value={detail.registration?.id ? `#${detail.registration.id}` : "-"} />
+            {/* <DetailRow label="Registration ID" value={detail.registration?.id ? `#${detail.registration.id}` : "-"} /> */}
+            <DetailRow label="Customer" value={detail.registration.customer?.fullName ? `${detail.registration.customer?.fullName} | ${detail.registration.customer?.email}` : "-"} />
             <DetailRow label="Registration status" value={detail.registration?.statusName || `#${detail.registration?.status ?? "-"}`} />
             <DetailRow label="Phone" value={detail.registration?.phone || "-"} />
             <DetailRow label="Address" value={detail.registration?.address || "-"} />

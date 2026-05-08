@@ -106,27 +106,56 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
     return 0;
   }, [analysisResult, generateResult, isAnalyzing, isGenerating]);
 
-  const recommendationsByAnyId = useMemo(() => {
+  const recommendationsByCommonPlantId = useMemo(() => {
     const map = new Map<number, RoomPlantRecommendation>();
 
-    (analysisResult?.recommendations ?? []).forEach((recommendation) => {
-      if (recommendation.entityId > 0 && !map.has(recommendation.entityId)) {
-        map.set(recommendation.entityId, recommendation);
-      }
-      if (recommendation.productId > 0 && !map.has(recommendation.productId)) {
-        map.set(recommendation.productId, recommendation);
-      }
-    });
+    (analysisResult?.recommendations ?? [])
+      .filter((recommendation) => recommendation.entityType === 'CommonPlant')
+      .forEach((recommendation) => {
+        if (recommendation.entityId > 0 && !map.has(recommendation.entityId)) {
+          map.set(recommendation.entityId, recommendation);
+        }
+        if (recommendation.productId > 0 && !map.has(recommendation.productId)) {
+          map.set(recommendation.productId, recommendation);
+        }
+      });
+
+    return map;
+  }, [analysisResult]);
+
+  const recommendationsByPlantInstanceId = useMemo(() => {
+    const map = new Map<number, RoomPlantRecommendation>();
+
+    (analysisResult?.recommendations ?? [])
+      .filter((recommendation) => recommendation.entityType === 'PlantInstance')
+      .forEach((recommendation) => {
+        if (recommendation.entityId > 0 && !map.has(recommendation.entityId)) {
+          map.set(recommendation.entityId, recommendation);
+        }
+        if (recommendation.productId > 0 && !map.has(recommendation.productId)) {
+          map.set(recommendation.productId, recommendation);
+        }
+      });
 
     return map;
   }, [analysisResult]);
 
   const resolveRecommendationFromGeneratedItem = (item: GeneratedLayoutImageItem): RoomPlantRecommendation | null => {
-    if (!item.commonPlantId || item.commonPlantId <= 0) {
-      return null;
+    if (item.commonPlantId && item.commonPlantId > 0) {
+      const matched = recommendationsByCommonPlantId.get(item.commonPlantId);
+      if (matched) {
+        return matched;
+      }
     }
 
-    return recommendationsByAnyId.get(item.commonPlantId) ?? null;
+    if (item.plantInstanceId && item.plantInstanceId > 0) {
+      const matched = recommendationsByPlantInstanceId.get(item.plantInstanceId);
+      if (matched) {
+        return matched;
+      }
+    }
+
+    return null;
   };
 
   const handleGenerateImages = async (layoutDesignId: number) => {

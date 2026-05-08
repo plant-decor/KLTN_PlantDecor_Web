@@ -240,6 +240,15 @@ const normalizeDesignRegistrationTask = (value: unknown): CustomerDesignRegistra
 
   const assignedStaff = isRecord(value.assignedStaff) ? value.assignedStaff : undefined;
   const registration = isRecord(value.registration) ? value.registration : undefined;
+  const customer = normalizeDesignRegistrationCustomer(registration?.customer);
+  if (registration == null || customer == null) {
+    return null;
+  }
+
+  const registrationId = toNumber(registration.id, Number.NaN);
+  if (!Number.isFinite(registrationId)) {
+    return null;
+  }
 
   return {
     id,
@@ -262,14 +271,15 @@ const normalizeDesignRegistrationTask = (value: unknown): CustomerDesignRegistra
         avatar: assignedStaff.avatar == null ? null : toText(assignedStaff.avatar),
       },
     registration: {
-      id: toNumber(registration?.id),
-      userId: toNumber(registration?.userId),
-      assignedCaretakerId: registration?.assignedCaretakerId == null ? null : toNumber(registration?.assignedCaretakerId),
-      nurseryId: toNumber(registration?.nurseryId),
-      status: toNumber(registration?.status),
-      statusName: toText(registration?.statusName),
-      address: toText(registration?.address),
-      phone: toText(registration?.phone),
+      id: registrationId,
+      customer,
+      userId: toNumber(registration.userId),
+      assignedCaretakerId: registration.assignedCaretakerId == null ? null : toNumber(registration.assignedCaretakerId),
+      nurseryId: toNumber(registration.nurseryId),
+      status: toNumber(registration.status),
+      statusName: toText(registration.statusName),
+      address: toText(registration.address),
+      phone: toText(registration.phone),
     },
     taskMaterialUsages: Array.isArray(value.taskMaterialUsages)
       ? value.taskMaterialUsages.map(normalizeDesignRegistrationTaskMaterialUsage).filter((item): item is CustomerDesignRegistrationListItem["designTasks"][number]["taskMaterialUsages"][number] => Boolean(item))

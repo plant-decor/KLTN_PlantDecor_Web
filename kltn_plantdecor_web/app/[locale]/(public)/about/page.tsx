@@ -11,6 +11,8 @@ import {
 } from "@mui/icons-material";
 import { Button, Card, CardContent, Container, Grid, Stack, Typography } from "@mui/material";
 import { hoverLiftStyle } from "@/lib/styles/buttonStyles";
+import { cookies } from "next/headers";
+import { getCurrentUser } from "@/lib/auth/getCurrentUser";
 
 interface AboutPageProps {
   params: Promise<{ locale: string }>;
@@ -48,10 +50,13 @@ export async function generateMetadata({
 export default async function AboutPage({ params }: AboutPageProps) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "aboutPage" });
-  const aiRecommendationHref = getPathname({
-    locale,
-    href: "/ai-plant-recommendation",
-  });
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get('accessToken')?.value || null;
+  
+  const user = accessToken ? await getCurrentUser() : null;
+  const aiRecommendationHref = user?.id
+    ? `/ai-plant-recommendation/${user.id}`
+    : `/login?redirectTo=${encodeURIComponent('/ai-plant-recommendation/[userid]')}`;
   const contactHref = getPathname({
     locale,
     href: "/contact",

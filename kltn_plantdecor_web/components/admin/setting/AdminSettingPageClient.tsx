@@ -5,6 +5,7 @@ import { Box, Tab, Tabs } from "@mui/material";
 import ManagementHeader from "@/components/layout/ManagementHeader";
 import TabPanel from "@/components/admin/categories-tags/TabPanel";
 import DepositPolicySection from "@/components/admin/setting/deposit-policy/DepositPolicySection";
+import PolicyContentSection from "@/components/admin/setting/policy-content/PolicyContentSection";
 
 export default function AdminSettingPageClient() {
   const [tabValue, setTabValue] = useState(0);
@@ -28,12 +29,16 @@ export default function AdminSettingPageClient() {
             '& .Mui-selected': { backgroundColor: 'var(--primary) !important', color: '#fff !important' },
           }}
           >
-          <Tab label="DepositPolicy" />
+          <Tab label="Deposit Policy" />
+          <Tab label="Policy Content" />
         </Tabs>
       </Box>
 
       <TabPanel value={tabValue} index={0}>
         <DepositPolicySection />
+      </TabPanel>
+      <TabPanel value={tabValue} index={1}>
+        <PolicyContentSection />
       </TabPanel>
     </Box>
   );

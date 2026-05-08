@@ -31,8 +31,8 @@ import {
   getManagerNurseryOrderShippers,
   updateManagerNurseryOrderShipper,
 } from '@/lib/api/managerSalesOrdersService';
+import { formatCurrency } from '@/lib/utils/formatUtil';
 import {
-  formatCurrency,
   normalizeMultilineText,
   SALES_ORDER_STATUS_CHIP_COLOR,
   SALES_ORDER_STATUS_LABELS,
@@ -168,19 +168,19 @@ export default function ManagerSalesOrderDetailDialog({
 
               <Stack spacing={1}>
                 <Typography variant="body2" textAlign={{ md: 'right' }}>
-                  <strong>Subtotal:</strong> {formatCurrency(detailItem.subTotalAmount)}
+                  <strong>Subtotal:</strong> {formatCurrency(detailItem.subTotalAmount, 'vi-VN')}
                 </Typography>
                 <Typography variant="body2" textAlign={{ md: 'right' }}>
-                  <strong>Total:</strong> {formatCurrency(detailItem.totalAmount ?? undefined)}
+                  <strong>Total:</strong> {formatCurrency(detailItem.totalAmount ?? 0, 'vi-VN')}
                 </Typography>
                 <Typography variant="body2" textAlign={{ md: 'right' }}>
-                  <strong>Payment:</strong> {paidAmount != null ? formatCurrency(paidAmount) : '-'}
+                  <strong>Payment:</strong> {paidAmount != null ? formatCurrency(paidAmount, 'vi-VN') : '-'}
                 </Typography>
                 <Typography variant="body2" textAlign={{ md: 'right' }}>
-                  <strong>Deposit:</strong> {formatCurrency(detailItem.depositAmount ?? undefined)}
+                  <strong>Deposit:</strong> {formatCurrency(detailItem.depositAmount ?? 0, 'vi-VN')}
                 </Typography>
                 <Typography variant="body2" textAlign={{ md: 'right' }}>
-                  <strong>Remaining:</strong> {formatCurrency(detailItem.remainingAmount ?? undefined)}
+                  <strong>Remaining:</strong> {formatCurrency(detailItem.remainingAmount ?? 0, 'vi-VN')}
                 </Typography>
                 <Typography variant="caption" color="text.secondary" textAlign={{ md: 'right' }}>
                   Total items: {detailItem.items.length}
@@ -311,9 +311,9 @@ export default function ManagerSalesOrderDetailDialog({
                             {item.statusName}
                           </Typography>
                         </TableCell>
-                        <TableCell align="right">{formatCurrency(item.price)}</TableCell>
+                        <TableCell align="right">{formatCurrency(item.price, 'vi-VN')}</TableCell>
                         <TableCell align="center">{item.quantity}</TableCell>
-                        <TableCell align="right">{formatCurrency(item.price * item.quantity)}</TableCell>
+                        <TableCell align="right">{formatCurrency(item.price * item.quantity, 'vi-VN')}</TableCell>
                       </TableRow>
                     ))
                   )}

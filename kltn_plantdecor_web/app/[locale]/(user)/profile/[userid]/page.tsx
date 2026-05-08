@@ -46,8 +46,12 @@ export default function ProfilePage() {
 
     if (gender === 1) return 'Male';
     if (gender === 2) return 'Female';
-    if (gender === 3) return 'Other';
     return 'Unknown';
+  };
+
+  const pickDefined = <T,>(next: T | null | undefined, fallback: T | null | undefined): T | undefined => {
+    if (next === null || next === undefined) return fallback ?? undefined;
+    return next;
   };
   
   const [profile, setProfile] = useState<Partial<UserProfile>>({});
@@ -241,11 +245,16 @@ export default function ProfilePage() {
       const response = await updateUserProfile(request, false);
 
       if (response?.payload) {
-        // Update both profile states with returned data
+        // API có thể trả gender null/không trả => tránh overwrite state hiện tại
+        const payload = response.payload as Partial<UserProfile>;
+        const nextGender = pickDefined(payload.gender, request.gender);
+
         const updatedData: Partial<UserProfile> = {
           ...profile,
-          ...response.payload,
+          ...payload,
+          gender: normalizeGender(nextGender as UserProfile['gender']),
         };
+
         setProfile(updatedData);
         setOriginalProfile(updatedData);
       }
@@ -487,7 +496,6 @@ export default function ProfilePage() {
                   <MenuItem value="Unknown">{t('unknown') || 'Unknown'}</MenuItem>
                   <MenuItem value="Male">{t('male')}</MenuItem>
                   <MenuItem value="Female">{t('female')}</MenuItem>
-                  <MenuItem value="Other">{t('other')}</MenuItem>
                 </TextField>
 
                 {/* Birth Year */}

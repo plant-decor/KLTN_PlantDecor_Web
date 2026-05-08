@@ -24,12 +24,12 @@ import type { ManagerNurseryOrder } from '@/types/manager-sales-orders.types';
 import FullscreenImageModal from '@/components/image-view/FullscreenImageModal';
 import RedeliveryConfirmationModal from './RedeliveryConfirmationModal';
 import {
-  formatCurrency,
   SALES_ORDER_STATUS_CHIP_COLOR,
   SALES_ORDER_STATUS_LABELS,
 } from './managerSalesOrders.constants';
-import { CheckOutlined } from '@mui/icons-material';
+import { CancelOutlined, CheckOutlined } from '@mui/icons-material';
 import ConfirmActionDialog from '@/components/admin/categories-tags/ConfirmActionDialog';
+import { formatCurrency } from '@/lib/utils/formatUtil';
 
 const ASSIGNABLE_STATUSES = new Set([1, 2, 3]);
 
@@ -49,6 +49,7 @@ interface ManagerSalesOrdersTableProps {
   onAssignShipper?: (item: ManagerNurseryOrder) => void;
   onRedelivery?: (item: ManagerNurseryOrder) => void;
   onMarkCompleted?: (item: ManagerNurseryOrder) => void;
+  onCancel?: (item: ManagerNurseryOrder) => void;
 }
 
 export default function ManagerSalesOrdersTable({
@@ -62,6 +63,7 @@ export default function ManagerSalesOrdersTable({
   onAssignShipper,
   onRedelivery,
   onMarkCompleted,
+  onCancel,
 }: ManagerSalesOrdersTableProps) {
   const [shipImageOpen, setShipImageOpen] = useState(false);
   const [shipImageUrl, setShipImageUrl] = useState<string | null>(null);
@@ -69,7 +71,8 @@ export default function ManagerSalesOrdersTable({
   const [openConfirmMarkCompleted, setOpenConfirmMarkCompleted] = useState(false);
   const [markCompletedTarget, setMarkCompletedTarget] = useState<ManagerNurseryOrder | null>(null);
   const [redeliveryTarget, setRedeliveryTarget] = useState<ManagerNurseryOrder | null>(null);
-
+  const [cancelTarget, setCancelTarget] = useState<ManagerNurseryOrder | null>(null);
+  const [openConfirmCancel, setOpenConfirmCancel] = useState(false);
   const handleChangePage = (_event: unknown, newPage: number) => {
     onPageChange(newPage + 1);
   };
@@ -149,17 +152,17 @@ export default function ManagerSalesOrdersTable({
                     </TableCell> */}
                     <TableCell align="center">
                       <Typography variant="body2" fontWeight={700}>
-                        {formatCurrency(item.depositAmount ?? undefined)}
+                        {formatCurrency(item.depositAmount ?? 0, 'vi-VN')}
                       </Typography>
                     </TableCell>
                     <TableCell align="center">
                       <Typography variant="body2" fontWeight={700}>
-                        {formatCurrency(item.remainingAmount ?? 0)}
+                        {formatCurrency(item.remainingAmount ?? 0, 'vi-VN')}
                       </Typography>
                     </TableCell>
                     <TableCell align="center">
                       <Typography variant="body2" fontWeight={700}>
-                        {formatCurrency(item.subTotalAmount)}
+                        {formatCurrency(item.subTotalAmount, 'vi-VN')}
                       </Typography>
                     </TableCell>
                     <TableCell align="center">
@@ -181,11 +184,21 @@ export default function ManagerSalesOrdersTable({
                         </Tooltip>
                       ) : null}
                       {onRedelivery && canRedeliver ? (
+                        <>
                         <Tooltip title="Redelivery">
                           <Button size="small" onClick={() => setRedeliveryTarget(item)}>
                             <ReplayIcon fontSize="medium" className="hover:scale-110" />
                           </Button>
                         </Tooltip>
+                        <Tooltip title="Cancel Order">
+                          <Button size="small" onClick={() => {
+                            setCancelTarget(item);
+                            setOpenConfirmCancel(true);
+                          }}>
+                            <CancelOutlined fontSize="medium" className="hover:scale-110" />
+                          </Button>
+                        </Tooltip>
+                        </>
                       ) : null}
                       {item.deliveryImageUrl ? (
                         <>
@@ -243,6 +256,23 @@ export default function ManagerSalesOrdersTable({
         alt="Delivery image"
       />
 
+      <ConfirmActionDialog
+        open={openConfirmCancel}
+        onClose={() => setOpenConfirmCancel(false)}
+        title="Cancel Order"
+        message="Are you sure you want to cancel this order?"
+        confirmLabel="Cancel"
+        cancelLabel="Cancel"
+        confirmColor="error"
+        loading={false}
+        onConfirm={() => {
+          if (cancelTarget && onCancel) {
+            onCancel(cancelTarget);
+          }
+          setCancelTarget(null);
+          setOpenConfirmCancel(false);
+        }}
+      />
       <RedeliveryConfirmationModal
         open={!!redeliveryTarget}
         onClose={() => setRedeliveryTarget(null)}

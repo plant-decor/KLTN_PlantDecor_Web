@@ -20,16 +20,16 @@ import {
   Typography,
 } from '@mui/material';
 import type { ManagerReturnTicketAssignmentDetail, ManagerReturnTicketAssignmentItem } from '@/types/return-ticket.types';
-import FullscreenImageModal from '@/components/image-view/FullscreenImageModal';
 import {
   RETURN_TICKET_ASSIGNMENT_STATUS_CHIP_COLOR,
   RETURN_TICKET_ITEM_STATUS_CHIP_COLOR,
   RETURN_TICKET_STATUS_CHIP_COLOR,
-  formatCurrency,
-  formatDateTime,
 } from './managerReturnTicket.constants';
 import { ImageOutlined } from '@mui/icons-material';
 import { CustomLoading } from '@/components/CustomLoading';
+import { formatDateTime } from '@/lib/utils/dateUtils';
+import { formatCurrency } from '@/lib/utils/formatUtil';
+import ClickableImageViewer from '@/components/image-view/ClickableImageViewer';
 
 interface ManagerReturnTicketAssignmentDetailDialogProps {
   open: boolean;
@@ -65,14 +65,16 @@ export default function ManagerReturnTicketAssignmentDetailDialog({
   const canStartReview = !!detail && detail.assignmentStatus === 0;
   const [imageModalOpen, setImageModalOpen] = useState(false);
   const [activeImages, setActiveImages] = useState<string[]>([]);
+  const [activeReason, setActiveReason] = useState('');
 
-  const handleOpenEvidenceImages = (imageUrls: string[]) => {
+  const handleOpenEvidenceImages = (imageUrls: string[], reason: string) => {
     if (imageUrls.length === 0) {
       return;
     }
 
     setActiveImages(imageUrls);
     setImageModalOpen(true);
+    setActiveReason(reason);
   };
 
   const handleCloseEvidenceImages = () => {
@@ -125,7 +127,7 @@ export default function ManagerReturnTicketAssignmentDetailDialog({
                   color={RETURN_TICKET_STATUS_CHIP_COLOR[detail.ticketStatus] || 'default'}
                 />
                 <Typography variant="body2" fontWeight={600}>
-                  Refunded Total: {formatCurrency(detail.ticketTotalRefundedAmount)}
+                  Refunded Total: {formatCurrency(detail.ticketTotalRefundedAmount, 'vi-VN')}
                 </Typography>
               </Stack>
             </Stack>
@@ -211,13 +213,19 @@ export default function ManagerReturnTicketAssignmentDetailDialog({
                             No images
                           </Typography>
                         ) : (
+                          <Stack direction="row" spacing={1} justifyContent="center">
+                          {/* <Button variant="outlined" size="small" 
+                          onClick={() => handleOpenReasonModal(item.reason)}>
+                            <DescriptionOutlined/>
+                            </Button> */}
                           <Button
                             size="small"
                             variant="outlined"
-                            onClick={() => handleOpenEvidenceImages(item.imageUrls)}
+                            onClick={() => handleOpenEvidenceImages(item.imageUrls, item.reason)}
                           >
-                            Evidence <ImageOutlined sx={{ ml: 0.5 }} />
+                            <ImageOutlined/>
                           </Button>
+                            </Stack>
                         )}
                       </TableCell>
                       <TableCell align="center">
@@ -266,14 +274,31 @@ export default function ManagerReturnTicketAssignmentDetailDialog({
           </Stack>
         )}
       </DialogContent>
-        {activeImages.length > 0 && (
-      <FullscreenImageModal
+      {imageModalOpen && (
+        <Dialog open={imageModalOpen} onClose={handleCloseEvidenceImages} maxWidth="sm" fullWidth className='w-full flex justify-center items-center'>
+          <DialogTitle>Evidence Images</DialogTitle>
+          <DialogContent dividers>
+            <Box className='flex flex-col gap-2'>
+            <Typography variant="body2" fontWeight={600} gutterBottom>
+              Return reason: {activeReason}
+            </Typography>
+            <ClickableImageViewer
+              images={activeImages}
+              alt="Return evidence image"
+              className="w-full h-full aspect-square object-cover" 
+              containerClassName="w-full sm:w-[400px] md:w-[450px]"
+              />
+              </Box>
+          </DialogContent>
+        </Dialog>
+      )}
+      {/* <FullscreenImageModal
         images={activeImages}
         isOpen={imageModalOpen}
         onClose={handleCloseEvidenceImages}
         alt="Return evidence image"
       />
-        )}
+        )} */}
       <DialogActions>
         {canStartReview ? (
           <Button

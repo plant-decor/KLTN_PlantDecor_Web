@@ -15,11 +15,12 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { useTranslations } from 'next-intl';
 import type { Order, OrderInvoiceDetail } from '@/types/order.types';
-import { canUserCancelOrder, formatCurrency, getStatusInfo } from './orderHistoryUtils';
+import { canUserCancelOrder, getStatusInfo } from './orderHistoryUtils';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 import Image from 'next/image';
 import { CustomLoading } from '@/components/CustomLoading';
 import { formatDateTime } from '@/lib/utils/dateUtils';
+import { formatCurrency } from '@/lib/utils/formatUtil';
 
 const SERVICE_ORDER_TYPE = [4, 5]; 
 const ORDER_ITEM_FALLBACK_IMAGE = '/img/fallbackplant.avif';
@@ -197,7 +198,7 @@ export default function OrderHistoryList({
                         {item.itemName}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        x{item.quantity} - {formatCurrency(item.price)}
+                        x{item.quantity} - {formatCurrency(item.price, 'vi-VN')}
                       </Typography>
                     </Box>
                   </Box>
@@ -225,7 +226,7 @@ export default function OrderHistoryList({
                     {tOrderHistory('total')}
                   </Typography>
                   <Typography variant="h6" fontWeight="bold" color="primary">
-                    {formatCurrency(order.totalAmount)}
+                    {formatCurrency(order.totalAmount, 'vi-VN')}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>

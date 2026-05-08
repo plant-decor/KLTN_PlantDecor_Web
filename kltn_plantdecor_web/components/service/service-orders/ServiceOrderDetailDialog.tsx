@@ -19,12 +19,11 @@ import {
   canAssignCaretaker,
   canManagerCancel,
   canReschedule,
-  formatCurrency,
-  formatDate,
   getStatusChipColor,
 } from './managerServiceOrders.constants';
 import ServiceRatingReadOnlySection from '@/components/service/ServiceRatingReadOnlySection';
-
+import { formatCurrency } from '@/lib/utils/formatUtil';
+import { formatDate } from '@/lib/utils/dateUtils';
 interface ServiceOrderDetailDialogProps {
   open: boolean;
   loading: boolean;
@@ -110,7 +109,7 @@ export default function ServiceOrderDetailDialog({
               <strong>Service package:</strong> {detailItem.nurseryCareService.careServicePackage.name}
             </Typography>
             <Typography>
-              <strong>Unit price:</strong> {formatCurrency(detailItem.nurseryCareService.careServicePackage.unitPrice)}
+              <strong>Unit price:</strong> {formatCurrency(detailItem.nurseryCareService.careServicePackage.unitPrice, 'vi-VN')}
             </Typography>
             <Typography>
               <strong>Total sessions:</strong> {detailItem.totalSessions}
@@ -133,7 +132,7 @@ export default function ServiceOrderDetailDialog({
               <strong>Created at:</strong> {formatDate(detailItem.createdAt)}
             </Typography>
             <Typography>
-              <strong>Approved at:</strong> {formatDate(detailItem.approvedAt)}
+              <strong>Approved at:</strong> {formatDate(detailItem.approvedAt ?? '')}
             </Typography>
 
             <Divider sx={{ my: 1 }} />

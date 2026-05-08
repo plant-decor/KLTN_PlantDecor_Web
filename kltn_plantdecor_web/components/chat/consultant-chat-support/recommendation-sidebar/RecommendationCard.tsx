@@ -5,6 +5,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import SendIcon from "@mui/icons-material/Send";
 import type { RecommendedPackage } from "@/types/order.types";
 import { hoverLiftStyle } from "@/lib/styles/buttonStyles";
+import { formatCurrency } from "@/lib/utils/formatUtil";
 
 type Props = {
   recommendation: RecommendedPackage;
@@ -14,9 +15,6 @@ type Props = {
   onSendBookingLink: (recommendation: RecommendedPackage) => void;
   onViewDetail: (recommendation: RecommendedPackage) => void;
 };
-
-const formatCurrency = (value: number) =>
-  value.toLocaleString("vi-VN", { style: "currency", currency: "VND" });
 
 export function RecommendationCard({
   recommendation,
@@ -54,7 +52,7 @@ export function RecommendationCard({
             {recommendation.packageName}
           </Typography>
           <Typography sx={{ fontSize: 12, fontWeight: 700, color: "#15803d", mt: 0.25 }}>
-            {formatCurrency(recommendation.unitPrice)}
+            {formatCurrency(recommendation.unitPrice, 'vi-VN')}
           </Typography>
         </Box>
         <Chip

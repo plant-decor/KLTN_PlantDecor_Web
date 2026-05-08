@@ -587,15 +587,53 @@ const normalizeNurseryServiceScheduleItem = (
 };
 
 const parseNurseryServiceScheduleItems = (payload: unknown): NurseryServiceScheduleItem[] => {
-  const rawItems = Array.isArray(payload)
-    ? payload
-    : isRecord(payload) && Array.isArray(payload.items)
-      ? payload.items
+  if (Array.isArray(payload)) {
+    return payload
+      .map((item) => normalizeNurseryServiceScheduleItem(item))
+      .filter((item): item is NurseryServiceScheduleItem => Boolean(item));
+  }
+
+  if (isRecord(payload)) {
+    if (Array.isArray(payload.items)) {
+      return payload.items
+        .map((item) => normalizeNurseryServiceScheduleItem(item))
+        .filter((item): item is NurseryServiceScheduleItem => Boolean(item));
+    }
+
+    const serviceProgresses = Array.isArray(payload.serviceProgresses)
+      ? payload.serviceProgresses
+      : [];
+    const designTasks = Array.isArray(payload.designTasks)
+      ? payload.designTasks
       : [];
 
-  return rawItems
-    .map((item) => normalizeNurseryServiceScheduleItem(item))
-    .filter((item): item is NurseryServiceScheduleItem => Boolean(item));
+    const tagged: unknown[] = [
+      ...serviceProgresses.map((item) =>
+        isRecord(item)
+          ? {
+              ...item,
+              taskType: "CareService",
+              taskTypeName: toText(item.taskTypeName, "Care Service"),
+            }
+          : item,
+      ),
+      ...designTasks.map((item) =>
+        isRecord(item)
+          ? {
+              ...item,
+              taskType: "DesignService",
+              taskTypeName: toText(item.taskTypeName, "Design Service"),
+            }
+          : item,
+      ),
+    ];
+
+    return tagged
+      .map((item) => normalizeNurseryServiceScheduleItem(item))
+      .filter((item): item is NurseryServiceScheduleItem => Boolean(item));
+  }
+
+  return [];
 };
 
 const buildPaginationParams = (query?: ServiceRegistrationsQuery) => {
@@ -1183,20 +1221,13 @@ export const getNurseryScheduleByDate = async (
   loading = true,
 ): Promise<NurseryServiceScheduleItem[]> => {
   const response = await apiClient.get<WrappedResponse<unknown>>(
-    "service-progress/nursery-schedule",
+    "service-progress/nursery-schedule/all-services",
     { date },
     loading,
     QUERY_CONFIG,
   );
 
-  const payload = unwrapPayloadData(response);
-  if (!Array.isArray(payload)) {
-    return [];
-  }
-
-  return payload
-    .map((item) => normalizeNurseryServiceScheduleItem(item))
-    .filter((item): item is NurseryServiceScheduleItem => Boolean(item));
+  return parseNurseryServiceScheduleItems(unwrapPayloadData(response));
 };
 
 export const getServiceProgressDetail = async (

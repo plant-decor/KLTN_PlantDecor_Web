@@ -172,6 +172,7 @@ export default function ManagerScheduleServicesTable({
                         <VisibilityIcon />
                       </IconButton>
                     </Tooltip>
+                    {item.status === 1 || item.status === 2 || item.status === 3 && (
                     <Tooltip title='Reassign Caretaker'>
                       <IconButton
                         color='secondary'
@@ -181,6 +182,7 @@ export default function ManagerScheduleServicesTable({
                         <SwapHorizIcon />
                       </IconButton>
                     </Tooltip>
+                    )}
                   </Stack>
                 </TableCell>
               </TableRow>

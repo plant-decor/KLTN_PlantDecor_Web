@@ -23,6 +23,7 @@ import {
 import { CustomLoading } from "@/components/CustomLoading";
 import type { AIChatSession } from "@/types/ai-chatbot.types";
 import { hoverLiftStyle } from "@/lib/styles/buttonStyles";
+import chatbotAvatar from "@/public/logo/chatbot.png"
 
 interface SessionsPanelProps {
   sessions: AIChatSession[];
@@ -173,9 +174,8 @@ export function SessionsPanel({
                       color: "#1d4ed8",
                       fontWeight: 800,
                     }}
-                  >
-                    AI
-                  </Avatar>
+                    src={chatbotAvatar.src}
+                  />
                 </Badge>
 
                 <Box sx={{ minWidth: 0, flex: 1 }}>

@@ -63,6 +63,7 @@ import type {
   MarketedDesignTemplateTierNursery,
 } from '@/types/design-registration.types';
 import { formatDate } from '@/lib/utils/dateUtils';
+import { formatCurrency } from '@/lib/utils/formatUtil';
 
 const DESIGN_STATUS = {
   PendingApproval: 1,
@@ -86,13 +87,6 @@ const PAYABLE_DESIGN_STATUS = new Set<number>([
   DESIGN_STATUS.AwaitFinalPayment,
 ]);
 
-const formatCurrency = (value?: number) => {
-  if (typeof value !== 'number' || !Number.isFinite(value)) {
-    return '-';
-  }
-
-  return value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
-};
 
 
 const formatEnumLabel = (value: string) => {
@@ -587,7 +581,7 @@ export default function DesignRegistrationPageClient() {
                     <TableCell align="center">
                       <Chip size="small" color={getStatusChipColor(item.status)} label={getDesignStatusLabel(item)} />
                     </TableCell>
-                    <TableCell align="center">{formatCurrency(item.totalPrice)}</TableCell>
+                    <TableCell align="center">{formatCurrency(item.totalPrice, 'vi-VN')}</TableCell>
                     <TableCell>{formatDate(item.createdAt)}</TableCell>
                     <TableCell align="center">
                       <Stack direction="row" spacing={1} justifyContent="center" useFlexGap flexWrap="wrap">
@@ -672,7 +666,7 @@ export default function DesignRegistrationPageClient() {
                   >
                     {selectedTiers.map((tier) => (
                       <MenuItem key={tier.id} value={tier.id}>
-                        {tier.tierName} - {formatCurrency(tier.packagePrice)}
+                        {tier.tierName} - {formatCurrency(tier.packagePrice, 'vi-VN')}
                       </MenuItem>
                     ))}
                   </Select>
@@ -690,7 +684,7 @@ export default function DesignRegistrationPageClient() {
                     </Typography>
                     <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
                       <Chip label={selectedTier.tierName} color="primary" />
-                      <Chip label={formatCurrency(selectedTier.packagePrice)} />
+                      <Chip label={formatCurrency(selectedTier.packagePrice, 'vi-VN')} />
                       <Chip label={`${selectedTier.minArea}-${selectedTier.maxArea} m2`} />
                       <Chip label={`${selectedTier.estimatedDays} days`} />
                     </Stack>
@@ -823,8 +817,8 @@ export default function DesignRegistrationPageClient() {
               <Typography><strong>Template:</strong> {detailItem.designTemplateTier.designTemplate.name || '-'}</Typography>
               <Typography><strong>Tier:</strong> {detailItem.designTemplateTier.tierName || '-'}</Typography>
               <Typography><strong>Nursery:</strong> {detailItem.nursery?.name || 'Optional'}</Typography>
-              <Typography><strong>Total price:</strong> {formatCurrency(detailItem.totalPrice)}</Typography>
-              <Typography><strong>Deposit:</strong> {formatCurrency(detailItem.depositAmount)}</Typography>
+              <Typography><strong>Total price:</strong> {formatCurrency(detailItem.totalPrice, 'vi-VN')}</Typography>
+              <Typography><strong>Deposit:</strong> {formatCurrency(detailItem.depositAmount, 'vi-VN')}</Typography>
               <Typography><strong>Phone:</strong> {detailItem.phone || '-'}</Typography>
               <Typography><strong>Address:</strong> {detailItem.address || '-'}</Typography>
               <Typography><strong>Customer note:</strong> {detailItem.customerNote || '-'}</Typography>

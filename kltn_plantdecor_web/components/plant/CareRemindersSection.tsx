@@ -39,19 +39,8 @@ import { useUpdateMyCareReminder } from "../../hooks/useUpdateMyCareReminder";
 import { useMyCareReminders } from "../../hooks/useMyCareReminders";
 import { useDeleteMyCareReminder } from "../../hooks/useDeleteMyCareReminder";
 import { useCompleteMyCareReminder } from "../../hooks/useCompleteMyCareReminder";
+import { formatDate } from "@/lib/utils/dateUtils";
 
-const formatDate = (value: string | null | undefined, fallback: string) => {
-  if (!value) {
-    return fallback;
-  }
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return date.toLocaleDateString();
-};
 
 const getCareTypeChipStyles = (careTypeName?: string | null) => {
   const normalized = (careTypeName ?? "").toLowerCase();
@@ -369,8 +358,7 @@ export default function CareRemindersSection({
                                     >
                                       <Chip
                                         label={formatDate(
-                                          reminder.reminderDate,
-                                          "N/A",
+                                          reminder.reminderDate ?? '',
                                         )}
                                         size="small"
                                         variant="outlined"

@@ -42,13 +42,6 @@ export const SALES_ORDER_STATUS_OPTIONS = [
   })),
 ];
 
-export const formatCurrency = (value?: number) => {
-  if (typeof value !== 'number' || !Number.isFinite(value)) {
-    return '-';
-  }
-
-  return value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
-};
 
 export const normalizeMultilineText = (value?: string | null) => {
   if (!value || typeof value !== 'string') {

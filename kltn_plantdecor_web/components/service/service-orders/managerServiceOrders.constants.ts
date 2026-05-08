@@ -44,26 +44,7 @@ export const buildServiceStatusLabelMap = (enums: EnumOption[]) => {
   }, {});
 };
 
-export const formatDate = (value: string | null | undefined) => {
-  if (!value) {
-    return '-';
-  }
 
-  const parsed = new Date(value);
-  return parsed.toLocaleDateString('vi-VN', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  });
-};
-
-export const formatCurrency = (value?: number) => {
-  if (typeof value !== 'number' || !Number.isFinite(value)) {
-    return '-';
-  }
-
-  return value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
-};
 
 export const getErrorMessage = (error: unknown, fallback: string) => {
   if (!error || typeof error !== 'object') {

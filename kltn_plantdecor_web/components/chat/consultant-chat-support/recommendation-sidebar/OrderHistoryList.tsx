@@ -3,15 +3,13 @@
 import { Box, Chip, Stack, Typography } from "@mui/material";
 import type { OrderByEmail } from "@/types/order.types";
 import { formatDate } from "@/lib/utils/dateUtils";
+import { formatCurrency } from "@/lib/utils/formatUtil";
 
 type Props = {
   orders: OrderByEmail[];
   selectedOrderId: number | null;
   onSelectOrder: (orderId: number) => void;
 };
-
-const formatCurrency = (value: number) =>
-  value.toLocaleString("vi-VN", { style: "currency", currency: "VND" });
 
 export function OrderHistoryList({
   orders,
@@ -107,7 +105,7 @@ export function OrderHistoryList({
               <Typography
                 sx={{ fontSize: 12, fontWeight: 700, color: "#15803d" }}
               >
-                {formatCurrency(order.totalAmount)}
+                {formatCurrency(order.totalAmount, 'vi-VN')}
               </Typography>
             </Stack>
           </Box>

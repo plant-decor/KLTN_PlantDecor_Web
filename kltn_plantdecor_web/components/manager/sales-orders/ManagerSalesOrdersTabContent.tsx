@@ -7,6 +7,7 @@ import {
   getManagerNurseryOrderDetail,
   getManagerNurseryOrders,
   markManagerNurseryOrderAsAssigned,
+  markManagerNurseryOrderAsCancelled,
   markManagerNurseryOrderAsCompleted,
 } from '@/lib/api/managerSalesOrdersService';
 import type {
@@ -128,7 +129,11 @@ export default function ManagerSalesOrdersTabContent() {
     toast.success('Order marked as completed successfully');
     await loadList();
   };
-
+  const handleCancel = async (nurseryOrderId: number) => {
+    await markManagerNurseryOrderAsCancelled(nurseryOrderId);
+    toast.success('Order cancelled successfully');
+    await loadList();
+  };
   return (
     <>
       <ManagerSalesOrdersHeader
@@ -168,6 +173,7 @@ export default function ManagerSalesOrdersTabContent() {
             onAssignShipper={(item) => void handleAssignShipper(item)}
             onRedelivery={(item) => void handleRedelivery(item)}
             onMarkCompleted={(item) => void handleMarkCompleted(item.id)}
+            onCancel={(item) => void handleCancel(item.id)}
           />
         )}
       </Paper>

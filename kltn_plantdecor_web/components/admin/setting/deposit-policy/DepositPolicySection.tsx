@@ -158,7 +158,7 @@ export default function DepositPolicySection() {
                           color={policy.isActive ? "success" : "default"}
                         />
                       </TableCell>
-                      <TableCell align="center">{policy.updatedAt ? formatDateTime(policy.updatedAt) : "-"}</TableCell>
+                      <TableCell align="center">{policy.updatedAt ? formatDateTime(policy.updatedAt ?? '') : "-"}</TableCell>
                       <TableCell align="center">
                         <IconButton
                           size="small"

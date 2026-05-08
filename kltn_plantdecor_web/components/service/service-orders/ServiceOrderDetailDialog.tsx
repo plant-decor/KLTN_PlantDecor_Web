@@ -97,7 +97,7 @@ export default function ServiceOrderDetailDialog({
               <strong>Address:</strong> {detailItem.address || '-'}
             </Typography>
             <Typography>
-              <strong>Service date:</strong> {formatDate(detailItem.serviceDate)}
+              <strong>Service date:</strong> {detailItem.serviceDate ? formatDate(detailItem.serviceDate) : '-'}
             </Typography>
             <Typography>
               <strong>Preferred shift:</strong>{' '}
@@ -129,10 +129,10 @@ export default function ServiceOrderDetailDialog({
               </Typography>
             ) : null}
             <Typography>
-              <strong>Created at:</strong> {formatDate(detailItem.createdAt)}
+              <strong>Created at:</strong> {detailItem.createdAt ? formatDate(detailItem.createdAt) : '-'}
             </Typography>
             <Typography>
-              <strong>Approved at:</strong> {formatDate(detailItem.approvedAt ?? '')}
+              <strong>Approved at:</strong> {detailItem.approvedAt ? formatDate(detailItem.approvedAt) : '-'}
             </Typography>
 
             <Divider sx={{ my: 1 }} />

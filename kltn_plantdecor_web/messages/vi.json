@@ -573,15 +573,28 @@
       "cm": " cm"
     },
     "plantCode": "Cây #{id}",
+    "actions": {
+      "edit": "Chỉnh sửa",
+      "cancel": "Hủy",
+      "save": "Lưu",
+      "saving": "Đang lưu..."
+    },
     "fields": {
       "purchaseDate": "Ngày mua",
       "location": "Vị trí",
       "age": "Tuổi cây",
       "trunkDiameter": "Đường kính thân",
       "height": "Chiều cao",
+      "healthStatus": "Tình trạng cây",
       "lastWatered": "Lần tưới cuối cùng",
       "lastFertilized": "Lần phân bón cuối cùng",
       "lastPruned": "Lần tỉa cành cuối cùng"
+    },
+    "editDialog": {
+      "title": "Cập nhật cây",
+      "titleWithName": "Cập nhật {plantName}",
+      "success": "Cập nhật cây thành công",
+      "error": "Không thể cập nhật cây"
     },
     "guide": {
       "title": "Hướng dẫn chăm sóc cho {plantName}",

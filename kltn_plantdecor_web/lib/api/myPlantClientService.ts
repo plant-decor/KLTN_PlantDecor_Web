@@ -5,6 +5,8 @@ import type {
   MyCareReminderCreateRequest,
   MyCareReminderItem,
   MyCareReminderListPayload,
+  MyPlantItem,
+  MyPlantUpdateRequest,
 } from "@/types/my-plant.types";
 
 const QUERY_CONFIG = {
@@ -150,6 +152,21 @@ export type ApiActionResult<T> = {
   success: boolean;
   message?: string;
   data?: T | null;
+};
+
+export const updateMyPlant = async (
+  id: number,
+  request: MyPlantUpdateRequest,
+  loading = true,
+): Promise<ApiActionResult<MyPlantItem>> => {
+  const response = await apiClient.put<ApiPayload<MyPlantItem>>(
+    `/user-plants/my/${id}`,
+    request,
+    loading,
+    QUERY_CONFIG,
+  );
+
+  return toApiActionResult<MyPlantItem>(response);
 };
 
 export const createMyCareReminder = async (

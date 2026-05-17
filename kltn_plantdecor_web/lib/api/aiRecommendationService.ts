@@ -1,9 +1,11 @@
-import { get, post } from '@/lib/api/apiService';
+import { get, post, put } from '@/lib/api/apiService';
 import type { ResponseModel } from '@/types/api.types';
 import type {
   AllergyPlantOption,
   AnalyzeRoomUploadPayload,
   AnalyzeRoomRequest,
+  LayoutDesignManualEditorContextDto,
+  LayoutDesignManualEditorImageDto,
   GenerateLayoutImagesPayload,
   GeneratedImageItem,
   RoomViewAngle,
@@ -128,4 +130,108 @@ export const getMyDesignGeneratedImages = async (
   );
 
   return unwrapResponse(response) ?? [];
+};
+
+export const getManualEditorContext = async (
+  layoutDesignId: number,
+  isServer = false,
+  loading = false
+): Promise<LayoutDesignManualEditorContextDto | null> => {
+  const response = await get<ResponseModel<LayoutDesignManualEditorContextDto>>(
+    `/layout-designs/${layoutDesignId}/manual-editor`,
+    undefined,
+    isServer,
+    loading
+  );
+
+  return unwrapResponse(response);
+};
+
+const buildManualDraftBody = (layerJson: string) => ({ layerJson });
+
+const buildManualPublishFormData = (image: Blob, layerJson?: string | null): FormData => {
+  const formData = new FormData();
+  formData.append('Image', image, 'manual-editor.png');
+  if (layerJson != null) {
+    formData.append('LayerJson', layerJson);
+  }
+  return formData;
+};
+
+export const saveCompositeManualDraft = async (
+  layoutDesignId: number,
+  layerJson: string,
+  isServer = false,
+  loading = false
+): Promise<LayoutDesignManualEditorImageDto | null> => {
+  const response = await put<ResponseModel<LayoutDesignManualEditorImageDto>>(
+    `/layout-designs/${layoutDesignId}/manual-editor/draft`,
+    buildManualDraftBody(layerJson),
+    isServer,
+    loading
+  );
+
+  return unwrapResponse(response);
+};
+
+export const savePlantManualDraft = async (
+  layoutDesignId: number,
+  layoutDesignPlantId: number,
+  layerJson: string,
+  isServer = false,
+  loading = false
+): Promise<LayoutDesignManualEditorImageDto | null> => {
+  const response = await put<ResponseModel<LayoutDesignManualEditorImageDto>>(
+    `/layout-designs/${layoutDesignId}/plants/${layoutDesignPlantId}/manual-editor/draft`,
+    buildManualDraftBody(layerJson),
+    isServer,
+    loading
+  );
+
+  return unwrapResponse(response);
+};
+
+export const publishCompositeManualImage = async (
+  layoutDesignId: number,
+  image: Blob,
+  layerJson?: string | null,
+  isServer = false,
+  loading = false
+): Promise<LayoutDesignManualEditorImageDto | null> => {
+  const response = await post<ResponseModel<LayoutDesignManualEditorImageDto>>(
+    `/layout-designs/${layoutDesignId}/manual-editor/publish`,
+    buildManualPublishFormData(image, layerJson),
+    isServer,
+    loading,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }
+  );
+
+  return unwrapResponse(response);
+};
+
+export const publishPlantManualImage = async (
+  layoutDesignId: number,
+  layoutDesignPlantId: number,
+  image: Blob,
+  layerJson?: string | null,
+  isServer = false,
+  loading = false
+): Promise<LayoutDesignManualEditorImageDto | null> => {
+  const response = await post<ResponseModel<LayoutDesignManualEditorImageDto>>(
+    `/layout-designs/${layoutDesignId}/plants/${layoutDesignPlantId}/manual-editor/publish`,
+    buildManualPublishFormData(image, layerJson),
+    isServer,
+    loading,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }
+  );
+
+  return unwrapResponse(response);
 };

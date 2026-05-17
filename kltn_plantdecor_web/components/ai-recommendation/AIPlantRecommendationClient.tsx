@@ -25,6 +25,8 @@ import RoomAnalysisCard from './RoomAnalysisCard';
 import GeneratedImagesCard from './GeneratedImagesCard';
 import MyDesignHistoryModal from './MyDesignHistoryModal';
 import { HistoryOutlined } from '@mui/icons-material';
+import { useLocale } from 'next-intl';
+import { useRouter } from 'next/navigation';
 
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/heif'];
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -39,6 +41,8 @@ type MessageState = {
 } | null;
 
 export default function AIPlantRecommendationClient({ userId }: AIPlantRecommendationClientProps) {
+  const locale = useLocale();
+  const router = useRouter();
   const [imagesByViewAngle, setImagesByViewAngle] = useState<Partial<Record<RoomViewAngle, File>>>({});
   const [imagePreviewUrlsByViewAngle, setImagePreviewUrlsByViewAngle] = useState<Partial<Record<RoomViewAngle, string>>>(
     {}
@@ -319,6 +323,10 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
     }
   };
 
+  const handleOpenManualEditor = (layoutDesignId: number) => {
+    router.push(`/${locale}/ai-plant-recommendation/${userId}/manual-editor/${layoutDesignId}`);
+  };
+
   return (
     <Box sx={{ py: 4, px: { xs: 2, md: 4 }, maxWidth: 1280, mx: 'auto' }}>
       <Stack
@@ -426,6 +434,7 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
             void handleGenerateImages(analysisResult.layoutDesignId);
           }
         }}
+        onOpenManualEditor={handleOpenManualEditor}
       />
 
       <MyDesignHistoryModal

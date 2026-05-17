@@ -132,3 +132,67 @@ export interface GeneratedImageItem {
   fluxPromptUsed: string | null;
   createdAt: string;
 }
+
+export interface LayoutDesignManualEditorPlantDto {
+  layoutDesignPlantId?: number | null;
+  commonPlantId?: number | null;
+  plantInstanceId?: number | null;
+  name: string;
+  imageUrl?: string | null;
+  placementPosition?: string | null;
+  isRecommended: boolean;
+}
+
+export interface LayoutDesignManualEditorImageDto {
+  imageId: number;
+  layoutDesignId: number;
+  layoutDesignPlantId?: number | null;
+  imageUrl?: string | null;
+  sourceType?: number | string | null;
+  replacesImageId?: number | null;
+  manualLayerJson?: string | null;
+  createdAt?: string | null;
+}
+
+export interface LayoutDesignManualEditorContextDto {
+  layoutDesignId: number;
+  roomImageUrl: string;
+  isFullCatalog: boolean;
+  plants: LayoutDesignManualEditorPlantDto[];
+  images: LayoutDesignManualEditorImageDto[];
+}
+
+export type ManualEditorLayerType = 'image' | 'mask';
+
+export interface ManualEditorLayerMaskPoint {
+  x: number;
+  y: number;
+}
+
+export interface ManualEditorLayerState {
+  id: string;
+  type: ManualEditorLayerType;
+  name: string;
+  plantImageUrl: string;
+  layoutDesignPlantId?: number | null;
+  commonPlantId?: number | null;
+  plantInstanceId?: number | null;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation: number;
+  scaleX: number;
+  scaleY: number;
+  flipped: boolean;
+  zIndex: number;
+  opacity: number;
+  maskPoints: ManualEditorLayerMaskPoint[];
+}
+
+export interface ManualEditorSnapshot {
+  roomImageUrl: string;
+  canvasWidth: number;
+  canvasHeight: number;
+  layers: ManualEditorLayerState[];
+}

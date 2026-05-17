@@ -20,6 +20,7 @@ interface GeneratedImagesCardProps {
   addingLayoutDesignPlantId: number | null;
   onAddToCart: (item: GeneratedLayoutImageItem) => Promise<void>;
   onRetryGenerate: () => void;
+  onOpenManualEditor: (layoutDesignId: number) => void;
 }
 
 export default function GeneratedImagesCard({
@@ -30,6 +31,7 @@ export default function GeneratedImagesCard({
   addingLayoutDesignPlantId,
   onAddToCart,
   onRetryGenerate,
+  onOpenManualEditor,
 }: GeneratedImagesCardProps) {
   const t = useTranslations('aiRecommendation.generatedImages');
 
@@ -72,7 +74,14 @@ export default function GeneratedImagesCard({
             </Box>
 
             {analysisResult?.layoutDesignId ? (
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1.5, mt: 2, flexWrap: 'wrap' }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => onOpenManualEditor(analysisResult.layoutDesignId)}
+                  sx={{ fontWeight: '700', ...hoverLiftStyle }}
+                >
+                  Open manual editor
+                </Button>
                 <Button
                   variant="outlined"
                   onClick={onRetryGenerate}

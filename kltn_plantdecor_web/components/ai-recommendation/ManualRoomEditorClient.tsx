@@ -108,6 +108,15 @@ const normalizeLayerOrder = (layers: ManualEditorLayerState[]) =>
 
 const nextZIndex = (layers: ManualEditorLayerState[]) => layers.reduce((max, layer) => Math.max(max, layer.zIndex), 0) + 1;
 
+const createUniqueLayerId = (plant: LayoutDesignManualEditorPlantDto) => {
+  const sourceId = plant.layoutDesignPlantId ?? plant.commonPlantId ?? plant.plantInstanceId ?? 'plant';
+  const randomSuffix = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
+  return `layer-${sourceId}-${randomSuffix}`;
+};
+
 const serializeSnapshot = (snapshot: ManualEditorSnapshot) =>
   JSON.stringify({ version: 1, ...snapshot });
 
@@ -127,7 +136,7 @@ const createLayerFromPlant = async (
   const height = Math.max(80, Math.round(DEFAULT_LAYER_WIDTH * aspectRatio));
 
   return {
-    id: `layer-${plant.layoutDesignPlantId ?? plant.commonPlantId ?? plant.plantInstanceId ?? Date.now()}`,
+    id: createUniqueLayerId(plant),
     type: 'image',
     name: plant.name,
     plantImageUrl: plant.imageUrl ?? '',

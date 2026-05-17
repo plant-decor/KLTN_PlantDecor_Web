@@ -299,6 +299,18 @@ export default function ManualRoomEditorClient({ layoutDesignId, userId }: Manua
     }
   }, [selectedLayerId]);
 
+  const handleSelectLayer = useCallback((layerId: string) => {
+    setSelectedLayerId((current) => (current === layerId ? null : layerId));
+  }, []);
+
+  const clearSelection = useCallback(() => {
+    if (transformerRef.current) {
+      transformerRef.current.nodes([]);
+      transformerRef.current.getLayer()?.batchDraw();
+    }
+    setSelectedLayerId(null);
+  }, []);
+
   useEffect(() => {
     let active = true;
 
@@ -461,12 +473,30 @@ export default function ManualRoomEditorClient({ layoutDesignId, userId }: Manua
     try {
       setPublishing(true);
       setError(null);
+      const transformer = transformerRef.current;
+      const wasVisible = transformer?.visible?.() ?? true;
+
+      if (transformer) {
+        transformer.visible(false);
+        transformer.getLayer()?.batchDraw();
+      }
+
       const dataUrl = stageRef.current.toDataURL({ pixelRatio: 2, mimeType: 'image/png' });
       const response = await fetch(dataUrl);
       const blob = await response.blob();
+
+      if (transformer) {
+        transformer.visible(wasVisible);
+        transformer.getLayer()?.batchDraw();
+      }
+
       await publishCompositeManualImage(layoutDesignId, blob, serializeSnapshot(snapshot), false, false);
       setMessage({ type: 'success', text: 'Manual image published.' });
     } catch (publishError) {
+      if (transformerRef.current) {
+        transformerRef.current.visible(true);
+        transformerRef.current.getLayer()?.batchDraw();
+      }
       const publishMessage = publishError instanceof Error ? publishError.message : 'Failed to publish manual image.';
       setError(publishMessage);
     } finally {
@@ -611,6 +641,9 @@ export default function ManualRoomEditorClient({ layoutDesignId, userId }: Manua
               <Button variant="contained" startIcon={<PublishIcon />} onClick={() => void handlePublish()} disabled={publishing} sx={{ backgroundColor: 'var(--primary)', fontWeight: 700, ...hoverLiftStyle }}>
                 {publishing ? 'Publishing...' : 'Publish'}
               </Button>
+                <Button variant="outlined" onClick={clearSelection} disabled={!selectedLayerId}>
+                  Clear selection
+                </Button>
             </Stack>
           </Stack>
 
@@ -646,14 +679,14 @@ export default function ManualRoomEditorClient({ layoutDesignId, userId }: Manua
                 onMouseDown={(event: any) => {
                   const clickedOnEmpty = event.target === event.target.getStage();
                   if (clickedOnEmpty) {
-                    setSelectedLayerId(null);
+                    clearSelection();
                   }
                 }}
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 onTouchStart={(event: any) => {
                   const clickedOnEmpty = event.target === event.target.getStage();
                   if (clickedOnEmpty) {
-                    setSelectedLayerId(null);
+                    clearSelection();
                   }
                 }}
               >
@@ -668,7 +701,7 @@ export default function ManualRoomEditorClient({ layoutDesignId, userId }: Manua
                       layer={layer}
                       isSelected={selectedLayerId === layer.id}
                       imageUrl={layer.plantImageUrl}
-                      onSelect={(layerId) => setSelectedLayerId(layerId)}
+                      onSelect={handleSelectLayer}
                       onChange={updateLayer}
                       registerNode={(layerId, node) => {
                         nodeRefs.current[layerId] = node;

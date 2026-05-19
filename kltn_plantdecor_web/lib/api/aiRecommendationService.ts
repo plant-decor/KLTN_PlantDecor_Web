@@ -4,6 +4,7 @@ import type {
   AllergyPlantOption,
   AnalyzeRoomUploadPayload,
   AnalyzeRoomRequest,
+  ManualEditorCalculateTotalResult,
   LayoutDesignManualEditorContextDto,
   LayoutDesignManualEditorImageDto,
   GenerateLayoutImagesPayload,
@@ -68,6 +69,41 @@ export const uploadRoomImages = async (
         'Content-Type': 'multipart/form-data',
       },
     }
+  );
+
+  return unwrapResponse(response);
+};
+
+export const beautifyCompositeManualImage = async (
+  layoutDesignId: number,
+  imageUrl: string,
+  layerJson?: string | null,
+  isServer = false,
+  loading = false
+): Promise<any | null> => {
+  const body = { imageUrl, layerJson };
+  const response = await post<ResponseModel<any>>(
+    `/layout-designs/${layoutDesignId}/manual-editor/beautify`,
+    body,
+    isServer,
+    loading
+  );
+
+  return unwrapResponse(response);
+};
+
+export const calculateManualTotal = async (
+  layoutDesignId: number,
+  items: Array<{ layoutDesignPlantId?: number | null; commonPlantId?: number | null; plantInstanceId?: number | null; quantity: number }>,
+  isServer = false,
+  loading = false
+): Promise<ManualEditorCalculateTotalResult | null> => {
+  const body = { items };
+  const response = await post<ResponseModel<ManualEditorCalculateTotalResult>>(
+    `/layout-designs/${layoutDesignId}/manual-editor/calculate-total`,
+    body,
+    isServer,
+    loading
   );
 
   return unwrapResponse(response);

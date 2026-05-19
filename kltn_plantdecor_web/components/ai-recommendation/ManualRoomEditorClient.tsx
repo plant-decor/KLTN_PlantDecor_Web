@@ -1,6 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useLocale } from 'next-intl';
+import { useRouter } from 'next/navigation';
 import {
   Alert,
   Box,
@@ -9,8 +11,18 @@ import {
   CardContent,
   Chip,
   Divider,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Paper,
   Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   TextField,
   Typography,
 } from '@mui/material';
@@ -23,17 +35,23 @@ import {
   Save as SaveIcon,
 } from '@mui/icons-material';
 import { CustomLoading } from '@/components/CustomLoading';
+import { addItemToCart } from '@/lib/api/cartWishlistService';
 import {
   getManualEditorContext,
   publishCompositeManualImage,
   saveCompositeManualDraft,
+  beautifyCompositeManualImage,
+  calculateManualTotal,
 } from '@/lib/api/aiRecommendationService';
+import { useAuthStore } from '@/lib/store/authStore';
 import type {
   LayoutDesignManualEditorContextDto,
+  ManualEditorCalculateTotalResult,
   LayoutDesignManualEditorPlantDto,
   ManualEditorLayerState,
   ManualEditorSnapshot,
 } from '@/types/ai-recommendation.types';
+import { notifyCartUpdated } from '@/lib/utils/cartEvents';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 import { Image as KonvaImage, Layer, Stage, Transformer } from 'react-konva';
 
@@ -46,6 +64,11 @@ type ApiMessage = { type: 'success' | 'error'; text: string } | null;
 
 const DEFAULT_STAGE_WIDTH = 960;
 const DEFAULT_LAYER_WIDTH = 180;
+const currencyVndFormatter = new Intl.NumberFormat('vi-VN', {
+  style: 'currency',
+  currency: 'VND',
+  maximumFractionDigits: 0,
+});
 
 const readImageSize = (url?: string | null): Promise<{ image: HTMLImageElement; width: number; height: number } | null> => {
   if (!url) {
@@ -165,13 +188,15 @@ type PlantLayerNodeProps = {
   onChange: (layerId: string, patch: Partial<ManualEditorLayerState>) => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   registerNode: (layerId: string, node: any) => void;
+  // shadow controls
+  // shadow controls removed
 };
 
 function PlantLayerNode({ layer, isSelected, imageUrl, onSelect, onChange, registerNode }: PlantLayerNodeProps) {
-  const image = useLoadedImage(imageUrl);
-
-  return (
-    <KonvaImage
+  const image = useLoadedImage(imageUrl);  
+  
+  return (  
+    <KonvaImage  
       id={layer.id}
       name={layer.name}
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -224,10 +249,20 @@ function PlantLayerNode({ layer, isSelected, imageUrl, onSelect, onChange, regis
 }
 
 export default function ManualRoomEditorClient({ layoutDesignId, userId }: ManualRoomEditorClientProps) {
+  const locale = useLocale();
+  const router = useRouter();
+  const { user } = useAuthStore();
+
   const [context, setContext] = useState<LayoutDesignManualEditorContextDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [savingDraft, setSavingDraft] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [publishedImageUrl, setPublishedImageUrl] = useState<string | null>(null);
+  const [beautifying, setBeautifying] = useState(false);
+  const [calculating, setCalculating] = useState(false);
+  const [calculateResult, setCalculateResult] = useState<ManualEditorCalculateTotalResult | null>(null);
+  const [isCalculateDialogOpen, setIsCalculateDialogOpen] = useState(false);
+  const [actionLoadingKey, setActionLoadingKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<ApiMessage>(null);
   const [layers, setLayers] = useState<ManualEditorLayerState[]>([]);
@@ -235,6 +270,7 @@ export default function ManualRoomEditorClient({ layoutDesignId, userId }: Manua
   const [roomImageUrl, setRoomImageUrl] = useState<string | null>(null);
   const [stageWidth, setStageWidth] = useState(DEFAULT_STAGE_WIDTH);
   const [stageHeight, setStageHeight] = useState(720);
+  // shadow controls removed per user request
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const stageRef = useRef<any>(null);
@@ -282,6 +318,11 @@ export default function ManualRoomEditorClient({ layoutDesignId, userId }: Manua
 
   const addPlantLayer = useCallback(
     async (plant: LayoutDesignManualEditorPlantDto, pointerX?: number, pointerY?: number) => {
+      // Enforce one-time placement for PlantInstance entities
+      if (plant.plantInstanceId && layers.some((l) => l.plantInstanceId === plant.plantInstanceId)) {
+        setMessage({ type: 'error', text: 'This plant instance is already placed. Delete it first to add again.' });
+        return;
+      }
       const anchorX = typeof pointerX === 'number' ? pointerX : stageWidth / 2;
       const anchorY = typeof pointerY === 'number' ? pointerY : stageHeight / 2;
       const nextLayer = await createLayerFromPlant(plant, anchorX, anchorY, nextZIndex(layers));
@@ -494,12 +535,16 @@ export default function ManualRoomEditorClient({ layoutDesignId, userId }: Manua
       const response = await fetch(dataUrl);
       const blob = await response.blob();
 
+      // send publish request and capture returned image url
+      const published = await publishCompositeManualImage(layoutDesignId, blob, serializeSnapshot(snapshot), false, false);
+
       if (transformer) {
         transformer.visible(wasVisible);
         transformer.getLayer()?.batchDraw();
       }
 
-      await publishCompositeManualImage(layoutDesignId, blob, serializeSnapshot(snapshot), false, false);
+      const returnedUrl = published?.imageUrl ?? null;
+      setPublishedImageUrl(returnedUrl);
       setMessage({ type: 'success', text: 'Manual image published.' });
     } catch (publishError) {
       if (transformerRef.current) {
@@ -512,6 +557,76 @@ export default function ManualRoomEditorClient({ layoutDesignId, userId }: Manua
       setPublishing(false);
     }
   }, [layoutDesignId, snapshot]);
+
+  const handleBeautify = useCallback(async () => {
+    // Always use the most recently published image URL.
+    const imageToUse = publishedImageUrl;
+    if (!imageToUse) {
+      setMessage({ type: 'error', text: 'Please publish the design before using Beautify with AI.' });
+      return;
+    }
+
+    try {
+      setBeautifying(true);
+      setError(null);
+      await beautifyCompositeManualImage(layoutDesignId, imageToUse, serializeSnapshot(snapshot), false, false);
+      setMessage({ type: 'success', text: 'Beautify job submitted.' });
+      // Optionally handle response (e.g., preview URL) if backend returns one
+    } catch (beautifyError) {
+      const beautifyMessage = beautifyError instanceof Error ? beautifyError.message : 'Failed to submit beautify job.';
+      setError(beautifyMessage);
+    } finally {
+      setBeautifying(false);
+    }
+  }, [layoutDesignId, publishedImageUrl, snapshot]);
+
+  const handleCalculateTotal = useCallback(async () => {
+    if (!layers || layers.length === 0) {
+      setMessage({ type: 'error', text: 'No plants on canvas to calculate.' });
+      return;
+    }
+
+    try {
+      setCalculating(true);
+      setError(null);
+
+      const map = new Map<string, { layoutDesignPlantId?: number | null; commonPlantId?: number | null; plantInstanceId?: number | null; quantity: number }>();
+
+      layers.forEach((layer) => {
+        const key = layer.layoutDesignPlantId?.toString() ?? layer.commonPlantId?.toString() ?? layer.plantInstanceId?.toString() ?? layer.name;
+        const existing = map.get(key);
+        if (existing) {
+          existing.quantity += 1;
+        } else {
+          map.set(key, {
+            layoutDesignPlantId: layer.layoutDesignPlantId,
+            commonPlantId: layer.commonPlantId,
+            plantInstanceId: layer.plantInstanceId,
+            quantity: 1,
+          });
+        }
+      });
+
+      const items = Array.from(map.values());
+      const response = await calculateManualTotal(layoutDesignId, items, false, false);
+      if (!response) {
+        setError('No calculation data returned from server.');
+        return;
+      }
+
+      setCalculateResult(response);
+      setIsCalculateDialogOpen(true);
+      setMessage({ type: 'success', text: 'Calculated manual total.' });
+      if (response?.summary) {
+        setMessage({ type: 'success', text: response.summary });
+      }
+    } catch (calcError) {
+      const calcMessage = calcError instanceof Error ? calcError.message : 'Failed to calculate manual total.';
+      setError(calcMessage);
+    } finally {
+      setCalculating(false);
+    }
+  }, [layers, layoutDesignId]);
 
   const moveSelected = useCallback(
     (direction: 'forward' | 'backward') => {
@@ -552,6 +667,71 @@ export default function ManualRoomEditorClient({ layoutDesignId, userId }: Manua
     delete nodeRefs.current[activeLayer.id];
   }, [activeLayer]);
 
+  const getResultItemActionKey = useCallback(
+    (item: { commonPlantId?: number | null; plantInstanceId?: number | null }, index: number) =>
+      `${item.commonPlantId ?? 'cp'}-${item.plantInstanceId ?? 'pi'}-${index}`,
+    []
+  );
+
+  const handleAddCommonPlantToCart = useCallback(
+    async (item: { commonPlantId?: number | null; quantity?: number; name?: string | null }, index: number) => {
+      const commonPlantId = item.commonPlantId ?? 0;
+      if (commonPlantId <= 0) {
+        setMessage({ type: 'error', text: 'Cannot add to cart because commonPlantId is missing.' });
+        return;
+      }
+
+      const actionKey = getResultItemActionKey(item, index);
+
+      try {
+        setActionLoadingKey(actionKey);
+        setError(null);
+        await addItemToCart({
+          commonPlantId,
+          quantity: Math.max(1, Number(item.quantity ?? 1)),
+        });
+        notifyCartUpdated();
+        setMessage({
+          type: 'success',
+          text: `Added ${item.name?.trim() ? item.name : 'plant'} to cart.`,
+        });
+      } catch (cartError) {
+        const errorMessage = cartError instanceof Error ? cartError.message : 'Failed to add item to cart.';
+        setError(errorMessage);
+      } finally {
+        setActionLoadingKey(null);
+      }
+    },
+    [getResultItemActionKey]
+  );
+
+  const handleBuyNowPlantInstance = useCallback(
+    (item: { plantInstanceId?: number | null; name?: string | null; unitPrice?: number | null }) => {
+      if (!user?.id) {
+        router.push(`/${locale}/login`);
+        return;
+      }
+
+      const plantInstanceId = item.plantInstanceId ?? 0;
+      if (plantInstanceId <= 0) {
+        setMessage({ type: 'error', text: 'Cannot proceed because plantInstanceId is missing.' });
+        return;
+      }
+
+      const query = new URLSearchParams({
+        orderType: '2',
+        paymentStrategy: '1',
+        plantId: String(plantInstanceId),
+        plantInstanceId: String(plantInstanceId),
+        instanceName: item.name?.trim() || 'Plant instance',
+        instancePrice: String(item.unitPrice ?? 0),
+      });
+
+      router.push(`/${locale}/checkout/${user.id}/0?${query.toString()}`);
+    },
+    [locale, router, user?.id]
+  );
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', py: 6 }}>
@@ -565,8 +745,15 @@ export default function ManualRoomEditorClient({ layoutDesignId, userId }: Manua
     );
   }
 
+  const calculateItems = calculateResult?.items ?? [];
+  const totalAmount = calculateItems.reduce((sum, item) => {
+    const safeSubTotal = typeof item.subTotal === 'number' ? item.subTotal : 0;
+    return sum + safeSubTotal;
+  }, 0);
+
   return (
-    <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', lg: '320px minmax(0, 1fr) 320px' }, minHeight: 'calc(100vh - 120px)' }}>
+    <>
+      <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', lg: '320px minmax(0, 1fr) 320px' }, minHeight: 'calc(100vh - 120px)' }}>
       <Card sx={{ boxShadow: 2, minHeight: 0 }}>
         <CardContent>
           <Stack spacing={1.5} sx={{ mb: 2 }}>
@@ -650,9 +837,22 @@ export default function ManualRoomEditorClient({ layoutDesignId, userId }: Manua
               <Button variant="contained" startIcon={<PublishIcon />} onClick={() => void handlePublish()} disabled={publishing} sx={{ backgroundColor: 'var(--primary)', fontWeight: 700, ...hoverLiftStyle }}>
                 {publishing ? 'Publishing...' : 'Publish'}
               </Button>
-                <Button variant="outlined" onClick={clearSelection} disabled={!selectedLayerId}>
-                  Clear selection
-                </Button>
+              <Button
+                variant="outlined"
+                startIcon={<PublishIcon />}
+                onClick={() => void handleBeautify()}
+                disabled={!publishedImageUrl || beautifying}
+                sx={{ fontWeight: 700 }}
+              >
+                {beautifying ? 'Beautifying...' : 'Beautify with AI'}
+              </Button>
+              <Button variant="outlined" onClick={() => void handleCalculateTotal()} disabled={calculating || layers.length === 0}>
+                {calculating ? 'Calculating...' : 'Calculate total'}
+              </Button>
+              {/* shadow controls removed */}
+              <Button variant="outlined" onClick={clearSelection} disabled={!selectedLayerId}>
+                Clear selection
+              </Button>
             </Stack>
           </Stack>
 
@@ -715,6 +915,7 @@ export default function ManualRoomEditorClient({ layoutDesignId, userId }: Manua
                       registerNode={(layerId, node) => {
                         nodeRefs.current[layerId] = node;
                       }}
+                      
                     />
                   ))}
                   <Transformer
@@ -795,6 +996,87 @@ export default function ManualRoomEditorClient({ layoutDesignId, userId }: Manua
           )}
         </CardContent>
       </Card>
-    </Box>
+      </Box>
+
+      <Dialog
+        open={isCalculateDialogOpen}
+        onClose={() => setIsCalculateDialogOpen(false)}
+        fullWidth
+        maxWidth="md"
+      >
+        <DialogTitle>Manual Total Details</DialogTitle>
+        <DialogContent dividers>
+          {calculateItems.length === 0 ? (
+            <Alert severity="info">Khong co du lieu tinh toan.</Alert>
+          ) : (
+            <TableContainer component={Paper} variant="outlined">
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Plant</TableCell>
+                    <TableCell align="right">Unit Price</TableCell>
+                    <TableCell align="right">Quantity</TableCell>
+                    <TableCell align="right">Subtotal</TableCell>
+                    <TableCell align="center">Action</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {calculateItems.map((item, index) => (
+                    <TableRow key={`${item.layoutDesignPlantId ?? 'lp'}-${item.commonPlantId ?? 'cp'}-${item.plantInstanceId ?? 'pi'}-${index}`}>
+                      <TableCell>{item.name?.trim() || 'Unknown plant'}</TableCell>
+                      <TableCell align="right">{currencyVndFormatter.format(Number(item.unitPrice ?? 0))}</TableCell>
+                      <TableCell align="right">{item.quantity ?? 0}</TableCell>
+                      <TableCell align="right">{currencyVndFormatter.format(Number(item.subTotal ?? 0))}</TableCell>
+                      <TableCell align="center" sx={{ minWidth: 220 }}>
+                        <Stack direction="row" spacing={1} justifyContent="center">
+                          {item.commonPlantId && item.commonPlantId > 0 ? (
+                            <Button
+                              size="small"
+                              variant="contained"
+                              sx={{ backgroundColor: 'var(--primary)', fontWeight: 700, ...hoverLiftStyle }}
+                              disabled={actionLoadingKey === getResultItemActionKey(item, index)}
+                              onClick={() => void handleAddCommonPlantToCart(item, index)}
+                            >
+                              {actionLoadingKey === getResultItemActionKey(item, index) ? 'Adding...' : 'Add to cart'}
+                            </Button>
+                          ) : null}
+
+                          {item.plantInstanceId && item.plantInstanceId > 0 ? (
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              sx={{ fontWeight: 700 }}
+                              onClick={() => handleBuyNowPlantInstance(item)}
+                            >
+                              Buy now
+                            </Button>
+                          ) : null}
+
+                          {!item.commonPlantId && !item.plantInstanceId ? (
+                            <Typography variant="caption" color="text.secondary">-</Typography>
+                          ) : null}
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  <TableRow>
+                    <TableCell colSpan={3} sx={{ fontWeight: 700 }}>
+                      Total
+                    </TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700 }}>
+                      {currencyVndFormatter.format(totalAmount)}
+                    </TableCell>
+                    <TableCell />
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setIsCalculateDialogOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 }

@@ -196,3 +196,19 @@ export interface ManualEditorSnapshot {
   canvasHeight: number;
   layers: ManualEditorLayerState[];
 }
+
+export interface ManualEditorCalculateTotalItem {
+  layoutDesignPlantId?: number | null;
+  commonPlantId?: number | null;
+  plantInstanceId?: number | null;
+  name?: string | null;
+  unitPrice?: number | null;
+  quantity: number;
+  subTotal?: number | null;
+}
+
+export interface ManualEditorCalculateTotalResult {
+  summary?: string | null;
+  items: ManualEditorCalculateTotalItem[];
+  errors?: string[] | null;
+}

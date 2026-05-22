@@ -30,6 +30,7 @@ import {
   type HeaderIconKey,
 } from '@/lib/constants/header';
 import { useAuthStore } from '@/lib/store/authStore';
+import SubscriptionBadge from '@/components/profile/SubscriptionBadge';
 import { logoutAction } from '@/app/actions/loginAction';
 import Image from 'next/image';
 
@@ -377,10 +378,13 @@ export default function Navigation({ initialStoreCategories = [] }: NavigationPr
               {isCustomerLike && (
                 <>
                   <div className="flex items-center gap-3 py-2">
-                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-green-600 text-sm font-semibold text-white">
+                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-green-600 text-sm font-semibold text-white shrink-0">
                       {avatarLabel}
                     </span>
-                    <span className="text-sm font-medium text-gray-700">{activeUser?.email}</span>
+                    <div className="flex flex-col gap-0.5 min-w-0">
+                      <span className="text-sm font-medium text-gray-700 truncate">{activeUser?.email}</span>
+                      <SubscriptionBadge tier={activeUser?.subscription} variant="inline" />
+                    </div>
                   </div>
                   {USER_MENU_ITEMS.map((item) => (
                     item.href === '/logout' ? (

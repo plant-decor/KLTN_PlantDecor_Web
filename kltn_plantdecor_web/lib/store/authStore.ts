@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { User } from '@/types/auth.types';
+import type { SubscriptionTier, User } from '@/types/auth.types';
 
 /**
  * Zustand Store cho Authentication
@@ -33,6 +33,7 @@ interface AuthState {
   setUser: (user: User) => void;
   clearUser: () => void;
   getUser: () => User | null;
+  setUserSubscription: (tier: SubscriptionTier) => void;
 
   // Token Actions
   setAccessToken: (token: string) => void;
@@ -72,6 +73,13 @@ export const useAuthStore = create<AuthState>()(
           user: null,
           isAuthenticated: false,
         });
+      },
+
+      setUserSubscription: (tier: SubscriptionTier) => {
+        const current = get().user;
+        if (current) {
+          set({ user: { ...current, subscription: tier } });
+        }
       },
 
       getUser: () => {

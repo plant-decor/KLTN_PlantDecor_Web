@@ -29,7 +29,6 @@ import Step4Budget from './steps/Step4Budget';
 import RoomAnalysisCard from './RoomAnalysisCard';
 import GeneratedImagesCard from './GeneratedImagesCard';
 import MyDesignHistoryModal from './MyDesignHistoryModal';
-import { HistoryOutlined } from '@mui/icons-material';
 import { useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
 

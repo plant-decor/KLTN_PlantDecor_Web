@@ -128,8 +128,6 @@ export default function Step1ImageUpload({
     if (!nextAngle) return;
     setLocalError(null);
     onErrorDismiss();
-    // Trigger mock detection when adding the very first image
-    if (uploadCount === 0) startMockDetection();
     onUploadImage(nextAngle, e);
   };
 
@@ -271,6 +269,22 @@ export default function Step1ImageUpload({
           )}
         </Box>
 
+        {/* Check Room Type button */}
+        {hasAnyImage && (
+          <Box sx={{ mb: 2 }}>
+            <Button
+              variant="outlined"
+              startIcon={<AutoAwesomeIcon />}
+              onClick={startMockDetection}
+              disabled={isDetecting}
+              fullWidth
+              sx={{ borderStyle: 'dashed', fontWeight: 600 }}
+            >
+              {isDetecting ? 'Detecting...' : detectedRoomType ? 'Re-check Room Type' : 'Check Room Type'}
+            </Button>
+          </Box>
+        )}
+
         {/* AI detection status */}
         {isDetecting && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2, p: 1.5, backgroundColor: 'action.hover', borderRadius: 1 }}>
@@ -350,7 +364,7 @@ export default function Step1ImageUpload({
             variant="contained"
             size="large"
             onClick={onNext}
-            disabled={!hasAnyImage || isDetecting}
+            disabled={!hasAnyImage || isDetecting || !detectedRoomType}
             sx={{ backgroundColor: 'var(--primary)', fontWeight: 600, ...hoverLiftStyle }}
           >
             Next

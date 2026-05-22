@@ -13,7 +13,9 @@ import {
   Divider,
   Alert,
   Autocomplete,
+  Chip,
 } from '@mui/material';
+import { getFengShuiColors, getFengShuiElementKey } from '@/lib/utils/fengShui';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import SaveIcon from '@mui/icons-material/Save';
 import LockResetIcon from '@mui/icons-material/LockReset';
@@ -21,18 +23,21 @@ import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import { getUserProfile, updateUserProfile, updateUserAvatar } from '@/lib/api/userProfileService';
 import ChangePasswordModal from '@/components/profile/ChangePasswordModal';
 import SetPasswordModal from '@/components/profile/SetPasswordModal';
+import SubscriptionBadge from '@/components/profile/SubscriptionBadge';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 import { isValidPhoneNumber10Digits } from '@/lib/utils/phoneNumber';
 import { useTranslations } from 'next-intl';
-import type { UserProfile, UpdateUserProfileRequest } from '@/types/auth.types';
+import type { SubscriptionTier, UserProfile, UpdateUserProfileRequest } from '@/types/auth.types';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
 import ClickableImageViewer from '@/components/image-view/ClickableImageViewer';
 import { searchAddressSuggestions, type AddressSuggestion } from '@/lib/utils/geocoding';
 import { CustomLoading } from '@/components/CustomLoading';
+import { useAuthStore } from '@/lib/store/authStore';
 
 export default function ProfilePage() {
   const t = useTranslations('profile');
   const tAuth = useTranslations('auth');
+  const { setUserSubscription } = useAuthStore();
 
   type AvatarResponsePayload = {
     avatarURL?: string;
@@ -81,6 +86,7 @@ export default function ProfilePage() {
       if (response?.payload) {
         const userData = response.payload;
         // Map API response to component state
+        const subscription: SubscriptionTier = (userData.subscription as SubscriptionTier) ?? 'Bronze';
         const mappedData: Partial<UserProfile> = {
           id: userData.id,
           username: userData.username || '',
@@ -90,15 +96,18 @@ export default function ProfilePage() {
           avatarUrl: userData.avatarUrl,
           address: userData.address || '',
           gender: normalizeGender(userData.gender),
-          birthYear: userData.birthYear || 0,
+          birthDate: userData.birthDate || '',
+          fengshuiElement: userData.fengshuiElement || '',
+          subscription,
           latitude: userData.latitude ?? 0,
           longitude: userData.longitude ?? 0,
           receiveNotifications: userData.receiveNotifications ?? true,
         };
-        
+
         setProfile(mappedData);
         setOriginalProfile(mappedData);
         setAddressInputValue(userData.address || '');
+        setUserSubscription(subscription);
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : t('errorLoadingProfile');
@@ -107,7 +116,7 @@ export default function ProfilePage() {
     } finally {
       setIsLoading(false);
     }
-  }, [t]);
+  }, [t, setUserSubscription]);
 
   useEffect(() => {
     void fetchProfile();
@@ -235,7 +244,7 @@ export default function ProfilePage() {
         phoneNumber,
         fullName,
         address: profile.address || '',
-        birthYear: profile.birthYear || 0,
+        birthDate: profile.birthDate || '',
         gender: normalizeGender(profile.gender),
         latitude: profile.latitude ?? 0,
         longitude: profile.longitude ?? 0,
@@ -391,7 +400,7 @@ export default function ProfilePage() {
                   </IconButton>
                 </Box>
 
-                {/* Name and Email */}
+                {/* Name, Email and Subscription */}
                 <Box sx={{ textAlign: { xs: 'center', md: 'left' }, flex: 1 }}>
                   <Typography variant="h5" fontWeight="bold" gutterBottom>
                     {profile.fullName || profile.username}
@@ -399,6 +408,7 @@ export default function ProfilePage() {
                   <Typography variant="body1" color="text.secondary" gutterBottom>
                     {profile.email}
                   </Typography>
+                  <SubscriptionBadge tier={profile.subscription} variant="chip" />
                 </Box>
 
                 {/* Action Buttons */}
@@ -498,16 +508,44 @@ export default function ProfilePage() {
                   <MenuItem value="Female">{t('female')}</MenuItem>
                 </TextField>
 
-                {/* Birth Year */}
+                {/* Birth Date */}
                 <TextField
-                  label={t('birthYear')}
-                  value={profile.birthYear || 0}
-                  onChange={(e) => handleInputChange('birthYear', parseInt(e.target.value) || 0)}
+                  label="Date of birth"
+                  value={profile.birthDate || ''}
+                  onChange={(e) => handleInputChange('birthDate', e.target.value)}
                   fullWidth
-                  type="number"
-                  inputProps={{ min: 1940, max: new Date().getFullYear() }}
+                  type="date"
+                  slotProps={{ inputLabel: { shrink: true }, htmlInput: { max: new Date().toISOString().split('T')[0] } }}
                   disabled={isSaving}
                 />
+
+                {/* Feng Shui Element — read-only, calculated by BE from birthDate */}
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, justifyContent: 'center' }}>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                    Feng Shui element
+                  </Typography>
+                  {profile.fengshuiElement ? (() => {
+                    const colors = getFengShuiColors(profile.fengshuiElement);
+                    const key = getFengShuiElementKey(profile.fengshuiElement);
+                    const viLabels: Record<string, string> = { kim: 'Kim (Metal)', moc: 'Mộc (Wood)', thuy: 'Thủy (Water)', hoa: 'Hỏa (Fire)', tho: 'Thổ (Earth)' };
+                    return (
+                      <Chip
+                        label={viLabels[key] ?? profile.fengshuiElement}
+                        sx={{ backgroundColor: colors.bg, color: colors.text, border: `1px solid ${colors.border}`, fontWeight: 600, width: 'fit-content' }}
+                      />
+                    );
+                  })() : (
+                    <Chip label="Not yet determined" variant="outlined" sx={{ width: 'fit-content', color: 'text.secondary' }} />
+                  )}
+                </Box>
+
+                {/* Subscription tier — read-only, set by backend */}
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, justifyContent: 'center' }}>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                    Membership tier
+                  </Typography>
+                  <SubscriptionBadge tier={profile.subscription} variant="inline" />
+                </Box>
               </Box>
 
               <Divider sx={{ my: 3 }} />

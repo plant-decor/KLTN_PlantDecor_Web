@@ -58,7 +58,7 @@ export default function ProfilePage() {
     if (next === null || next === undefined) return fallback ?? undefined;
     return next;
   };
-  
+
   const [profile, setProfile] = useState<Partial<UserProfile>>({});
   const [originalProfile, setOriginalProfile] = useState<Partial<UserProfile>>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -159,43 +159,43 @@ export default function ProfilePage() {
   };
 
   const handleSelectAddressSuggestion = (value: AddressSuggestion | string | null) => {
-     if (!value) {
-       // User cleared the field
-       setProfile((prev) => ({
-         ...prev,
-         address: '',
-         latitude: 0,
-         longitude: 0,
-       }));
-       setAddressInputValue('');
-       setAddressSuggestions([]);
-       return;
-     }
+    if (!value) {
+      // User cleared the field
+      setProfile((prev) => ({
+        ...prev,
+        address: '',
+        latitude: 0,
+        longitude: 0,
+      }));
+      setAddressInputValue('');
+      setAddressSuggestions([]);
+      return;
+    }
 
-     // Check if it's a suggestion object (user selected from dropdown)
-     if (typeof value === 'object' && 'display_name' in value) {
-       setProfile((prev) => ({
-         ...prev,
-         address: value.display_name,
-         latitude: value.latitude,
-         longitude: value.longitude,
-       }));
-       setAddressInputValue(value.display_name);
-       setAddressSuggestions([]);
-     }
-     // If it's a string (user typed custom address without selecting suggestion)
-     // Keep the address as-is, set lat/long to 0
-     else if (typeof value === 'string') {
-       setProfile((prev) => ({
-         ...prev,
-         address: value,
-         latitude: 0,
-         longitude: 0,
-       }));
-       setAddressInputValue(value);
-       setAddressSuggestions([]);
-     }
-   };
+    // Check if it's a suggestion object (user selected from dropdown)
+    if (typeof value === 'object' && 'display_name' in value) {
+      setProfile((prev) => ({
+        ...prev,
+        address: value.display_name,
+        latitude: value.latitude,
+        longitude: value.longitude,
+      }));
+      setAddressInputValue(value.display_name);
+      setAddressSuggestions([]);
+    }
+    // If it's a string (user typed custom address without selecting suggestion)
+    // Keep the address as-is, set lat/long to 0
+    else if (typeof value === 'string') {
+      setProfile((prev) => ({
+        ...prev,
+        address: value,
+        latitude: 0,
+        longitude: 0,
+      }));
+      setAddressInputValue(value);
+      setAddressSuggestions([]);
+    }
+  };
 
   const handleAddressInputChange = (value: string) => {
     setAddressInputValue(value);
@@ -347,56 +347,56 @@ export default function ProfilePage() {
                 {/* Avatar */}
                 <Box sx={{ position: 'relative' }}>
                   {profile.avatarUrl ? (
-                  <ClickableImageViewer
-                    images={[profile.avatarUrl]}
-                    alt={profile.fullName || profile.username || 'User Avatar'}
-                    className='rounded-full aspect-square object-cover shadow-md'
-                    containerClassName='block xs:w-[120px] md:w-37.5 xs:h-[120px] md:h-37.5'
-                    showZoomHint={false}
-                  />
+                    <ClickableImageViewer
+                      images={[profile.avatarUrl]}
+                      alt={profile.fullName || profile.username || 'User Avatar'}
+                      className='rounded-full aspect-square object-cover shadow-md'
+                      containerClassName='block xs:w-[120px] md:w-37.5 xs:h-[120px] md:h-37.5'
+                      showZoomHint={false}
+                    />
                   ) : (
-                  <Box
-                    sx={{
-                    width: { xs: '120px', md: '150px' },
-                    height: { xs: '120px', md: '150px' },
-                    borderRadius: '50%',
-                    backgroundColor: 'var(--primary)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: 2,
-                    }}
-                  >
-                    <Typography variant="h3" fontWeight="bold" sx={{ color: 'white' }}>
-                    {(profile.username || '').charAt(0).toUpperCase()}
-                    </Typography>
-                  </Box>
+                    <Box
+                      sx={{
+                        width: { xs: '120px', md: '150px' },
+                        height: { xs: '120px', md: '150px' },
+                        borderRadius: '50%',
+                        backgroundColor: 'var(--primary)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: 2,
+                      }}
+                    >
+                      <Typography variant="h3" fontWeight="bold" sx={{ color: 'white' }}>
+                        {(profile.username || '').charAt(0).toUpperCase()}
+                      </Typography>
+                    </Box>
                   )}
                   <IconButton
-                  component="label"
-                  sx={{
-                    position: 'absolute',
-                    bottom: 0,
-                    right: 0,
-                    backgroundColor: 'var(--primary)',
-                    color: 'black',
-                    ":hover": {
-                    backgroundColor: 'var(--success)',
-                    color: 'white',
-                    },
-                    ...hoverLiftStyle,
-                  }}
-                  size="large"
-                  disabled={isSaving}
-                  >
-                  <PhotoCameraIcon fontSize="large"/>
-                  <input
-                    hidden
-                    accept="image/jpeg,image/jpg,image/png,image/heif"
-                    type="file"
-                    onChange={handleAvatarUpload}
+                    component="label"
+                    sx={{
+                      position: 'absolute',
+                      bottom: 0,
+                      right: 0,
+                      backgroundColor: 'var(--primary)',
+                      color: 'black',
+                      ":hover": {
+                        backgroundColor: 'var(--success)',
+                        color: 'white',
+                      },
+                      ...hoverLiftStyle,
+                    }}
+                    size="large"
                     disabled={isSaving}
-                  />
+                  >
+                    <PhotoCameraIcon fontSize="large" />
+                    <input
+                      hidden
+                      accept="image/jpeg,image/jpg,image/png,image/heif"
+                      type="file"
+                      onChange={handleAvatarUpload}
+                      disabled={isSaving}
+                    />
                   </IconButton>
                 </Box>
 
@@ -540,12 +540,12 @@ export default function ProfilePage() {
                 </Box>
 
                 {/* Subscription tier — read-only, set by backend */}
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, justifyContent: 'center' }}>
+                {/* <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, justifyContent: 'center' }}>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
                     Membership tier
                   </Typography>
                   <SubscriptionBadge tier={profile.subscription} variant="inline" />
-                </Box>
+                </Box> */}
               </Box>
 
               <Divider sx={{ my: 3 }} />
@@ -628,7 +628,7 @@ export default function ProfilePage() {
               size="large"
               onClick={() => setProfile(originalProfile)}
               disabled={isSaving}
-              sx={{":hover": {backgroundColor: 'var(--error)', color: 'white'}, ...hoverLiftStyle}}
+              sx={{ ":hover": { backgroundColor: 'var(--error)', color: 'white' }, ...hoverLiftStyle }}
             >
               {t('cancelChanges')}
             </Button>

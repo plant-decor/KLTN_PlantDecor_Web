@@ -142,7 +142,10 @@ export default function Header({ initialStoreCategories = [] }: HeaderProps) {
               <CartBadge />
 
               {isCustomer && userId && isDesktopViewport && (
+                <>
                 <HeaderNotificationDropdown userId={userId} />
+                <SubscriptionBadge tier={user?.subscription} variant="compact" />
+                </>
               )}
 
               {/* Auth Actions */}
@@ -188,7 +191,6 @@ export default function Header({ initialStoreCategories = [] }: HeaderProps) {
                         )}
                       </span>
                       {/* Subscription badge */}
-                      <SubscriptionBadge tier={user?.subscription} variant="compact" />
                       <ExpandMoreIcon sx={{ fontSize: 16 }} />
                     </button>
                     {isUserMenuOpen && (

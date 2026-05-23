@@ -466,6 +466,7 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
             onRetryGenerate={() => {
               if (analysisResult?.layoutDesignId) void handleGenerateImages(analysisResult.layoutDesignId);
             }}
+            onOpenManualEditor={handleOpenManualEditor}
           />
 
           <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-start' }}>
@@ -485,22 +486,6 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
         </>
       )}
       
-      <GeneratedImagesCard
-        isGenerating={isGenerating}
-        generateResult={generateResult}
-        analysisResult={analysisResult}
-        resolveRecommendationFromGeneratedItem={resolveRecommendationFromGeneratedItem}
-        addingLayoutDesignPlantId={addingLayoutDesignPlantId}
-        onAddToCart={handleAddGeneratedPlantToCart}
-        onRetryGenerate={() => {
-          if (analysisResult?.layoutDesignId) {
-            void handleGenerateImages(analysisResult.layoutDesignId);
-          }
-        }}
-        onOpenManualEditor={handleOpenManualEditor}
-      />
-
-
       <MyDesignHistoryModal
         open={isMyDesignModalOpen}
         userId={userId}

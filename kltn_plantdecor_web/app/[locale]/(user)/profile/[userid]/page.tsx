@@ -97,7 +97,7 @@ export default function ProfilePage() {
           address: userData.address || '',
           gender: normalizeGender(userData.gender),
           birthDate: userData.birthDate || '',
-          fengshuiElement: userData.fengshuiElement || '',
+          fengShuiElement: userData.fengShuiElement || '',
           subscription,
           latitude: userData.latitude ?? 0,
           longitude: userData.longitude ?? 0,
@@ -524,13 +524,13 @@ export default function ProfilePage() {
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
                     Feng Shui element
                   </Typography>
-                  {profile.fengshuiElement ? (() => {
-                    const colors = getFengShuiColors(profile.fengshuiElement);
-                    const key = getFengShuiElementKey(profile.fengshuiElement);
-                    const viLabels: Record<string, string> = { kim: 'Kim (Metal)', moc: 'Mộc (Wood)', thuy: 'Thủy (Water)', hoa: 'Hỏa (Fire)', tho: 'Thổ (Earth)' };
+                  {profile.fengShuiElement ? (() => {
+                    const colors = getFengShuiColors(profile.fengShuiElement);
+                    const key = getFengShuiElementKey(profile.fengShuiElement);
+                    const viLabels: Record<string, string> = { kim: 'Metal)', moc: 'Wood', thuy: 'Water', hoa: 'Fire', tho: 'Earth' };
                     return (
                       <Chip
-                        label={viLabels[key] ?? profile.fengshuiElement}
+                        label={viLabels[key] ?? profile.fengShuiElement}
                         sx={{ backgroundColor: colors.bg, color: colors.text, border: `1px solid ${colors.border}`, fontWeight: 600, width: 'fit-content' }}
                       />
                     );

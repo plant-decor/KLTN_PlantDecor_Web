@@ -50,13 +50,13 @@ export const uploadRoomImages = async (
 ): Promise<UploadRoomImagesPayload | null> => {
   const formData = new FormData();
 
-  Object.entries(request.imagesByViewAngle).forEach(([viewAngle, file]) => {
+  let orderIndex = 1;
+  Object.entries(request.imagesByViewAngle).forEach(([, file]) => {
     if (!file || !isNonEmptyFile(file)) {
       return;
     }
-    // Backend expects repeated keys: Images[] + ViewAngles[]
     formData.append('Images', file);
-    formData.append('ViewAngles', viewAngle);
+    formData.append('OrderIndexes', String(orderIndex++));
   });
 
   const response = await post<ResponseModel<UploadRoomImagesPayload>>(
@@ -80,9 +80,9 @@ export const beautifyCompositeManualImage = async (
   layerJson?: string | null,
   isServer = false,
   loading = false
-): Promise<any | null> => {
+): Promise<unknown> => {
   const body = { imageUrl, layerJson };
-  const response = await post<ResponseModel<any>>(
+  const response = await post<ResponseModel<unknown>>(
     `/layout-designs/${layoutDesignId}/manual-editor/beautify`,
     body,
     isServer,
@@ -104,6 +104,29 @@ export const calculateManualTotal = async (
     body,
     isServer,
     loading
+  );
+
+  return unwrapResponse(response);
+};
+
+export const analyzeRoomOnlyUpload = async (
+  imagesByViewAngle: Partial<Record<RoomViewAngle, File>>,
+  isServer = false,
+  loading = false
+): Promise<{ roomType: string } | null> => {
+  const formData = new FormData();
+
+  Object.values(imagesByViewAngle).forEach((file) => {
+    if (!file || !isNonEmptyFile(file)) return;
+    formData.append('Images', file);
+  });
+
+  const response = await post<ResponseModel<{ roomType: string }>>(
+    '/RoomDesign/analyze-room-only-upload',
+    formData,
+    isServer,
+    loading,
+    { headers: { 'Content-Type': 'multipart/form-data' } }
   );
 
   return unwrapResponse(response);

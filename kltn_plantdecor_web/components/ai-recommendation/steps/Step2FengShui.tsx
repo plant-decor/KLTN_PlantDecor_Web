@@ -1,31 +1,29 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import {
   Box,
   Button,
   Card,
   CardContent,
+  Checkbox,
   Chip,
-  Divider,
+  FormControlLabel,
   MenuItem,
   Stack,
   TextField,
-  ToggleButton,
-  ToggleButtonGroup,
   Typography,
 } from '@mui/material';
-import { PersonOutline as PersonIcon, PeopleAlt as PeopleIcon } from '@mui/icons-material';
 import type { PlantEnumValue } from '@/lib/api/shopPlantsService';
 import { getFengShuiColors, getFengShuiElementKey } from '@/lib/utils/fengShui';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 
 const FENG_SHUI_VI: Record<string, string> = {
-  kim: 'Kim (Metal)',
-  moc: 'Mộc (Wood)',
-  thuy: 'Thủy (Water)',
-  hoa: 'Hỏa (Fire)',
-  tho: 'Thổ (Earth)',
+  kim: 'Metal',
+  moc: 'Wood',
+  thuy: 'Water',
+  hoa: 'Fire',
+  tho: 'Earth',
   unknown: 'Unknown',
 };
 const FENG_SHUI_DESCRIPTION: Record<string, string> = {
@@ -37,16 +35,6 @@ const FENG_SHUI_DESCRIPTION: Record<string, string> = {
   unknown: '',
 };
 
-/** Mock: compute fengshui element from birth year last digit */
-const computeFengShuiFromBirthYear = (birthYear: number): string => {
-  const d = birthYear % 10;
-  if (d === 0 || d === 1) return 'Metal';
-  if (d === 2 || d === 3) return 'Water';
-  if (d === 4 || d === 5) return 'Wood';
-  if (d === 6 || d === 7) return 'Fire';
-  return 'Earth';
-};
-
 const humanizeEnum = (value: string) =>
   value
     .replace(/_/g, ' ')
@@ -54,80 +42,47 @@ const humanizeEnum = (value: string) =>
     .trim();
 
 interface Step2Props {
-  dominantDirection: string;
+  fengShui: string;
+  fengShuiElements: PlantEnumValue[];
   isBuyingForSelf: boolean;
-  otherBirthDate: string;
-  calendarType: 'Solar' | 'Lunar';
-  profileBirthDate: string;
   profileFengShuiElement: string;
-  dominantDirections: PlantEnumValue[];
   onFengShuiChange: (value: string) => void;
-  onDominantDirectionChange: (value: string) => void;
   onIsBuyingForSelfChange: (value: boolean) => void;
-  onOtherBirthDateChange: (value: string) => void;
-  onCalendarTypeChange: (value: 'Solar' | 'Lunar') => void;
   onBack: () => void;
   onNext: () => void;
 }
 
 export default function Step2FengShui({
-  dominantDirection,
+  fengShui,
+  fengShuiElements,
   isBuyingForSelf,
-  otherBirthDate,
-  calendarType,
-  profileBirthDate,
   profileFengShuiElement,
-  dominantDirections,
   onFengShuiChange,
-  onDominantDirectionChange,
   onIsBuyingForSelfChange,
-  onOtherBirthDateChange,
-  onCalendarTypeChange,
   onBack,
   onNext,
 }: Step2Props) {
-  const [mode, setMode] = useState<'self' | 'other'>(isBuyingForSelf ? 'self' : 'other');
+  const [useProfile, setUseProfile] = useState(isBuyingForSelf);
 
-  const handleModeChange = (_: React.MouseEvent<HTMLElement>, val: 'self' | 'other' | null) => {
-    if (!val) return;
-    setMode(val);
-    onIsBuyingForSelfChange(val === 'self');
-    if (val === 'self') {
-      onFengShuiChange(profileFengShuiElement || '');
-    }
+  const handleUseProfileChange = (checked: boolean) => {
+    setUseProfile(checked);
+    onIsBuyingForSelfChange(checked);
+    if (checked) onFengShuiChange(profileFengShuiElement || '');
   };
 
-  const computedElementForOther = useMemo(() => {
-    if (!otherBirthDate) return '';
-    const year = new Date(otherBirthDate).getFullYear();
-    if (isNaN(year)) return '';
-    return computeFengShuiFromBirthYear(year);
-  }, [otherBirthDate]);
-
-  const activeElement = mode === 'self' ? profileFengShuiElement : computedElementForOther;
+  const activeElement = useProfile ? profileFengShuiElement : fengShui;
   const elementKey = getFengShuiElementKey(activeElement);
   const colors = getFengShuiColors(activeElement);
 
-  const handleOtherBirthDateChange = (value: string) => {
-    onOtherBirthDateChange(value);
-    const year = new Date(value).getFullYear();
-    if (!isNaN(year)) {
-      onFengShuiChange(computeFengShuiFromBirthYear(year));
-    }
-  };
-
-  const directionOptions =
-    dominantDirections.length > 0
-      ? dominantDirections
+  const fengShuiOptions =
+    fengShuiElements.length > 0
+      ? fengShuiElements
       : [
-          { value: 1, name: 'North' },
-          { value: 2, name: 'Northeast' },
-          { value: 3, name: 'East' },
-          { value: 4, name: 'Southeast' },
-          { value: 5, name: 'South' },
-          { value: 6, name: 'Southwest' },
-          { value: 7, name: 'West' },
-          { value: 8, name: 'Northwest' },
+          { value: 1, name: 'Metal' },
+          { value: 2, name: 'Wood' },
+          { value: 3, name: 'Water' },
+          { value: 4, name: 'Fire' },
+          { value: 5, name: 'Earth' },
         ];
 
   return (
@@ -140,69 +95,39 @@ export default function Step2FengShui({
           AI will analyze feng shui data to recommend plants that align with the owner&apos;s element.
         </Typography>
 
-        {/* Buying mode toggle */}
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-            Buying plants for
-          </Typography>
-          <ToggleButtonGroup value={mode} exclusive onChange={handleModeChange} size="small">
-            <ToggleButton value="self" sx={{ gap: 1 }}>
-              <PersonIcon fontSize="small" />
-              Myself
-            </ToggleButton>
-            <ToggleButton value="other" sx={{ gap: 1 }}>
-              <PeopleIcon fontSize="small" />
-              Someone else
-            </ToggleButton>
-          </ToggleButtonGroup>
-        </Box>
-
-        {/* Birth date section */}
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-            Date of birth
-          </Typography>
-
-          {mode === 'self' ? (
-            <TextField
-              label="Date of birth"
-              value={profileBirthDate || ''}
-              fullWidth
-              type="date"
-              slotProps={{ inputLabel: { shrink: true } }}
-              disabled
-              helperText="Pulled from your profile"
-              sx={{ maxWidth: 280 }}
-            />
-          ) : (
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="flex-start">
-              <TextField
-                label="Date of birth"
-                value={otherBirthDate}
-                onChange={(e) => handleOtherBirthDateChange(e.target.value)}
-                type="date"
-                slotProps={{ inputLabel: { shrink: true }, htmlInput: { max: new Date().toISOString().split('T')[0] } }}
-                sx={{ maxWidth: 280 }}
+        {/* Use profile checkbox */}
+        <Box sx={{ mb: 2 }}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={useProfile}
+                onChange={(e) => handleUseProfileChange(e.target.checked)}
               />
-              <Box>
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-                  Calendar type
-                </Typography>
-                <ToggleButtonGroup
-                  value={calendarType}
-                  exclusive
-                  onChange={(_, val) => { if (val) onCalendarTypeChange(val); }}
-                  size="small"
-                >
-                  <ToggleButton value="Solar">Solar</ToggleButton>
-                  <ToggleButton value="Lunar">Lunar</ToggleButton>
-                </ToggleButtonGroup>
-              </Box>
-            </Stack>
-          )}
+            }
+            label="Use user profile information"
+          />
         </Box>
 
-        {/* Feng shui element result */}
+        {/* Feng Shui Element field */}
+        <Box sx={{ mb: 3 }}>
+          <TextField
+            label="Feng Shui Element"
+            value={useProfile ? profileFengShuiElement : fengShui}
+            onChange={(e) => onFengShuiChange(e.target.value)}
+            select
+            disabled={useProfile}
+            sx={{ minWidth: 240 }}
+            helperText={useProfile ? 'Pulled from your profile' : ' '}
+          >
+            {fengShuiOptions.map((opt) => (
+              <MenuItem key={opt.value} value={opt.name}>
+                {humanizeEnum(opt.name)}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Box>
+
+        {/* Feng shui element description */}
         {activeElement && (
           <Box
             sx={{
@@ -214,18 +139,13 @@ export default function Step2FengShui({
             }}
           >
             <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1, color: colors.text }}>
-              Five Elements (Ngũ Hành)
+              Five Elements
             </Typography>
             <Stack direction="row" alignItems="center" spacing={1.5} flexWrap="wrap">
               <Chip
                 label={FENG_SHUI_VI[elementKey] ?? activeElement}
                 sx={{ backgroundColor: colors.bg, color: colors.text, border: `1px solid ${colors.border}`, fontWeight: 700, fontSize: '0.95rem' }}
               />
-              {mode === 'other' && (
-                <Typography variant="caption" color="text.secondary">
-                  (Estimated from birth year — the system will confirm the final value)
-                </Typography>
-              )}
             </Stack>
             {FENG_SHUI_DESCRIPTION[elementKey] && (
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
@@ -234,34 +154,6 @@ export default function Step2FengShui({
             )}
           </Box>
         )}
-
-        <Divider sx={{ my: 2 }} />
-
-        {/* Room direction */}
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-            Building / Room facing direction
-          </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-            The orientation of the building structure (not light direction).
-          </Typography>
-          <TextField
-            label="Facing direction"
-            value={dominantDirection}
-            onChange={(e) => onDominantDirectionChange(e.target.value)}
-            select
-            sx={{ minWidth: 200 }}
-          >
-            <MenuItem value="">
-              <em>Unknown</em>
-            </MenuItem>
-            {directionOptions.map((opt) => (
-              <MenuItem key={opt.value} value={opt.name}>
-                {humanizeEnum(opt.name)}
-              </MenuItem>
-            ))}
-          </TextField>
-        </Box>
 
         <Stack direction="row" justifyContent="space-between" sx={{ mt: 3 }}>
           <Button variant="outlined" size="large" onClick={onBack} sx={hoverLiftStyle}>

@@ -130,6 +130,15 @@ export default function MyDesignHistoryModal({ open, userId, onClose }: MyDesign
     router.push(`/${locale}/checkout/${user.id}/0?${query.toString()}`);
   };
 
+  const handleOpenManualEditor = (item: GeneratedImageItem) => {
+    if (!item.layoutDesignId) {
+      setMessage({ type: 'error', text: 'Manual editor is unavailable for this item.' });
+      return;
+    }
+
+    router.push(`/${locale}/ai-plant-recommendation/${userId}/manual-editor/${item.layoutDesignId}`);
+  };
+
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
       <DialogTitle>{t('modalTitle')}</DialogTitle>
@@ -208,6 +217,15 @@ export default function MyDesignHistoryModal({ open, userId, onClose }: MyDesign
                   </Typography> */}
 
                   <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ pt: 0.5, display: 'flex', justifyContent: 'space-between' }}>
+                    {item.layoutDesignId && (
+                    <Button
+                      variant="outlined"
+                      sx={{ fontWeight: '700', ...hoverLiftStyle }}
+                      onClick={() => void handleOpenManualEditor(item)}
+                    >
+                      Edit
+                    </Button>
+                    )}
                     {item.commonPlantId && (
                     <Button
                       sx={{ backgroundColor: 'var(--primary)', fontWeight: '700', ...hoverLiftStyle }}

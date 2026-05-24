@@ -1,9 +1,25 @@
 import type { SubscriptionTier } from '@/types/auth.types';
+import Image from 'next/image';
 
 const TIER_CONFIG: Record<SubscriptionTier, { bg: string; text: string; border: string; icon: string }> = {
-  Bronze: { bg: '#fdf3e7', text: '#92400e', border: '#d97706', icon: '🥉' },
-  Silver: { bg: '#f3f4f6', text: '#374151', border: '#9ca3af', icon: '🥈' },
-  Gold:   { bg: '#fefce8', text: '#78350f', border: '#f59e0b', icon: '🥇' },
+  Bronze: {
+    bg: '#fdf3e7',
+    text: '#92400e',
+    border: '#d97706',
+    icon: '/logo/bronze-subcription.png'
+  },
+  Silver: {
+    bg: '#f3f4f6',
+    text: '#374151',
+    border: '#9ca3af',
+    icon: '/logo/silver-subcription.png'
+  },
+  Gold: {
+    bg: '#fefce8',
+    text: '#78350f',
+    border: '#f59e0b',
+    icon: '/logo/gold-subcription.png'
+  },
 };
 
 interface SubscriptionBadgeProps {
@@ -41,7 +57,9 @@ export default function SubscriptionBadge({
           whiteSpace: 'nowrap',
         }}
       >
-        {cfg.icon} {resolved}
+        <span style={{ display: 'inline-block', overflow: 'hidden', width: 40, height: 40, position: 'relative', flexShrink: 0 }}>
+          <Image src={cfg.icon} alt={resolved} width={40} height={40} style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', scale: 1.5, marginLeft: 10, marginTop: 5 }} />
+        </span> {resolved}
       </span>
     );
   }
@@ -64,7 +82,9 @@ export default function SubscriptionBadge({
           lineHeight: 1.6,
         }}
       >
-        {cfg.icon} {resolved}
+        <span style={{ display: 'inline-block', overflow: 'hidden', width: 40, height: 40, position: 'relative', flexShrink: 0 }}>
+          <Image src={cfg.icon} alt={resolved} width={60} height={60} style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', scale: 1.5, marginLeft: 10, marginTop: 5 }}/>
+        </span> {resolved}
       </span>
     );
   }
@@ -77,17 +97,19 @@ export default function SubscriptionBadge({
         display: 'inline-flex',
         alignItems: 'center',
         gap: 6,
-        padding: '4px 12px',
+        padding: '2px 4px',
         borderRadius: 999,
         fontSize: '0.875rem',
         fontWeight: 700,
         background: cfg.bg,
         color: cfg.text,
-        border: `1.5px solid ${cfg.border}`,
+        border: `1px solid ${cfg.border}`,
         lineHeight: 1.6,
       }}
     >
-      {cfg.icon} {resolved} Member
+      <span style={{ display: 'inline-block', overflow: 'hidden', width: 40, height: 40, position: 'relative', flexShrink: 0, aspectRatio: '1 / 1' }}>
+        <Image src={cfg.icon} alt={resolved} width={80} height={80} style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', scale: 1.5, marginLeft: 10, marginTop: 5 }} />
+      </span> {resolved} Member
     </span>
   );
 }

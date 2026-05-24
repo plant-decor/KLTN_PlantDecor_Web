@@ -153,7 +153,7 @@ export default function Step4Budget({
             <TextField
               label="Min budget"
               value={minBudget}
-              onChange={(e) => onMinBudgetChange(formatCurrencyInput(e.target.value, 'en'))}
+              onChange={(e) => onMinBudgetChange(formatCurrencyInput(e.target.value, 'vi'))}
               type="text"
               fullWidth
               slotProps={{ htmlInput: { inputMode: 'numeric' } }}
@@ -161,7 +161,7 @@ export default function Step4Budget({
             <TextField
               label="Max budget"
               value={maxBudget}
-              onChange={(e) => onMaxBudgetChange(formatCurrencyInput(e.target.value, 'en'))}
+              onChange={(e) => onMaxBudgetChange(formatCurrencyInput(e.target.value, 'vi'))}
               type="text"
               fullWidth
               slotProps={{ htmlInput: { inputMode: 'numeric' } }}

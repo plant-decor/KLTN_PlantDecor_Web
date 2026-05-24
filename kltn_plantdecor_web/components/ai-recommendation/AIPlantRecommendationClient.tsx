@@ -29,6 +29,8 @@ import Step4Budget from './steps/Step4Budget';
 import RoomAnalysisCard from './RoomAnalysisCard';
 import GeneratedImagesCard from './GeneratedImagesCard';
 import MyDesignHistoryModal from './MyDesignHistoryModal';
+import { useLocale } from 'next-intl';
+import { useRouter } from 'next/navigation';
 
 const STEP_LABELS = ['Room Images', 'Feng Shui', 'Lighting', 'Budget & Care', 'Results'];
 
@@ -61,6 +63,8 @@ interface AIPlantRecommendationClientProps {
 type MessageState = { type: 'success' | 'error'; text: string } | null;
 
 export default function AIPlantRecommendationClient({ userId }: AIPlantRecommendationClientProps) {
+  const locale = useLocale();
+  const router = useRouter();
   // ── Navigation ──────────────────────────────────────────────────────────────
   const [currentStep, setCurrentStep] = useState(0);
   const [hasSubmitted, setHasSubmitted] = useState(false);
@@ -131,8 +135,8 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
         if (response?.payload) {
           const p = response.payload;
           setProfileBirthDate(p.birthDate || '');
-          setProfileFengShuiElement(p.fengshuiElement || '');
-          if (p.fengshuiElement) setFengShuiElement(p.fengshuiElement);
+          setProfileFengShuiElement(p.fengShuiElement || '');
+          if (p.fengShuiElement) setFengShuiElement(p.fengShuiElement);
         }
       } catch {
         // profile unavailable — user can still fill manually
@@ -303,6 +307,10 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
 
   // ── Active stepper index (0-4) ───────────────────────────────────────────────
   const activeStepIndex = hasSubmitted ? 4 : currentStep;
+  
+  const handleOpenManualEditor = (layoutDesignId: number) => {
+    router.push(`/${locale}/ai-plant-recommendation/${userId}/manual-editor/${layoutDesignId}`);
+  };
 
   return (
     <Box sx={{ py: 4, px: { xs: 2, md: 4 }, maxWidth: 1280, mx: 'auto' }}>
@@ -364,18 +372,12 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
 
           {currentStep === 1 && (
             <Step2FengShui
-              dominantDirection={dominantDirection}
+              fengShui={fengShuiElement}
+              fengShuiElements={enumMap.fengShuiElements}
               isBuyingForSelf={isBuyingForSelf}
-              otherBirthDate={otherBirthDate}
-              calendarType={calendarType}
-              profileBirthDate={profileBirthDate}
               profileFengShuiElement={profileFengShuiElement}
-              dominantDirections={enumMap.dominantDirections}
               onFengShuiChange={setFengShuiElement}
-              onDominantDirectionChange={setDominantDirection}
               onIsBuyingForSelfChange={setIsBuyingForSelf}
-              onOtherBirthDateChange={setOtherBirthDate}
-              onCalendarTypeChange={setCalendarType}
               onBack={() => setCurrentStep(0)}
               onNext={() => setCurrentStep(2)}
             />
@@ -458,6 +460,7 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
             onRetryGenerate={() => {
               if (analysisResult?.layoutDesignId) void handleGenerateImages(analysisResult.layoutDesignId);
             }}
+            onOpenManualEditor={handleOpenManualEditor}
           />
 
           <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-start' }}>
@@ -476,7 +479,7 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
           </Box>
         </>
       )}
-
+      
       <MyDesignHistoryModal
         open={isMyDesignModalOpen}
         userId={userId}

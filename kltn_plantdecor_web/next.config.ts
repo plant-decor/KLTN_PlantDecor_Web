@@ -54,6 +54,15 @@ const nextConfig: NextConfig = {
   },
   // Increase server-side fetch timeout
   serverExternalPackages: ['@node-rs/argon2'],
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      // Prevent konva/react-konva from being bundled on server
+      config.externals = config.externals || {};
+      config.externals['konva'] = 'konva';
+      config.externals['react-konva'] = 'react-konva';
+    }
+    return config;
+  },
 };
 
 export default withNextIntl(nextConfig);

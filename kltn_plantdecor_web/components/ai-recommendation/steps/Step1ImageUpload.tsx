@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import {
   Alert,
   Box,
@@ -21,6 +21,7 @@ import {
 } from '@mui/icons-material';
 import type { PlantEnumValue } from '@/lib/api/shopPlantsService';
 import type { RoomViewAngle } from '@/types/ai-recommendation.types';
+import { analyzeRoomOnlyUpload } from '@/lib/api/aiRecommendationService';
 import ClickableImageViewer from '@/components/image-view/ClickableImageViewer';
 import { CustomLoading } from '@/components/CustomLoading';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
@@ -28,14 +29,6 @@ import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/heif'];
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const SLOT_ANGLES: RoomViewAngle[] = ['Front', 'Left', 'Right', 'Back'];
-
-const MOCK_ROOM_DETECTIONS: Array<{ roomType: string; confidence: number }> = [
-  { roomType: 'LivingRoom', confidence: 92 },
-  { roomType: 'Bedroom', confidence: 88 },
-  { roomType: 'HomeOffice', confidence: 85 },
-  { roomType: 'Kitchen', confidence: 79 },
-  { roomType: 'Balcony', confidence: 76 },
-];
 
 const humanizeEnum = (value: string) =>
   value
@@ -81,33 +74,31 @@ export default function Step1ImageUpload({
   const [localError, setLocalError] = useState<string | null>(null);
   const [isDetecting, setIsDetecting] = useState(false);
   const [detectedRoomType, setDetectedRoomType] = useState<string | null>(null);
-  const [detectedConfidence, setDetectedConfidence] = useState<number>(0);
   const [isOverriding, setIsOverriding] = useState(false);
-  const addInputRef = useRef<HTMLInputElement>(null);
-  const detectionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const uploadedAngles = SLOT_ANGLES.filter((a) => Boolean(imagesByViewAngle[a]));
   const uploadCount = uploadedAngles.length;
   const hasAnyImage = uploadCount > 0;
   const canAddMore = uploadCount < 4;
 
-  // Cleanup timer on unmount
-  useEffect(() => () => {
-    if (detectionTimerRef.current) clearTimeout(detectionTimerRef.current);
-  }, []);
-
-  const startMockDetection = () => {
-    if (detectionTimerRef.current) clearTimeout(detectionTimerRef.current);
+  const handleCheckRoomType = async () => {
     setIsDetecting(true);
     setDetectedRoomType(null);
-    const pick = MOCK_ROOM_DETECTIONS[Math.floor(Math.random() * MOCK_ROOM_DETECTIONS.length)];
-    detectionTimerRef.current = setTimeout(() => {
+    setLocalError(null);
+    try {
+      const result = await analyzeRoomOnlyUpload(imagesByViewAngle);
+      if (result?.roomType) {
+        setDetectedRoomType(result.roomType);
+        onRoomTypeChange(result.roomType);
+        setIsOverriding(false);
+      } else {
+        setLocalError('Could not detect room type. Please try again.');
+      }
+    } catch {
+      setLocalError('Failed to analyze room. Please try again.');
+    } finally {
       setIsDetecting(false);
-      setDetectedRoomType(pick.roomType);
-      setDetectedConfidence(pick.confidence);
-      onRoomTypeChange(pick.roomType);
-      setIsOverriding(false);
-    }, 1500);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -123,22 +114,18 @@ export default function Step1ImageUpload({
       e.target.value = '';
       return;
     }
-    // Auto-assign next free angle slot
     const nextAngle = SLOT_ANGLES.find((a) => !imagesByViewAngle[a]);
     if (!nextAngle) return;
     setLocalError(null);
     onErrorDismiss();
     onUploadImage(nextAngle, e);
+    setDetectedRoomType(null);
+    setIsOverriding(false);
   };
 
   const handleRemoveImage = (angle: RoomViewAngle) => {
-    // Reset detection when removing the last image
-    if (uploadCount === 1) {
-      if (detectionTimerRef.current) clearTimeout(detectionTimerRef.current);
-      setIsDetecting(false);
-      setDetectedRoomType(null);
-      setIsOverriding(false);
-    }
+    setDetectedRoomType(null);
+    setIsOverriding(false);
     onRemoveImage(angle);
   };
 
@@ -259,7 +246,6 @@ export default function Step1ImageUpload({
                 {uploadCount === 0 ? 'Add photo *' : 'Add more'}
               </Typography>
               <input
-                ref={addInputRef}
                 hidden
                 accept="image/jpeg,image/jpg,image/png,image/heif"
                 type="file"
@@ -275,7 +261,7 @@ export default function Step1ImageUpload({
             <Button
               variant="outlined"
               startIcon={<AutoAwesomeIcon />}
-              onClick={startMockDetection}
+              onClick={() => void handleCheckRoomType()}
               disabled={isDetecting}
               fullWidth
               sx={{ borderStyle: 'dashed', fontWeight: 600 }}
@@ -302,7 +288,7 @@ export default function Step1ImageUpload({
               AI detected:
             </Typography>
             <Chip
-              label={`${humanizeEnum(detectedRoomType)} — ${detectedConfidence}%`}
+              label={humanizeEnum(detectedRoomType)}
               color="success"
               size="small"
               variant="outlined"

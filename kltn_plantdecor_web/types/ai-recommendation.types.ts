@@ -69,7 +69,7 @@ export interface UploadRoomImagesRequest {
 export interface UploadedRoomImageItem {
   roomImageId: number;
   imageUrl: string | null;
-  viewAngle: RoomViewAngle;
+  orderIndex: number;
   moderationStatus?: string | null;
   moderationReason?: string | null;
   uploadedAt?: string | null;

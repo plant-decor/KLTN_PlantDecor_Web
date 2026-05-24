@@ -135,8 +135,8 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
         if (response?.payload) {
           const p = response.payload;
           setProfileBirthDate(p.birthDate || '');
-          setProfileFengShuiElement(p.fengshuiElement || '');
-          if (p.fengshuiElement) setFengShuiElement(p.fengshuiElement);
+          setProfileFengShuiElement(p.fengShuiElement || '');
+          if (p.fengShuiElement) setFengShuiElement(p.fengShuiElement);
         }
       } catch {
         // profile unavailable — user can still fill manually
@@ -372,18 +372,12 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
 
           {currentStep === 1 && (
             <Step2FengShui
-              dominantDirection={dominantDirection}
+              fengShui={fengShuiElement}
+              fengShuiElements={enumMap.fengShuiElements}
               isBuyingForSelf={isBuyingForSelf}
-              otherBirthDate={otherBirthDate}
-              calendarType={calendarType}
-              profileBirthDate={profileBirthDate}
               profileFengShuiElement={profileFengShuiElement}
-              dominantDirections={enumMap.dominantDirections}
               onFengShuiChange={setFengShuiElement}
-              onDominantDirectionChange={setDominantDirection}
               onIsBuyingForSelfChange={setIsBuyingForSelf}
-              onOtherBirthDateChange={setOtherBirthDate}
-              onCalendarTypeChange={setCalendarType}
               onBack={() => setCurrentStep(0)}
               onNext={() => setCurrentStep(2)}
             />

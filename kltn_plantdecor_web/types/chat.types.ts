@@ -74,3 +74,13 @@ export type GetConversationDetailsResponse =
 
 export type GetLatestActiveConversationResponse =
   ResponseModel<SupportConversationPayload | null>;
+
+export interface ConversationSummary {
+  conversationId: number;
+  summary: string;
+  keyPoints: string[];
+  nextActions: string[];
+  generatedAt: string;
+}
+
+export type ConversationSummaryResponse = ResponseModel<ConversationSummary>;

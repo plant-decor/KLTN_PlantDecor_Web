@@ -60,7 +60,7 @@ export function useSupportChat(options: UseSupportChatOptions) {
         await chatHubService.sendMessage(conversationId, content);
       } catch (err) {
         console.error("Send message failed:", err);
-        setHubError("Không thể gửi tin nhắn");
+        setHubError("Cannot send message");
         throw err;
       } finally {
         setIsSending(false);
@@ -161,7 +161,7 @@ export function useSupportChat(options: UseSupportChatOptions) {
       } catch (err) {
         console.error("Chat setup failed:", err);
         if (!isMounted) return;
-        setHubError("Không thể kết nối chat realtime");
+        setHubError("Cannot connect to chat");
         setIsHubReady(false);
       }
     };

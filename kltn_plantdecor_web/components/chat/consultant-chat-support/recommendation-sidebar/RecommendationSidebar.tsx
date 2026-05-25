@@ -14,23 +14,16 @@ import { useLocale } from "next-intl";
 import { toast } from "react-toastify";
 import { CustomLoading } from "@/components/CustomLoading";
 import {
-  getOrdersByEmail,
-  getRecommendedPackagesByPlant,
-} from "@/lib/api/orderService";
-import { getConsultantOrderById } from "@/lib/api/consultantOrdersService";
-import { getCareServicePackageDetail } from "@/lib/api/careServiceService";
+  getAiRecommendedPackagesByConversation,
+  getCareServicePackageDetail,
+} from "@/lib/api/careServiceService";
+import { getConversationSummary } from "@/lib/api/chatService";
 import { buildServiceBookingUrl } from "@/lib/utils/serviceBookingLink";
-import type {
-  OrderByEmail,
-  RecommendedPackage,
-} from "@/types/order.types";
-import type { CareServicePackage } from "@/types/care-service.types";
-import type { ConsultantOrder } from "@/types/consultant-order.types";
+import type { AiRecommendedPackage, CareServicePackage } from "@/types/care-service.types";
+import type { ConversationSummary } from "@/types/chat.types";
 import type { ChatSession } from "../types";
-import { OrderHistoryList } from "./OrderHistoryList";
-import { RecommendedPackageList } from "./RecommendedPackageList";
 import { CareServicePackageDetailDialog } from "./CareServicePackageDetailDialog";
-import { ConsultantOrderDetailDialog } from "./ConsultantOrderDetailDialogView";
+import { AiRecommendedPackageList } from "./RecommendedPackageList";
 
 type Props = {
   activeSession: ChatSession | null;
@@ -46,12 +39,14 @@ export function RecommendationSidebar({
   onSendBookingLink,
 }: Props) {
   const locale = useLocale();
-  const [orders, setOrders] = useState<OrderByEmail[]>([]);
-  const [ordersLoading, setOrdersLoading] = useState(false);
-  const [ordersError, setOrdersError] = useState<string | null>(null);
-  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
+  const conversationId = activeSession?.conversationId ?? null;
+  const customerId = activeSession?.customerId ?? null;
 
-  const [recommendations, setRecommendations] = useState<RecommendedPackage[]>([]);
+  const [summary, setSummary] = useState<ConversationSummary | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
+
+  const [recommendations, setRecommendations] = useState<AiRecommendedPackage[]>([]);
   const [recLoading, setRecLoading] = useState(false);
   const [recError, setRecError] = useState<string | null>(null);
 
@@ -63,62 +58,29 @@ export function RecommendationSidebar({
   const [detail, setDetail] = useState<CareServicePackage | null>(null);
   const [viewingPackageId, setViewingPackageId] = useState<number | null>(null);
 
-  const [orderDetailOpen, setOrderDetailOpen] = useState(false);
-  const [orderDetailLoading, setOrderDetailLoading] = useState(false);
-  const [orderDetailError, setOrderDetailError] = useState<string | null>(null);
-  const [orderDetail, setOrderDetail] = useState<ConsultantOrder | null>(null);
-  const [viewingOrderId, setViewingOrderId] = useState<number | null>(null);
-
-  const customerEmail = activeSession?.customerEmail ?? "";
-  const customerId = activeSession?.customerId ?? null;
-
-  const loadOrders = useCallback(
-    async (email: string) => {
-      if (!email) {
-        setOrders([]);
-        setSelectedOrderId(null);
-        return;
-      }
-
-      try {
-        setOrdersLoading(true);
-        setOrdersError(null);
-        const data = await getOrdersByEmail(email);
-        setOrders(data);
-        setSelectedOrderId(data[0]?.id ?? null);
-      } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Unable to load order history";
-        setOrdersError(message);
-        setOrders([]);
-        setSelectedOrderId(null);
-      } finally {
-        setOrdersLoading(false);
-      }
-    },
-    [],
-  );
-
-  useEffect(() => {
-    void loadOrders(customerEmail);
-  }, [customerEmail, loadOrders]);
-
-  const loadRecommendations = useCallback(async (orderId: number | null) => {
-    if (!orderId) {
-      setRecommendations([]);
-      return;
+  const loadSummary = useCallback(async (id: number) => {
+    try {
+      setSummaryLoading(true);
+      setSummaryError(null);
+      const data = await getConversationSummary(id);
+      setSummary(data);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unable to load conversation summary";
+      setSummaryError(message);
+      setSummary(null);
+    } finally {
+      setSummaryLoading(false);
     }
+  }, []);
 
+  const loadRecommendations = useCallback(async (id: number) => {
     try {
       setRecLoading(true);
       setRecError(null);
-      const payload = await getRecommendedPackagesByPlant(orderId);
-      setRecommendations(payload.recommendations ?? []);
+      const data = await getAiRecommendedPackagesByConversation(id);
+      setRecommendations(data);
     } catch (err) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : "Unable to load recommended packages";
+      const message = err instanceof Error ? err.message : "Unable to load recommended packages";
       setRecError(message);
       setRecommendations([]);
     } finally {
@@ -127,18 +89,23 @@ export function RecommendationSidebar({
   }, []);
 
   useEffect(() => {
-    void loadRecommendations(selectedOrderId);
-  }, [selectedOrderId, loadRecommendations]);
+    if (!conversationId) {
+      setSummary(null);
+      setRecommendations([]);
+      return;
+    }
+    void loadSummary(conversationId);
+    void loadRecommendations(conversationId);
+  }, [conversationId, loadSummary, loadRecommendations]);
 
   const handleSendBookingLink = useCallback(
-    async (recommendation: RecommendedPackage) => {
+    async (recommendation: AiRecommendedPackage) => {
       if (!customerId) {
         toast.error("Cannot resolve customer user id for this conversation.");
         return;
       }
 
-      const origin =
-        typeof window !== "undefined" ? window.location.origin : undefined;
+      const origin = typeof window !== "undefined" ? window.location.origin : undefined;
       const url = buildServiceBookingUrl({
         origin,
         locale,
@@ -152,8 +119,7 @@ export function RecommendationSidebar({
         await onSendBookingLink(url);
         toast.success("Booking link sent");
       } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Failed to send booking link";
+        const message = err instanceof Error ? err.message : "Failed to send booking link";
         toast.error(message);
       } finally {
         setSendingPackageId(null);
@@ -162,7 +128,7 @@ export function RecommendationSidebar({
     [customerId, locale, onSendBookingLink],
   );
 
-  const handleViewDetail = useCallback(async (recommendation: RecommendedPackage) => {
+  const handleViewDetail = useCallback(async (recommendation: AiRecommendedPackage) => {
     const id = recommendation.packageId;
     try {
       setDetailOpen(true);
@@ -172,13 +138,10 @@ export function RecommendationSidebar({
       setViewingPackageId(id);
 
       const payload = await getCareServicePackageDetail(id, true);
-      if (!payload) {
-        throw new Error("Không thể tải chi tiết gói dịch vụ");
-      }
+      if (!payload) throw new Error("Không thể tải chi tiết gói dịch vụ");
       setDetail(payload);
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Không thể tải chi tiết gói dịch vụ";
+      const message = err instanceof Error ? err.message : "Không thể tải chi tiết gói dịch vụ";
       setDetailError(message);
       toast.error(message);
     } finally {
@@ -189,34 +152,6 @@ export function RecommendationSidebar({
 
   const handleCloseDetail = useCallback(() => {
     setDetailOpen(false);
-  }, []);
-
-  const handleViewOrderDetail = useCallback(async (orderId: number) => {
-    try {
-      setOrderDetailOpen(true);
-      setOrderDetailLoading(true);
-      setOrderDetailError(null);
-      setOrderDetail(null);
-      setViewingOrderId(orderId);
-
-      const payload = await getConsultantOrderById(orderId, true);
-      if (!payload) {
-        throw new Error("Không thể tải chi tiết đơn hàng");
-      }
-      setOrderDetail(payload);
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Không thể tải chi tiết đơn hàng";
-      setOrderDetailError(message);
-      toast.error(message);
-    } finally {
-      setOrderDetailLoading(false);
-      setViewingOrderId(null);
-    }
-  }, []);
-
-  const handleCloseOrderDetail = useCallback(() => {
-    setOrderDetailOpen(false);
   }, []);
 
   const sendDisabled = useMemo(
@@ -238,7 +173,7 @@ export function RecommendationSidebar({
           textAlign: "center",
         }}
       >
-        Select a conversation to see customer orders and package recommendations.
+        Select a conversation to see AI summary and package recommendations.
       </Box>
     );
   }
@@ -253,57 +188,85 @@ export function RecommendationSidebar({
         borderLeft: "1px solid rgba(15,23,42,0.08)",
       }}
     >
+      {/* Conversation Summary */}
       <Box sx={{ p: 1.4 }}>
         <Stack direction="row" alignItems="center" spacing={1}>
           <Typography sx={{ fontWeight: 800, fontSize: 13 }}>
-            Customer orders
+            Conversation Summary
           </Typography>
           <Box sx={{ flex: 1 }} />
           <IconButton
             size="small"
-            disabled={ordersLoading || !customerEmail}
-            onClick={() => void loadOrders(customerEmail)}
-            aria-label="Refresh orders"
+            disabled={summaryLoading || !conversationId}
+            onClick={() => conversationId && void loadSummary(conversationId)}
+            aria-label="Refresh summary"
           >
             <RefreshIcon fontSize="small" />
           </IconButton>
         </Stack>
-        <Typography sx={{ fontSize: 11.5, color: "#64748b" }}>
-          {customerEmail || "No email available"}
-        </Typography>
       </Box>
 
-      <Box sx={{ px: 1.4, pb: 1, maxHeight: 220, overflowY: "auto" }}>
-        {ordersLoading ? (
+      <Box sx={{ px: 1.4, pb: 1.5, maxHeight: 260, overflowY: "auto" }}>
+        {summaryLoading ? (
           <Stack alignItems="center" sx={{ py: 2 }}>
             <CustomLoading size={18} />
           </Stack>
-        ) : ordersError ? (
-          <Stack spacing={1} sx={{ px: 1 }}>
+        ) : summaryError ? (
+          <Stack spacing={1}>
             <Typography sx={{ fontSize: 12, color: "#b91c1c" }}>
-              {ordersError}
+              {summaryError}
             </Typography>
             <Button
               size="small"
               variant="outlined"
-              onClick={() => void loadOrders(customerEmail)}
+              onClick={() => conversationId && void loadSummary(conversationId)}
               sx={{ textTransform: "none", fontWeight: 700 }}
             >
               Retry
             </Button>
           </Stack>
+        ) : summary ? (
+          <Stack spacing={1}>
+            <Typography sx={{ fontSize: 12, color: "#334155", lineHeight: 1.5 }}>
+              {summary.summary}
+            </Typography>
+
+            {summary.keyPoints?.length ? (
+              <Box>
+                <Typography sx={{ fontSize: 11.5, fontWeight: 700, color: "#0f172a", mb: 0.25 }}>
+                  Key Points
+                </Typography>
+                {summary.keyPoints.map((point, i) => (
+                  <Typography key={i} sx={{ fontSize: 11.5, color: "#475569", lineHeight: 1.45 }}>
+                    • {point}
+                  </Typography>
+                ))}
+              </Box>
+            ) : null}
+
+            {summary.nextActions?.length ? (
+              <Box>
+                <Typography sx={{ fontSize: 11.5, fontWeight: 700, color: "#2563eb", mb: 0.25 }}>
+                  Next Actions
+                </Typography>
+                {summary.nextActions.map((action, i) => (
+                  <Typography key={i} sx={{ fontSize: 11.5, color: "#1e40af", lineHeight: 1.45 }}>
+                    → {action}
+                  </Typography>
+                ))}
+              </Box>
+            ) : null}
+          </Stack>
         ) : (
-          <OrderHistoryList
-            orders={orders}
-            selectedOrderId={selectedOrderId}
-            onSelectOrder={setSelectedOrderId}
-            onViewDetail={(orderId) => void handleViewOrderDetail(orderId)}
-          />
+          <Typography sx={{ fontSize: 12, color: "#94a3b8" }}>
+            No summary available yet.
+          </Typography>
         )}
       </Box>
 
       <Divider sx={{ borderColor: "rgba(15,23,42,0.08)" }} />
 
+      {/* Recommended Packages */}
       <Box sx={{ p: 1.4 }}>
         <Stack direction="row" alignItems="center" spacing={1}>
           <Typography sx={{ fontWeight: 800, fontSize: 13 }}>
@@ -312,17 +275,15 @@ export function RecommendationSidebar({
           <Box sx={{ flex: 1 }} />
           <IconButton
             size="small"
-            disabled={recLoading || !selectedOrderId}
-            onClick={() => void loadRecommendations(selectedOrderId)}
+            disabled={recLoading || !conversationId}
+            onClick={() => conversationId && void loadRecommendations(conversationId)}
             aria-label="Refresh recommendations"
           >
             <RefreshIcon fontSize="small" />
           </IconButton>
         </Stack>
         <Typography sx={{ fontSize: 11.5, color: "#64748b" }}>
-          {selectedOrderId
-            ? `Suggestions based on order #${selectedOrderId}`
-            : "Select an order to view suggestions"}
+          AI-ranked suggestions based on conversation
         </Typography>
       </Box>
 
@@ -335,7 +296,7 @@ export function RecommendationSidebar({
           pb: 2,
         }}
       >
-        <RecommendedPackageList
+        <AiRecommendedPackageList
           recommendations={recommendations}
           loading={recLoading}
           error={recError}
@@ -353,15 +314,6 @@ export function RecommendationSidebar({
         error={detailError}
         detail={detail}
         onClose={handleCloseDetail}
-      />
-
-      <ConsultantOrderDetailDialog
-        open={orderDetailOpen}
-        loading={orderDetailLoading}
-        error={orderDetailError}
-        detail={orderDetail}
-        viewingOrderId={viewingOrderId}
-        onClose={handleCloseOrderDetail}
       />
     </Box>
   );

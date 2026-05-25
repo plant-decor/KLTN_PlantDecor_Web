@@ -31,6 +31,16 @@ export interface CareServicePackage {
   suitabilityRules?: CareServicePackageSuitabilityRule[];
 }
 
+export interface AiRecommendedPackage {
+  packageId: number;
+  packageName: string;
+  unitPrice: number;
+  score: number;
+  reason: string;
+  ecosystemMatchPercentage: number;
+  coveragePercentage: number;
+}
+
 export interface NurseryCareService {
   id: number;
   nurseryId: number;

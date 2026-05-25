@@ -127,9 +127,10 @@ class ChatHubService {
     });
 
     connection.onreconnected(async (connectionId) => {
-      this.emit("reconnected", connectionId);
-
-      // rejoin tất cả room đã join trước đó
+      // Rejoin all rooms first so the server registers the participant before
+      // the UI becomes active. Emitting "reconnected" before JoinConversation
+      // completes causes a race where SendMessage arrives before the server
+      // has accepted the join → "HubException: Not a participant".
       const roomIds = [...this.joinedConversationIds];
       for (const conversationId of roomIds) {
         try {
@@ -141,6 +142,8 @@ class ChatHubService {
           );
         }
       }
+
+      this.emit("reconnected", connectionId);
     });
 
     connection.onclose((error) => {

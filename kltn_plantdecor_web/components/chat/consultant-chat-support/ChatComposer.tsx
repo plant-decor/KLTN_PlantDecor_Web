@@ -62,7 +62,7 @@ export function ChatComposer({
           />
           <IconButton
             onClick={onSubmit}
-            disabled={!canSend || !canUseRealtime || isSending}
+            disabled={!canSend || !canUseRealtime || isSending || !isHubReady}
             sx={{ color: "#2563eb" }}
           >
             <SendRoundedIcon />

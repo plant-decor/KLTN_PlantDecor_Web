@@ -3,6 +3,7 @@
 import * as apiClient from "@/lib/api/apiService.client";
 import type { ResponseModel } from "@/types/api.types";
 import type {
+  AiRecommendedPackage,
   AssignServiceRegistrationCaretakerRequest,
   CareServicePackage,
   CareServiceSpecialization,
@@ -1348,4 +1349,21 @@ export const getStaffScheduleByRange = async (
   );
 
   return parseNurseryServiceScheduleItems(unwrapPayloadData(response));
+};
+
+/**
+ * GET /api/care-service-packages/recommendations/conversations/{conversationId}
+ * AI-ranked care service package recommendations based on conversation content.
+ */
+export const getAiRecommendedPackagesByConversation = async (
+  conversationId: number,
+  loading = false,
+): Promise<AiRecommendedPackage[]> => {
+  const res = await apiClient.get<ResponseModel<AiRecommendedPackage[]>>(
+    `care-service-packages/recommendations/conversations/${conversationId}`,
+    undefined,
+    loading,
+    QUERY_CONFIG,
+  );
+  return (res as ResponseModel<AiRecommendedPackage[]>).payload ?? [];
 };

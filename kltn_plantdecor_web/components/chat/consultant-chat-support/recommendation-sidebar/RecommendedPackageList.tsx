@@ -1,22 +1,22 @@
 "use client";
 
 import { Stack, Typography } from "@mui/material";
-import type { RecommendedPackage } from "@/types/order.types";
+import type { AiRecommendedPackage } from "@/types/care-service.types";
 import { CustomLoading } from "@/components/CustomLoading";
 import { RecommendationCard } from "./RecommendationCard";
 
 type Props = {
-  recommendations: RecommendedPackage[];
+  recommendations: AiRecommendedPackage[];
   loading: boolean;
   error: string | null;
   sendingPackageId: number | null;
   viewingPackageId: number | null;
   disabled: boolean;
-  onSendBookingLink: (recommendation: RecommendedPackage) => void;
-  onViewDetail: (recommendation: RecommendedPackage) => void;
+  onSendBookingLink: (recommendation: AiRecommendedPackage) => void;
+  onViewDetail: (recommendation: AiRecommendedPackage) => void;
 };
 
-export function RecommendedPackageList({
+export function AiRecommendedPackageList({
   recommendations,
   loading,
   error,
@@ -45,7 +45,7 @@ export function RecommendedPackageList({
   if (!recommendations.length) {
     return (
       <Typography sx={{ fontSize: 12, color: "#94a3b8", px: 1 }}>
-        No matching care packages for this order.
+        No matching care packages for this conversation.
       </Typography>
     );
   }

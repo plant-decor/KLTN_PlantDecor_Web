@@ -70,7 +70,7 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
   // ── User profile (for Step 2 auto-fill) ─────────────────────────────────────
-  const [profileBirthDate, setProfileBirthDate] = useState('');
+  // const [profileBirthDate, setProfileBirthDate] = useState('');
   const [profileFengShuiElement, setProfileFengShuiElement] = useState('');
 
   // ── Enums ────────────────────────────────────────────────────────────────────
@@ -86,10 +86,10 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
 
   // ── Step 2: fengshui ─────────────────────────────────────────────────────────
   const [fengShuiElement, setFengShuiElement] = useState('');
-  const [dominantDirection, setDominantDirection] = useState('');
+  // const [dominantDirection, setDominantDirection] = useState('');
   const [isBuyingForSelf, setIsBuyingForSelf] = useState(true);
-  const [otherBirthDate, setOtherBirthDate] = useState('');
-  const [calendarType, setCalendarType] = useState<'Solar' | 'Lunar'>('Solar');
+  // const [otherBirthDate, setOtherBirthDate] = useState('');
+  // const [calendarType, setCalendarType] = useState<'Solar' | 'Lunar'>('Solar');
 
   // ── Step 3: lighting ─────────────────────────────────────────────────────────
   const [lightDirection, setLightDirection] = useState('');
@@ -134,7 +134,7 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
         const response = await getUserProfile(false);
         if (response?.payload) {
           const p = response.payload;
-          setProfileBirthDate(p.birthDate || '');
+          // setProfileBirthDate(p.birthDate || '');
           setProfileFengShuiElement(p.fengShuiElement || '');
           if (p.fengShuiElement) setFengShuiElement(p.fengShuiElement);
         }
@@ -260,7 +260,7 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
           roomStyle,
           roomArea: Number(roomArea) || 0,
           lightDirection: lightDirection || undefined,
-          dominantDirection: dominantDirection || undefined,
+          // dominantDirection: dominantDirection || undefined,
           naturalLightLevel: naturalLightLevel || undefined,
           minBudget: parseCurrencyInput(minBudget) > 0 ? parseCurrencyInput(minBudget) : undefined,
           maxBudget: parseCurrencyInput(maxBudget) > 0 ? parseCurrencyInput(maxBudget) : undefined,

@@ -14,6 +14,7 @@ import {
   generateLayoutImages,
   uploadRoomImages,
 } from '@/lib/api/aiRecommendationService';
+import { getUserAiQuota } from '@/lib/api/aiQuotaService';
 import type {
   AllergyPlantOption,
   AnalyzeRoomUploadPayload,
@@ -29,6 +30,7 @@ import Step4Budget from './steps/Step4Budget';
 import RoomAnalysisCard from './RoomAnalysisCard';
 import GeneratedImagesCard from './GeneratedImagesCard';
 import MyDesignHistoryModal from './MyDesignHistoryModal';
+import NoQuotaModal from './NoQuotaModal';
 import { useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
 
@@ -115,6 +117,7 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
   const [message, setMessage] = useState<MessageState>(null);
   const [addingLayoutDesignPlantId, setAddingLayoutDesignPlantId] = useState<number | null>(null);
   const [isMyDesignModalOpen, setIsMyDesignModalOpen] = useState(false);
+  const [isNoQuotaModalOpen, setIsNoQuotaModalOpen] = useState(false);
 
   // ── Lifecycle ────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -125,6 +128,18 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
     return () => {
       Object.values(imagePreviewUrlsRef.current).forEach((url) => { if (url) URL.revokeObjectURL(url); });
     };
+  }, []);
+
+  // Check quota on mount — open warning modal if exhausted
+  useEffect(() => {
+    void (async () => {
+      try {
+        const quota = await getUserAiQuota(false);
+        if (quota.totalRemainingQuota === 0) setIsNoQuotaModalOpen(true);
+      } catch {
+        // best-effort; server enforces the hard limit
+      }
+    })();
   }, []);
 
   // Fetch user profile for Step 2 auto-fill
@@ -484,6 +499,11 @@ export default function AIPlantRecommendationClient({ userId }: AIPlantRecommend
         open={isMyDesignModalOpen}
         userId={userId}
         onClose={() => setIsMyDesignModalOpen(false)}
+      />
+
+      <NoQuotaModal
+        open={isNoQuotaModalOpen}
+        onClose={() => setIsNoQuotaModalOpen(false)}
       />
     </Box>
   );

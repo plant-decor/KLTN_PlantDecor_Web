@@ -80,9 +80,9 @@ export const beautifyCompositeManualImage = async (
   layerJson?: string | null,
   isServer = false,
   loading = false
-): Promise<unknown> => {
+): Promise<LayoutDesignManualEditorImageDto | null> => {
   const body = { imageUrl, layerJson };
-  const response = await post<ResponseModel<unknown>>(
+  const response = await post<ResponseModel<LayoutDesignManualEditorImageDto>>(
     `/layout-designs/${layoutDesignId}/manual-editor/beautify`,
     body,
     isServer,

@@ -7,6 +7,7 @@ import type {
   UserSubscription,
   CreateTierPackagePaymentRequest,
   CreateTierPackagePaymentResponse,
+  TierProgress,
 } from "@/types/tier-package.types";
 
 const QUERY_CONFIG = { showToast: false, showErrorToast: false };
@@ -56,6 +57,16 @@ export const createTierPackagePayment = async (
     MUTATION_CONFIG
   );
   return unwrapPayload(response) as CreateTierPackagePaymentResponse;
+};
+
+export const getTierProgress = async (loading = true): Promise<TierProgress> => {
+  const response = await apiClient.get<WrappedResponse<TierProgress>>(
+    "User/tier-progress",
+    undefined,
+    loading,
+    QUERY_CONFIG
+  );
+  return unwrapPayload(response) as TierProgress;
 };
 
 export const getAdminUserAiQuota = async (

@@ -93,3 +93,20 @@ export interface CreateTierPackagePaymentResponse {
   paymentId: number;
   paymentUrl: string;
 }
+
+export interface TierProgress {
+  currentTierLevel: number;
+  currentTierName: string;
+  currentTierBenefitDescription: string | null;
+  currentTierMonthlyFreeQuota: number;
+  currentTierMinSpent: number;
+  totalSpent: number;
+  nextTierLevel: number | null;
+  nextTierName: string | null;
+  nextTierBenefitDescription: string | null;
+  nextTierMonthlyFreeQuota: number | null;
+  nextTierMinSpent: number | null;
+  amountToNextTier: number | null;
+  progressPercent: number;
+  isMaxTier: boolean;
+}

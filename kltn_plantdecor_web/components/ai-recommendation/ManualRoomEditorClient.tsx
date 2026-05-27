@@ -46,6 +46,7 @@ import {
 import { useAuthStore } from '@/lib/store/authStore';
 import type {
   LayoutDesignManualEditorContextDto,
+  LayoutDesignManualEditorImageDto,
   ManualEditorCalculateTotalResult,
   LayoutDesignManualEditorPlantDto,
   ManualEditorLayerState,
@@ -258,7 +259,12 @@ export default function ManualRoomEditorClient({ layoutDesignId, userId }: Manua
   const [savingDraft, setSavingDraft] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [publishedImageUrl, setPublishedImageUrl] = useState<string | null>(null);
+  const [beautifiedImageUrl, setBeautifiedImageUrl] = useState<string | null>(null);
+  const [isBeautifiedDialogOpen, setIsBeautifiedDialogOpen] = useState(false);
   const [beautifying, setBeautifying] = useState(false);
+  const [isImagesDialogOpen, setIsImagesDialogOpen] = useState(false);
+  const [contextImages, setContextImages] = useState<LayoutDesignManualEditorImageDto[]>([]);
+  const [loadingImages, setLoadingImages] = useState(false);
   const [calculating, setCalculating] = useState(false);
   const [calculateResult, setCalculateResult] = useState<ManualEditorCalculateTotalResult | null>(null);
   const [isCalculateDialogOpen, setIsCalculateDialogOpen] = useState(false);
@@ -375,6 +381,7 @@ export default function ManualRoomEditorClient({ layoutDesignId, userId }: Manua
 
         setContext(payload);
         setRoomImageUrl(payload.roomImageUrl);
+        setContextImages(payload.images ?? []);
 
         const latestDraft = [...payload.images]
           .filter((item) => item.manualLayerJson?.trim())
@@ -569,9 +576,14 @@ export default function ManualRoomEditorClient({ layoutDesignId, userId }: Manua
     try {
       setBeautifying(true);
       setError(null);
-      await beautifyCompositeManualImage(layoutDesignId, imageToUse, serializeSnapshot(snapshot), false, false);
+      const result = await beautifyCompositeManualImage(layoutDesignId, imageToUse, serializeSnapshot(snapshot), false, false);
+      const returnedUrl = result?.imageUrl ?? null;
+      if (returnedUrl) {
+        setBeautifiedImageUrl(returnedUrl);
+        setIsBeautifiedDialogOpen(true);
+        setContextImages((prev) => (result ? [result, ...prev.filter((img) => img.imageId !== result.imageId)] : prev));
+      }
       setMessage({ type: 'success', text: 'Beautify job submitted.' });
-      // Optionally handle response (e.g., preview URL) if backend returns one
     } catch (beautifyError) {
       const beautifyMessage = beautifyError instanceof Error ? beautifyError.message : 'Failed to submit beautify job.';
       setError(beautifyMessage);
@@ -579,6 +591,18 @@ export default function ManualRoomEditorClient({ layoutDesignId, userId }: Manua
       setBeautifying(false);
     }
   }, [layoutDesignId, publishedImageUrl, snapshot]);
+
+  const handleRefreshImages = useCallback(async () => {
+    try {
+      setLoadingImages(true);
+      const payload = await getManualEditorContext(layoutDesignId, false, false);
+      if (payload) {
+        setContextImages(payload.images ?? []);
+      }
+    } finally {
+      setLoadingImages(false);
+    }
+  }, [layoutDesignId]);
 
   const handleCalculateTotal = useCallback(async () => {
     if (!layers || layers.length === 0) {
@@ -853,6 +877,9 @@ export default function ManualRoomEditorClient({ layoutDesignId, userId }: Manua
               <Button variant="outlined" onClick={clearSelection} disabled={!selectedLayerId}>
                 Clear selection
               </Button>
+              <Button variant="outlined" onClick={() => setIsImagesDialogOpen(true)}>
+                View Created Images
+              </Button>
             </Stack>
           </Stack>
 
@@ -866,7 +893,6 @@ export default function ManualRoomEditorClient({ layoutDesignId, userId }: Manua
               {error}
             </Alert>
           )}
-
           <Box
             ref={canvasShellRef}
             onDragOver={(event) => event.preventDefault()}
@@ -1075,6 +1101,73 @@ export default function ManualRoomEditorClient({ layoutDesignId, userId }: Manua
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setIsCalculateDialogOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={isBeautifiedDialogOpen} onClose={() => setIsBeautifiedDialogOpen(false)} fullWidth maxWidth="md">
+        <DialogTitle>Beautified Image</DialogTitle>
+        <DialogContent dividers>
+          {beautifiedImageUrl && (
+            <Box
+              component="img"
+              src={beautifiedImageUrl}
+              alt="Beautified result"
+              sx={{ width: '100%', borderRadius: 2, display: 'block' }}
+            />
+          )}
+        </DialogContent>
+        <DialogActions>
+          {beautifiedImageUrl && (
+            <Button component="a" href={beautifiedImageUrl} target="_blank" rel="noopener noreferrer">
+              Open in new tab
+            </Button>
+          )}
+          <Button onClick={() => setIsBeautifiedDialogOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={isImagesDialogOpen} onClose={() => setIsImagesDialogOpen(false)} fullWidth maxWidth="md">
+        <DialogTitle>
+          <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <span>Created Images</span>
+            <Button size="small" onClick={() => void handleRefreshImages()} disabled={loadingImages}>
+              {loadingImages ? 'Refreshing...' : 'Refresh'}
+            </Button>
+          </Stack>
+        </DialogTitle>
+        <DialogContent dividers>
+          {contextImages.filter((img) => img.imageUrl).length === 0 ? (
+            <Alert severity="info">No created images yet.</Alert>
+          ) : (
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+              {contextImages
+                .filter((img) => img.imageUrl)
+                .sort((a, b) => Date.parse(b.createdAt ?? '') - Date.parse(a.createdAt ?? ''))
+                .map((img) => (
+                  <Box
+                    key={img.imageId}
+                    component="a"
+                    href={img.imageUrl!}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    sx={{ display: 'block', width: 200, flexShrink: 0 }}
+                  >
+                    <Box
+                      component="img"
+                      src={img.imageUrl!}
+                      alt={`Image ${img.imageId}`}
+                      sx={{ width: '100%', height: 150, objectFit: 'cover', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}
+                    />
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                      {img.createdAt ? new Date(img.createdAt).toLocaleString() : ''}
+                    </Typography>
+                  </Box>
+                ))}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setIsImagesDialogOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>
     </>

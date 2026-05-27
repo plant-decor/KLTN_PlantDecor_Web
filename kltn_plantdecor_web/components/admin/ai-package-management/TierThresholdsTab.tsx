@@ -110,7 +110,7 @@ export default function TierThresholdsTab() {
                     <Typography fontWeight={600}>{threshold.name}</Typography>
                   </TableCell>
                   <TableCell>
-                    <Chip label={`Cấp ${threshold.tierLevel}`} size="small" variant="outlined" color="primary" />
+                    <Chip label={`Level ${threshold.tierLevel}`} size="small" variant="outlined" color="primary" />
                   </TableCell>
                   <TableCell>{formatCurrency(threshold.minTotalSpent)}</TableCell>
                   <TableCell>{threshold.monthlyFreeQuota.toLocaleString()} requests</TableCell>

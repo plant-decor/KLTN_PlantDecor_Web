@@ -123,6 +123,7 @@ export interface Order {
   statusName: string;
   paymentStrategy: number;
   orderType: number;
+  orderTypeName?: string;
   note: string;
   createdAt: string;
   updatedAt: string;

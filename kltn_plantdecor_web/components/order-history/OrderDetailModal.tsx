@@ -27,6 +27,7 @@ import {
   canUserCancelOrder,
   getStatusInfo,
 } from './orderHistoryUtils';
+import SmartToyIcon from '@mui/icons-material/SmartToy';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 import Image from 'next/image';
 import { canCreateReturnTicket } from './returnTicket.constants';
@@ -34,7 +35,8 @@ import { CustomLoading } from '@/components/CustomLoading';
 import { formatDateTime } from '@/lib/utils/dateUtils';
 import { formatCurrency } from '@/lib/utils/formatUtil';
 
-const SERVICE_ORDER_TYPE = 4;
+const SERVICE_ORDER_TYPES = [4, 5];
+const TIER_PACKAGE_ORDER_TYPE = 6;
 
 interface OrderDetailModalProps {
   open: boolean;
@@ -67,9 +69,10 @@ export default function OrderDetailModal({
 }: OrderDetailModalProps) {
   const tOrderHistory = useTranslations('orderHistory');
   const statusInfo = order ? getStatusInfo(order.statusName) : null;
-  const isServiceOrder = order?.orderType === SERVICE_ORDER_TYPE;
+  const isServiceOrder = !!order && SERVICE_ORDER_TYPES.includes(order.orderType);
+  const isTierPackageOrder = order?.orderType === TIER_PACKAGE_ORDER_TYPE;
   const canCancelOrder = !!order && canUserCancelOrder(order.statusName);
-  const canCreateReturn = !!order && !isServiceOrder && canCreateReturnTicket(order.statusName);
+  const canCreateReturn = !!order && !isServiceOrder && !isTierPackageOrder && canCreateReturnTicket(order.statusName);
   const hasEligibleReturnItems = useMemo(() => {
     if (!order) {
       return false;
@@ -105,6 +108,31 @@ export default function OrderDetailModal({
           <Alert severity="error">Cannot load order detail.</Alert>
         ) : (
           <Box>
+            {isTierPackageOrder && (
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 2,
+                  p: 2,
+                  mb: 3,
+                  bgcolor: 'grey.50',
+                  borderRadius: 2,
+                  border: '1px solid var(--primary, #13EC5B)',
+                }}
+              >
+                <SmartToyIcon color="primary" sx={{ fontSize: 36 }} />
+                <Box>
+                  <Typography variant="subtitle1" fontWeight={700}>
+                    AI Quota Package
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Digital purchase — no shipping required
+                  </Typography>
+                </Box>
+              </Box>
+            )}
+
             <Box sx={{ mb: 3 }}>
               <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                 Order ID
@@ -136,41 +164,44 @@ export default function OrderDetailModal({
               </Box>
             </Box>
 
-            <Divider sx={{ my: 3 }} />
-
-            <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-              Customer information
-            </Typography>
-            <Box sx={{ mb: 3 }}>
-              {order.customerName && (
-                <>
+            {!isTierPackageOrder && (
+              <>
+                <Divider sx={{ my: 3 }} />
+                <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                  Customer information
+                </Typography>
+                <Box sx={{ mb: 3 }}>
+                  {order.customerName && (
+                    <>
+                      <Typography variant="body2" color="text.secondary">
+                        Customer
+                      </Typography>
+                      <Typography variant="body1" gutterBottom>
+                        {order.customerName}
+                      </Typography>
+                    </>
+                  )}
                   <Typography variant="body2" color="text.secondary">
-                    Customer
+                    Phone
                   </Typography>
                   <Typography variant="body1" gutterBottom>
-                    {order.customerName || '-'}
+                    {order.phone}
                   </Typography>
-                </>
-              )}
-              <Typography variant="body2" color="text.secondary">
-                Phone
-              </Typography>
-              <Typography variant="body1" gutterBottom>
-                {order.phone}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Address
-              </Typography>
-              <Typography variant="body1">{order.address}</Typography>
-              {order.note ? (
-                <>
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                    Note
+                  <Typography variant="body2" color="text.secondary">
+                    Address
                   </Typography>
-                  <Typography variant="body1">{order.note}</Typography>
-                </>
-              ) : null}
-            </Box>
+                  <Typography variant="body1">{order.address}</Typography>
+                  {order.note ? (
+                    <>
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                        Note
+                      </Typography>
+                      <Typography variant="body1">{order.note}</Typography>
+                    </>
+                  ) : null}
+                </Box>
+              </>
+            )}
 
             <Divider sx={{ my: 3 }} />
 
@@ -256,7 +287,7 @@ export default function OrderDetailModal({
             {order.invoices.length > 0 ? (
               <>
                 <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                  {isServiceOrder ? 'Service details' : 'Invoices'}
+                  {isServiceOrder ? 'Service details' : isTierPackageOrder ? 'AI Package Purchase' : 'Invoices'}
                 </Typography>
                 {order.invoices.map((invoice) => (
                   <Card key={invoice.id} variant="outlined" sx={{ mb: 2, p: 2 }}>
@@ -273,7 +304,7 @@ export default function OrderDetailModal({
                       {formatCurrency(invoice.totalAmount, 'vi-VN')}
                     </Typography>
 
-                    {isServiceOrder ? (
+                    {(isServiceOrder || isTierPackageOrder) ? (
                       <TableContainer component={Paper} elevation={0} sx={{ mt: 2 }}>
                         <Table>
                           <TableHead>
@@ -306,7 +337,7 @@ export default function OrderDetailModal({
                               <TableRow>
                                 <TableCell colSpan={4} align="center">
                                   <Typography variant="body2" color="text.secondary">
-                                    No service details available.
+                                    {isTierPackageOrder ? 'No package details available.' : 'No service details available.'}
                                   </Typography>
                                 </TableCell>
                               </TableRow>

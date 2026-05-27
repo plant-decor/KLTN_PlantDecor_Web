@@ -86,7 +86,10 @@ export default function ProfilePage() {
       if (response?.payload) {
         const userData = response.payload;
         // Map API response to component state
-        const subscription: SubscriptionTier = (userData.subscription as SubscriptionTier) ?? 'Bronze';
+        const subscription: SubscriptionTier =
+          (userData.tierName as SubscriptionTier) ??
+          (userData.subscription as SubscriptionTier) ??
+          'Bronze';
         const mappedData: Partial<UserProfile> = {
           id: userData.id,
           username: userData.username || '',
@@ -99,6 +102,8 @@ export default function ProfilePage() {
           birthDate: userData.birthDate || '',
           fengShuiElement: userData.fengShuiElement || '',
           subscription,
+          tierLevel: userData.tierLevel,
+          tierName: userData.tierName,
           latitude: userData.latitude ?? 0,
           longitude: userData.longitude ?? 0,
           receiveNotifications: userData.receiveNotifications ?? true,

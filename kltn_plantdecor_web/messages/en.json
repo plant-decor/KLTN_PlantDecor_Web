@@ -748,7 +748,7 @@
         "Other": "Other"
       }
     },
-      "phoneNumberInvalid": "Phone number must contain exactly 10 digits",
+    "phoneNumberInvalid": "Phone number must contain exactly 10 digits",
     "nurserySection": {
       "title": "Nursery Profile",
       "id": "Nursery ID",
@@ -1166,7 +1166,7 @@
       }
     },
     "roomAnalysis": {
-      "title": "2) Room analysis"
+      "title": "1) Room analysis"
     },
     "recommendations": {
       "title": "Recommended plants",
@@ -1183,7 +1183,7 @@
       }
     },
     "generatedImages": {
-      "title": "3) Generated room images",
+      "title": "2) Generated room images",
       "generatingLabel": "Generating AI room images...",
       "imageFailed": "Image generation failed for this recommendation.",
       "placementLabel": "Placement:",
@@ -1206,7 +1206,7 @@
       "roomImageRequired": "Please upload a room image"
     }
   },
-  "combo":{
+  "combo": {
     "description": "Description",
     "themeDescription": "Theme Description"
   }

@@ -30,6 +30,7 @@ import {
   Payment as PaymentIcon,
   Notifications as ReminderIcon,
   Inventory,
+  SmartToy as SmartToyIcon,
 } from '@mui/icons-material';
 // import { ACTIVE_SAMPLE_USER_ID, SAMPLE_USERS } from '@/data/sampledata';
 import {
@@ -64,6 +65,7 @@ const ICONS: Record<SidebarIconKey, ReactNode> = {
   reminder: <ReminderIcon sx={{ fontSize: 18 }} />,
   logout: <LogoutIcon sx={{ fontSize: 18 }} />,
   inventory: <Inventory sx={{ fontSize: 18 }} />,
+  ai: <SmartToyIcon sx={{ fontSize: 18 }} />,
 };
 
 const isActiveRoute = (pathname: string, href: string, allHrefs: string[]) => {

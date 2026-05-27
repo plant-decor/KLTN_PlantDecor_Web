@@ -26,14 +26,6 @@ const FENG_SHUI_VI: Record<string, string> = {
   tho: 'Earth',
   unknown: 'Unknown',
 };
-const FENG_SHUI_DESCRIPTION: Record<string, string> = {
-  kim: 'Metal element — suited to plants with silver or white foliage and rounded shapes. Try Orchids, Japanese Bamboo, or Cactus.',
-  moc: 'Wood element — suited to lush green plants with long leaves. Try Lucky Bamboo, Snake Plant, or Pothos.',
-  thuy: 'Water element — suited to aquatic or deep-green plants. Try Duckweed, Succulent, or Fern.',
-  hoa: 'Fire element — suited to red-leaved or vibrant-flowering plants. Try Roses, Geraniums, or Carnations.',
-  tho: 'Earth element — suited to low-growing, broad-leaved plants. Try Money Tree, Pothos, or Fan Palm.',
-  unknown: '',
-};
 
 const humanizeEnum = (value: string) =>
   value
@@ -138,20 +130,20 @@ export default function Step2FengShui({
               borderRadius: 1,
             }}
           >
-            <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1, color: colors.text }}>
+            {/* <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1, color: colors.text }}>
               Five Elements
-            </Typography>
+            </Typography> */}
             <Stack direction="row" alignItems="center" spacing={1.5} flexWrap="wrap">
               <Chip
                 label={FENG_SHUI_VI[elementKey] ?? activeElement}
                 sx={{ backgroundColor: colors.bg, color: colors.text, border: `1px solid ${colors.border}`, fontWeight: 700, fontSize: '0.95rem' }}
               />
             </Stack>
-            {FENG_SHUI_DESCRIPTION[elementKey] && (
+            {/* {FENG_SHUI_DESCRIPTION[elementKey] && (
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                 {FENG_SHUI_DESCRIPTION[elementKey]}
               </Typography>
-            )}
+            )} */}
           </Box>
         )}
 

@@ -126,6 +126,8 @@ export interface UserProfile extends CustomerProfile {
   birthDate?: string;
   fengShuiElement?: string;
   subscription?: SubscriptionTier;
+  tierLevel?: number;
+  tierName?: string;
   gender?: UserGender | number | string;
   latitude?: number;
   longitude?: number;

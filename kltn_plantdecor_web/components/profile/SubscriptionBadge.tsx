@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { SubscriptionTier } from '@/types/auth.types';
 import Image from 'next/image';
 
@@ -27,18 +28,24 @@ interface SubscriptionBadgeProps {
   /** 'chip' for profile page, 'compact' for header (no text, just colored dot + label) */
   variant?: 'chip' | 'compact' | 'inline';
   className?: string;
+  href?: string;
 }
 
 export default function SubscriptionBadge({
   tier,
   variant = 'chip',
   className = '',
+  href,
 }: SubscriptionBadgeProps) {
   const resolved: SubscriptionTier = tier ?? 'Bronze';
   const cfg = TIER_CONFIG[resolved];
 
+  const linkStyle = href
+    ? { textDecoration: 'none', cursor: 'pointer' }
+    : undefined;
+
   if (variant === 'compact') {
-    return (
+    const badge = (
       <span
         className={className}
         style={{
@@ -62,10 +69,11 @@ export default function SubscriptionBadge({
         </span> {resolved}
       </span>
     );
+    return href ? <Link href={href} style={linkStyle}>{badge}</Link> : badge;
   }
 
   if (variant === 'inline') {
-    return (
+    const badge = (
       <span
         className={className}
         style={{
@@ -87,10 +95,11 @@ export default function SubscriptionBadge({
         </span> {resolved}
       </span>
     );
+    return href ? <Link href={href} style={linkStyle}>{badge}</Link> : badge;
   }
 
   // chip (default) — used on profile page
-  return (
+  const badge = (
     <span
       className={className}
       style={{
@@ -112,4 +121,5 @@ export default function SubscriptionBadge({
       </span> {resolved} Member
     </span>
   );
+  return href ? <Link href={href} style={linkStyle}>{badge}</Link> : badge;
 }

@@ -121,7 +121,7 @@ export default function Header({ initialStoreCategories = [] }: HeaderProps) {
             {/* Logo */}
             <div className="shrink-0">
               <Link href="/" className="border-none! block w-32 lg:w-44 h-10 lg:h-12 overflow-hidden">
-                <Image src="/logo/logo-landscape.png" 
+                <Image src="/logo/logo-landscape.png"
                   alt="Plant Decor Logo"
                   width={176}
                   height={48}
@@ -143,8 +143,8 @@ export default function Header({ initialStoreCategories = [] }: HeaderProps) {
 
               {isCustomer && userId && isDesktopViewport && (
                 <>
-                <HeaderNotificationDropdown userId={userId} />
-                <SubscriptionBadge tier={user?.subscription} variant="compact" />
+                  <HeaderNotificationDropdown userId={userId} />
+                  <SubscriptionBadge tier={user?.subscription} variant="compact" href="/ai-packages" />
                 </>
               )}
 

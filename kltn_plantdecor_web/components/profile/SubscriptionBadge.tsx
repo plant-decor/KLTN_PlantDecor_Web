@@ -47,7 +47,7 @@ export default function SubscriptionBadge({
   if (variant === 'compact') {
     const badge = (
       <span
-        className={className}
+        className={`transition-all duration-200 ease-in-out hover:scale-105 hover:shadow-sm ${className}`}
         style={{
           display: 'inline-flex',
           alignItems: 'center',
@@ -75,7 +75,7 @@ export default function SubscriptionBadge({
   if (variant === 'inline') {
     const badge = (
       <span
-        className={className}
+        className={`transition-all duration-200 ease-in-out hover:scale-105 hover:shadow-sm ${className}`}
         style={{
           display: 'inline-flex',
           alignItems: 'center',
@@ -101,7 +101,7 @@ export default function SubscriptionBadge({
   // chip (default) — used on profile page
   const badge = (
     <span
-      className={className}
+      className={`transition-all duration-200 ease-in-out hover:scale-105 hover:shadow-sm ${className}`}
       style={{
         display: 'inline-flex',
         alignItems: 'center',

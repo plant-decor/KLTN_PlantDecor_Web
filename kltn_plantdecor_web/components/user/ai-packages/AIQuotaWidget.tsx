@@ -2,15 +2,17 @@
 
 import React from "react";
 import { Box, Card, CardContent, Chip, Divider, LinearProgress, Stack, Typography } from "@mui/material";
-import type { UserQuotaStatus } from "@/types/tier-package.types";
+import type { UserQuotaStatus, TierProgress } from "@/types/tier-package.types";
 import type { SubscriptionTier } from "@/types/auth.types";
 import SubscriptionBadge from "@/components/profile/SubscriptionBadge";
+import { formatCurrency } from "@/lib/utils/formatUtil";
 
 interface AIQuotaWidgetProps {
   quotaStatus: UserQuotaStatus;
+  tierProgress?: TierProgress | null;
 }
 
-export default function AIQuotaWidget({ quotaStatus }: AIQuotaWidgetProps) {
+export default function AIQuotaWidget({ quotaStatus, tierProgress }: AIQuotaWidgetProps) {
   const tier = quotaStatus.tierName as SubscriptionTier | null;
 
   return (
@@ -74,6 +76,45 @@ export default function AIQuotaWidget({ quotaStatus }: AIQuotaWidgetProps) {
                 </Box>
               ))}
             </Stack>
+          </>
+        )}
+
+        {tierProgress && (
+          <>
+            <Divider sx={{ my: 2 }} />
+            <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
+              Tier Progress
+            </Typography>
+            {tierProgress.isMaxTier ? (
+              <Typography variant="body2" color="text.secondary">
+                You are at the highest tier.
+              </Typography>
+            ) : (
+              <Box>
+                <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Spending toward{" "}
+                    <Typography component="span" variant="body2" fontWeight={700}>
+                      {tierProgress.nextTierName}
+                    </Typography>
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {formatCurrency(tierProgress.totalSpent, "vi")} /{" "}
+                    {formatCurrency(tierProgress.nextTierMinSpent ?? 0, "vi")}
+                  </Typography>
+                </Box>
+                <LinearProgress
+                  variant="determinate"
+                  value={Math.min(tierProgress.progressPercent, 100)}
+                  sx={{ height: 8, borderRadius: 4, backgroundColor: "#E2E8F0" }}
+                />
+                {tierProgress.amountToNextTier != null && (
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+                    {formatCurrency(tierProgress.amountToNextTier, "vi")} more to reach {tierProgress.nextTierName}
+                  </Typography>
+                )}
+              </Box>
+            )}
           </>
         )}
       </CardContent>

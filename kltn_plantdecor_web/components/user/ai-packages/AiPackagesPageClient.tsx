@@ -22,12 +22,13 @@ export default function AiPackagesPageClient() {
 
   const { packages, loading, purchasing, error, fetchPackages, purchasePackage, clearError } =
     useTierPackages();
-  const { quotaStatus, fetchQuota } = useAiQuota();
+  const { quotaStatus, tierProgress, fetchQuota, fetchTierProgress } = useAiQuota();
 
   useEffect(() => {
     fetchPackages();
     fetchQuota();
-  }, [fetchPackages, fetchQuota]);
+    fetchTierProgress();
+  }, [fetchPackages, fetchQuota, fetchTierProgress]);
 
   return (
     <Box sx={{ maxWidth: 1100, mx: "auto", px: { xs: 2, md: 4 }, py: { xs: 3, md: 6 } }}>
@@ -52,7 +53,7 @@ export default function AiPackagesPageClient() {
           </Typography>
         </Box>
 
-        {quotaStatus && <AIQuotaWidget quotaStatus={quotaStatus} />}
+        {quotaStatus && <AIQuotaWidget quotaStatus={quotaStatus} tierProgress={tierProgress} />}
 
         {error && (
           <Alert severity="error" onClose={clearError}>

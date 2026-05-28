@@ -22,7 +22,7 @@ type AuthAwareRequestConfig = InternalAxiosRequestConfig & {
 
 const axiosClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
-  timeout: 100000,
+  timeout: 2000000,
   withCredentials: true,
 });
 

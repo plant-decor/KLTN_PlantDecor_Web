@@ -22,7 +22,7 @@ export async function createAxiosServer(): Promise<AxiosInstance> {
 
   return axios.create({
     baseURL,
-    timeout: 100000, // 100 seconds timeout (matching client timeout)
+    timeout: 2000000, // 2000 seconds timeout (matching client timeout)
     withCredentials: true,
     httpsAgent, // Use custom HTTPS agent
     headers: {

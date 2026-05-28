@@ -32,6 +32,8 @@ import {
 import { useAuthStore } from '@/lib/store/authStore';
 import SubscriptionBadge from '@/components/profile/SubscriptionBadge';
 import { logoutAction } from '@/app/actions/loginAction';
+import { getUserProfile } from '@/lib/api/userProfileService';
+import type { SubscriptionTier } from '@/types/auth.types';
 import Image from 'next/image';
 
 const NAV_LABEL_KEYS: Record<HeaderIconKey, string> = {
@@ -93,7 +95,20 @@ export default function Navigation({ initialStoreCategories = [] }: NavigationPr
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isStoreHoverOpen, setIsStoreHoverOpen] = useState(false);
   const [storeCategories, setStoreCategories] = useState<CategoryResponse[]>(initialStoreCategories);
-  const { user, clearAll } = useAuthStore();
+  const { user, clearAll, setUserSubscription } = useAuthStore();
+
+  useEffect(() => {
+    if (!user?.id || user.subscription) return;
+    void (async () => {
+      try {
+        const response = await getUserProfile(false);
+        const profile = response?.payload ?? response?.data;
+        const tierName = profile?.tierName ?? profile?.subscription;
+        if (tierName) setUserSubscription(tierName as SubscriptionTier);
+      } catch { /* silent — badge falls back to Bronze */ }
+    })();
+  }, [user?.id, setUserSubscription]);
+
   const tNav = useTranslations('nav');
   const tAuth = useTranslations('auth');
   const tUserMenu = useTranslations('headerUserMenu');

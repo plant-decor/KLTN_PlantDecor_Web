@@ -29,8 +29,10 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-hook-form": "^7.71.2",
+    "react-konva": "^19.0.7",
     "react-quill-new": "^3.8.3",
     "react-toastify": "^11.0.5",
+    "konva": "^9.3.18",
     "zustand": "^5.0.10"
   },
   "devDependencies": {

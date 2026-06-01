@@ -23,6 +23,8 @@ import { useAdminDataPolling } from '@/lib/hooks/useAdminDataPolling';
 import ManagementHeader from '../layout/ManagementHeader';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 import { CustomLoading } from '../CustomLoading';
+import { formatDateTime } from '@/lib/utils/dateUtils';
+import { formatCurrency } from '@/lib/utils/formatUtil';
 
 const toInputDateString = (d: Date): string => {
   const y = d.getFullYear();
@@ -41,14 +43,6 @@ const toApiDateTime = (date: string, endOfDay: boolean): string => {
   return endOfDay ? `${date}T23:59:59` : `${date}T00:00:00`;
 };
 
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
-
-const formatDateTimeLabel = (iso: string) => {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
-};
 
 export default function AdminRevenuePageClient() {
   const defaults = useMemo(() => defaultDateRange(), []);
@@ -185,7 +179,7 @@ export default function AdminRevenuePageClient() {
                   Period (API)
                 </Typography>
                 <Typography variant="body2">
-                  {formatDateTimeLabel(summary.from)} — {formatDateTimeLabel(summary.to)}
+                  {formatDateTime(summary.from)} — {formatDateTime(summary.to)}
                 </Typography>
               </Paper>
               <Paper sx={{ p: 2, flex: 1 }}>
@@ -193,7 +187,7 @@ export default function AdminRevenuePageClient() {
                   Total revenue
                 </Typography>
                 <Typography variant="h5" fontWeight={700}>
-                  {formatCurrency(summary.totalRevenue)}
+                  {formatCurrency(summary.totalRevenue, 'vi-VN')}
                 </Typography>
               </Paper>
               <Paper sx={{ p: 2, flex: 1 }}>
@@ -234,7 +228,7 @@ export default function AdminRevenuePageClient() {
                     <TableRow key={row.nurseryId}>
                       <TableCell>{row.nurseryId}</TableCell>
                       <TableCell>{row.nurseryName}</TableCell>
-                      <TableCell align="center">{formatCurrency(row.revenue)}</TableCell>
+                      <TableCell align="center">{formatCurrency(row.revenue, 'vi-VN')}</TableCell>
                       <TableCell align="center">{row.totalOrders}</TableCell>
                     </TableRow>
                   ))

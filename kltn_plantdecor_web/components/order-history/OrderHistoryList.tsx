@@ -12,16 +12,19 @@ import {
 } from '@mui/material';
 import MiscellaneousServicesIcon from '@mui/icons-material/MiscellaneousServices';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import SmartToyIcon from '@mui/icons-material/SmartToy';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { useTranslations } from 'next-intl';
 import type { Order, OrderInvoiceDetail } from '@/types/order.types';
-import { canUserCancelOrder, formatCurrency, getStatusInfo } from './orderHistoryUtils';
+import { canUserCancelOrder, getStatusInfo } from './orderHistoryUtils';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 import Image from 'next/image';
 import { CustomLoading } from '@/components/CustomLoading';
 import { formatDateTime } from '@/lib/utils/dateUtils';
+import { formatCurrency } from '@/lib/utils/formatUtil';
 
-const SERVICE_ORDER_TYPE = [4, 5]; 
+const SERVICE_ORDER_TYPE = [4, 5];
+const TIER_PACKAGE_ORDER_TYPE = 6;
 const ORDER_ITEM_FALLBACK_IMAGE = '/img/fallbackplant.avif';
 
 type OrderDisplayItem = {
@@ -42,12 +45,11 @@ function mapInvoiceDetailToDisplayItem(detail: OrderInvoiceDetail): OrderDisplay
 }
 
 function getDisplayItems(order: Order): OrderDisplayItem[] {
-  if (!SERVICE_ORDER_TYPE.includes(order.orderType)) {
-    return order.items;
+  if (SERVICE_ORDER_TYPE.includes(order.orderType) || order.orderType === TIER_PACKAGE_ORDER_TYPE) {
+    const invoiceWithDetails = order.invoices.find((invoice) => invoice.details.length > 0);
+    return invoiceWithDetails ? invoiceWithDetails.details.map(mapInvoiceDetailToDisplayItem) : [];
   }
-
-  const invoiceWithDetails = order.invoices.find((invoice) => invoice.details.length > 0);
-  return invoiceWithDetails ? invoiceWithDetails.details.map(mapInvoiceDetailToDisplayItem) : [];
+  return order.items;
 }
 
 interface OrderHistoryListProps {
@@ -83,16 +85,20 @@ export default function OrderHistoryList({
         return tOrderHistory('orderType.service');
       case SERVICE_ORDER_TYPE[1]:
         return tOrderHistory('orderType.service');
+      case TIER_PACKAGE_ORDER_TYPE:
+        return 'AI Package';
       default:
         return tOrderHistory('orderType.product');
     }
   };
 
   const getOrderItemIcon = (orderType: number) => {
-    if (SERVICE_ORDER_TYPE.includes(orderType)) {
-      return <MiscellaneousServicesIcon sx={{color: 'var(--primary)'}} fontSize='large' />;
+    if (orderType === TIER_PACKAGE_ORDER_TYPE) {
+      return <SmartToyIcon sx={{ color: 'var(--primary)' }} fontSize="large" />;
     }
-
+    if (SERVICE_ORDER_TYPE.includes(orderType)) {
+      return <MiscellaneousServicesIcon sx={{ color: 'var(--primary)' }} fontSize="large" />;
+    }
     return <ShoppingCartIcon />;
   };
 
@@ -103,7 +109,7 @@ export default function OrderHistoryList({
       </Box>
     );
   }
-  console.log('orders', orders);
+  // console.log('orders', orders);
   if (orders.length === 0) {
     return (
       <Card sx={{ boxShadow: 2 }}>
@@ -168,40 +174,59 @@ export default function OrderHistoryList({
               <Divider sx={{ my: 2 }} />
 
               <Box sx={{ mb: 2 }}>
-                {displayItems.map((item, index) => (
-                  <Box
-                    key={item.id}
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 2,
-                      mb: index < displayItems.length - 1 ? 1.5 : 0,
-                    }}
-                  >
-                    {SERVICE_ORDER_TYPE.includes(order.orderType) ? (
-                      <Avatar variant="rounded" sx={{ width: 60, height: 60, bgcolor: 'grey.200' }}>
-                        {getOrderItemIcon(order.orderType)}
-                      </Avatar>
-                    ) : (
-                      <Image
-                        src={item.imageUrl || ORDER_ITEM_FALLBACK_IMAGE}
-                        alt={item.itemName}
-                        width={60}
-                        height={60}
-                        className='aspect-square rounded-2xl'
-                        loading="lazy"
-                      />
-                    )}
+                {order.orderType === TIER_PACKAGE_ORDER_TYPE && displayItems.length === 0 ? (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Avatar
+                      variant="rounded"
+                      sx={{ width: 60, height: 60, bgcolor: 'grey.100', border: '1px solid var(--primary)' }}
+                    >
+                      <SmartToyIcon sx={{ color: 'var(--primary)' }} fontSize="large" />
+                    </Avatar>
                     <Box sx={{ flex: 1 }}>
                       <Typography variant="body1" fontWeight="medium">
-                        {item.itemName}
+                        AI Quota Package
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        x{item.quantity} - {formatCurrency(item.price)}
+                        {formatCurrency(order.totalAmount, 'vi-VN')}
                       </Typography>
                     </Box>
                   </Box>
-                ))}
+                ) : (
+                  displayItems.map((item, index) => (
+                    <Box
+                      key={item.id}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 2,
+                        mb: index < displayItems.length - 1 ? 1.5 : 0,
+                      }}
+                    >
+                      {SERVICE_ORDER_TYPE.includes(order.orderType) || order.orderType === TIER_PACKAGE_ORDER_TYPE ? (
+                        <Avatar variant="rounded" sx={{ width: 60, height: 60, bgcolor: 'grey.200' }}>
+                          {getOrderItemIcon(order.orderType)}
+                        </Avatar>
+                      ) : (
+                        <Image
+                          src={item.imageUrl || ORDER_ITEM_FALLBACK_IMAGE}
+                          alt={item.itemName}
+                          width={60}
+                          height={60}
+                          className='aspect-square rounded-2xl'
+                          loading="lazy"
+                        />
+                      )}
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="body1" fontWeight="medium">
+                          {item.itemName}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          x{item.quantity} - {formatCurrency(item.price, 'vi-VN')}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  ))
+                )}
                 {remainingItems > 0 && (
                   <Typography variant="body2" color="primary" sx={{ mt: 1, fontStyle: 'italic' }}>
                     + {remainingItems} {tOrderHistory('moreItems')}
@@ -225,7 +250,7 @@ export default function OrderHistoryList({
                     {tOrderHistory('total')}
                   </Typography>
                   <Typography variant="h6" fontWeight="bold" color="primary">
-                    {formatCurrency(order.totalAmount)}
+                    {formatCurrency(order.totalAmount, 'vi-VN')}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>

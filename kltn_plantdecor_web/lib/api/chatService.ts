@@ -4,6 +4,8 @@ import * as apiClient from "@/lib/api/apiService.client";
 import type {
   ClaimSupportConversationResponse,
   CloseSupportConversationResponse,
+  ConversationSummary,
+  ConversationSummaryResponse,
   GetClaimedSupportConversationsResponse,
   GetConversationsResponse,
   GetConversationDetailsParams,
@@ -143,4 +145,21 @@ export const getConversationDetails = async (
     loading,
     silentConfig,
   );
+};
+
+/**
+ * GET /api/support-conversations/{conversationId}/summary
+ * Get AI-generated summary, key points, and next-action suggestions for a conversation.
+ */
+export const getConversationSummary = async (
+  conversationId: number,
+  loading = false,
+): Promise<ConversationSummary | null> => {
+  const res = await apiClient.get<ConversationSummaryResponse>(
+    `/support-conversations/${conversationId}/summary`,
+    undefined,
+    loading,
+    silentConfig,
+  );
+  return (res as ConversationSummaryResponse).payload ?? null;
 };

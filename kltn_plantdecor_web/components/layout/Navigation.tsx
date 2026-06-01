@@ -30,7 +30,10 @@ import {
   type HeaderIconKey,
 } from '@/lib/constants/header';
 import { useAuthStore } from '@/lib/store/authStore';
+import SubscriptionBadge from '@/components/profile/SubscriptionBadge';
 import { logoutAction } from '@/app/actions/loginAction';
+import { getUserProfile } from '@/lib/api/userProfileService';
+import type { SubscriptionTier } from '@/types/auth.types';
 import Image from 'next/image';
 
 const NAV_LABEL_KEYS: Record<HeaderIconKey, string> = {
@@ -92,7 +95,20 @@ export default function Navigation({ initialStoreCategories = [] }: NavigationPr
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isStoreHoverOpen, setIsStoreHoverOpen] = useState(false);
   const [storeCategories, setStoreCategories] = useState<CategoryResponse[]>(initialStoreCategories);
-  const { user, clearAll } = useAuthStore();
+  const { user, clearAll, setUserSubscription } = useAuthStore();
+
+  useEffect(() => {
+    if (!user?.id || user.subscription) return;
+    void (async () => {
+      try {
+        const response = await getUserProfile(false);
+        const profile = response?.payload ?? response?.data;
+        const tierName = profile?.tierName ?? profile?.subscription;
+        if (tierName) setUserSubscription(tierName as SubscriptionTier);
+      } catch { /* silent — badge falls back to Bronze */ }
+    })();
+  }, [user?.id, setUserSubscription]);
+
   const tNav = useTranslations('nav');
   const tAuth = useTranslations('auth');
   const tUserMenu = useTranslations('headerUserMenu');
@@ -233,49 +249,49 @@ export default function Navigation({ initialStoreCategories = [] }: NavigationPr
               const shouldRenderStoreMenu = isStoreItem && canShowStoreCategoryMenu;
 
               if (!shouldRenderStoreMenu) {
-          return (
-            <Link
-              key={item.icon}
-              href={resolveHref(item.href, userId)}
-              className="inline-flex items-center gap-1.5 lg:gap-2 text-gray-700 hover:text-green-600 transition-colors duration-200 hover:bg-green-50 px-2.5 lg:px-4 py-2 rounded-full"
-            >
-              <span className="hidden lg:inline-flex">{ICONS[item.icon as HeaderIconKey]}</span>
-              <span className="text-xs lg:text-sm font-semibold whitespace-nowrap">
-                {tNav(getNavLabelKey(item.icon))}
-              </span>
-            </Link>
-          );
+                return (
+                  <Link
+                    key={item.icon}
+                    href={resolveHref(item.href, userId)}
+                    className="inline-flex items-center gap-1.5 lg:gap-2 text-gray-700 hover:text-green-600 transition-colors duration-200 hover:bg-green-50 px-2.5 lg:px-4 py-2 rounded-full"
+                  >
+                    <span className="hidden lg:inline-flex">{ICONS[item.icon as HeaderIconKey]}</span>
+                    <span className="text-xs lg:text-sm font-semibold whitespace-nowrap">
+                      {tNav(getNavLabelKey(item.icon))}
+                    </span>
+                  </Link>
+                );
               }
 
               return (
-          <div
-            key={item.icon}
-            className="relative"
-            onMouseEnter={() => setIsStoreHoverOpen(true)}
-            onMouseLeave={() => setIsStoreHoverOpen(false)}
-          >
-            <Link
-              href={resolveHref(item.href, userId)}
-              className="inline-flex items-center gap-1.5 lg:gap-2 text-gray-700 hover:text-green-600 transition-colors duration-200 hover:bg-green-50 px-2.5 lg:px-4 py-2 rounded-full"
-            >
-              <span className="hidden lg:inline-flex">{ICONS[item.icon as HeaderIconKey]}</span>
-              <span className="text-xs lg:text-sm font-semibold whitespace-nowrap">
-                {tNav(getNavLabelKey(item.icon))}
-              </span>
-            </Link>
+                <div
+                  key={item.icon}
+                  className="relative"
+                  onMouseEnter={() => setIsStoreHoverOpen(true)}
+                  onMouseLeave={() => setIsStoreHoverOpen(false)}
+                >
+                  <Link
+                    href={resolveHref(item.href, userId)}
+                    className="inline-flex items-center gap-1.5 lg:gap-2 text-gray-700 hover:text-green-600 transition-colors duration-200 hover:bg-green-50 px-2.5 lg:px-4 py-2 rounded-full"
+                  >
+                    <span className="hidden lg:inline-flex">{ICONS[item.icon as HeaderIconKey]}</span>
+                    <span className="text-xs lg:text-sm font-semibold whitespace-nowrap">
+                      {tNav(getNavLabelKey(item.icon))}
+                    </span>
+                  </Link>
 
-            {isStoreHoverOpen && (
-              <div className="absolute left-0 top-full z-50 w-96 pt-2">
-                <div className="rounded-xl border border-gray-100 bg-white p-3 shadow-xl max-h-[60vh] overflow-y-auto">
-            {filteredStoreCategories.length > 0 ? (
-              renderStoreCategoryTree(filteredStoreCategories)
-            ) : (
-              <p className="px-3 py-2 text-sm text-gray-500">No categories available</p>
-            )}
+                  {isStoreHoverOpen && (
+                    <div className="absolute left-0 top-full z-50 w-96 pt-2">
+                      <div className="rounded-xl border border-gray-100 bg-white p-3 shadow-xl max-h-[60vh] overflow-y-auto">
+                        {filteredStoreCategories.length > 0 ? (
+                          renderStoreCategoryTree(filteredStoreCategories)
+                        ) : (
+                          <p className="px-3 py-2 text-sm text-gray-500">No categories available</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
-          </div>
               );
             })}
           </div>
@@ -377,10 +393,13 @@ export default function Navigation({ initialStoreCategories = [] }: NavigationPr
               {isCustomerLike && (
                 <>
                   <div className="flex items-center gap-3 py-2">
-                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-green-600 text-sm font-semibold text-white">
+                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-green-600 text-sm font-semibold text-white shrink-0">
                       {avatarLabel}
                     </span>
-                    <span className="text-sm font-medium text-gray-700">{activeUser?.email}</span>
+                    <div className="flex flex-col gap-0.5 min-w-0">
+                      <span className="text-sm font-medium text-gray-700 truncate">{activeUser?.email}</span>
+                      <SubscriptionBadge tier={activeUser?.subscription} variant="inline" />
+                    </div>
                   </div>
                   {USER_MENU_ITEMS.map((item) => (
                     item.href === '/logout' ? (

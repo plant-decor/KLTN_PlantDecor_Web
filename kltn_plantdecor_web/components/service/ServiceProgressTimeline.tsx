@@ -17,7 +17,7 @@ import {
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import PendingIcon from "@mui/icons-material/Pending";
 import { ServiceRegistration, ServiceProgress } from "@/types/service.types";
-import { formatDateTime } from "../manager/return-ticket-management/managerReturnTicket.constants";
+import { formatDateTime } from "@/lib/utils/dateUtils";
 
 interface ServiceProgressTimelineProps {
   registration: ServiceRegistration;

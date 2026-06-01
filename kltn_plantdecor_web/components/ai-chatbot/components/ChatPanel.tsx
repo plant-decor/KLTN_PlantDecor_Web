@@ -18,7 +18,8 @@ import {
 import { CustomLoading } from "@/components/CustomLoading";
 import type { ChatMessageView } from "@/components/ai-chatbot/aiChatbot.ui-types";
 import type { AIChatSuggestedPlant } from "@/types/ai-chatbot.types";
-
+import chatbotAvatar from "@/public/logo/chatbot.png"
+import { useAuthStore } from "@/lib/store/authStore";
 interface ChatPanelProps {
   activeTitle: string;
   selectedSessionId: number | null;
@@ -53,11 +54,11 @@ const AssistantExtras = ({
 }) => {
   const hasCareTips = Array.isArray(careTips) && careTips.length > 0;
   const hasPlants = Array.isArray(suggestedPlants) && suggestedPlants.length > 0;
+  
   const hasFollowUps =
     Array.isArray(followUpQuestions) && followUpQuestions.length > 0;
 
   if (!hasCareTips && !hasPlants && !hasFollowUps) return null;
-
   return (
     <Box sx={{ mt: 1 }}>
       {hasCareTips ? (
@@ -166,6 +167,8 @@ export function ChatPanel({
   formatTime,
   userInitial,
 }: ChatPanelProps) {
+  const {user} = useAuthStore()
+  const userAvatar = user ? user.avatar : null;
   return (
     <Box
       sx={{
@@ -196,9 +199,8 @@ export function ChatPanel({
               color: "white",
               fontWeight: 900,
             }}
-          >
-            AI
-          </Avatar>
+            src={chatbotAvatar.src}
+          />
           <Box sx={{ minWidth: 0 }}>
             <Typography noWrap sx={{ fontWeight: 900, fontSize: 16, color: "#0f172a" }}>
               {activeTitle}
@@ -209,7 +211,7 @@ export function ChatPanel({
           </Box>
         </Stack>
 
-        <Chip
+        {/* <Chip
           icon={<FilterIcon />}
           label="Advanced filter"
           clickable
@@ -221,7 +223,7 @@ export function ChatPanel({
             border: "1px solid rgba(37,99,235,0.18)",
             "& .MuiChip-icon": { color: "#1d4ed8" },
           }}
-        />
+        /> */}
       </Box>
 
       {error ? (
@@ -300,9 +302,8 @@ export function ChatPanel({
                       fontSize: 12,
                       fontWeight: 800,
                     }}
-                  >
-                    AI
-                  </Avatar>
+                    src={chatbotAvatar.src}
+                  />
                 ) : null}
 
                 <Box sx={{ maxWidth: { xs: "88%", md: "70%" } }}>
@@ -351,7 +352,8 @@ export function ChatPanel({
                   </Typography>
                 </Box>
 
-                {isUser ? (
+                { isUser ? (
+                 userAvatar ? ( 
                   <Avatar
                     sx={{
                       width: 28,
@@ -361,9 +363,21 @@ export function ChatPanel({
                       fontSize: 12,
                       fontWeight: 800,
                     }}
-                  >
-                    {userInitial}
-                  </Avatar>
+                    src={userAvatar}
+                  />
+                  ) : (
+                    <Avatar
+                      sx={{
+                        width: 28,
+                        height: 28,
+                        bgcolor: "#e2e8f0",
+                        color: "#334155",
+                        fontSize: 12,
+                        fontWeight: 800,
+                      }}
+                    >{userInitial}
+                    </Avatar>
+                  )
                 ) : null}
               </Box>
             );
@@ -387,9 +401,8 @@ export function ChatPanel({
                   fontSize: 12,
                   fontWeight: 800,
                 }}
-              >
-                AI
-              </Avatar>
+                src={chatbotAvatar.src}
+              />
               <Box sx={{ maxWidth: { xs: "88%", md: "70%" } }}>
                 <Box
                   sx={{

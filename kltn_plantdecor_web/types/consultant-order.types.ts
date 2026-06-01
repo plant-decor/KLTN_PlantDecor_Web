@@ -14,7 +14,9 @@ export interface ConsultantOrder {
   status: number;
   statusName: string;
   paymentStrategy: number;
+  paymentStrategyName: string;
   orderType: number;
+  orderTypeName: string;
   note: string | null;
   createdAt: string;
   updatedAt: string;

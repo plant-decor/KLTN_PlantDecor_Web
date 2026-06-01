@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Button,
@@ -40,13 +40,22 @@ import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils/formatUtil'
 
 interface OptionItem {
   id: number;
-  name: string;
+  name?: string;
+  tagName?: string;
 }
 
 type UnknownApiResponse = { payload?: unknown; data?: unknown };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object';
+}
+
+function getOptionLabel(item: OptionItem | null | undefined): string {
+  if (!item) {
+    return '';
+  }
+  const label = item.name ?? item.tagName;
+  return label && label.trim() ? label : String(item.id);
 }
 
 function readImageUrlFromUnknownPayload(payload: unknown): string | null {
@@ -114,6 +123,28 @@ export default function MaterialFormDialog({
 
   const [images, setImages] = useState<ImageUploadData[]>([]);
   const [uploadingImage, setUploadingImage] = useState(false);
+
+  const categoryLabelById = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const item of categories) {
+      map.set(item.id, getOptionLabel(item));
+    }
+    for (const item of editingData?.categories ?? []) {
+      map.set(item.id, item.name);
+    }
+    return map;
+  }, [categories, editingData?.categories]);
+
+  const tagLabelById = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const item of tags) {
+      map.set(item.id, getOptionLabel(item));
+    }
+    for (const item of editingData?.tags ?? []) {
+      map.set(item.id, item.tagName);
+    }
+    return map;
+  }, [editingData?.tags, tags]);
 
   // Handle image upload for RichTextEditor
   const handleRichTextImageUpload = async (file: File): Promise<string> => {
@@ -327,15 +358,15 @@ export default function MaterialFormDialog({
                         renderValue={(selected) => (
                           <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap">
                             {(selected as number[]).map((id) => {
-                              const item = categories.find((category) => category.id === id);
-                              return <Chip key={id} label={item?.name ?? id} size="small" />;
+                              const label = categoryLabelById.get(id);
+                              return <Chip key={id} label={label || String(id)} size="small" />;
                             })}
                           </Stack>
                         )}
                       >
                         {categories.map((item) => (
                           <MenuItem key={item.id} value={item.id}>
-                            {item.name}
+                            {getOptionLabel(item)}
                           </MenuItem>
                         ))}
                       </Select>
@@ -362,15 +393,15 @@ export default function MaterialFormDialog({
                         renderValue={(selected) => (
                           <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap">
                             {(selected as number[]).map((id) => {
-                              const item = tags.find((tag) => tag.id === id);
-                              return <Chip key={id} label={item?.name ?? id} size="small" />;
+                              const label = tagLabelById.get(id);
+                              return <Chip key={id} label={label || String(id)} size="small" />;
                             })}
                           </Stack>
                         )}
                       >
                         {tags.map((item) => (
                           <MenuItem key={item.id} value={item.id}>
-                            {item.name}
+                            {getOptionLabel(item)}
                           </MenuItem>
                         ))}
                       </Select>
@@ -408,7 +439,7 @@ export default function MaterialFormDialog({
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
         <Button onClick={handleSubmit(handleFormSubmit)} variant="contained" disabled={isLoading} className='bg-primary'>
-          {isLoading ? 'Processing...' : 'Add Material'}
+          {isLoading ? 'Processing...' : editingData ? 'Update' : 'Add Material'}
         </Button>
       </DialogActions>
     </Dialog>

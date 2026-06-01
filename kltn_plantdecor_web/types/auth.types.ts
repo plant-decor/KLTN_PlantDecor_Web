@@ -20,12 +20,15 @@ export interface RefreshTokenResponse {
   expiresIn: number;
 }
 
+export type SubscriptionTier = 'Bronze' | 'Silver' | 'Gold';
+
 export interface User {
   id: number;
   email: string;
   name: string;
   avatar?: string;
   role?: string;
+  subscription?: SubscriptionTier;
   // Chỉ lưu dữ liệu KHÔNG nhạy cảm trên client
   // Token sẽ được lưu trong HTTP-Only Cookie
 }
@@ -120,6 +123,11 @@ export interface UserProfile extends CustomerProfile {
   nurseryName?: string;
   fullName?: string;
   birthYear?: number;
+  birthDate?: string;
+  fengShuiElement?: string;
+  subscription?: SubscriptionTier;
+  tierLevel?: number;
+  tierName?: string;
   gender?: UserGender | number | string;
   latitude?: number;
   longitude?: number;
@@ -130,7 +138,8 @@ export interface UpdateUserProfileRequest {
   phoneNumber: string;
   fullName: string;
   address: string;
-  birthYear: number;
+  birthYear?: number;
+  birthDate?: string;
   gender: UserGender;
   latitude: number;
   longitude: number;

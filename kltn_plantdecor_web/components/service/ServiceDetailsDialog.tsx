@@ -19,6 +19,8 @@ import { ServiceRegistrationStatusEnum } from '@/types/care-service.types';
 import ServiceStatusChip from './ServiceStatusChip';
 import { CustomLoading } from '@/components/CustomLoading';
 import ServiceRatingReadOnlySection from '@/components/service/ServiceRatingReadOnlySection';
+import { formatCurrency } from '@/lib/utils/formatUtil';
+import { formatDate, formatDateTime } from '@/lib/utils/dateUtils';
 
 interface ExtendedServiceRegistration extends ServiceRegistration {
   totalSessions?: number;
@@ -75,35 +77,7 @@ export default function ServiceDetailsDialog({
 }: ServiceDetailsDialogProps) {
   const t = useTranslations('services');
   const tCommon = useTranslations('common');
-  const formatDate = (date?: string) => {
-    if (!date) {
-      return '-';
-    }
 
-    const parsed = new Date(date);
-    return Number.isNaN(parsed.getTime()) ? date : parsed.toLocaleDateString();
-  };
-
-  const formatDateTime = (date?: string) => {
-    if (!date) {
-      return '-';
-    }
-
-    const parsed = new Date(date);
-    return Number.isNaN(parsed.getTime()) ? date : parsed.toLocaleString();
-  };
-
-  const formatCurrency = (value?: number) => {
-    if (typeof value !== 'number' || !Number.isFinite(value)) {
-      return '-';
-    }
-
-    return new Intl.NumberFormat(undefined, {
-      style: 'currency',
-      currency: 'VND',
-      maximumFractionDigits: 0,
-    }).format(value);
-  };
 
   const formatShift = (
     shift?: {
@@ -176,8 +150,8 @@ export default function ServiceDetailsDialog({
             <ServiceStatusChip status={service.status} label={statusLabels?.[Number(service.status)]} />
           </Box>
 
-          <Grid size={{ xs: 12, md: 6 }}>{renderReadOnlyField(t('serviceDate'), formatDate(service.serviceDate))}</Grid>
-          <Grid size={{ xs: 12, md: 6 }}>{renderReadOnlyField(t('createdAt'), formatDateTime(service.createdAt))}</Grid>
+          <Grid size={{ xs: 12, md: 6 }}>{renderReadOnlyField(t('serviceDate'), formatDate(service.serviceDate ?? ''))}</Grid>
+          <Grid size={{ xs: 12, md: 6 }}>{renderReadOnlyField(t('createdAt'), formatDateTime(service.createdAt ?? ''))}</Grid>
           <Grid size={{ xs: 12, md: 6 }}>{renderReadOnlyField(t('providerNursery'), service.nurseryName || '-')}</Grid>
           <Grid size={{ xs: 12, md: 6 }}>
             {renderReadOnlyField(t('servicePackage'), service.packageName || service.servicePackage?.name || '-')}
@@ -186,7 +160,7 @@ export default function ServiceDetailsDialog({
           <Grid size={{ xs: 12, md: 6 }}>
             {renderReadOnlyField(
               t('price'),
-              formatCurrency(service.servicePackage?.unitPrice)
+              formatCurrency(service.servicePackage?.unitPrice ?? 0, 'vi-VN')
             )}
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>{renderReadOnlyField(t('shift'), formatShift(service.preferredShift))}</Grid>

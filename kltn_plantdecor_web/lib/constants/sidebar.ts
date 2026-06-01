@@ -28,6 +28,7 @@ export type SidebarIconKey =
   | 'reminder'
   | 'store'
   | 'inventory'
+  | 'ai'
   | 'logout';
 
 export const SIDEBAR_ITEMS_BY_ROLE: Record<UserRole, SidebarItem[]> = {
@@ -41,6 +42,7 @@ export const SIDEBAR_ITEMS_BY_ROLE: Record<UserRole, SidebarItem[]> = {
     { label: 'Product Management', href: '/admin/store-management', icon: 'store' },
     { label: 'Plant Care Management', href: '/admin/plant-guide-management', icon: 'tasks' },
     { label: 'Service Package Management', href: '/admin/service-management', icon: 'services' },
+    { label: 'AI Package Management', href: '/admin/ai-package-management', icon: 'ai' },
     { label: 'Design Template Management', href: '/admin/design-template-management', icon: 'catalog' },
     { label: 'Specialization Management', href: '/admin/specializations-management', icon: 'catalog' },
     { label: 'Categories & Tags', href: '/admin/categories-tags', icon: 'tags' },

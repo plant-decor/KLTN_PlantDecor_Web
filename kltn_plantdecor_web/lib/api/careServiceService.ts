@@ -3,6 +3,7 @@
 import * as apiClient from "@/lib/api/apiService.client";
 import type { ResponseModel } from "@/types/api.types";
 import type {
+  AiRecommendedPackage,
   AssignServiceRegistrationCaretakerRequest,
   CareServicePackage,
   CareServiceSpecialization,
@@ -586,16 +587,100 @@ const normalizeNurseryServiceScheduleItem = (
   };
 };
 
+const mapDesignTaskToScheduleItem = (item: unknown): unknown => {
+  if (!isRecord(item)) {
+    return item;
+  }
+
+  const registration = isRecord(item.registration) ? item.registration : null;
+  const customer =
+    registration && isRecord(registration.customer) ? registration.customer : null;
+  const assignedStaff = isRecord(item.assignedStaff) ? item.assignedStaff : null;
+  const designTemplateName = registration
+    ? toText(registration.designTemplateName)
+    : "";
+  const taskTypeName = toText(item.taskTypeName, "Design Service");
+
+  return {
+    ...item,
+    taskType: "DesignService",
+    taskTypeName,
+    taskDate: toText(
+      (item.taskDate as unknown) ?? item.scheduledDate ?? item.createdAt,
+    ),
+    description: toNullableText(item.description) ?? taskTypeName,
+    evidenceImageUrl: toNullableText(item.reportImageUrl),
+    hasIncidents: false,
+    incidentReason: null,
+    incidentImageUrl: null,
+    shift: null,
+    caretaker: assignedStaff,
+    customer,
+    serviceRegistration: registration
+      ? {
+          id: toNumber(registration.id),
+          address: toText(registration.address),
+          phone: toText(registration.phone),
+          customer,
+          nurseryCareService: {
+            id: 0,
+            nurseryId: toNumber(registration.nurseryId),
+            nurseryName: "",
+            careServicePackage: {
+              id: 0,
+              name: designTemplateName || taskTypeName,
+              description: taskTypeName,
+              visitPerWeek: null,
+              durationDays: 0,
+              serviceType: 0,
+              unitPrice: 0,
+            },
+          },
+        }
+      : null,
+  };
+};
+
 const parseNurseryServiceScheduleItems = (payload: unknown): NurseryServiceScheduleItem[] => {
-  const rawItems = Array.isArray(payload)
-    ? payload
-    : isRecord(payload) && Array.isArray(payload.items)
-      ? payload.items
+  if (Array.isArray(payload)) {
+    return payload
+      .map((item) => normalizeNurseryServiceScheduleItem(item))
+      .filter((item): item is NurseryServiceScheduleItem => Boolean(item));
+  }
+
+  if (isRecord(payload)) {
+    if (Array.isArray(payload.items)) {
+      return payload.items
+        .map((item) => normalizeNurseryServiceScheduleItem(item))
+        .filter((item): item is NurseryServiceScheduleItem => Boolean(item));
+    }
+
+    const serviceProgresses = Array.isArray(payload.serviceProgresses)
+      ? payload.serviceProgresses
+      : [];
+    const designTasks = Array.isArray(payload.designTasks)
+      ? payload.designTasks
       : [];
 
-  return rawItems
-    .map((item) => normalizeNurseryServiceScheduleItem(item))
-    .filter((item): item is NurseryServiceScheduleItem => Boolean(item));
+    const tagged: unknown[] = [
+      ...serviceProgresses.map((item) =>
+        isRecord(item)
+          ? {
+              ...item,
+              taskType: "CareService",
+              taskTypeName: toText(item.taskTypeName, "Care Service"),
+            }
+          : item,
+      ),
+      ...designTasks.map((item) => mapDesignTaskToScheduleItem(item)),
+    ];
+
+    return tagged
+      .map((item) => normalizeNurseryServiceScheduleItem(item))
+      .filter((item): item is NurseryServiceScheduleItem => Boolean(item));
+  }
+
+  return [];
 };
 
 const buildPaginationParams = (query?: ServiceRegistrationsQuery) => {
@@ -1183,20 +1268,13 @@ export const getNurseryScheduleByDate = async (
   loading = true,
 ): Promise<NurseryServiceScheduleItem[]> => {
   const response = await apiClient.get<WrappedResponse<unknown>>(
-    "service-progress/nursery-schedule",
+    "service-progress/nursery-schedule/all-services",
     { date },
     loading,
     QUERY_CONFIG,
   );
 
-  const payload = unwrapPayloadData(response);
-  if (!Array.isArray(payload)) {
-    return [];
-  }
-
-  return payload
-    .map((item) => normalizeNurseryServiceScheduleItem(item))
-    .filter((item): item is NurseryServiceScheduleItem => Boolean(item));
+  return parseNurseryServiceScheduleItems(unwrapPayloadData(response));
 };
 
 export const getServiceProgressDetail = async (
@@ -1271,4 +1349,21 @@ export const getStaffScheduleByRange = async (
   );
 
   return parseNurseryServiceScheduleItems(unwrapPayloadData(response));
+};
+
+/**
+ * GET /api/care-service-packages/recommendations/conversations/{conversationId}
+ * AI-ranked care service package recommendations based on conversation content.
+ */
+export const getAiRecommendedPackagesByConversation = async (
+  conversationId: number,
+  loading = false,
+): Promise<AiRecommendedPackage[]> => {
+  const res = await apiClient.get<ResponseModel<AiRecommendedPackage[]>>(
+    `care-service-packages/recommendations/conversations/${conversationId}`,
+    undefined,
+    loading,
+    QUERY_CONFIG,
+  );
+  return (res as ResponseModel<AiRecommendedPackage[]>).payload ?? [];
 };

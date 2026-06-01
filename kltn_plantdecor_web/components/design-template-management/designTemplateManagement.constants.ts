@@ -70,10 +70,6 @@ export const DESIGN_TEMPLATE_TIER_ITEM_TYPE_OPTIONS = [
 
 export const DESIGN_TEMPLATE_TABLE_PAGE_SIZE_OPTIONS = [10, 20, 50];
 
-export const formatCurrency = (value: number) => {
-  return value.toLocaleString("vi-VN", { style: "currency", currency: "VND" });
-};
-
 const humanizeEnumName = (value: string) => {
   return value
     .replace(/([a-z])([A-Z])/g, '$1 $2')

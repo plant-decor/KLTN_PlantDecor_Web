@@ -11,6 +11,7 @@ import { Link } from '@/i18n/navigation';
 import { GUEST_ACTIONS, USER_MENU_ITEMS } from '@/lib/constants/header';
 import { logoutAction } from '@/app/actions/loginAction';
 import { ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
+import SubscriptionBadge from '@/components/profile/SubscriptionBadge';
 import {
   Button,
   Dialog,
@@ -120,7 +121,7 @@ export default function Header({ initialStoreCategories = [] }: HeaderProps) {
             {/* Logo */}
             <div className="shrink-0">
               <Link href="/" className="border-none! block w-32 lg:w-44 h-10 lg:h-12 overflow-hidden">
-                <Image src="/logo/logo-landscape.png" 
+                <Image src="/logo/logo-landscape.png"
                   alt="Plant Decor Logo"
                   width={176}
                   height={48}
@@ -141,7 +142,10 @@ export default function Header({ initialStoreCategories = [] }: HeaderProps) {
               <CartBadge />
 
               {isCustomer && userId && isDesktopViewport && (
-                <HeaderNotificationDropdown userId={userId} />
+                <>
+                  <HeaderNotificationDropdown userId={userId} />
+                  <SubscriptionBadge tier={user?.subscription} variant="compact" href="/ai-packages" />
+                </>
               )}
 
               {/* Auth Actions */}
@@ -169,20 +173,24 @@ export default function Header({ initialStoreCategories = [] }: HeaderProps) {
                       onClick={() => setIsUserMenuOpen((open) => !open)}
                       className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-2 py-1 text-gray-700 hover:text-green-600 hover:bg-primary"
                     >
-                      {avatarImageSrc && !hasAvatarImageError ? (
-                        <Image
-                          src={avatarImageSrc}
-                          width={32}
-                          height={32}
-                          alt={user?.name || 'User avatar'}
-                          className="h-8 w-8 rounded-full object-cover"
-                          onError={() => setFailedAvatarSrc(avatarImageSrc)}
-                        />
-                      ) : (
-                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-green-600 text-sm font-semibold text-white">
-                          {avatarLabel}
-                        </span>
-                      )}
+                      {/* Avatar */}
+                      <span className="relative inline-flex shrink-0">
+                        {avatarImageSrc && !hasAvatarImageError ? (
+                          <Image
+                            src={avatarImageSrc}
+                            width={32}
+                            height={32}
+                            alt={user?.name || 'User avatar'}
+                            className="h-8 w-8 rounded-full object-cover"
+                            onError={() => setFailedAvatarSrc(avatarImageSrc)}
+                          />
+                        ) : (
+                          <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-green-600 text-sm font-semibold text-white">
+                            {avatarLabel}
+                          </span>
+                        )}
+                      </span>
+                      {/* Subscription badge */}
                       <ExpandMoreIcon sx={{ fontSize: 16 }} />
                     </button>
                     {isUserMenuOpen && (

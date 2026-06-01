@@ -3,20 +3,18 @@
 import { Box, Button, Chip, Paper, Stack, Typography } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import SendIcon from "@mui/icons-material/Send";
-import type { RecommendedPackage } from "@/types/order.types";
+import type { AiRecommendedPackage } from "@/types/care-service.types";
 import { hoverLiftStyle } from "@/lib/styles/buttonStyles";
+import { formatCurrency } from "@/lib/utils/formatUtil";
 
 type Props = {
-  recommendation: RecommendedPackage;
+  recommendation: AiRecommendedPackage;
   isSending: boolean;
   isViewing: boolean;
   disabled: boolean;
-  onSendBookingLink: (recommendation: RecommendedPackage) => void;
-  onViewDetail: (recommendation: RecommendedPackage) => void;
+  onSendBookingLink: (recommendation: AiRecommendedPackage) => void;
+  onViewDetail: (recommendation: AiRecommendedPackage) => void;
 };
-
-const formatCurrency = (value: number) =>
-  value.toLocaleString("vi-VN", { style: "currency", currency: "VND" });
 
 export function RecommendationCard({
   recommendation,
@@ -54,52 +52,51 @@ export function RecommendationCard({
             {recommendation.packageName}
           </Typography>
           <Typography sx={{ fontSize: 12, fontWeight: 700, color: "#15803d", mt: 0.25 }}>
-            {formatCurrency(recommendation.unitPrice)}
+            {formatCurrency(recommendation.unitPrice, "vi-VN")}
           </Typography>
         </Box>
         <Chip
           size="small"
-          label={`Score ${recommendation.matchScore}`}
+          label={`Score ${recommendation.score}`}
           sx={{
             fontSize: 11,
             height: 22,
             bgcolor: "rgba(34,197,94,0.12)",
             color: "#15803d",
             fontWeight: 700,
+            flexShrink: 0,
           }}
         />
       </Stack>
 
-      {recommendation.matchReasons.length ? (
-        <Box sx={{ mt: 0.75 }}>
-          {recommendation.matchReasons.slice(0, 2).map((reason, index) => (
-            <Typography
-              key={index}
-              sx={{
-                fontSize: 11.5,
-                color: "#475569",
-                lineHeight: 1.4,
-              }}
-            >
-              • {reason}
-            </Typography>
-          ))}
-        </Box>
+      {recommendation.reason ? (
+        <Typography
+          sx={{
+            mt: 0.75,
+            fontSize: 11.5,
+            color: "#475569",
+            lineHeight: 1.4,
+            fontStyle: "italic",
+          }}
+        >
+          {recommendation.reason}
+        </Typography>
       ) : null}
 
-      {recommendation.plants.length ? (
-        <Stack direction="row" flexWrap="wrap" gap={0.5} sx={{ mt: 0.75 }}>
-          {recommendation.plants.slice(0, 4).map((plant) => (
-            <Chip
-              key={plant.plantId}
-              size="small"
-              variant="outlined"
-              label={`${plant.plantName} x${plant.quantity}`}
-              sx={{ fontSize: 10.5, height: 20 }}
-            />
-          ))}
-        </Stack>
-      ) : null}
+      <Stack direction="row" spacing={1.5} sx={{ mt: 0.75 }}>
+        <Typography sx={{ fontSize: 11, color: "#64748b" }}>
+          Coverage:{" "}
+          <Box component="span" sx={{ fontWeight: 700, color: "#0f172a" }}>
+            {recommendation.coveragePercentage}%
+          </Box>
+        </Typography>
+        <Typography sx={{ fontSize: 11, color: "#64748b" }}>
+          Ecosystem:{" "}
+          <Box component="span" sx={{ fontWeight: 700, color: "#0f172a" }}>
+            {recommendation.ecosystemMatchPercentage}%
+          </Box>
+        </Typography>
+      </Stack>
 
       <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
         <Button

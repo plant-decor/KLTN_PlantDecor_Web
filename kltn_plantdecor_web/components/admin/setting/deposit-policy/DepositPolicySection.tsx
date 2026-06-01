@@ -28,13 +28,12 @@ import ConfirmActionDialog from "@/components/admin/categories-tags/ConfirmActio
 import DepositPolicyModal from "@/components/admin/setting/deposit-policy/DepositPolicyModal";
 import { hoverLiftStyle } from "@/lib/styles/buttonStyles";
 import { formatDateTime } from "@/lib/utils/dateUtils";
-import { formatCurrency } from "@/components/order-history/orderHistoryUtils";
-
+import { formatCurrency } from "@/lib/utils/formatUtil";
 const toDisplayMax = (maxPrice: number | null): string => {
   if (maxPrice == null) {
     return "∞";
   }
-  return formatCurrency(maxPrice);
+  return formatCurrency(maxPrice, 'vi-VN');
 };
 
 const sortByMinPrice = (items: DepositPolicy[]) => {
@@ -149,7 +148,7 @@ export default function DepositPolicySection() {
                   sortedPolicies.map((policy) => (
                     <TableRow key={policy.id} hover>
                       <TableCell align="center">{policy.id}</TableCell>
-                      <TableCell align="center">{formatCurrency(policy.minPrice)}</TableCell>
+                      <TableCell align="center">{formatCurrency(policy.minPrice, 'vi-VN')}</TableCell>
                       <TableCell align="center">{toDisplayMax(policy.maxPrice)}</TableCell>
                       <TableCell align="center">{policy.depositPercentage}%</TableCell>
                       <TableCell align="center">
@@ -159,7 +158,7 @@ export default function DepositPolicySection() {
                           color={policy.isActive ? "success" : "default"}
                         />
                       </TableCell>
-                      <TableCell align="center">{policy.updatedAt ? formatDateTime(policy.updatedAt) : "-"}</TableCell>
+                      <TableCell align="center">{policy.updatedAt ? formatDateTime(policy.updatedAt ?? '') : "-"}</TableCell>
                       <TableCell align="center">
                         <IconButton
                           size="small"
@@ -215,8 +214,8 @@ export default function DepositPolicySection() {
         title="Confirm Delete Deposit Policy"
         message={
           deleteTarget
-            ? `Are you sure you want to delete this policy (${formatCurrency(deleteTarget.minPrice)} - ${
-                deleteTarget.maxPrice == null ? "∞" : formatCurrency(deleteTarget.maxPrice)
+            ? `Are you sure you want to delete this policy (${formatCurrency(deleteTarget.minPrice, 'vi-VN')} - ${
+                deleteTarget.maxPrice == null ? "∞" : formatCurrency(deleteTarget.maxPrice, 'vi-VN')
               })? This action cannot be undone.`
             : "Are you sure you want to delete this policy? This action cannot be undone."
         }

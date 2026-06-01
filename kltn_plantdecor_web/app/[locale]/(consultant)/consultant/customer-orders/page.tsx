@@ -48,6 +48,7 @@ import {
 import { CustomLoading } from '@/components/CustomLoading';
 import ConsultantCustomerOrdersFilter from '@/components/consultant/ConsultantCustomerOrdersFilter';
 import ManagementHeader from '@/components/layout/ManagementHeader';
+import { formatDateTime } from '@/lib/utils/dateUtils';
 
 /** Đổi tên nếu Swagger backend khác */
 const ORDER_STATUSES_ENUM = 'OrderStatuses';
@@ -132,19 +133,6 @@ function buildLineRows(order: ConsultantOrder): LineRow[] {
   return rows;
 }
 
-function formatDateTime(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) {
-    return iso;
-  }
-  return d.toLocaleString('vi-VN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
 
 export default function CustomerOrdersPage() {
   const locale = useLocale();
@@ -416,7 +404,7 @@ export default function CustomerOrdersPage() {
                       size="small"
                     />
                   </TableCell>
-                  <TableCell>{formatDateTime(order.createdAt)}</TableCell>
+                  <TableCell>{formatDateTime(order.createdAt ?? '')}</TableCell>
                   <TableCell align="center">
                     <Button
                       size="small"
@@ -552,7 +540,7 @@ export default function CustomerOrdersPage() {
                           {formatCurrency(inv.totalAmount, locale)}
                         </Typography>
                         <Typography variant="caption" color="text.secondary" display="block">
-                          Issued {formatDateTime(inv.issuedDate)}
+                          Issued {formatDateTime(inv.issuedDate ?? '')}
                         </Typography>
                       </Box>
                     ))}
@@ -566,13 +554,13 @@ export default function CustomerOrdersPage() {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                   <Typography variant="body2">Created:</Typography>
                   <Typography variant="body2" fontWeight="bold">
-                    {formatDateTime(detailOrder.createdAt)}
+                    {formatDateTime(detailOrder.createdAt ?? '')}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                   <Typography variant="body2">Updated:</Typography>
                   <Typography variant="body2" fontWeight="bold">
-                    {formatDateTime(detailOrder.updatedAt)}
+                    {formatDateTime(detailOrder.updatedAt ?? '')}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>

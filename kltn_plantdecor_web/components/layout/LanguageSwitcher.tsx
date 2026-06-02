@@ -61,7 +61,7 @@ export default function LanguageSwitcher() {
         title={t('vi')}
         aria-label={`${t('switchTo')} ${t('vi')}`}
       >
-        🇻🇳 VI
+        VI
       </button>
 
       <button
@@ -77,7 +77,7 @@ export default function LanguageSwitcher() {
         title={t('en')}
         aria-label={`${t('switchTo')} ${t('en')}`}
       >
-        🇬🇧 EN
+        EN
       </button>
     </div>
   );

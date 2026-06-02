@@ -407,6 +407,7 @@
     "cancelServiceSuccess": "Service registration cancelled successfully",
     "cancelServiceFailed": "Unable to cancel service registration",
     "serviceDate": "Service Date",
+    "package": "Package",
     "address": "Address",
     "phone": "Phone",
     "notes": "Notes",

@@ -910,6 +910,7 @@ export default function ManagerServiceOrdersPageClient({
             }}
             onAssignCaretaker={(item) => void openAssignDialog(item)}
             onReschedule={(item) => void openRescheduleDialog(item)}
+            onAnyProgressReviewed={() => void loadList()}
           />
 
           <ServiceOrderApproveDialog
@@ -1040,6 +1041,7 @@ export default function ManagerServiceOrdersPageClient({
           onSelectedCaretakerIdChange={setSelectedDesignCaretakerId}
           onCancelReasonChange={setDesignCancelReason}
           onRejectReasonChange={setDesignRejectReason}
+          onTaskReviewed={() => void loadDesignOrders()}
         />
       )}
 

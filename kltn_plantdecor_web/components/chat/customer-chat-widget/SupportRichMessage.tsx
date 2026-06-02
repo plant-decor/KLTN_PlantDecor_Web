@@ -83,7 +83,7 @@ export function SupportRichMessage({ text, isMine }: Props) {
             <Typography
               sx={{ fontWeight: 800, fontSize: 13, color: "#15803d" }}
             >
-              Service recommendation
+              {target.packageName ?? "Gói dịch vụ chăm sóc cây"}
             </Typography>
             <Typography
               sx={{
@@ -96,7 +96,7 @@ export function SupportRichMessage({ text, isMine }: Props) {
                 overflow: "hidden",
               }}
             >
-              Tap to view this care package and book it instantly.
+              Nhấn để xem gói dịch vụ và đặt lịch ngay.
             </Typography>
           </Box>
           <OpenInNewIcon

@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import {
+  Box,
   Button,
   Chip,
   Stack,
@@ -9,6 +10,7 @@ import {
   TableCell,
   TableHead,
   TableRow,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -16,6 +18,7 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import PersonAddAltOutlinedIcon from '@mui/icons-material/PersonAddAltOutlined';
 import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import type { ManagerServiceRegistration } from '@/types/care-service.types';
 import {
   canApproveOrReject,
@@ -78,9 +81,20 @@ export default function ServiceOrdersTable({
           </TableRow>
         ) : (
           items.map((item) => {
+            const hasUnreviewedFeedback = item.progresses.some((p) => p.customerFeedback && !p.isReviewed);
+
             return (
               <TableRow key={item.id} hover>
-                <TableCell>#{item.id}</TableCell>
+                <TableCell>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                    #{item.id}
+                    {hasUnreviewedFeedback && (
+                      <Tooltip title="Has unreviewed customer feedback">
+                        <ChatBubbleOutlineIcon sx={{ fontSize: 15, color: 'warning.main' }} />
+                      </Tooltip>
+                    )}
+                  </Box>
+                </TableCell>
                 <TableCell>
                   <Typography variant="body2" fontWeight={600}>
                     {item.customer?.fullName || '-'}

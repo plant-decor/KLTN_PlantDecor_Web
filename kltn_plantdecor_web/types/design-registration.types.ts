@@ -131,6 +131,8 @@ export interface DesignRegistrationTask {
   taskType: number;
   taskTypeName: string;
   reportImageUrl?: string | null;
+  customerFeedback?: string | null;
+  isReviewed?: boolean;
   createdAt: string;
   status: number;
   statusName: string;

@@ -211,7 +211,7 @@ export const CaretakerTaskList: React.FC<CaretakerTaskListProps> = ({
                 {task.note && (
                   <Box sx={{ mt: 2, p: 1.5, bgcolor: "#fff3e0", borderRadius: 1 }}>
                     <Typography variant="caption" sx={{ fontWeight: "bold" }}>
-                      📝 Ghi chú:
+                      Ghi chú:
                     </Typography>
                     <Typography variant="body2" sx={{ mt: 0.5 }}>
                       {task.note.substring(0, 80)}...

@@ -7,6 +7,7 @@ import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
 import PersonAddAltOutlinedIcon from '@mui/icons-material/PersonAddAltOutlined';
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import ServiceOrdersHeader from './ServiceOrdersHeader';
 import DesignOrderDetailDialog from './dialogs/DesignOrderDetailDialog';
 import DesignOrderCancelDialog from './dialogs/DesignOrderCancelDialog';
@@ -81,6 +82,7 @@ interface DesignServiceTabProps {
   onSelectedCaretakerIdChange: (value: number) => void;
   onCancelReasonChange: (value: string) => void;
   onRejectReasonChange: (value: string) => void;
+  onTaskReviewed?: () => void;
 }
 
 export default function DesignServiceTab({
@@ -140,6 +142,7 @@ export default function DesignServiceTab({
   onSelectedCaretakerIdChange,
   onCancelReasonChange,
   onRejectReasonChange,
+  onTaskReviewed,
 }: DesignServiceTabProps) {
   const [fullscreenCurrentStateImage, setFullscreenCurrentStateImage] = useState<string | null>(null);
 
@@ -202,10 +205,20 @@ export default function DesignServiceTab({
                 ) : (
                   designOrders.map((order) => {
                     const currentStateImageUrl = order.currentStateImageUrl?.trim();
+                    const hasUnreviewedFeedback = order.designTasks.some((t) => t.customerFeedback && !t.isReviewed);
 
                     return (
                       <TableRow key={order.id} hover>
-                        <TableCell>{order.id}</TableCell>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                            {order.id}
+                            {hasUnreviewedFeedback && (
+                              <Tooltip title="Has unreviewed customer feedback">
+                                <ChatBubbleOutlineIcon sx={{ fontSize: 15, color: 'warning.main' }} />
+                              </Tooltip>
+                            )}
+                          </Box>
+                        </TableCell>
                         <TableCell>
                           <Typography variant="body2" fontWeight={600}>
                             {order.customer?.fullName || '-'}
@@ -325,6 +338,7 @@ export default function DesignServiceTab({
         getDesignRegistrationStatusLabel={getDesignRegistrationStatusLabel}
         getDesignTaskStatusLabel={getDesignTaskStatusLabel}
         getDesignTaskTypeLabel={getDesignTaskTypeLabel}
+        onTaskReviewed={onTaskReviewed}
       />
 
       <DesignOrderCancelDialog

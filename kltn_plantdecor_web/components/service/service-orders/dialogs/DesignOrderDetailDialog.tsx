@@ -1,12 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { Alert, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Divider, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, Typography } from '@mui/material';
+import { Alert, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Divider, IconButton, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, Typography } from '@mui/material';
 import type { CustomerDesignRegistrationDetail, DesignRegistrationTask } from '@/types/design-registration.types';
 import { canApproveDesign, canAssignDesignTask, canManagerCancelDesign, canRejectDesign, getDesignStatusChipColor } from '../utils/designStatusUtil';
 import { formatDateTime } from '@/lib/utils/dateUtils';
-import { CalendarMonthOutlined, ImageOutlined, PersonAddOutlined, VisibilityOutlined } from '@mui/icons-material';
+import { CalendarMonthOutlined, ChatBubbleOutline, DoneAll, ImageOutlined, MarkChatRead, PersonAddOutlined, VisibilityOutlined } from '@mui/icons-material';
 import FullscreenImageModal from '@/components/image-view/FullscreenImageModal';
+import FeedbackModal from '@/components/feedback/FeedbackModal';
+import { markDesignTaskReviewed } from '@/lib/api/designRegistrationService';
+import { toast } from 'react-toastify';
 
 interface DesignOrderDetailDialogProps {
   open: boolean;
@@ -23,6 +26,7 @@ interface DesignOrderDetailDialogProps {
   getDesignRegistrationStatusLabel: (item: Pick<CustomerDesignRegistrationDetail, 'status' | 'statusName'>) => string;
   getDesignTaskStatusLabel: (task: DesignRegistrationTask) => string;
   getDesignTaskTypeLabel: (task: DesignRegistrationTask) => string;
+  onTaskReviewed?: () => void;
 }
 
 export default function DesignOrderDetailDialog({
@@ -40,8 +44,26 @@ export default function DesignOrderDetailDialog({
   getDesignRegistrationStatusLabel,
   getDesignTaskStatusLabel,
   getDesignTaskTypeLabel,
+  onTaskReviewed,
 }: DesignOrderDetailDialogProps) {
   const [fullscreenReportImage, setFullscreenReportImage] = useState<string | null>(null);
+  const [feedbackTask, setFeedbackTask] = useState<{ typeName: string; feedback: string } | null>(null);
+  const [localReviewedIds, setLocalReviewedIds] = useState<Set<number>>(new Set());
+  const [markingReviewedId, setMarkingReviewedId] = useState<number | null>(null);
+
+  const handleMarkTaskReviewed = async (task: DesignRegistrationTask) => {
+    setMarkingReviewedId(task.id);
+    try {
+      await markDesignTaskReviewed(task.id);
+      setLocalReviewedIds((prev) => new Set([...prev, task.id]));
+      toast.success('Feedback marked as reviewed');
+      onTaskReviewed?.();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Cannot mark as reviewed');
+    } finally {
+      setMarkingReviewedId(null);
+    }
+  };
 
   return (
     <>
@@ -101,6 +123,7 @@ export default function DesignOrderDetailDialog({
                         <TableCell align='center' sx={{ fontWeight: 700 }}>Status</TableCell>
                         <TableCell align='center' sx={{ fontWeight: 700 }}>Scheduled Date</TableCell>
                         <TableCell sx={{ fontWeight: 700 }}>Assigned Staff</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }} align="center">Feedback</TableCell>
                         <TableCell sx={{ fontWeight: 700 }} align="center">
                           Actions
                         </TableCell>
@@ -118,6 +141,45 @@ export default function DesignOrderDetailDialog({
                             </TableCell>
                             <TableCell>{task.scheduledDate || '-'}</TableCell>
                             <TableCell>{task.assignedStaff?.fullName || '-'}</TableCell>
+                            <TableCell align="center">
+                              {task.customerFeedback ? (
+                                <Stack direction="row" spacing={0.5} justifyContent="center" alignItems="center">
+                                  {(task.isReviewed || localReviewedIds.has(task.id)) ? (
+                                    <Tooltip title="Reviewed — click to view feedback">
+                                      <IconButton
+                                        size="small"
+                                        color="success"
+                                        onClick={() => setFeedbackTask({ typeName: getDesignTaskTypeLabel(task), feedback: task.customerFeedback! })}
+                                      >
+                                        <DoneAll fontSize="small" />
+                                      </IconButton>
+                                    </Tooltip>
+                                  ) : (
+                                    <>
+                                      <Tooltip title="View customer feedback">
+                                        <IconButton
+                                          size="small"
+                                          color="warning"
+                                          onClick={() => setFeedbackTask({ typeName: getDesignTaskTypeLabel(task), feedback: task.customerFeedback! })}
+                                        >
+                                          <ChatBubbleOutline fontSize="small" />
+                                        </IconButton>
+                                      </Tooltip>
+                                      <Tooltip title="Mark as reviewed">
+                                        <IconButton
+                                          size="small"
+                                          color="primary"
+                                          onClick={() => void handleMarkTaskReviewed(task)}
+                                          disabled={markingReviewedId === task.id}
+                                        >
+                                          <MarkChatRead fontSize="small" />
+                                        </IconButton>
+                                      </Tooltip>
+                                    </>
+                                  )}
+                                </Stack>
+                              ) : '-'}
+                            </TableCell>
                             <TableCell align="center">
                               <Stack direction="row" spacing={1} justifyContent="center" useFlexGap flexWrap="wrap">
                                 <Tooltip title="View detail">
@@ -225,6 +287,13 @@ export default function DesignOrderDetailDialog({
           </Button>
         </DialogActions>
       </Dialog>
+
+      <FeedbackModal
+        open={Boolean(feedbackTask)}
+        onClose={() => setFeedbackTask(null)}
+        title={feedbackTask ? `${feedbackTask.typeName} — Customer Feedback` : 'Customer Feedback'}
+        existingFeedback={feedbackTask?.feedback}
+      />
 
       <FullscreenImageModal
         images={fullscreenReportImage ? [fullscreenReportImage] : []}

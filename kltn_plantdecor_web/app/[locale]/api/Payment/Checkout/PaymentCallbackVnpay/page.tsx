@@ -2,6 +2,8 @@
 
 import { useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter, useParams } from 'next/navigation';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import { useAuthStore } from '@/lib/store/authStore';
 
 function PaymentCallbackContent() {
@@ -42,13 +44,13 @@ function PaymentCallbackContent() {
       <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-8 text-center">
         {isSuccessful ? (
           <>
-            <div className="text-green-500 text-6xl mb-4">✓</div>
+            <CheckCircleOutlineIcon sx={{ fontSize: 72, color: '#22c55e', mb: 1 }} />
             <h1 className="text-2xl font-bold text-gray-800 mb-2">Thanh toán thành công!</h1>
             <p className="text-gray-600 mb-6">Cảm ơn bạn đã mua sắm tại cửa hàng của chúng tôi.</p>
           </>
         ) : (
           <>
-            <div className="text-red-500 text-6xl mb-4">✕</div>
+            <CancelOutlinedIcon sx={{ fontSize: 72, color: '#ef4444', mb: 1 }} />
             <h1 className="text-2xl font-bold text-gray-800 mb-2">Thanh toán thất bại</h1>
             <p className="text-gray-600 mb-6">Đã có lỗi xảy ra hoặc giao dịch đã bị hủy bỏ.</p>
           </>

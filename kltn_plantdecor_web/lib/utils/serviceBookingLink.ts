@@ -5,6 +5,7 @@ export interface BuildServiceBookingUrlInput {
   locale: string;
   userId: number;
   packageId: number;
+  packageName?: string;
   action?: ServiceBookingAction;
 }
 
@@ -13,6 +14,7 @@ export interface ParsedServiceBookingUrl {
   locale: string | null;
   userId: number;
   packageId: number;
+  packageName: string | null;
   action: ServiceBookingAction;
   rawUrl: string;
 }
@@ -23,6 +25,7 @@ export function buildServiceBookingPath({
   locale,
   userId,
   packageId,
+  packageName,
   action = "book",
 }: Omit<BuildServiceBookingUrlInput, "origin">): string {
   const safeLocale = encodeURIComponent(locale);
@@ -31,6 +34,7 @@ export function buildServiceBookingPath({
   params.set("tab", "care");
   params.set("packageId", String(packageId));
   params.set("action", action);
+  if (packageName) params.set("packageName", packageName);
   return `/${safeLocale}/services/${safeUserId}?${params.toString()}`;
 }
 
@@ -83,11 +87,14 @@ export function parseServiceBookingUrl(
 
   if (actionRaw !== "book") return null;
 
+  const packageName = searchParams.get("packageName") ?? null;
+
   return {
     pathname,
     locale,
     userId,
     packageId,
+    packageName,
     action: actionRaw,
     rawUrl: trimmed,
   };

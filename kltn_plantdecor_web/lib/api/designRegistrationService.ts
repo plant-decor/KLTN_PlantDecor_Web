@@ -258,6 +258,8 @@ const normalizeDesignRegistrationTask = (value: unknown): CustomerDesignRegistra
     taskType: toNumber(value.taskType),
     taskTypeName: toText(value.taskTypeName),
     reportImageUrl: value.reportImageUrl == null ? null : toText(value.reportImageUrl),
+    customerFeedback: value.customerFeedback == null ? null : toText(value.customerFeedback),
+    isReviewed: toBoolean(value.isReviewed, false),
     createdAt: toText(value.createdAt),
     status: toNumber(value.status),
     statusName: toText(value.statusName),
@@ -828,5 +830,33 @@ export const rescheduleDesignTask = async (
     throw new Error("Cannot reschedule design task");
   }
 
+  return task;
+};
+
+export const postDesignTaskCustomerComment = async (
+  taskId: number,
+  comment: string,
+  loading = false,
+): Promise<void> => {
+  await apiClient.post<WrappedResponse<unknown>>(
+    `design-tasks/${taskId}/customer-comment`,
+    { comment },
+    loading,
+    MUTATION_CONFIG,
+  );
+};
+
+export const markDesignTaskReviewed = async (
+  taskId: number,
+  loading = false,
+): Promise<DesignRegistrationTask> => {
+  const response = await apiClient.post<WrappedResponse<unknown>>(
+    `design-tasks/${taskId}/mark-reviewed`,
+    {},
+    loading,
+    MUTATION_CONFIG,
+  );
+  const task = normalizeDesignRegistrationTask(unwrapPayloadData(response));
+  if (!task) throw new Error('Cannot parse mark-reviewed response');
   return task;
 };

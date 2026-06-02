@@ -113,10 +113,10 @@ export const ServiceCatalog: React.FC<ServiceCatalogProps> = ({
 
                 <Box sx={{ mb: 2 }}>
                   <Typography variant="body2" color="textSecondary">
-                    ⏱️ Thời gian: {pkg.durationDays} ngày
+                    Thời gian: {pkg.durationDays} ngày
                   </Typography>
                   <Typography variant="body2" color="textSecondary">
-                    📐 Diện tích tối đa: {pkg.areaLimit} m²
+                    Diện tích tối đa: {pkg.areaLimit} m²
                   </Typography>
                 </Box>
 

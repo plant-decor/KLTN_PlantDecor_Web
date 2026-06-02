@@ -49,7 +49,7 @@ export const ServiceProgressTimeline: React.FC<ServiceProgressTimelineProps> = (
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Box>
           <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-            📋 #{registration.id} - {registration.customer?.name}
+            #{registration.id} - {registration.customer?.name}
           </Typography>
           <Typography variant="caption" color="textSecondary">
             {registration.servicePackage?.name}

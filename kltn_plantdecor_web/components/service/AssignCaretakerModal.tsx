@@ -167,7 +167,7 @@ export const AssignCaretakerModal: React.FC<AssignCaretakerModalProps> = ({
                       </Box>
 
                       <Typography variant="caption" color="textSecondary" display="block" mt={1}>
-                        ✓ Hoàn thành {caretaker.totalCompletedServices} dịch vụ
+                        Hoàn thành {caretaker.totalCompletedServices} dịch vụ
                       </Typography>
                     </CardContent>
                   </Card>

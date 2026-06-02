@@ -107,7 +107,7 @@ export default function Navigation({ initialStoreCategories = [] }: NavigationPr
         if (tierName) setUserSubscription(tierName as SubscriptionTier);
       } catch { /* silent — badge falls back to Bronze */ }
     })();
-  }, [user?.id, setUserSubscription]);
+  }, [user?.id, user?.subscription, setUserSubscription]);
 
   const tNav = useTranslations('nav');
   const tAuth = useTranslations('auth');

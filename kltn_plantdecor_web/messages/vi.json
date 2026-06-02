@@ -407,6 +407,7 @@
     "cancelServiceSuccess": "Đã hủy đăng ký dịch vụ thành công",
     "cancelServiceFailed": "Không thể hủy đăng ký dịch vụ",
     "serviceDate": "Ngày dịch vụ",
+    "package": "Gói dịch vụ",
     "address": "Địa chỉ",
     "phone": "Số điện thoại",
     "notes": "Ghi chú",

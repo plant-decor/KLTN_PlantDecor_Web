@@ -16,6 +16,7 @@ export type SupportRichMessage = {
     locale: string | null;
     userId: number;
     packageId: number;
+    packageName: string | null;
   };
 };
 
@@ -64,6 +65,7 @@ export function parseSupportRichMessage(text: string): SupportRichMessage {
         locale: bookingUrl.locale,
         userId: bookingUrl.userId,
         packageId: bookingUrl.packageId,
+        packageName: bookingUrl.packageName,
       },
     };
   }

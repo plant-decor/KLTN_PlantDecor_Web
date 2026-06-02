@@ -400,6 +400,8 @@ const normalizeServiceRegistration = (
           action: toText(progress.action),
           description: toText(progress.description),
           createdAt: toText(progress.createdAt),
+          customerFeedback: toNullableText(progress.customerFeedback),
+          isReviewed: toBoolean(progress.isReviewed, false),
         };
       })
       .filter(
@@ -521,6 +523,8 @@ const normalizeNurseryServiceScheduleItem = (
     incidentImageUrl: toNullableText(item.incidentImageUrl),
     hasIncidents: toBoolean(item.hasIncidents, false),
     evidenceImageUrl: toNullableText(item.evidenceImageUrl),
+    customerFeedback: toNullableText(item.customerFeedback),
+    isReviewed: toBoolean(item.isReviewed, false),
     shift: shift
       ? {
         id: toNumber(shift.id),
@@ -1349,6 +1353,47 @@ export const getStaffScheduleByRange = async (
   );
 
   return parseNurseryServiceScheduleItems(unwrapPayloadData(response));
+};
+
+export const getProgressByRegistrationId = async (
+  registrationId: number,
+  loading = false,
+): Promise<NurseryServiceScheduleItem[]> => {
+  const response = await apiClient.get<WrappedResponse<unknown>>(
+    `service-progress/by-registration/${registrationId}`,
+    undefined,
+    loading,
+    QUERY_CONFIG,
+  );
+  return parseNurseryServiceScheduleItems(unwrapPayloadData(response));
+};
+
+export const postServiceProgressCustomerComment = async (
+  progressId: number,
+  comment: string,
+  loading = false,
+): Promise<void> => {
+  await apiClient.post<WrappedResponse<unknown>>(
+    `service-progress/${progressId}/customer-comment`,
+    { comment },
+    loading,
+    MUTATION_CONFIG,
+  );
+};
+
+export const markServiceProgressReviewed = async (
+  progressId: number,
+  loading = false,
+): Promise<NurseryServiceScheduleItem> => {
+  const response = await apiClient.post<WrappedResponse<unknown>>(
+    `service-progress/${progressId}/mark-reviewed`,
+    {},
+    loading,
+    MUTATION_CONFIG,
+  );
+  const items = parseNurseryServiceScheduleItems([unwrapPayloadData(response)]);
+  if (items.length === 0) throw new Error('Cannot parse mark-reviewed response');
+  return items[0];
 };
 
 /**

@@ -404,7 +404,7 @@ export default function ProductTable({
                                           onClick={() => onUpdateThumbnail(product.id, instance.id)}
                                           disabled={isThumbnail}
                                         >
-                                          {isThumbnail ? '✓ Thumbnail' : 'Set as Thumbnail'}
+                                          {isThumbnail ? 'Thumbnail' : 'Set as Thumbnail'}
                                         </Button>
                                       </TableCell>
                                       <TableCell sx={{ textAlign: 'center' }}>

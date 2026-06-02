@@ -3,6 +3,7 @@
 import type { RefObject } from "react";
 import { Avatar, Box, Stack, Typography } from "@mui/material";
 import { CustomLoading } from "@/components/CustomLoading";
+import { SupportRichMessage } from "@/components/chat/customer-chat-widget/SupportRichMessage";
 import type { ChatMessageView, ChatSession } from "./types";
 
 type Props = {
@@ -123,16 +124,7 @@ export function MessageList({
                     // borderTopRightRadius: isMine ? 1 : 3,
                   }}
                 >
-                  <Typography
-                    sx={{
-                      fontSize: 14,
-                      lineHeight: 1.5,
-                      whiteSpace: "pre-wrap",
-                      wordBreak: "break-word",
-                    }}
-                  >
-                    {entry.text}
-                  </Typography>
+                  <SupportRichMessage text={entry.text} isMine={isMine} />
                 </Box>
                 <Typography
                   sx={{

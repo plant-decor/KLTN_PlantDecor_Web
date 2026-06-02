@@ -2,7 +2,17 @@
 
 import { Avatar, Badge, Box, Chip, InputBase, Stack, Typography } from "@mui/material";
 import { Search as SearchIcon } from "@mui/icons-material";
+import { extractServiceBookingUrl } from "@/lib/utils/serviceBookingLink";
 import type { ChatSession } from "./types";
+
+function getFriendlyPreview(text: string | null | undefined): string {
+  if (!text) return "";
+  const booking = extractServiceBookingUrl(text);
+  if (booking) {
+    return `${booking.packageName ?? "Gói dịch vụ chăm sóc cây"}`;
+  }
+  return text;
+}
 
 type Props = {
   sessions: ChatSession[];
@@ -160,7 +170,7 @@ export function ConversationListPanel({
                         fontWeight: session.unreadCount > 0 ? 800 : 400,
                       }}
                     >
-                      {session.previewText || session.summary}
+                      {getFriendlyPreview(session.previewText || session.summary)}
                     </Typography>
                     {session.unreadCount > 0 ? (
                       <Box

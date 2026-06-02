@@ -50,6 +50,12 @@ export default function ServiceRequestTable({
   const defaultColumns: Column[] = columns || [
     { id: 'id', label: 'ID', format: (value) => `#${value}` },
     {
+      id: 'servicePackage',
+      label: t('package'),
+      maxWidth: 180,
+      format: (_value, row) => row.servicePackage?.name ?? '-',
+    },
+    {
       id: 'serviceDate',
       label: t('serviceDate'),
       format: (value) => {

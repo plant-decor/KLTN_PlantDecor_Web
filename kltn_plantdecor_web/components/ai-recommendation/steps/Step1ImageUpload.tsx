@@ -87,12 +87,16 @@ export default function Step1ImageUpload({
     setLocalError(null);
     try {
       const result = await analyzeRoomOnlyUpload(imagesByViewAngle);
-      if (result?.roomType) {
+      if (!result) {
+        setLocalError('Could not detect room type. Please try again.');
+      } else if (result.roomType === 'Not Related') {
+        setDetectedRoomType('Not Related');
+        onRoomTypeChange('');
+        setIsOverriding(false);
+      } else {
         setDetectedRoomType(result.roomType);
         onRoomTypeChange(result.roomType);
         setIsOverriding(false);
-      } else {
-        setLocalError('Could not detect room type. Please try again.');
       }
     } catch {
       setLocalError('Failed to analyze room. Please try again.');
@@ -281,7 +285,26 @@ export default function Step1ImageUpload({
           </Box>
         )}
 
-        {detectedRoomType && !isDetecting && (
+        {detectedRoomType === 'Not Related' && !isDetecting && (
+          <Alert
+            severity="warning"
+            sx={{ mb: 2 }}
+            action={
+              <Button color="warning" size="small" onClick={() => { setDetectedRoomType(null); onRoomTypeChange(''); }}>
+                Dismiss
+              </Button>
+            }
+          >
+            <Typography variant="body2" fontWeight={600}>
+              Invalid image detected
+            </Typography>
+            <Typography variant="body2">
+              One or more photos do not appear to be room images. Please remove the invalid photo(s) and upload a valid room photo before continuing.
+            </Typography>
+          </Alert>
+        )}
+
+        {detectedRoomType && detectedRoomType !== 'Not Related' && !isDetecting && (
           <Box sx={{ mb: 2, p: 1.5, border: '1px solid', borderColor: 'success.light', borderRadius: 1, display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', bgcolor: 'success.50' }}>
             <AutoAwesomeIcon color="success" fontSize="small" />
             <Typography variant="body2" fontWeight={600}>
@@ -309,8 +332,8 @@ export default function Step1ImageUpload({
             onChange={(e) => onRoomTypeChange(e.target.value)}
             select
             fullWidth
-            disabled={detectedRoomType !== null && !isOverriding}
-            helperText={detectedRoomType && !isOverriding ? 'AI detected result (click Override to change)' : ' '}
+            disabled={detectedRoomType !== null && detectedRoomType !== 'Not Related' && !isOverriding}
+            helperText={detectedRoomType && detectedRoomType !== 'Not Related' && !isOverriding ? 'AI detected result (click Override to change)' : ' '}
           >
             {roomTypeOptions.map((opt) => (
               <MenuItem key={opt.value} value={opt.name}>
@@ -350,7 +373,7 @@ export default function Step1ImageUpload({
             variant="contained"
             size="large"
             onClick={onNext}
-            disabled={!hasAnyImage || isDetecting || !detectedRoomType}
+            disabled={!hasAnyImage || isDetecting || !detectedRoomType || detectedRoomType === 'Not Related'}
             sx={{ backgroundColor: 'var(--primary)', fontWeight: 600, ...hoverLiftStyle }}
           >
             Next

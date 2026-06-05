@@ -166,6 +166,37 @@ export async function getRecommendedPackagesByPlant(
   return getPayloadFromResponse(response) ?? { recommendations: [] };
 }
 
+export async function confirmNurseryOrderReceived(nurseryOrderId: number): Promise<Order> {
+  const response = await patch<MyOrderDetailResponse & ApiResponseFallback<Order>>(
+    `${ORDER_ENDPOINT}/nursery-orders/${nurseryOrderId}/confirm-received`,
+    {},
+    false,
+    false
+  );
+  const payload = getPayloadFromResponse(response);
+  if (!payload) {
+    throw new Error('Cannot confirm nursery order received');
+  }
+  return payload;
+}
+
+export async function confirmNurseryOrderNotReceived(
+  nurseryOrderId: number,
+  reason: string
+): Promise<Order> {
+  const response = await patch<MyOrderDetailResponse & ApiResponseFallback<Order>>(
+    `${ORDER_ENDPOINT}/nursery-orders/${nurseryOrderId}/confirm-not-received`,
+    { reason },
+    false,
+    false
+  );
+  const payload = getPayloadFromResponse(response);
+  if (!payload) {
+    throw new Error('Cannot confirm nursery order not received');
+  }
+  return payload;
+}
+
 export async function cancelOrder(orderId: number): Promise<Order> {
   const response = await patch<MyOrderDetailResponse & ApiResponseFallback<Order>>(
     `${ORDER_ENDPOINT}/${orderId}/cancel`,

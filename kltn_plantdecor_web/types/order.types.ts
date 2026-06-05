@@ -19,7 +19,8 @@ export type OrderStatusName =
   | 'RefundRequested'
   | 'Refunded'
   | 'Rejected'
-  | 'PendingConfirmation';
+  | 'PendingConfirmation'
+  | 'Confirmed';
 
 export type BuyNowItemType = 1 | 2 | 3;
 

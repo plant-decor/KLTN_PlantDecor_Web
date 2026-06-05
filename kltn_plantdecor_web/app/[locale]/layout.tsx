@@ -6,6 +6,7 @@ import { routing } from "@/i18n/routing";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 
 import { ToastProvider } from "@/components/providers/ToastProvider";
+import { ChatNotificationProvider } from "@/components/providers/ChatNotificationProvider";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
 import { SessionInvalidatedModal } from "@/components/auth/SessionInvalidatedModal";
 import type { Metadata } from "next";
@@ -75,6 +76,7 @@ export default async function LocaleLayout({
     <NextIntlClientProvider locale={locale} messages={messages}>
       <AuthProvider initialUser={initialUser}>
         <ToastProvider />
+        <ChatNotificationProvider />
         <LoadingOverlay />
         <SessionInvalidatedModal />
         {children}

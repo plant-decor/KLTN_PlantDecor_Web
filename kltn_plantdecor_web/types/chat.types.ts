@@ -17,6 +17,7 @@ export interface SupportConversationParticipant {
   phoneNumber: string | null;
   avatarUrl: string | null;
   joinedAt: string;
+  isOnline?: boolean;
 }
 
 export interface SupportConversationMessage {

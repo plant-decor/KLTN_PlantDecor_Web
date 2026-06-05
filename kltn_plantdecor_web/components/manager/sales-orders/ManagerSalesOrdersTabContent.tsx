@@ -9,12 +9,14 @@ import {
   markManagerNurseryOrderAsAssigned,
   markManagerNurseryOrderAsCancelled,
   markManagerNurseryOrderAsCompleted,
+  refundManagerNurseryOrder,
 } from '@/lib/api/managerSalesOrdersService';
 import type {
   ManagerNurseryOrder,
   ManagerNurseryOrderDetail,
   ManagerNurseryOrderListPayload,
   ManagerNurseryOrderStatus,
+  RefundNurseryOrderRequest,
 } from '@/types/manager-sales-orders.types';
 import ManagerSalesOrderDetailDialog from './ManagerSalesOrderDetailDialog';
 import ManagerSalesOrdersHeader from './ManagerSalesOrdersHeader';
@@ -134,6 +136,17 @@ export default function ManagerSalesOrdersTabContent() {
     toast.success('Order cancelled successfully');
     await loadList();
   };
+
+  const handleRefund = async (item: ManagerNurseryOrder, request: RefundNurseryOrderRequest) => {
+    try {
+      await refundManagerNurseryOrder(item.id, request, false);
+      toast.success('Order refunded successfully');
+      await loadList();
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to refund order'));
+    }
+  };
+
   return (
     <>
       <ManagerSalesOrdersHeader
@@ -174,6 +187,7 @@ export default function ManagerSalesOrdersTabContent() {
             onRedelivery={(item) => void handleRedelivery(item)}
             onMarkCompleted={(item) => void handleMarkCompleted(item.id)}
             onCancel={(item) => void handleCancel(item.id)}
+            onRefund={(item, request) => void handleRefund(item, request)}
           />
         )}
       </Paper>

@@ -75,3 +75,9 @@ export interface ManagerNurseryOrdersListQuery {
   pageNumber?: number;
   pageSize?: number;
 }
+
+export interface RefundNurseryOrderRequest {
+  refundedAmount: number;
+  refundReference?: string;
+  managerRefundNote?: string;
+}

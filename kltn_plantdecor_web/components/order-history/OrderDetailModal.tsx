@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Alert,
   Box,
@@ -19,6 +19,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TextField,
   Typography,
 } from '@mui/material';
 import { useTranslations } from 'next-intl';
@@ -46,9 +47,13 @@ interface OrderDetailModalProps {
   retryLoadingOrderId: number | null;
   paymentLoadingInvoiceId: number | null;
   cancelLoadingOrderId: number | null;
+  confirmLoadingNurseryOrderId: number | null;
+  notReceivedLoadingNurseryOrderId: number | null;
   creatingReturnTicket: boolean;
   onPayInvoice: (invoiceId: number) => Promise<void>;
   onCancelOrder: (orderId: number) => Promise<void>;
+  onConfirmNurseryOrderReceived: (nurseryOrderId: number) => Promise<void>;
+  onConfirmNurseryOrderNotReceived: (nurseryOrderId: number, reason: string) => Promise<void>;
   onCreateReturnTicket: (orderId: number) => void;
   onClose: () => void;
 }
@@ -61,13 +66,21 @@ export default function OrderDetailModal({
   retryLoadingOrderId,
   paymentLoadingInvoiceId,
   cancelLoadingOrderId,
+  confirmLoadingNurseryOrderId,
+  notReceivedLoadingNurseryOrderId,
   creatingReturnTicket,
   onPayInvoice,
   onCancelOrder,
+  onConfirmNurseryOrderReceived,
+  onConfirmNurseryOrderNotReceived,
   onCreateReturnTicket,
   onClose,
 }: OrderDetailModalProps) {
   const tOrderHistory = useTranslations('orderHistory');
+  const [notReceivedDialogOpen, setNotReceivedDialogOpen] = useState(false);
+  const [notReceivedNurseryOrderId, setNotReceivedNurseryOrderId] = useState<number | null>(null);
+  const [notReceivedReason, setNotReceivedReason] = useState('');
+  const [notReceivedReasonError, setNotReceivedReasonError] = useState('');
   const statusInfo = order ? getStatusInfo(order.statusName) : null;
   const isServiceOrder = !!order && SERVICE_ORDER_TYPES.includes(order.orderType);
   const isTierPackageOrder = order?.orderType === TIER_PACKAGE_ORDER_TYPE;
@@ -84,6 +97,32 @@ export default function OrderDetailModal({
     );
   }, [order]);
   const isCancelling = !!order && cancelLoadingOrderId === order.id;
+
+  const openNotReceivedDialog = (nurseryOrderId: number) => {
+    setNotReceivedNurseryOrderId(nurseryOrderId);
+    setNotReceivedReason('');
+    setNotReceivedReasonError('');
+    setNotReceivedDialogOpen(true);
+  };
+
+  const closeNotReceivedDialog = () => {
+    setNotReceivedDialogOpen(false);
+    setNotReceivedNurseryOrderId(null);
+    setNotReceivedReason('');
+    setNotReceivedReasonError('');
+  };
+
+  const handleNotReceivedSubmit = () => {
+    if (!notReceivedReason.trim()) {
+      setNotReceivedReasonError('Please enter a reason');
+      return;
+    }
+    if (notReceivedNurseryOrderId !== null) {
+      void onConfirmNurseryOrderNotReceived(notReceivedNurseryOrderId, notReceivedReason.trim());
+    }
+    closeNotReceivedDialog();
+  };
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
       <DialogTitle>
@@ -272,9 +311,38 @@ export default function OrderDetailModal({
                         </TableBody>
                       </Table>
                     </TableContainer>
-                    <Typography variant="body2" fontWeight="bold" sx={{ mt: 1 }} align="right">
-                      Subtotal: {formatCurrency(nurseryOrder.subTotalAmount, 'vi-VN')}
-                    </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1, gap: 1, flexWrap: 'wrap' }}>
+                      <Typography variant="body2" fontWeight="bold" align="right">
+                        Subtotal: {formatCurrency(nurseryOrder.subTotalAmount, 'vi-VN')}
+                      </Typography>
+                      {nurseryOrder.statusName === 'Delivered' ? (
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          <Button
+                            variant="outlined"
+                            color="error"
+                            size="small"
+                            sx={{ ...hoverLiftStyle }}
+                            onClick={() => openNotReceivedDialog(nurseryOrder.id)}
+                            disabled={notReceivedLoadingNurseryOrderId === nurseryOrder.id || confirmLoadingNurseryOrderId === nurseryOrder.id || isCancelling}
+                          >
+                            {notReceivedLoadingNurseryOrderId === nurseryOrder.id
+                              ? 'Submitting...'
+                              : 'Not Received'}
+                          </Button>
+                          <Button
+                            variant="contained"
+                            size="small"
+                            sx={{ backgroundColor: 'var(--primary)', ...hoverLiftStyle }}
+                            onClick={() => void onConfirmNurseryOrderReceived(nurseryOrder.id)}
+                            disabled={confirmLoadingNurseryOrderId === nurseryOrder.id || notReceivedLoadingNurseryOrderId === nurseryOrder.id || isCancelling}
+                          >
+                            {confirmLoadingNurseryOrderId === nurseryOrder.id
+                              ? 'Confirming...'
+                              : 'Confirm Received'}
+                          </Button>
+                        </Box>
+                      ) : null}
+                    </Box>
                   </Card>
                 ))}
                 <Typography variant="subtitle1" fontWeight="bold" gutterBottom align='right' sx={{ mt: 2, backgroundColor: 'var(--primary)', padding: 1, borderRadius: 1 }}>
@@ -396,6 +464,39 @@ export default function OrderDetailModal({
           Close
         </Button>
       </DialogActions>
+
+      <Dialog open={notReceivedDialogOpen} onClose={closeNotReceivedDialog} maxWidth="sm" fullWidth>
+        <DialogTitle>Report Not Received</DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Please describe why you did not receive this order.
+          </Typography>
+          <TextField
+            label="Reason"
+            required
+            fullWidth
+            multiline
+            rows={3}
+            size="small"
+            value={notReceivedReason}
+            onChange={(e) => {
+              setNotReceivedReason(e.target.value);
+              setNotReceivedReasonError('');
+            }}
+            error={!!notReceivedReasonError}
+            helperText={notReceivedReasonError}
+            inputProps={{ maxLength: 255 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeNotReceivedDialog} color="inherit">
+            Cancel
+          </Button>
+          <Button onClick={handleNotReceivedSubmit} variant="contained" color="error">
+            Submit
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Dialog>
   );
 }

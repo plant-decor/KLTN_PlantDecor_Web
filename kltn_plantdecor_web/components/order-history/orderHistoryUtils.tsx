@@ -29,6 +29,8 @@ export function getStatusInfo(statusName: string): {
       return { color: 'primary', icon: <LocalShippingIcon /> };
     case 'PendingConfirmation':
       return { color: 'primary', icon: <HourglassTopIcon /> };
+    case 'Confirmed':
+      return { color: 'success', icon: <CheckCircleIcon /> };
     case 'Delivered':
       return { color: 'success', icon: <LocalShippingIcon /> };
     case 'RemainingPaymentPending':

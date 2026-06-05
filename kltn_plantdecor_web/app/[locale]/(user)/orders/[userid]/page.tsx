@@ -24,6 +24,8 @@ import ReturnTicketCreateDialog, {
 } from '@/components/order-history/ReturnTicketCreateDialog';
 import {
   cancelOrder,
+  confirmNurseryOrderNotReceived,
+  confirmNurseryOrderReceived,
   continuePaymentByInvoice,
   getPendingInvoicesForCurrentUser,
   getInvoicesByOrderId,
@@ -62,6 +64,8 @@ export default function OrdersPage() {
   const [cancelLoadingOrderId, setCancelLoadingOrderId] = useState<number | null>(null);
   const [cancelError, setCancelError] = useState('');
   const [cancelConfirmOrderId, setCancelConfirmOrderId] = useState<number | null>(null);
+  const [confirmLoadingNurseryOrderId, setConfirmLoadingNurseryOrderId] = useState<number | null>(null);
+  const [notReceivedLoadingNurseryOrderId, setNotReceivedLoadingNurseryOrderId] = useState<number | null>(null);
 
   const [detailOrder, setDetailOrder] = useState<Order | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -302,6 +306,38 @@ export default function OrdersPage() {
     setCancelError('');
   }, []);
 
+  const handleConfirmNurseryOrderReceived = useCallback(async (nurseryOrderId: number) => {
+    try {
+      setConfirmLoadingNurseryOrderId(nurseryOrderId);
+
+      const updatedOrder = await confirmNurseryOrderReceived(nurseryOrderId);
+
+      setDetailOrder(updatedOrder);
+      setOrders((prev) => prev.map((o) => (o.id === updatedOrder.id ? updatedOrder : o)));
+      toast.success('Nursery order confirmed successfully.');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Cannot confirm nursery order received.');
+    } finally {
+      setConfirmLoadingNurseryOrderId(null);
+    }
+  }, []);
+
+  const handleConfirmNurseryOrderNotReceived = useCallback(async (nurseryOrderId: number, reason: string) => {
+    try {
+      setNotReceivedLoadingNurseryOrderId(nurseryOrderId);
+
+      const updatedOrder = await confirmNurseryOrderNotReceived(nurseryOrderId, reason);
+
+      setDetailOrder(updatedOrder);
+      setOrders((prev) => prev.map((o) => (o.id === updatedOrder.id ? updatedOrder : o)));
+      toast.success('Not received report submitted successfully.');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Cannot submit not received report.');
+    } finally {
+      setNotReceivedLoadingNurseryOrderId(null);
+    }
+  }, []);
+
   const handleOpenReturnDialog = useCallback(async (orderId: number) => {
     try {
       setCreatingReturnTicket(true);
@@ -439,9 +475,13 @@ export default function OrdersPage() {
         retryLoadingOrderId={retryLoadingOrderId}
         paymentLoadingInvoiceId={paymentLoadingInvoiceId}
         cancelLoadingOrderId={cancelLoadingOrderId}
+        confirmLoadingNurseryOrderId={confirmLoadingNurseryOrderId}
+        notReceivedLoadingNurseryOrderId={notReceivedLoadingNurseryOrderId}
         creatingReturnTicket={creatingReturnTicket}
         onPayInvoice={handlePayInvoice}
         onCancelOrder={handleCancelOrder}
+        onConfirmNurseryOrderReceived={handleConfirmNurseryOrderReceived}
+        onConfirmNurseryOrderNotReceived={handleConfirmNurseryOrderNotReceived}
         onCreateReturnTicket={handleOpenReturnDialog}
         onClose={closeDetailModal}
       />

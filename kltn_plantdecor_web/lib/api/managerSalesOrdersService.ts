@@ -7,6 +7,7 @@ import type {
   ManagerNurseryOrderListPayload,
   ManagerNurseryOrdersListQuery,
   ManagerNurseryOrderShipper,
+  RefundNurseryOrderRequest,
 } from '@/types/manager-sales-orders.types';
 import type {
   NurseryFailedOrdersPayload,
@@ -195,6 +196,20 @@ export const markManagerNurseryOrderAsCancelled = async (
   const response = await apiClient.put<ResponseModel<ManagerNurseryOrderDetail>>(
     `manager/nursery-orders/${nurseryOrderId}/cancel`,
     {},
+    loading,
+    { showToast: false, showErrorToast: false }
+  );
+  return unwrapPayloadData(response);
+};
+
+export const refundManagerNurseryOrder = async (
+  nurseryOrderId: number,
+  request: RefundNurseryOrderRequest,
+  loading = false
+): Promise<ManagerNurseryOrderDetail> => {
+  const response = await apiClient.put<ResponseModel<ManagerNurseryOrderDetail>>(
+    `/manager/nursery-orders/${nurseryOrderId}/refund`,
+    request,
     loading,
     { showToast: false, showErrorToast: false }
   );

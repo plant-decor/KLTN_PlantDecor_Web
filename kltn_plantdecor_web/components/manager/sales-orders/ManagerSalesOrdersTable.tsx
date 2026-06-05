@@ -20,9 +20,11 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
 import ImageIcon from '@mui/icons-material/Image';
 import ReplayIcon from '@mui/icons-material/Replay';
-import type { ManagerNurseryOrder } from '@/types/manager-sales-orders.types';
+import CurrencyExchangeIcon from '@mui/icons-material/CurrencyExchange';
+import type { ManagerNurseryOrder, RefundNurseryOrderRequest } from '@/types/manager-sales-orders.types';
 import FullscreenImageModal from '@/components/image-view/FullscreenImageModal';
 import RedeliveryConfirmationModal from './RedeliveryConfirmationModal';
+import RefundNurseryOrderDialog from './RefundNurseryOrderDialog';
 import {
   SALES_ORDER_STATUS_CHIP_COLOR,
   SALES_ORDER_STATUS_LABELS,
@@ -50,6 +52,7 @@ interface ManagerSalesOrdersTableProps {
   onRedelivery?: (item: ManagerNurseryOrder) => void;
   onMarkCompleted?: (item: ManagerNurseryOrder) => void;
   onCancel?: (item: ManagerNurseryOrder) => void;
+  onRefund?: (item: ManagerNurseryOrder, request: RefundNurseryOrderRequest) => void;
 }
 
 export default function ManagerSalesOrdersTable({
@@ -64,6 +67,7 @@ export default function ManagerSalesOrdersTable({
   onRedelivery,
   onMarkCompleted,
   onCancel,
+  onRefund,
 }: ManagerSalesOrdersTableProps) {
   const [shipImageOpen, setShipImageOpen] = useState(false);
   const [shipImageUrl, setShipImageUrl] = useState<string | null>(null);
@@ -73,6 +77,8 @@ export default function ManagerSalesOrdersTable({
   const [redeliveryTarget, setRedeliveryTarget] = useState<ManagerNurseryOrder | null>(null);
   const [cancelTarget, setCancelTarget] = useState<ManagerNurseryOrder | null>(null);
   const [openConfirmCancel, setOpenConfirmCancel] = useState(false);
+  const [refundTarget, setRefundTarget] = useState<ManagerNurseryOrder | null>(null);
+  const [openRefundDialog, setOpenRefundDialog] = useState(false);
   const handleChangePage = (_event: unknown, newPage: number) => {
     onPageChange(newPage + 1);
   };
@@ -174,13 +180,11 @@ export default function ManagerSalesOrdersTable({
                     </TableCell>
                     <TableCell align="center">{item.items.length}</TableCell>
                     <TableCell align="center">
-                      {onAssignShipper ? (
-                        <Tooltip title={canAssignShipper ? 'Assign shipper' : 'Only for DepositPaid / Paid / Assigned'}>
-                          <span>
-                            <Button size="small" disabled={!canAssignShipper} onClick={() => onAssignShipper(item)}>
-                              <AssignmentIndIcon fontSize="medium" className="hover:scale-110" />
-                            </Button>
-                          </span>
+                      {onAssignShipper && canAssignShipper ? (
+                        <Tooltip title="Assign shipper">
+                          <Button size="small" onClick={() => onAssignShipper(item)}>
+                            <AssignmentIndIcon fontSize="medium" className="hover:scale-110" />
+                          </Button>
                         </Tooltip>
                       ) : null}
                       {onRedelivery && canRedeliver ? (
@@ -198,6 +202,16 @@ export default function ManagerSalesOrdersTable({
                             <CancelOutlined fontSize="medium" className="hover:scale-110" />
                           </Button>
                         </Tooltip>
+                        {onRefund ? (
+                          <Tooltip title="Refund">
+                            <Button size="small" onClick={() => {
+                              setRefundTarget(item);
+                              setOpenRefundDialog(true);
+                            }}>
+                              <CurrencyExchangeIcon fontSize="medium" className="hover:scale-110" />
+                            </Button>
+                          </Tooltip>
+                        ) : null}
                         </>
                       ) : null}
                       {item.deliveryImageUrl ? (
@@ -299,6 +313,22 @@ export default function ManagerSalesOrdersTable({
           }
           setOpenConfirmMarkCompleted(false);
           setMarkCompletedTarget(null);
+        }}
+      />
+
+      <RefundNurseryOrderDialog
+        open={openRefundDialog}
+        order={refundTarget}
+        onClose={() => {
+          setOpenRefundDialog(false);
+          setRefundTarget(null);
+        }}
+        onSubmit={(request) => {
+          if (refundTarget && onRefund) {
+            onRefund(refundTarget, request);
+          }
+          setOpenRefundDialog(false);
+          setRefundTarget(null);
         }}
       />
     </Box>

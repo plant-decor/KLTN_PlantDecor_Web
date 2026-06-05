@@ -9,6 +9,8 @@ export type MessageReceivedPayload = {
   sendAt: string;
 };
 
+export type NewMessageNotificationPayload = MessageReceivedPayload;
+
 export type TypingPayload = {
   conversationId: number;
   userId: number;
@@ -16,6 +18,7 @@ export type TypingPayload = {
 
 type ChatEventMap = {
   messageReceived: MessageReceivedPayload;
+  newMessageNotification: NewMessageNotificationPayload;
   userTyping: TypingPayload;
   userStoppedTyping: TypingPayload;
   reconnecting: Error | undefined;
@@ -107,12 +110,20 @@ class ChatHubService {
   private bindConnectionEvents(connection: signalR.HubConnection) {
     // tránh bind trùng nếu recreate connection
     connection.off("messageReceived");
+    connection.off("newMessageNotification");
     connection.off("userTyping");
     connection.off("userStoppedTyping");
 
     connection.on("messageReceived", (payload: MessageReceivedPayload) => {
       this.emit("messageReceived", payload);
     });
+
+    connection.on(
+      "newMessageNotification",
+      (payload: NewMessageNotificationPayload) => {
+        this.emit("newMessageNotification", payload);
+      },
+    );
 
     connection.on("userTyping", (payload: TypingPayload) => {
       this.emit("userTyping", payload);

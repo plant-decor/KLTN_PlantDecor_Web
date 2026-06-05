@@ -22,7 +22,10 @@ import { useSupportChatInput } from "@/hooks/chat/useSupportChatInput";
 import { useLatestActiveConversation } from "@/hooks/chat/useCustomerActiveConversations";
 import { startSupportConversation } from "@/lib/api/chatService";
 import { useAuthStore } from "@/lib/store/authStore";
-import { OPEN_SUPPORT_CHAT_EVENT } from "@/lib/constants/chat";
+import {
+  CHAT_MESSAGE_NOTIFICATION_EVENT,
+  OPEN_SUPPORT_CHAT_EVENT,
+} from "@/lib/constants/chat";
 import type { SupportConversationMessage } from "@/types/chat.types";
 import { CustomLoading } from "../CustomLoading";
 import { SupportRichMessage } from "./customer-chat-widget/SupportRichMessage";
@@ -59,6 +62,7 @@ const mapRealtimeMessages = (
 export default function SupportChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
+  const [hasUnreadMessage, setHasUnreadMessage] = useState(false);
 
   const widgetRef = useRef<HTMLDivElement | null>(null);
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
@@ -178,6 +182,7 @@ export default function SupportChatWidget() {
   useEffect(() => {
     const handleOpenSupportChat = () => {
       setIsOpen(true);
+      setHasUnreadMessage(false);
     };
 
     window.addEventListener(OPEN_SUPPORT_CHAT_EVENT, handleOpenSupportChat);
@@ -186,6 +191,30 @@ export default function SupportChatWidget() {
       window.removeEventListener(OPEN_SUPPORT_CHAT_EVENT, handleOpenSupportChat);
     };
   }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      setHasUnreadMessage(false);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    const handleChatMessageNotification = () => {
+      setHasUnreadMessage((current) => (isOpen ? current : true));
+    };
+
+    window.addEventListener(
+      CHAT_MESSAGE_NOTIFICATION_EVENT,
+      handleChatMessageNotification,
+    );
+
+    return () => {
+      window.removeEventListener(
+        CHAT_MESSAGE_NOTIFICATION_EVENT,
+        handleChatMessageNotification,
+      );
+    };
+  }, [isOpen]);
 
   return (
     <Box
@@ -480,40 +509,79 @@ export default function SupportChatWidget() {
           </Box>
         </Paper>
       ) : (
-        <Fab
-          onClick={() => setIsOpen(true)}
-          aria-label="Open chat support"
-          sx={{
-            width: 74,
-            height: 74,
-            borderRadius: 9999,
-            bgcolor: "#ffffff",
-            color: "white",
-            p: 0.5,
-            overflow: "hidden",
-            border: "2px solid #22c55e",
-            boxShadow: "0 10px 30px rgba(34,197,94,0.3)",
-            "&:hover": {
-              bgcolor: "#ffffff",
-              transform: "translateY(-2px)",
-              boxShadow: "0 14px 34px rgba(34,197,94,0.36)",
-            },
-            transition: "transform 0.2s ease, box-shadow 0.2s ease",
-          }}
-        >
-          <Image
-            src="/img/consultantChat.png"
-            alt="Open chat support"
-            width={68}
-            height={68}
-            style={{
-              width: "100%",
-              height: "100%",
-              borderRadius: "9999px",
-              objectFit: "cover",
+        <Box sx={{ position: "relative", width: 74, height: 74 }}>
+          <Fab
+            onClick={() => {
+              setIsOpen(true);
+              setHasUnreadMessage(false);
             }}
-          />
-        </Fab>
+            aria-label="Open chat support"
+            sx={{
+              width: 74,
+              height: 74,
+              borderRadius: 9999,
+              bgcolor: "#ffffff",
+              color: "white",
+              p: 0.5,
+              overflow: "hidden",
+              border: "2px solid #22c55e",
+              position: "relative",
+              zIndex: 1,
+              boxShadow: hasUnreadMessage
+                ? "0 10px 30px rgba(239,68,68,0.35)"
+                : "0 10px 30px rgba(34,197,94,0.3)",
+              "&:hover": {
+                bgcolor: "#ffffff",
+                transform: "translateY(-2px)",
+                boxShadow: hasUnreadMessage
+                  ? "0 14px 34px rgba(239,68,68,0.42)"
+                  : "0 14px 34px rgba(34,197,94,0.36)",
+              },
+              transition: "transform 0.2s ease, box-shadow 0.2s ease",
+            }}
+          >
+            <Image
+              src="/img/consultantChat.png"
+              alt="Open chat support"
+              width={68}
+              height={68}
+              style={{
+                width: "100%",
+                height: "100%",
+                borderRadius: "9999px",
+                objectFit: "cover",
+              }}
+            />
+          </Fab>
+
+          {hasUnreadMessage && (
+            <Box
+              aria-hidden="true"
+              sx={{
+                position: "absolute",
+                top: -4,
+                right: -4,
+                zIndex: 2,
+                width: 24,
+                height: 24,
+                borderRadius: "50%",
+                bgcolor: "#ef4444",
+                color: "#ffffff",
+                border: "2px solid #ffffff",
+                boxShadow: "0 6px 14px rgba(239,68,68,0.45)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 14,
+                fontWeight: 900,
+                lineHeight: 1,
+                pointerEvents: "none",
+              }}
+            >
+              !
+            </Box>
+          )}
+        </Box>
       )}
     </Box>
   );

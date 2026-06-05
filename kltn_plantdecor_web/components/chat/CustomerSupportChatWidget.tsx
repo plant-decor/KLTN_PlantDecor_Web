@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Avatar,
+  Badge,
   Box,
   Fab,
   IconButton,
@@ -22,6 +23,7 @@ import { useSupportChatInput } from "@/hooks/chat/useSupportChatInput";
 import { useLatestActiveConversation } from "@/hooks/chat/useCustomerActiveConversations";
 import { startSupportConversation } from "@/lib/api/chatService";
 import { useAuthStore } from "@/lib/store/authStore";
+import { chatHubService } from "@/lib/signalr/chatHubService";
 import {
   CHAT_MESSAGE_NOTIFICATION_EVENT,
   OPEN_SUPPORT_CHAT_EVENT,
@@ -63,9 +65,12 @@ export default function SupportChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
   const [hasUnreadMessage, setHasUnreadMessage] = useState(false);
+  const [consultantIsOnline, setConsultantIsOnline] = useState(false);
+  const [showOfflineReply, setShowOfflineReply] = useState(false);
 
   const widgetRef = useRef<HTMLDivElement | null>(null);
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
+  const pendingOfflineCheckRef = useRef(false);
 
   const user = useAuthStore((state) => state.user);
 
@@ -117,6 +122,32 @@ export default function SupportChatWidget() {
     [messages, user?.id],
   );
 
+  useEffect(() => {
+    setConsultantIsOnline(consultantParticipant?.isOnline ?? false);
+  }, [consultantParticipant]);
+
+  useEffect(() => {
+    const consultantId = consultantParticipant?.userId;
+    if (!consultantId) return;
+    const off = chatHubService.on("consultantStatusChanged", (payload) => {
+      if (payload.consultantId === consultantId) {
+        setConsultantIsOnline(payload.isOnline);
+        if (payload.isOnline) setShowOfflineReply(false);
+      }
+    });
+    return () => off();
+  }, [consultantParticipant?.userId]);
+
+  useEffect(() => {
+    setShowOfflineReply(false);
+  }, [conversationId]);
+
+  useEffect(() => {
+    if (!pendingOfflineCheckRef.current || !consultantParticipant) return;
+    pendingOfflineCheckRef.current = false;
+    if (!consultantIsOnline) setShowOfflineReply(true);
+  }, [consultantParticipant, consultantIsOnline]);
+
   useAutoScrollToBottom(chatScrollRef, {
     dependency: `${conversationId}:${isOpen ? 1 : 0}:${displayedMessages.length}:${isOtherUserTyping ? 1 : 0}`,
   });
@@ -131,6 +162,7 @@ export default function SupportChatWidget() {
         await startSupportConversation({ firstMessage: trimmed }, false);
 
         reset();
+        pendingOfflineCheckRef.current = true;
         await reloadConversation();
       } catch (err) {
         console.error(err);
@@ -142,6 +174,7 @@ export default function SupportChatWidget() {
 
     if (!canUseRealtime) return;
     await submit();
+    if (!consultantIsOnline) setShowOfflineReply(true);
   };
 
   useEffect(() => {
@@ -254,13 +287,21 @@ export default function SupportChatWidget() {
               spacing={1.25}
               sx={{ minWidth: 0 }}
             >
-              <Image
-                src="/img/consultantChat.png"
-                alt="Plant Decor consultant"
-                width={40}
-                height={40}
-                style={{ borderRadius: 9999, objectFit: "cover" }}
-              />
+              <Badge
+                overlap="circular"
+                variant="dot"
+                color="success"
+                invisible={!consultantIsOnline}
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+              >
+                <Image
+                  src="/img/consultantChat.png"
+                  alt="Plant Decor consultant"
+                  width={40}
+                  height={40}
+                  style={{ borderRadius: 9999, objectFit: "cover" }}
+                />
+              </Badge>
 
               <Box sx={{ minWidth: 0 }}>
                 <Typography
@@ -274,6 +315,17 @@ export default function SupportChatWidget() {
                 >
                   Chat support
                 </Typography>
+                {conversationId !== null && (
+                  <Typography
+                    sx={{
+                      fontSize: 11.5,
+                      color: consultantIsOnline ? "#16a34a" : "#94a3b8",
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {consultantIsOnline ? "Online" : "Offline"}
+                  </Typography>
+                )}
               </Box>
             </Stack>
 
@@ -426,6 +478,26 @@ export default function SupportChatWidget() {
                   )}
                 </Box>
               ))}
+
+              {showOfflineReply && (
+                <Box sx={{ display: "flex", justifyContent: "center", my: 0.5 }}>
+                  <Box
+                    sx={{
+                      px: 2,
+                      py: 1,
+                      borderRadius: 3,
+                      bgcolor: "rgba(148,163,184,0.12)",
+                      border: "1px solid rgba(148,163,184,0.28)",
+                      fontSize: 13,
+                      color: "#475569",
+                      textAlign: "center",
+                      maxWidth: "88%",
+                    }}
+                  >
+                    Consultant is offline, customer can use chatbot in the meantime.
+                  </Box>
+                </Box>
+              )}
 
               {isOtherUserTyping && (
                 <Typography sx={{ fontSize: 12, color: "#64748b" }}>

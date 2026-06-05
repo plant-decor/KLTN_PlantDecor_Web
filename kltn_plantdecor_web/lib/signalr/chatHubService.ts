@@ -16,11 +16,17 @@ export type TypingPayload = {
   userId: number;
 };
 
+export type ConsultantStatusChangedPayload = {
+  consultantId: number;
+  isOnline: boolean;
+};
+
 type ChatEventMap = {
   messageReceived: MessageReceivedPayload;
   newMessageNotification: NewMessageNotificationPayload;
   userTyping: TypingPayload;
   userStoppedTyping: TypingPayload;
+  consultantStatusChanged: ConsultantStatusChangedPayload;
   reconnecting: Error | undefined;
   reconnected: string | undefined;
   closed: Error | undefined;
@@ -113,6 +119,7 @@ class ChatHubService {
     connection.off("newMessageNotification");
     connection.off("userTyping");
     connection.off("userStoppedTyping");
+    connection.off("consultantStatusChanged");
 
     connection.on("messageReceived", (payload: MessageReceivedPayload) => {
       this.emit("messageReceived", payload);
@@ -132,6 +139,13 @@ class ChatHubService {
     connection.on("userStoppedTyping", (payload: TypingPayload) => {
       this.emit("userStoppedTyping", payload);
     });
+
+    connection.on(
+      "consultantStatusChanged",
+      (payload: ConsultantStatusChangedPayload) => {
+        this.emit("consultantStatusChanged", payload);
+      },
+    );
 
     connection.onreconnecting((error) => {
       this.emit("reconnecting", error);

@@ -49,7 +49,7 @@ export const ServiceRequestList: React.FC<ServiceRequestListProps> = ({
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Typography variant="h5" sx={{ fontWeight: "bold", mb: 2 }}>
-        📋 Yêu Cầu Dịch Vụ Chờ Xác Nhận ({requests.length})
+        Yêu Cầu Dịch Vụ Chờ Xác Nhận ({requests.length})
       </Typography>
 
       <Grid container spacing={2}>
@@ -125,7 +125,7 @@ export const ServiceRequestList: React.FC<ServiceRequestListProps> = ({
                 {request.note && (
                   <Box sx={{ mt: 2, p: 1.5, bgcolor: "#fff3e0", borderRadius: 1 }}>
                     <Typography variant="caption" sx={{ fontWeight: "bold" }}>
-                      📝 Ghi chú khách hàng:
+                      Ghi chú khách hàng:
                     </Typography>
                     <Typography variant="body2" sx={{ mt: 0.5 }}>
                       {request.note}

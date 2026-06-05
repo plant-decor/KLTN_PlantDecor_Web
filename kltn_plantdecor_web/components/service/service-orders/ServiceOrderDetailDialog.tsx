@@ -22,6 +22,7 @@ import {
   getStatusChipColor,
 } from './managerServiceOrders.constants';
 import ServiceRatingReadOnlySection from '@/components/service/ServiceRatingReadOnlySection';
+import ManagerServiceProgressSection from '@/components/service/ManagerServiceProgressSection';
 import { formatCurrency } from '@/lib/utils/formatUtil';
 import { formatDate } from '@/lib/utils/dateUtils';
 interface ServiceOrderDetailDialogProps {
@@ -36,6 +37,7 @@ interface ServiceOrderDetailDialogProps {
   onCancel: (item: ManagerServiceRegistration) => void;
   onAssignCaretaker: (item: ManagerServiceRegistration) => void;
   onReschedule: (item: ManagerServiceRegistration) => void;
+  onAnyProgressReviewed?: () => void;
 }
 
 export default function ServiceOrderDetailDialog({
@@ -50,6 +52,7 @@ export default function ServiceOrderDetailDialog({
   onCancel,
   onAssignCaretaker,
   onReschedule,
+  onAnyProgressReviewed,
 }: ServiceOrderDetailDialogProps) {
   return (
     <Dialog
@@ -134,6 +137,14 @@ export default function ServiceOrderDetailDialog({
             <Typography>
               <strong>Approved at:</strong> {detailItem.approvedAt ? formatDate(detailItem.approvedAt) : '-'}
             </Typography>
+
+            <Divider sx={{ my: 1 }} />
+
+            <ManagerServiceProgressSection
+              registrationId={detailItem.id}
+              enabled={open && Boolean(detailItem) && !loading}
+              onAnyReviewed={onAnyProgressReviewed}
+            />
 
             <Divider sx={{ my: 1 }} />
 

@@ -111,6 +111,7 @@ export function RecommendationSidebar({
         locale,
         userId: customerId,
         packageId: recommendation.packageId,
+        packageName: recommendation.packageName,
         action: "book",
       });
 

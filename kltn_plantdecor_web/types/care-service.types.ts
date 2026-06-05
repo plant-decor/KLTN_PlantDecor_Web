@@ -158,6 +158,8 @@ export interface ServiceRegistrationProgress {
   action: string;
   description: string;
   createdAt: string;
+  customerFeedback: string | null;
+  isReviewed: boolean;
 }
 
 export interface ServiceRegistrationRating {
@@ -302,6 +304,8 @@ export interface NurseryServiceScheduleItem {
   incidentImageUrl: string | null;
   hasIncidents: boolean;
   evidenceImageUrl: string | null;
+  customerFeedback?: string | null;
+  isReviewed?: boolean;
   shift: ServiceProgressShift | null;
   caretaker: ServiceProgressCaretaker | null;
   customer?: {

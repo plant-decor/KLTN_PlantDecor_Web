@@ -32,9 +32,11 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import MyLocationIcon from '@mui/icons-material/MyLocation';
 import PaymentIcon from '@mui/icons-material/Payment';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import ImageIcon from '@mui/icons-material/Image';
 import { toast } from 'react-toastify';
 import { CustomLoading } from '@/components/CustomLoading';
 import EmptyState from '@/components/service/EmptyState';
@@ -46,7 +48,9 @@ import {
   getDesignFlowEnums,
   getDesignRegistrationDetail,
   getMyDesignRegistrations,
+  postDesignTaskCustomerComment,
 } from '@/lib/api/designRegistrationService';
+import { DESIGN_TASK_STATUS } from '@/components/service/service-orders/utils/designStatusConstants';
 import {
   getDesignTemplateTierNurseries,
   getMarketedDesignTemplates,
@@ -65,6 +69,8 @@ import type {
 import { formatDate } from '@/lib/utils/dateUtils';
 import { formatCurrency } from '@/lib/utils/formatUtil';
 import ClickableImageViewer from '../image-view/ClickableImageViewer';
+import FullscreenImageModal from '../image-view/FullscreenImageModal';
+import FeedbackModal from '@/components/feedback/FeedbackModal';
 
 const DESIGN_STATUS = {
   PendingApproval: 1,
@@ -142,6 +148,8 @@ export default function DesignRegistrationPageClient() {
   const [cancelTarget, setCancelTarget] = useState<CustomerDesignRegistrationListItem | null>(null);
   const [cancelReason, setCancelReason] = useState('');
   const [paymentSubmittingId, setPaymentSubmittingId] = useState<number | null>(null);
+  const [fullscreenImageUrl, setFullscreenImageUrl] = useState<string | null>(null);
+  const [feedbackTask, setFeedbackTask] = useState<{ id: number; typeName: string; feedback?: string | null } | null>(null);
 
   const [addressInputValue, setAddressInputValue] = useState('');
   const [addressSuggestions, setAddressSuggestions] = useState<AddressSuggestion[]>([]);
@@ -504,6 +512,22 @@ export default function DesignRegistrationPageClient() {
     }
   };
 
+  const handleSubmitTaskFeedback = async (comment: string) => {
+    if (!feedbackTask) return;
+    await postDesignTaskCustomerComment(feedbackTask.id, comment, false);
+    setDetailItem((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        designTasks: prev.designTasks.map((t) =>
+          t.id === feedbackTask.id ? { ...t, customerFeedback: comment } : t
+        ),
+      };
+    });
+    setFeedbackTask(null);
+    toast.success('Feedback submitted');
+  };
+
   const canCustomerCancel = (item: CustomerDesignRegistrationListItem) => {
     if (FINAL_DESIGN_STATUS.has(item.status)) {
       return false;
@@ -849,17 +873,47 @@ export default function DesignRegistrationPageClient() {
                           <TableCell>Status</TableCell>
                           <TableCell>Scheduled</TableCell>
                           <TableCell>Staff</TableCell>
+                          <TableCell>Report</TableCell>
+                          <TableCell>Feedback</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {detailItem.designTasks.map((task) => (
+                        {detailItem.designTasks.map((task) => {
+                          const isCompleted = task.status === DESIGN_TASK_STATUS.Completed;
+                          return (
                           <TableRow key={task.id}>
                             <TableCell>{taskTypeLabels[task.taskType] || formatEnumLabel(task.taskTypeName) || `#${task.taskType}`}</TableCell>
                             <TableCell>{taskStatusLabels[task.status] || formatEnumLabel(task.statusName) || `#${task.status}`}</TableCell>
                             <TableCell>{task.scheduledDate ? formatDate(task.scheduledDate) : '-'}</TableCell>
                             <TableCell>{task.assignedStaff?.fullName || '-'}</TableCell>
+                            <TableCell>
+                              {task.reportImageUrl?.trim() ? (
+                                <Tooltip title="View report image">
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => setFullscreenImageUrl(task.reportImageUrl!)}
+                                  >
+                                    <ImageIcon fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+                              ) : '-'}
+                            </TableCell>
+                            <TableCell>
+                              {(isCompleted || task.customerFeedback) ? (
+                                <Tooltip title={task.customerFeedback ? 'View feedback' : 'Leave feedback'}>
+                                  <IconButton
+                                    size="small"
+                                    color={task.customerFeedback ? 'info' : 'default'}
+                                    onClick={() => setFeedbackTask({ id: task.id, typeName: taskTypeLabels[task.taskType] || task.taskTypeName, feedback: task.customerFeedback })}
+                                  >
+                                    <ChatBubbleOutlineIcon fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+                              ) : '-'}
+                            </TableCell>
                           </TableRow>
-                        ))}
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </TableContainer>
@@ -905,6 +959,21 @@ export default function DesignRegistrationPageClient() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <FeedbackModal
+        open={Boolean(feedbackTask)}
+        onClose={() => setFeedbackTask(null)}
+        title={feedbackTask ? `${feedbackTask.typeName} — Feedback` : 'Task Feedback'}
+        existingFeedback={feedbackTask?.feedback}
+        onSubmit={feedbackTask?.feedback ? undefined : handleSubmitTaskFeedback}
+      />
+
+      <FullscreenImageModal
+        images={fullscreenImageUrl ? [fullscreenImageUrl] : []}
+        isOpen={Boolean(fullscreenImageUrl)}
+        onClose={() => setFullscreenImageUrl(null)}
+        alt="Task report"
+      />
 
       <Dialog open={Boolean(cancelTarget)} onClose={() => setCancelTarget(null)} fullWidth maxWidth="sm">
         <DialogTitle>{cancelTarget ? `Cancel design registration #${cancelTarget.id}` : 'Cancel design registration'}</DialogTitle>

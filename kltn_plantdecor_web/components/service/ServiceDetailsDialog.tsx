@@ -19,6 +19,7 @@ import { ServiceRegistrationStatusEnum } from '@/types/care-service.types';
 import ServiceStatusChip from './ServiceStatusChip';
 import { CustomLoading } from '@/components/CustomLoading';
 import ServiceRatingReadOnlySection from '@/components/service/ServiceRatingReadOnlySection';
+import CustomerServiceProgressSection from '@/components/service/CustomerServiceProgressSection';
 import { formatCurrency } from '@/lib/utils/formatUtil';
 import { formatDate, formatDateTime } from '@/lib/utils/dateUtils';
 
@@ -199,18 +200,34 @@ export default function ServiceDetailsDialog({
               (Number.isFinite(statusNum) &&
                 statusNum === ServiceRegistrationStatusEnum.Completed) ||
               normalizeDetailStatusName(service.statusNameRaw) === 'completed';
-            return isDetailCompleted ? (
-              <Grid size={{ xs: 12 }}>
-                <Divider sx={{ my: 2 }} />
-                <ServiceRatingReadOnlySection
-                  key={`detail-rating-${service.id}-${customerRatingRefreshKey}`}
-                  registrationId={service.id}
-                  enabled={open && !loading}
-                  embeddedRating={service.rating ?? null}
-                  ratedCustomerName={service.customerName ?? null}
-                />
-              </Grid>
-            ) : null;
+            const showProgress =
+              statusNum === ServiceRegistrationStatusEnum.Active ||
+              isDetailCompleted;
+            return (
+              <>
+                {showProgress && (
+                  <Grid size={{ xs: 12 }}>
+                    <Divider sx={{ my: 2 }} />
+                    <CustomerServiceProgressSection
+                      registrationId={service.id}
+                      enabled={open && !loading}
+                    />
+                  </Grid>
+                )}
+                {isDetailCompleted && (
+                  <Grid size={{ xs: 12 }}>
+                    <Divider sx={{ my: 2 }} />
+                    <ServiceRatingReadOnlySection
+                      key={`detail-rating-${service.id}-${customerRatingRefreshKey}`}
+                      registrationId={service.id}
+                      enabled={open && !loading}
+                      embeddedRating={service.rating ?? null}
+                      ratedCustomerName={service.customerName ?? null}
+                    />
+                  </Grid>
+                )}
+              </>
+            );
           })()}
         </Grid>
         )}

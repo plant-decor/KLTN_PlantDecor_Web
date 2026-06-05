@@ -372,7 +372,7 @@ export default function ProductModal({
                           disabled={formData.thumbnailInstanceId === instance.id}
                         >
                           {formData.thumbnailInstanceId === instance.id
-                            ? '✓ Thumbnail'
+                            ? 'Thumbnail'
                             : 'Set'}
                         </Button>
                       </TableCell>

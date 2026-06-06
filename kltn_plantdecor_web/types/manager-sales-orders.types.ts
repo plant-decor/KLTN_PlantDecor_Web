@@ -55,6 +55,7 @@ export interface ManagerNurseryOrder {
   shipperNote: string | null;
   deliveryNote: string | null;
   deliveryImageUrl?: string | null;
+  customerNotReceivedReason?: string | null;
   note: string;
   items: ManagerNurseryOrderItem[];
 }

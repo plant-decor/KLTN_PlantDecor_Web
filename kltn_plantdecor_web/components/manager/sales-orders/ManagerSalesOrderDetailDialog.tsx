@@ -261,6 +261,13 @@ export default function ManagerSalesOrderDetailDialog({
                   <DetailLine label="Phone" value={detailItem.shipperPhone || '-'} />
                   <DetailLine label="Shipper note" value={detailItem.shipperNote || '-'} />
                   <DetailLine label="Delivery note" value={detailItem.deliveryNote || '-'} />
+                  {detailItem.customerNotReceivedReason ? (
+                    <Box sx={{ p: 1, bgcolor: 'error.50', border: '1px solid', borderColor: 'error.200', borderRadius: 1 }}>
+                      <Typography variant="body2" color="error.main">
+                        <strong>Customer not received reason:</strong> {detailItem.customerNotReceivedReason}
+                      </Typography>
+                    </Box>
+                  ) : null}
                   {detailItem.deliveryImageUrl ? (
                     <Box sx={{ pt: 0.5 }}>
                       <Button variant="outlined" size="small" onClick={() => setDeliveryImageOpen(true)}>

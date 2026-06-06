@@ -9,6 +9,7 @@ import {
   markManagerNurseryOrderAsAssigned,
   markManagerNurseryOrderAsCancelled,
   markManagerNurseryOrderAsCompleted,
+  markManagerNurseryOrderAsPendingConfirmation,
   refundManagerNurseryOrder,
 } from '@/lib/api/managerSalesOrdersService';
 import type {
@@ -126,6 +127,16 @@ export default function ManagerSalesOrdersTabContent() {
       toast.error(getErrorMessage(error, 'Failed to mark order for redelivery'));
     }
   };
+
+  const handlePendingConfirmation = async (item: ManagerNurseryOrder) => {
+    try {
+      await markManagerNurseryOrderAsPendingConfirmation(item.id);
+      toast.success('Order moved to Pending Confirmation successfully');
+      await loadList();
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to move order to Pending Confirmation'));
+    }
+  };
   const handleMarkCompleted = async (nurseryOrderId: number) => {
     await markManagerNurseryOrderAsCompleted(nurseryOrderId);
     toast.success('Order marked as completed successfully');
@@ -185,6 +196,7 @@ export default function ManagerSalesOrdersTabContent() {
             onViewDetail={(item) => void handleViewDetail(item)}
             onAssignShipper={(item) => void handleAssignShipper(item)}
             onRedelivery={(item) => void handleRedelivery(item)}
+            onPendingConfirmation={(item) => void handlePendingConfirmation(item)}
             onMarkCompleted={(item) => void handleMarkCompleted(item.id)}
             onCancel={(item) => void handleCancel(item.id)}
             onRefund={(item, request) => void handleRefund(item, request)}

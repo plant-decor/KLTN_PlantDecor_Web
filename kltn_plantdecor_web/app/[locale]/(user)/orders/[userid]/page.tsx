@@ -314,7 +314,6 @@ export default function OrdersPage() {
 
       setDetailOrder(updatedOrder);
       setOrders((prev) => prev.map((o) => (o.id === updatedOrder.id ? updatedOrder : o)));
-      toast.success('Nursery order confirmed successfully.');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Cannot confirm nursery order received.');
     } finally {

@@ -21,6 +21,7 @@ import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
 import ImageIcon from '@mui/icons-material/Image';
 import ReplayIcon from '@mui/icons-material/Replay';
 import CurrencyExchangeIcon from '@mui/icons-material/CurrencyExchange';
+import PendingActionsIcon from '@mui/icons-material/PendingActions';
 import type { ManagerNurseryOrder, RefundNurseryOrderRequest } from '@/types/manager-sales-orders.types';
 import FullscreenImageModal from '@/components/image-view/FullscreenImageModal';
 import RedeliveryConfirmationModal from './RedeliveryConfirmationModal';
@@ -50,6 +51,7 @@ interface ManagerSalesOrdersTableProps {
   onViewDetail: (item: ManagerNurseryOrder) => void;
   onAssignShipper?: (item: ManagerNurseryOrder) => void;
   onRedelivery?: (item: ManagerNurseryOrder) => void;
+  onPendingConfirmation?: (item: ManagerNurseryOrder) => void;
   onMarkCompleted?: (item: ManagerNurseryOrder) => void;
   onCancel?: (item: ManagerNurseryOrder) => void;
   onRefund?: (item: ManagerNurseryOrder, request: RefundNurseryOrderRequest) => void;
@@ -65,6 +67,7 @@ export default function ManagerSalesOrdersTable({
   onViewDetail,
   onAssignShipper,
   onRedelivery,
+  onPendingConfirmation,
   onMarkCompleted,
   onCancel,
   onRefund,
@@ -79,6 +82,8 @@ export default function ManagerSalesOrdersTable({
   const [openConfirmCancel, setOpenConfirmCancel] = useState(false);
   const [refundTarget, setRefundTarget] = useState<ManagerNurseryOrder | null>(null);
   const [openRefundDialog, setOpenRefundDialog] = useState(false);
+  const [pendingConfirmationTarget, setPendingConfirmationTarget] = useState<ManagerNurseryOrder | null>(null);
+  const [openConfirmPendingConfirmation, setOpenConfirmPendingConfirmation] = useState(false);
   const handleChangePage = (_event: unknown, newPage: number) => {
     onPageChange(newPage + 1);
   };
@@ -189,41 +194,51 @@ export default function ManagerSalesOrdersTable({
                       ) : null}
                       {onRedelivery && canRedeliver ? (
                         <>
-                        <Tooltip title="Redelivery">
-                          <Button size="small" onClick={() => setRedeliveryTarget(item)}>
-                            <ReplayIcon fontSize="medium" className="hover:scale-110" />
-                          </Button>
-                        </Tooltip>
-                        <Tooltip title="Cancel Order">
-                          <Button size="small" onClick={() => {
-                            setCancelTarget(item);
-                            setOpenConfirmCancel(true);
-                          }}>
-                            <CancelOutlined fontSize="medium" className="hover:scale-110" />
-                          </Button>
-                        </Tooltip>
-                        {onRefund ? (
-                          <Tooltip title="Refund">
-                            <Button size="small" onClick={() => {
-                              setRefundTarget(item);
-                              setOpenRefundDialog(true);
-                            }}>
-                              <CurrencyExchangeIcon fontSize="medium" className="hover:scale-110" />
+                          <Tooltip title="Redelivery">
+                            <Button size="small" onClick={() => setRedeliveryTarget(item)}>
+                              <ReplayIcon fontSize="medium" className="hover:scale-110" />
                             </Button>
                           </Tooltip>
-                        ) : null}
+                          {onPendingConfirmation ? (
+                            <Tooltip title="Delivery Success">
+                              <Button size="small" onClick={() => {
+                                setPendingConfirmationTarget(item);
+                                setOpenConfirmPendingConfirmation(true);
+                              }}>
+                                <PendingActionsIcon fontSize="medium" className="hover:scale-110" />
+                              </Button>
+                            </Tooltip>
+                          ) : null}
+                          <Tooltip title="Cancel Order">
+                            <Button size="small" onClick={() => {
+                              setCancelTarget(item);
+                              setOpenConfirmCancel(true);
+                            }}>
+                              <CancelOutlined fontSize="medium" className="hover:scale-110" />
+                            </Button>
+                          </Tooltip>
+                          {onRefund ? (
+                            <Tooltip title="Refund">
+                              <Button size="small" onClick={() => {
+                                setRefundTarget(item);
+                                setOpenRefundDialog(true);
+                              }}>
+                                <CurrencyExchangeIcon fontSize="medium" className="hover:scale-110" />
+                              </Button>
+                            </Tooltip>
+                          ) : null}
                         </>
                       ) : null}
                       {item.deliveryImageUrl ? (
                         <>
-                        <Tooltip title="Mark as completed">
-                          <Button size="small" onClick={() => {
-                            setShipImageUrl(item.deliveryImageUrl ?? null);
-                            setShipImageOpen(true);
-                          }}>
-                            <ImageIcon fontSize="medium" className="hover:scale-110" />
-                          </Button>
-                        </Tooltip>
+                          <Tooltip title="View delivery image">
+                            <Button size="small" onClick={() => {
+                              setShipImageUrl(item.deliveryImageUrl ?? null);
+                              setShipImageOpen(true);
+                            }}>
+                              <ImageIcon fontSize="medium" className="hover:scale-110" />
+                            </Button>
+                          </Tooltip>
                         </>
                       ) : null}
                       <Button size="small" onClick={() => onViewDetail(item)}>
@@ -231,13 +246,13 @@ export default function ManagerSalesOrdersTable({
                       </Button>
                       {onMarkCompleted && item.status === 13 ? (
                         <Tooltip title="Mark as completed">
-                        <Button className='bg-primary! rounded-full!' size="small" onClick={() => {
-                          setMarkCompletedTarget(item);
-                          setOpenConfirmMarkCompleted(true);
-                        }}>
-                          <CheckOutlined fontSize="medium" className="hover:scale-110" />
-                        </Button>
-                      </Tooltip>
+                          <Button className='bg-primary! rounded-full!' size="small" onClick={() => {
+                            setMarkCompletedTarget(item);
+                            setOpenConfirmMarkCompleted(true);
+                          }}>
+                            <CheckOutlined fontSize="medium" className="hover:scale-110" />
+                          </Button>
+                        </Tooltip>
                       ) : null}
                     </TableCell>
                   </TableRow>
@@ -295,6 +310,27 @@ export default function ManagerSalesOrdersTable({
             onRedelivery(redeliveryTarget);
           }
           setRedeliveryTarget(null);
+        }}
+      />
+
+      <ConfirmActionDialog
+        open={openConfirmPendingConfirmation}
+        onClose={() => {
+          setOpenConfirmPendingConfirmation(false);
+          setPendingConfirmationTarget(null);
+        }}
+        title="Move to Pending Confirmation"
+        message="Are you sure you want to move this failed order to Pending Confirmation status?"
+        confirmLabel="Confirm"
+        cancelLabel="Cancel"
+        confirmColor="primary"
+        loading={false}
+        onConfirm={() => {
+          if (pendingConfirmationTarget && onPendingConfirmation) {
+            onPendingConfirmation(pendingConfirmationTarget);
+          }
+          setOpenConfirmPendingConfirmation(false);
+          setPendingConfirmationTarget(null);
         }}
       />
 

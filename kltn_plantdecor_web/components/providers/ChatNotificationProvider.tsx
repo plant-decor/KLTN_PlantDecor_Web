@@ -85,6 +85,7 @@ export function ChatNotificationProvider() {
       handleNewMessageNotification,
     );
 
+    chatHubService.allowReconnect();
     void chatHubService.connect().catch((error) => {
       if (isActive) {
         console.error("Cannot connect to chat notifications:", error);

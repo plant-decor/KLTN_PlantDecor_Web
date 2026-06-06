@@ -86,6 +86,11 @@ export default function ConsultantChatSupport() {
 
   useEffect(() => {
     if (!user) return;
+    chatHubService.allowReconnect();
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
 
     const setupHubForConsultantInbox = async () => {
       try {

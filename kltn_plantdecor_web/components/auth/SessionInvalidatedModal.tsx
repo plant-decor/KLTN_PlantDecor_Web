@@ -14,6 +14,7 @@ import {
 } from '@mui/material';
 import LockClockOutlinedIcon from '@mui/icons-material/LockClockOutlined';
 import { useAuthStore } from '@/lib/store/authStore';
+import { chatHubService } from '@/lib/signalr/chatHubService';
 import { hoverLiftStyle } from '@/lib/styles/buttonStyles';
 import { logoutAction, validateSessionAction } from '@/app/actions/authenticationActions';
 import {
@@ -102,6 +103,7 @@ export function SessionInvalidatedModal() {
   }, []);
 
   const onSessionInvalidated = useCallback(async () => {
+    try { await chatHubService.disconnect(); } catch { /* ignore */ }
     // Clear Zustand store (user + tokens)
     clearAll();
     setOpen(true);

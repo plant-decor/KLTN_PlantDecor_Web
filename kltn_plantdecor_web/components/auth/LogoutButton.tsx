@@ -3,6 +3,7 @@
 import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/authStore';
 import { logoutAction } from '@/app/actions/loginAction';
+import { chatHubService } from '@/lib/signalr/chatHubService';
 
 /**
  * Logout Button Component
@@ -26,6 +27,7 @@ export default function LogoutButton() {
 
   const handleLogout = async () => {
     try {
+      try { await chatHubService.disconnect(); } catch { /* ignore */ }
       // Gọi Server Action để xóa cookies
       const result = await logoutAction();
       if (!result.success) {

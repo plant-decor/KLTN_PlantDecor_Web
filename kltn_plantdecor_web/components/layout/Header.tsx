@@ -10,6 +10,7 @@ import Navigation from './Navigation';
 import { Link } from '@/i18n/navigation';
 import { GUEST_ACTIONS, USER_MENU_ITEMS } from '@/lib/constants/header';
 import { logoutAction } from '@/app/actions/loginAction';
+import { chatHubService } from '@/lib/signalr/chatHubService';
 import { ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
 import SubscriptionBadge from '@/components/profile/SubscriptionBadge';
 import {
@@ -82,6 +83,7 @@ export default function Header({ initialStoreCategories = [] }: HeaderProps) {
 
   const handleLogout = async () => {
     try {
+      try { await chatHubService.disconnect(); } catch { /* ignore */ }
       const result = await logoutAction();
 
       if (result.success) {

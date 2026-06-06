@@ -258,7 +258,7 @@ export default function OrderDetailModal({
                       <Typography variant="body2" color="text.secondary" component="span">
                         Status:
                       </Typography>
-                      <Chip label={nurseryOrder.statusName} size="small" sx={{ ml: 0.5 }} />
+                      <Chip label={nurseryOrder.statusName} size="small" color={getStatusInfo(nurseryOrder.statusName).color} sx={{ ml: 0.5 }} />
                     </Box>
                     {nurseryOrder.shipperName ? (
                       <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>

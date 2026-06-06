@@ -329,7 +329,6 @@ export default function OrdersPage() {
 
       setDetailOrder(updatedOrder);
       setOrders((prev) => prev.map((o) => (o.id === updatedOrder.id ? updatedOrder : o)));
-      toast.success('Not received report submitted successfully.');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Cannot submit not received report.');
     } finally {

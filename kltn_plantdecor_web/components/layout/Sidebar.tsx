@@ -41,6 +41,7 @@ import {
 import type { UserRole } from '@/lib/constants/header';
 import { useAuthStore } from '@/lib/store/authStore';
 import { logoutAction } from '@/app/actions/loginAction';
+import { chatHubService } from '@/lib/signalr/chatHubService';
 
 const ICONS: Record<SidebarIconKey, ReactNode> = {
   dashboard: <DashboardIcon sx={{ fontSize: 18 }} />,
@@ -121,6 +122,7 @@ export default function Sidebar({ isOpen, onClose, role }: SidebarProps) {
 
   const handleLogout = async () => {
     try {
+      try { await chatHubService.disconnect(); } catch { /* ignore */ }
       const result = await logoutAction();
       if (!result.success) {
         console.warn('Logout action reported failure, continuing with local cleanup.');

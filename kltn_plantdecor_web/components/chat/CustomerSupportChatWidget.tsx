@@ -99,6 +99,7 @@ export default function SupportChatWidget() {
     messages,
     isInitialLoading,
     isSending,
+    isHubReady,
     hasConnectedOnce,
     showConnectingBanner,
     isOtherUserTyping,
@@ -127,6 +128,11 @@ export default function SupportChatWidget() {
   }, [consultantParticipant]);
 
   useEffect(() => {
+    if (!isHubReady) return;
+    void reloadConversation();
+  }, [isHubReady, reloadConversation]);
+
+  useEffect(() => {
     const consultantId = consultantParticipant?.userId;
     if (!consultantId) return;
     const off = chatHubService.on("consultantStatusChanged", (payload) => {
@@ -147,6 +153,18 @@ export default function SupportChatWidget() {
     pendingOfflineCheckRef.current = false;
     if (!consultantIsOnline) setShowOfflineReply(true);
   }, [consultantParticipant, consultantIsOnline]);
+
+  useEffect(() => {
+    const consultantId = consultantParticipant?.userId;
+    if (!consultantId || !conversationId) return;
+    const off = chatHubService.on("messageReceived", (payload) => {
+      if (payload.conversationId === conversationId && payload.senderId === consultantId) {
+        setConsultantIsOnline(true);
+        setShowOfflineReply(false);
+      }
+    });
+    return () => off();
+  }, [consultantParticipant?.userId, conversationId]);
 
   useAutoScrollToBottom(chatScrollRef, {
     dependency: `${conversationId}:${isOpen ? 1 : 0}:${displayedMessages.length}:${isOtherUserTyping ? 1 : 0}`,

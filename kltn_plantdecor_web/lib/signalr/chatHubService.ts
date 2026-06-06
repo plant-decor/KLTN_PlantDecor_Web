@@ -43,6 +43,7 @@ class ChatHubService {
   private startPromise: Promise<signalR.HubConnection> | null = null;
   private joinedConversationIds = new Set<number>();
   private listeners: ListenerStore = {};
+  private intentionallyDisconnected = false;
 
   private readonly hubUrl = `${process.env.NEXT_PUBLIC_SIGNALR_BASE_URL}/hubs/chat`;
 
@@ -176,7 +177,13 @@ class ChatHubService {
     });
   }
 
+  allowReconnect() {
+    this.intentionallyDisconnected = false;
+  }
+
   async connect() {
+    if (this.intentionallyDisconnected) return;
+
     if (
       this.connection &&
       this.connection.state === signalR.HubConnectionState.Connected
@@ -248,6 +255,7 @@ class ChatHubService {
   }
 
   async disconnect() {
+    this.intentionallyDisconnected = true;
     this.joinedConversationIds.clear();
 
     if (

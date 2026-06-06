@@ -315,7 +315,7 @@ export default function OrderDetailModal({
                       <Typography variant="body2" fontWeight="bold" align="right">
                         Subtotal: {formatCurrency(nurseryOrder.subTotalAmount, 'vi-VN')}
                       </Typography>
-                      {nurseryOrder.statusName === 'Delivered' ? (
+                      {nurseryOrder.statusName === 'Delivered' || nurseryOrder.statusName === 'RemainingPaymentPending' ? (
                         <Box sx={{ display: 'flex', gap: 1 }}>
                           <Button
                             variant="outlined"
@@ -329,17 +329,19 @@ export default function OrderDetailModal({
                               ? 'Submitting...'
                               : 'Not Received'}
                           </Button>
-                          <Button
-                            variant="contained"
-                            size="small"
-                            sx={{ backgroundColor: 'var(--primary)', ...hoverLiftStyle }}
-                            onClick={() => void onConfirmNurseryOrderReceived(nurseryOrder.id)}
-                            disabled={confirmLoadingNurseryOrderId === nurseryOrder.id || notReceivedLoadingNurseryOrderId === nurseryOrder.id || isCancelling}
-                          >
-                            {confirmLoadingNurseryOrderId === nurseryOrder.id
-                              ? 'Confirming...'
-                              : 'Confirm Received'}
-                          </Button>
+                          {nurseryOrder.statusName === 'Delivered' ? (
+                            <Button
+                              variant="contained"
+                              size="small"
+                              sx={{ backgroundColor: 'var(--primary)', ...hoverLiftStyle }}
+                              onClick={() => void onConfirmNurseryOrderReceived(nurseryOrder.id)}
+                              disabled={confirmLoadingNurseryOrderId === nurseryOrder.id || notReceivedLoadingNurseryOrderId === nurseryOrder.id || isCancelling}
+                            >
+                              {confirmLoadingNurseryOrderId === nurseryOrder.id
+                                ? 'Confirming...'
+                                : 'Confirm Received'}
+                            </Button>
+                          ) : null}
                         </Box>
                       ) : null}
                     </Box>

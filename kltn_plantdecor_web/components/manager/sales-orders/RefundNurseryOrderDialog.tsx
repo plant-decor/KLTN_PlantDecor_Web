@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   Button,
   Dialog,
@@ -27,21 +27,23 @@ export default function RefundNurseryOrderDialog({
   onClose,
   onSubmit,
 }: RefundNurseryOrderDialogProps) {
+  const [prevOrderId, setPrevOrderId] = useState<number | null>(null);
   const [refundedAmount, setRefundedAmount] = useState('');
   const [refundReference, setRefundReference] = useState('');
   const [managerRefundNote, setManagerRefundNote] = useState('');
   const [amountError, setAmountError] = useState('');
 
-  useEffect(() => {
-    if (open && order) {
-      setRefundedAmount(formatCurrencyInput(order.subTotalAmount, 'vi-VN'));
-      setRefundReference('');
-      setManagerRefundNote('');
-      setAmountError('');
-    }
-  }, [open, order]);
+  // React-approved pattern: adjust state when props change (avoids useEffect for derived state)
+  if (open && order && order.id !== prevOrderId) {
+    setPrevOrderId(order.id);
+    setRefundedAmount(formatCurrencyInput(order.subTotalAmount, 'vi-VN'));
+    setRefundReference('');
+    setManagerRefundNote('');
+    setAmountError('');
+  }
 
   const handleClose = () => {
+    setPrevOrderId(null);
     setRefundedAmount('');
     setRefundReference('');
     setManagerRefundNote('');

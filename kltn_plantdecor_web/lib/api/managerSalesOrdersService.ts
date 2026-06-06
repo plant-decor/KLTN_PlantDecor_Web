@@ -215,3 +215,16 @@ export const refundManagerNurseryOrder = async (
   );
   return unwrapPayloadData(response);
 };
+
+export const markManagerNurseryOrderAsPendingConfirmation = async (
+  nurseryOrderId: number,
+  loading = true
+): Promise<ManagerNurseryOrderDetail> => {
+  const response = await apiClient.put<ResponseModel<ManagerNurseryOrderDetail>>(
+    `/manager/nursery-orders/${nurseryOrderId}/pending-confirmation`,
+    {},
+    loading,
+    { showToast: false, showErrorToast: false }
+  );
+  return unwrapPayloadData(response);
+};

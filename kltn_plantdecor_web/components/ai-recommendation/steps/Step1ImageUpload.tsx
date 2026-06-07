@@ -94,8 +94,12 @@ export default function Step1ImageUpload({
         onRoomTypeChange('');
         setIsOverriding(false);
       } else {
-        setDetectedRoomType(result.roomType);
-        onRoomTypeChange(result.roomType);
+        const matchedOption = roomTypeOptions.find(
+          (opt) => humanizeEnum(opt.name).toLowerCase() === result.roomType.toLowerCase()
+        );
+        const normalizedRoomType = matchedOption?.name ?? result.roomType;
+        setDetectedRoomType(normalizedRoomType);
+        onRoomTypeChange(normalizedRoomType);
         setIsOverriding(false);
       }
     } catch {

@@ -79,23 +79,29 @@ export default function proxy(request: NextRequest) {
   const forceLogout = searchParams.get("forceLogout") === "1";
   const hasSession = Boolean(authToken || refreshToken);
 
-  // Allow protected route pass-through when refresh token still exists.
-  // Client bootstrap/interceptor can silently refresh and rehydrate access token.
-  if (protectedRoute && !authToken && !refreshToken) {
-    const loginPath = getLocalizedPath(pathname, "/login");
-    const loginUrl = new URL(loginPath, request.nextUrl.origin);
-    loginUrl.searchParams.set("redirectTo", pathname);
-    return NextResponse.redirect(loginUrl);
-  }
+  if (protectedRoute) {
+    if (!authToken && !refreshToken) {
+      const loginPath = getLocalizedPath(pathname, "/login");
+      const loginUrl = new URL(loginPath, request.nextUrl.origin);
+      loginUrl.searchParams.set("redirectTo", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
 
-  if (protectedRoute && authToken && userRole) {
-    const allowedRoles = ROUTE_TO_ROLES[protectedRoute];
-
-    if (!allowedRoles.includes(userRole)) {
+    if (!userRole) {
       const unauthorizedPath = getLocalizedPath(pathname, "/unauthorized");
       return NextResponse.redirect(
         new URL(unauthorizedPath, request.nextUrl.origin),
       );
+    }
+
+    if (authToken) {
+      const allowedRoles = ROUTE_TO_ROLES[protectedRoute];
+      if (!allowedRoles.includes(userRole)) {
+        const unauthorizedPath = getLocalizedPath(pathname, "/unauthorized");
+        return NextResponse.redirect(
+          new URL(unauthorizedPath, request.nextUrl.origin),
+        );
+      }
     }
   }
 

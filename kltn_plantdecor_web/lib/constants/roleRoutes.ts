@@ -75,6 +75,18 @@ export const ROLE_TO_ROUTES: Record<string, string[]> = {
   ],
 };
 
+const ALL_ROLES = [
+  "Admin",
+  "Manager",
+  "Staff",
+  "Consultant",
+  "Caretaker",
+  "Shipper",
+  "Customer",
+] as const;
+
+const INTERNAL_ROLES = ALL_ROLES.filter((r) => r !== "Customer");
+
 export const ROUTE_TO_ROLES: Record<string, string[]> = {
   admin: ["Admin"],
   manager: ["Admin", "Manager"],
@@ -85,15 +97,12 @@ export const ROUTE_TO_ROLES: Record<string, string[]> = {
   consultant: ["Admin", "Manager", "Staff", "Consultant"],
   services: ["Customer"],
   "design-registration": ["Customer"],
-  cart: ["Customer"],
   "ai-chatbot": ["Customer"],
-  dashboard: [
-    "Admin",
-    "Manager",
-    "Staff",
-    "Consultant",
-    "Caretaker",
-    "Shipper",
-  ],
-  sessions: ["Admin", "Manager", "Staff", "Consultant", "Caretaker", "Shipper"],
+  dashboard: [...INTERNAL_ROLES],
+  sessions: [...INTERNAL_ROLES],
+  orders: [...ALL_ROLES],
+  wishlist: [...ALL_ROLES],
+  cart: [...ALL_ROLES],
+  profile: [...ALL_ROLES],
+  "ai-plant-recommendation": [...ALL_ROLES],
 };

@@ -69,10 +69,10 @@ export function isStaff(userRole: string | undefined): boolean {
 }
 
 /**
- * Check if user is regular user
+ * Check if user is a regular customer
  */
 export function isRegularUser(userRole: string | undefined): boolean {
-  return normalizeRole(userRole) === "User";
+  return normalizeRole(userRole) === "Customer";
 }
 
 /**
@@ -108,7 +108,7 @@ export const ROLE_DEFAULT_PATHS: Record<string, string> = {
   Consultant: "/consultant/chat-support",
   Caretaker: "/caretaker",
   Shipper: "/shipper",
-  User: "/profile",
+  Customer: "/profile",
 };
 
 /**

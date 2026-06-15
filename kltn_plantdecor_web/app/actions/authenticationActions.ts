@@ -182,10 +182,10 @@ const setAuthenticationCookies = async (data: LoginResponse): Promise<void> => {
     cookieStore.set({
       name: 'userRole',
       value: data.user.role,
-      httpOnly: false,
+      httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: data.expiresIn,
+      maxAge: REFRESH_TOKEN_MAX_AGE,
       path: '/',
     });
   }
@@ -521,7 +521,6 @@ export async function confirmEmailAction(
         body: payload,
       }
     );
-    console.log('response', data);
     const success = deriveApiSuccess(data);
     return {
       success,

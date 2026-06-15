@@ -15,14 +15,13 @@ export async function createAxiosServer(): Promise<AxiosInstance> {
     .map((cookie) => `${cookie.name}=${cookie.value}`);
   const cookieHeader = cookiePairs.length > 0 ? cookiePairs.join("; ") : undefined;
 
-  // Create HTTPS agent that bypasses SSL certificate validation for localhost
   const httpsAgent = new https.Agent({
-    rejectUnauthorized: false, // Allow self-signed certificates in development
+    rejectUnauthorized: process.env.NODE_ENV === 'production',
   });
 
   return axios.create({
     baseURL,
-    timeout: 2000000, // 2000 seconds timeout (matching client timeout)
+    timeout: 30000,
     withCredentials: true,
     httpsAgent, // Use custom HTTPS agent
     headers: {
